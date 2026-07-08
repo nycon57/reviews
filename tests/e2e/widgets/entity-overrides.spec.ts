@@ -5,6 +5,7 @@ import {
   MOCK_WIDGET_ID,
   mockWidgetConfig,
   mockReviewsResponse,
+  waitForWidgetRendered,
 } from "./fixtures";
 
 const ENTITY_ONE = "123e4567-e89b-12d3-a456-426614174001";
@@ -60,7 +61,23 @@ test.describe("Dynamic Entity Overrides", () => {
       },
     ]);
 
-    await page.waitForTimeout(2500);
+    await page.waitForFunction(
+      ([widgetId, expectedCount]) => {
+        const hosts = Array.from(
+          document.querySelectorAll(`[data-repwell-widget="${widgetId}"]`)
+        );
+        return (
+          hosts.length === expectedCount &&
+          hosts.every(
+            (host) =>
+              host.hasAttribute("data-repwell-initialized") &&
+              !!host.shadowRoot &&
+              !host.shadowRoot.querySelector(".rw-skeleton")
+          )
+        );
+      },
+      [MOCK_WIDGET_ID, 2]
+    );
 
     expect(configEntityIds).toEqual(expect.arrayContaining([ENTITY_ONE, ENTITY_TWO]));
     expect(reviewsEntityIds).toEqual(expect.arrayContaining([ENTITY_ONE, ENTITY_TWO]));
@@ -88,8 +105,7 @@ test.describe("Dynamic Entity Overrides", () => {
         },
       },
     ]);
-
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(page);
 
     const widgetHost = page.locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`);
     const shadowText = await widgetHost.evaluate((el) => el.shadowRoot?.textContent ?? "");

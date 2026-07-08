@@ -1,6 +1,6 @@
 /**
  * E2E tests for the video testimonial widget.
- * Verifies video playback, progress events, and transcript sync.
+ * Verifies video rendering, transcript rendering, and play tracking.
  */
 
 import {
@@ -11,6 +11,9 @@ import {
   mockWidgetConfig,
   mockReviewsResponse,
   mockVideoTestimonials,
+  waitForWidgetRendered,
+  waitForWidgetEventRequest,
+  getShadowText,
 } from "./fixtures";
 
 const VIDEO_CONFIG = {
@@ -52,7 +55,6 @@ test.describe("Video Testimonial Widget", () => {
     await page.route(`**/api/v1/widgets/${MOCK_WIDGET_ID}/events`, async (route) => {
       await route.fulfill({ status: 204 });
     });
-    // Mock video file to prevent actual download
     await page.route("**/video1.mp4", async (route) => {
       await route.fulfill({
         status: 200,
@@ -71,100 +73,75 @@ test.describe("Video Testimonial Widget", () => {
 
   test("renders video testimonial widget", async ({ page }) => {
     await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(page);
 
-    const widgetHost = page.locator(
-      `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
-    );
+    const hasVideoContent = await page
+      .locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`)
+      .evaluate((el) => {
+        const shadow = el.shadowRoot;
+        return (
+          !!shadow?.querySelector(".rw-vt__player-wrap[role='region']") &&
+          !!shadow.querySelector(".rw-vt__play-btn[role='button']")
+        );
+      });
 
-    const hasVideoContent = await widgetHost.evaluate((el) => {
-      const shadow = el.shadowRoot;
-      if (!shadow) return false;
-      // Look for video element or video container
-      const video = shadow.querySelector("video");
-      const videoContainer = shadow.querySelector(
-        ".rw-video, [data-video], .rw-video-testimonial"
-      );
-      return !!video || !!videoContainer;
-    });
-
-    // Widget should render a video element or video container
     expect(hasVideoContent).toBe(true);
   });
 
   test("shows reviewer name and rating", async ({ page }) => {
     await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(page);
 
-    const widgetHost = page.locator(
-      `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
-    );
+    const reviewerName = await getShadowText(page, ".rw-vt__reviewer-name");
+    const starCount = await page
+      .locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`)
+      .evaluate(
+        (el) => el.shadowRoot?.querySelectorAll(".rw-vt__stars .rw-star").length ?? 0
+      );
 
-    const content = await widgetHost.evaluate((el) => {
-      return el.shadowRoot?.textContent ?? "";
-    });
-
-    // The testimonial should include reviewer info from the config
-    expect(content.length).toBeGreaterThan(0);
+    expect(reviewerName).toBe("Video Reviewer 1");
+    expect(starCount).toBe(5);
   });
 
   test("renders transcript section", async ({ page }) => {
     await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(page);
 
-    const widgetHost = page.locator(
-      `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
-    );
-
-    const hasTranscript = await widgetHost.evaluate((el) => {
-      const shadow = el.shadowRoot;
-      if (!shadow) return false;
-      const text = shadow.textContent ?? "";
-      // Check for transcript text from mock data
-      return (
-        text.includes("amazing experience") ||
-        text.includes("top notch") ||
-        !!shadow.querySelector(".rw-transcript, [data-transcript]")
-      );
-    });
-
-    // Transcript should render with expected content
-    expect(hasTranscript).toBe(true);
+    const transcript = await getShadowText(page, ".rw-vt__transcript");
+    expect(transcript).toContain("amazing experience");
+    expect(transcript).toContain("top notch");
   });
 
   test("video play triggers event tracking", async ({ page }) => {
-    const eventRequests: string[] = [];
-
-    await page.route(
-      `**/api/v1/widgets/${MOCK_WIDGET_ID}/events`,
-      async (route) => {
-        const body = route.request().postData() ?? "";
-        eventRequests.push(body);
-        await route.fulfill({ status: 204 });
-      }
-    );
-
-    await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
-    await page.waitForTimeout(2000);
-
-    const widgetHost = page.locator(
-      `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
-    );
-
-    // Try to click play button
-    await widgetHost.evaluate((el) => {
-      const shadow = el.shadowRoot;
-      if (!shadow) return;
-      const playBtn =
-        shadow.querySelector('button[aria-label*="play" i]') ??
-        shadow.querySelector(".rw-play-button") ??
-        shadow.querySelector("video");
-      if (playBtn) (playBtn as HTMLElement).click();
+    await page.addInitScript(() => {
+      HTMLMediaElement.prototype.play = function play() {
+        this.dispatchEvent(new Event("play"));
+        return Promise.resolve();
+      };
     });
 
-    await page.waitForTimeout(1000);
+    await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
+    await waitForWidgetRendered(page);
 
-    // At minimum, impression event should have fired
-    expect(eventRequests.length).toBeGreaterThanOrEqual(1);
+    const playRequest = waitForWidgetEventRequest(
+      page,
+      MOCK_WIDGET_ID,
+      (event) => event.event_type === "video_play"
+    );
+
+    await page
+      .locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`)
+      .evaluate((el) => {
+        const playBtn = el.shadowRoot?.querySelector<HTMLElement>(
+          ".rw-vt__play-btn[role='button']"
+        );
+        if (!playBtn) {
+          throw new Error("Expected video play button to be rendered");
+        }
+        playBtn.click();
+      });
+
+    const playEvent = await playRequest;
+    expect(playEvent.metadata?.video_id).toBe("video-1");
   });
 });

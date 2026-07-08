@@ -74,9 +74,6 @@ jobs:
       DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
       BETTER_AUTH_SECRET: mock-ci-secret-not-used-at-runtime
     needs: [bundle-size, unit-tests]
-    # Pre-dates the golden-flows E2E workstream; needs real env to be trustworthy.
-    # Non-blocking until replaced (docs/plans/2026-07-06-feature-audit-campaign.md §6k.2).
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4

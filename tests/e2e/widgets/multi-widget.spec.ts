@@ -10,6 +10,7 @@ import {
   loadEmbedPage,
   MOCK_WIDGET_ID,
   MOCK_WIDGET_ID_2,
+  waitForWidgetRendered,
 } from "./fixtures";
 
 test.describe("Multiple Widgets on Single Page", () => {
@@ -27,8 +28,14 @@ test.describe("Multiple Widgets on Single Page", () => {
       { id: MOCK_WIDGET_ID },
       { id: MOCK_WIDGET_ID_2 },
     ]);
-
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(
+      page,
+      `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
+    );
+    await waitForWidgetRendered(
+      page,
+      `[data-repwell-widget="${MOCK_WIDGET_ID_2}"]`
+    );
 
     // Both widgets should be initialized
     const widget1 = page.locator(
@@ -66,8 +73,14 @@ test.describe("Multiple Widgets on Single Page", () => {
       { id: MOCK_WIDGET_ID },
       { id: MOCK_WIDGET_ID_2 },
     ]);
-
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(
+      page,
+      `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
+    );
+    await waitForWidgetRendered(
+      page,
+      `[data-repwell-widget="${MOCK_WIDGET_ID_2}"]`
+    );
 
     const ids = await page.evaluate(
       ([id1, id2]) => {
@@ -96,8 +109,14 @@ test.describe("Multiple Widgets on Single Page", () => {
       { id: MOCK_WIDGET_ID },
       { id: MOCK_WIDGET_ID_2 },
     ]);
-
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(
+      page,
+      `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
+    );
+    await waitForWidgetRendered(
+      page,
+      `[data-repwell-widget="${MOCK_WIDGET_ID_2}"]`
+    );
 
     // Destroy widget 1
     await page.evaluate((wid) => {

@@ -9,6 +9,7 @@ import type {
 } from "@/types/survey.types";
 import { publishReviewIfClean } from "@/lib/reviews/publish";
 import { analyzeNewReview } from "@/lib/ai/actions";
+import { emitWebhookEvent } from "@/lib/webhooks/outbound";
 import type { PublicSurvey, ActionResult } from "./public-types";
 
 /**
@@ -211,6 +212,7 @@ export async function submitSurveyResponse(
         status,
         expires_at,
         completed_at,
+        contact_id,
         organization_id,
         user_id,
         template_id,
@@ -278,13 +280,28 @@ export async function submitSurveyResponse(
     }
 
     // Update survey status to completed
+    const completedAt = new Date().toISOString();
     await supabase
       .from("surveys")
       .update({
         status: "completed",
-        completed_at: new Date().toISOString(),
+        completed_at: completedAt,
       })
       .eq("id", survey.id);
+
+    await emitWebhookEvent({
+      organizationId: survey.organization_id,
+      type: "survey.completed",
+      data: {
+        survey_id: survey.id,
+        contact_id: survey.contact_id,
+        completed_at: completedAt,
+        rating: overallRating,
+        nps: npsScore,
+      },
+    }).catch((error) => {
+      console.error("Failed to enqueue survey.completed webhook:", error);
+    });
 
     // Get customer name from survey for review creation
     const { data: surveyDetails } = await supabase

@@ -16,6 +16,10 @@ import {
   notifyReviewPublished,
 } from "@/lib/reviews/notifications";
 import { sendReviewResponseConfirmationEmail } from "./response-confirmation";
+import {
+  emitWebhookEvent,
+  type ReviewWebhookData,
+} from "@/lib/webhooks/outbound";
 
 export type PublishReviewScreening =
   | {
@@ -68,6 +72,54 @@ type PublishRow = {
   response_text: string | null;
   response_status: string | null;
 };
+
+async function buildReviewWebhookData(params: {
+  supabase: UntypedSupabaseClient;
+  reviewId: string;
+  organizationId: string;
+  ownerUserId: string;
+  rating: number;
+  customerName: string | null;
+  reviewText: string | null;
+}): Promise<ReviewWebhookData> {
+  const [{ data: review }, { data: professional }] = await Promise.all([
+    params.supabase
+      .from("reviews")
+      .select("source, source_url, review_date")
+      .eq("id", params.reviewId)
+      .eq("organization_id", params.organizationId)
+      .maybeSingle(),
+    params.supabase
+      .from("users")
+      .select("id, full_name")
+      .eq("id", params.ownerUserId)
+      .eq("organization_id", params.organizationId)
+      .maybeSingle(),
+  ]);
+
+  const reviewRow = review as {
+    source?: string | null;
+    source_url?: string | null;
+    review_date?: string | null;
+  } | null;
+  const professionalRow = professional as {
+    full_name?: string | null;
+  } | null;
+
+  return {
+    review_id: params.reviewId,
+    rating: params.rating,
+    text: params.reviewText,
+    reviewer_display_name: params.customerName,
+    source: reviewRow?.source ?? "unknown",
+    review_date: reviewRow?.review_date ?? new Date().toISOString(),
+    professional: {
+      id: params.ownerUserId,
+      full_name: professionalRow?.full_name ?? null,
+    },
+    public_url: reviewRow?.source_url ?? null,
+  };
+}
 
 async function getModeration(
   screening: PublishReviewScreening
@@ -277,7 +329,17 @@ export async function publishReviewIfClean(
     threshold
   );
 
-  const [, , , draftResponseSurfaced] = await Promise.all([
+  const reviewWebhookData = buildReviewWebhookData({
+    supabase,
+    reviewId: params.reviewId,
+    organizationId: params.organizationId,
+    ownerUserId: params.ownerUserId,
+    rating: params.rating,
+    customerName: params.customerName ?? null,
+    reviewText: params.reviewText ?? null,
+  });
+
+  const [, , , , , draftResponseSurfaced] = await Promise.all([
     notifyReviewPublished({
       reviewId: params.reviewId,
       organizationId: params.organizationId,
@@ -308,6 +370,30 @@ export async function publishReviewIfClean(
     ).catch((error) => {
       console.error("Error checking review milestones:", error);
     }),
+    reviewWebhookData
+      .then((data) =>
+        emitWebhookEvent({
+          organizationId: params.organizationId,
+          type: "review.published",
+          data,
+        })
+      )
+      .catch((error) => {
+        console.error("Error enqueueing review.published webhook:", error);
+      }),
+    belowThreshold
+      ? reviewWebhookData
+          .then((data) =>
+            emitWebhookEvent({
+              organizationId: params.organizationId,
+              type: "review.negative",
+              data,
+            })
+          )
+          .catch((error) => {
+            console.error("Error enqueueing review.negative webhook:", error);
+          })
+      : Promise.resolve(),
     surfaceDraftResponse({
       supabase,
       reviewId: params.reviewId,

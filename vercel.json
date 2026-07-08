@@ -9,6 +9,10 @@
       "schedule": "*/5 * * * *"
     },
     {
+      "path": "/api/cron/process-webhook-deliveries",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/cron/process-campaigns",
       "schedule": "*/5 * * * *"
     },

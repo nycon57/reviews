@@ -14,6 +14,7 @@
  */
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { normalizeEmail, normalizePhone, sha256Email } from "@/lib/contacts/identity";
+import { emitWebhookEvent } from "@/lib/webhooks/outbound";
 
 export type SuppressionChannel = "email" | "sms";
 export type SuppressionReason =
@@ -155,6 +156,7 @@ export async function findOrCreateContact(
     .single();
 
   let contact: ContactRow;
+  let createdNew = false;
   if (insertError) {
     if (insertError.code === "23505") {
       // Lost a race — the Contact now exists. Re-select and return it.
@@ -178,6 +180,7 @@ export async function findOrCreateContact(
     }
   } else {
     contact = created as ContactRow;
+    createdNew = true;
   }
 
   // 4. Preserve suppressions across erase→re-import and absorb waiting
@@ -189,6 +192,22 @@ export async function findOrCreateContact(
     contact.id,
     erasedContactId
   );
+
+  if (createdNew) {
+    await emitWebhookEvent({
+      organizationId,
+      type: "contact.created",
+      data: {
+        contact_id: contact.id,
+        full_name: contact.name,
+        email: contact.email,
+        phone: contact.phone,
+        source: contact.source,
+      },
+    }).catch((error) => {
+      console.error("Failed to enqueue contact.created webhook:", error);
+    });
+  }
 
   return contact;
 }

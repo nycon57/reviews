@@ -316,6 +316,223 @@ const InviteUserSchema = z
 registry.register('User', UserSchema);
 registry.register('InviteUserInput', InviteUserSchema);
 
+const UpdateOrganizationSchema = z
+  .object({
+    name: z.string().min(1).max(200).optional(),
+    logo_url: z.string().url().nullable().optional(),
+    website_url: z.string().url().nullable().optional(),
+    timezone: z.string().max(50).optional(),
+    settings: z.record(z.unknown()).optional(),
+  })
+  .openapi('UpdateOrganizationInput');
+
+registry.register('UpdateOrganizationInput', UpdateOrganizationSchema);
+
+// ============================================================================
+// Contact Schemas
+// ============================================================================
+
+const ContactSchema = z
+  .object({
+    id: z.string().uuid(),
+    organization_id: z.string().uuid(),
+    owner_user_id: z.string().uuid().nullable(),
+    full_name: z.string().nullable(),
+    email: z.string().email().nullable(),
+    phone: z.string().nullable(),
+    source: z.string().nullable(),
+    created_at: z.string().datetime(),
+    updated_at: z.string().datetime(),
+  })
+  .openapi('Contact');
+
+const CreateContactSchema = z
+  .object({
+    full_name: z.string().min(1).max(200).optional(),
+    email: z.string().email(),
+    phone: z.string().max(50).optional(),
+    external_id: z.string().max(200).optional().openapi({
+      description: 'Optional caller-side identifier. Accepted for idempotent integrations; not returned.',
+    }),
+    owner_user_id: z.string().uuid().nullable().optional(),
+    source: z
+      .enum([
+        'survey',
+        'video_testimonial',
+        'salesforce',
+        'referral',
+        'direct_review',
+        'import',
+        'manual',
+      ])
+      .optional(),
+  })
+  .openapi('CreateContactInput');
+
+registry.register('Contact', ContactSchema);
+registry.register('CreateContactInput', CreateContactSchema);
+
+// ============================================================================
+// Outbound Webhook Schemas
+// ============================================================================
+
+const OutboundWebhookEventTypeSchema = z.enum([
+  'review.published',
+  'review.negative',
+  'review.responded',
+  'survey.completed',
+  'contact.created',
+]);
+
+const WebhookSubscriptionSchema = z
+  .object({
+    id: z.string().uuid(),
+    target_url: z.string().url(),
+    events: z.array(OutboundWebhookEventTypeSchema),
+    description: z.string().nullable(),
+    source: z.enum(['dashboard', 'api', 'zapier']),
+    is_active: z.boolean(),
+    last_delivery_at: z.string().datetime().nullable(),
+    failure_count: z.number().int(),
+    created_at: z.string().datetime(),
+    updated_at: z.string().datetime(),
+  })
+  .openapi('WebhookSubscription');
+
+const CreateWebhookSubscriptionSchema = z
+  .object({
+    target_url: z.string().url().openapi({
+      description: 'HTTPS endpoint that receives RepWell event deliveries.',
+      example: 'https://example.com/repwell/webhooks',
+    }),
+    events: z.array(OutboundWebhookEventTypeSchema).openapi({
+      description: 'Event types to receive. An empty array subscribes to all events.',
+    }),
+    description: z.string().max(500).optional(),
+  })
+  .openapi('CreateWebhookSubscriptionInput');
+
+const CreateWebhookSubscriptionResponseSchema = z
+  .object({
+    id: z.string().uuid(),
+    target_url: z.string().url(),
+    events: z.array(OutboundWebhookEventTypeSchema),
+    secret: z.string().openapi({
+      description: 'Signing secret. Returned only once at creation time.',
+    }),
+    created_at: z.string().datetime(),
+  })
+  .openapi('CreateWebhookSubscriptionResult');
+
+registry.register('WebhookSubscription', WebhookSubscriptionSchema);
+registry.register('CreateWebhookSubscriptionInput', CreateWebhookSubscriptionSchema);
+registry.register('CreateWebhookSubscriptionResult', CreateWebhookSubscriptionResponseSchema);
+
+// ============================================================================
+// Share Studio Schemas
+// ============================================================================
+
+const ShareStudioItemSchema = z
+  .object({
+    id: z.string().uuid(),
+  })
+  .passthrough()
+  .openapi('ShareStudioItem');
+
+const ShareStudioCreateItemSchema = z
+  .object({
+    source: z
+      .object({
+        review_id: z.string().uuid().optional(),
+        video_response_id: z.string().uuid().optional(),
+        manual_json: z.record(z.unknown()).optional(),
+      })
+      .openapi({ description: 'Provide exactly one source input.' }),
+    template_id: z.string().uuid().optional(),
+    title: z.string().max(200).optional(),
+    summary: z.string().max(500).optional(),
+    quote: z.string().max(2000).optional(),
+    customer_name: z.string().max(200).optional(),
+    rating: z.number().min(1).max(5).optional(),
+  })
+  .openapi('CreateShareStudioItemInput');
+
+const ShareStudioPatchItemSchema = z
+  .object({
+    title: z.string().max(200).nullable().optional(),
+    summary: z.string().max(500).nullable().optional(),
+    quote: z.string().max(2000).nullable().optional(),
+    customer_name: z.string().max(200).nullable().optional(),
+    rating: z.number().min(1).max(5).nullable().optional(),
+    source_platform: z.string().max(100).nullable().optional(),
+    source_review_date: z.string().datetime().nullable().optional(),
+    custom_payload: z.record(z.unknown()).nullable().optional(),
+    approval_action: z.enum(['approve', 'reject', 'request_changes']).optional(),
+    reason: z.string().max(400).optional(),
+  })
+  .openapi('PatchShareStudioItemInput');
+
+const ShareStudioLinkSchema = z
+  .object({
+    id: z.string().uuid(),
+  })
+  .passthrough()
+  .openapi('ShareStudioLink');
+
+const CreateShareStudioLinkSchema = z
+  .object({
+    proof_item_id: z.string().uuid(),
+    slug: z.string().min(3).max(80).regex(/^[a-z0-9-]+$/).optional(),
+    title: z.string().max(200).optional(),
+    description: z.string().max(500).optional(),
+    destination_url: z.string().url().optional(),
+  })
+  .openapi('CreateShareStudioLinkInput');
+
+const ShareStudioRenderJobSchema = z
+  .object({
+    id: z.string().uuid(),
+  })
+  .passthrough()
+  .openapi('ShareStudioRenderJob');
+
+const CreateShareStudioRenderJobSchema = z
+  .object({
+    proof_item_id: z.string().uuid(),
+    asset_type: z.enum(['smart_link_og', 'image', 'video']),
+    template_id: z.string().uuid().optional(),
+    template_version_id: z.string().uuid().optional(),
+    priority: z.number().int().min(0).max(100).optional(),
+    payload: z.record(z.unknown()).optional(),
+  })
+  .openapi('CreateShareStudioRenderJobInput');
+
+registry.register('ShareStudioItem', ShareStudioItemSchema);
+registry.register('CreateShareStudioItemInput', ShareStudioCreateItemSchema);
+registry.register('PatchShareStudioItemInput', ShareStudioPatchItemSchema);
+registry.register('ShareStudioLink', ShareStudioLinkSchema);
+registry.register('CreateShareStudioLinkInput', CreateShareStudioLinkSchema);
+registry.register('ShareStudioRenderJob', ShareStudioRenderJobSchema);
+registry.register('CreateShareStudioRenderJobInput', CreateShareStudioRenderJobSchema);
+
+// ============================================================================
+// Public Widget Schemas
+// ============================================================================
+
+const WidgetPublicResponseSchema = z.record(z.unknown()).openapi('WidgetPublicResponse');
+const WidgetEventInputSchema = z
+  .object({
+    event_type: z.string(),
+    page_url: z.string().url().nullable().optional(),
+    referrer: z.string().url().or(z.literal('')).nullable().optional(),
+    metadata: z.record(z.unknown()).nullable().optional(),
+    session_id: z.string().max(128).nullable().optional(),
+  })
+  .openapi('WidgetEventInput');
+
+registry.register('WidgetPublicResponse', WidgetPublicResponseSchema);
+registry.register('WidgetEventInput', WidgetEventInputSchema);
+
 // ============================================================================
 // API Response Wrappers
 // ============================================================================
@@ -365,6 +582,20 @@ registry.register('LoanOfficerListResponse', createListResponse(LoanOfficerSchem
 registry.register('LoanOfficerResponse', createSingleResponse(LoanOfficerSchema, 'LoanOfficer'));
 registry.register('UserListResponse', createListResponse(UserSchema, 'User'));
 registry.register('OrganizationResponse', createSingleResponse(OrganizationSchema, 'Organization'));
+registry.register('ContactListResponse', createListResponse(ContactSchema, 'Contact'));
+registry.register('ContactResponse', createSingleResponse(ContactSchema, 'Contact'));
+registry.register(
+  'WebhookSubscriptionListResponse',
+  createSingleResponse(z.array(WebhookSubscriptionSchema), 'WebhookSubscriptionList')
+);
+registry.register(
+  'WebhookSubscriptionResponse',
+  createSingleResponse(WebhookSubscriptionSchema, 'WebhookSubscription')
+);
+registry.register(
+  'CreateWebhookSubscriptionResponse',
+  createSingleResponse(CreateWebhookSubscriptionResponseSchema, 'CreateWebhookSubscription')
+);
 registry.register('ErrorResponse', createErrorResponse());
 
 // ============================================================================
@@ -842,14 +1073,748 @@ registry.registerPath({
   },
 });
 
+// Registered implemented routes not covered by the original registry.
+
+registry.registerPath({
+  method: 'patch',
+  path: '/api/v1/organization',
+  summary: 'Update organization',
+  description: 'Update your organization settings',
+  tags: ['Organization'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: UpdateOrganizationSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Organization updated',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(OrganizationSchema, 'Organization'),
+        },
+      },
+    },
+    400: {
+      description: 'Validation error',
+      content: { 'application/json': { schema: createErrorResponse() } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/reviews/{id}',
+  summary: 'Get a review',
+  description: 'Get details of a specific review',
+  tags: ['Reviews'],
+  security: [{ ApiKeyAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'Review details',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ReviewSchema, 'Review'),
+        },
+      },
+    },
+    404: {
+      description: 'Review not found',
+      content: { 'application/json': { schema: createErrorResponse() } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'patch',
+  path: '/api/v1/reviews/{id}',
+  summary: 'Update a review',
+  description: 'Update review status',
+  tags: ['Reviews'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z
+            .object({
+              status: z.enum(['pending', 'approved', 'rejected', 'flagged']).optional(),
+            })
+            .openapi('UpdateReviewInput'),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Review updated',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ReviewSchema, 'Review'),
+        },
+      },
+    },
+    404: {
+      description: 'Review not found',
+      content: { 'application/json': { schema: createErrorResponse() } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/branches/{id}',
+  summary: 'Get a branch',
+  description: 'Get details of a specific branch',
+  tags: ['Branches'],
+  security: [{ ApiKeyAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'Branch details',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(BranchSchema, 'Branch'),
+        },
+      },
+    },
+    404: {
+      description: 'Branch not found',
+      content: { 'application/json': { schema: createErrorResponse() } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'patch',
+  path: '/api/v1/branches/{id}',
+  summary: 'Update a branch',
+  description: 'Update details of a branch',
+  tags: ['Branches'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z
+            .object({
+              name: z.string().min(1).max(200).optional(),
+              address: AddressSchema.optional(),
+              phone: z.string().optional(),
+              email: z.string().email().optional().nullable(),
+              website_url: z.string().url().optional().nullable(),
+              manager_id: z.string().uuid().optional().nullable(),
+              manager_name: z.string().max(200).optional().nullable(),
+              manager_email: z.string().email().optional().nullable(),
+              is_active: z.boolean().optional(),
+            })
+            .openapi('UpdateBranchInput'),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Branch updated',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(BranchSchema, 'Branch'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/api/v1/branches/{id}',
+  summary: 'Delete a branch',
+  description: 'Soft delete a branch by marking it inactive',
+  tags: ['Branches'],
+  security: [{ ApiKeyAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'Branch deleted',
+      content: {
+        'application/json': {
+          schema: z.object({
+            success: z.literal(true),
+            data: z.object({ deleted: z.boolean() }),
+            meta: MetaSchema,
+          }),
+        },
+      },
+    },
+    404: {
+      description: 'Branch not found',
+      content: { 'application/json': { schema: createErrorResponse() } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/loan-officers/{id}',
+  summary: 'Get a loan officer (deprecated)',
+  description: 'Get details of a specific loan officer. **Deprecated: Use /api/v1/professionals/{id} instead.**',
+  tags: ['Loan Officers (Deprecated)'],
+  deprecated: true,
+  security: [{ ApiKeyAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'Loan officer details',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(LoanOfficerSchema, 'LoanOfficer'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'patch',
+  path: '/api/v1/loan-officers/{id}',
+  summary: 'Update a loan officer (deprecated)',
+  description: 'Update a loan officer. **Deprecated: Use /api/v1/professionals/{id} instead.**',
+  tags: ['Loan Officers (Deprecated)'],
+  deprecated: true,
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: {
+      content: {
+        'application/json': {
+          schema: UpdateLoanOfficerSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Loan officer updated',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(LoanOfficerSchema, 'LoanOfficer'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/testimonials/transcribe',
+  summary: 'Get video testimonial transcription status',
+  description: 'Get transcription status for a video testimonial response',
+  tags: ['Testimonials'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    query: z.object({ response_id: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      description: 'Transcription status',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(z.record(z.unknown()), 'TranscriptionStatus'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/testimonials/transcribe',
+  summary: 'Transcribe video testimonial',
+  description: 'Trigger or retry transcription for a video testimonial response',
+  tags: ['Testimonials'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z
+            .object({
+              response_id: z.string().uuid(),
+              retry: z.boolean().optional(),
+            })
+            .openapi('TranscribeVideoTestimonialInput'),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Transcription completed',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(z.record(z.unknown()), 'TranscriptionResult'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/share-studio/items',
+  summary: 'List Share Studio items',
+  description: 'List proof items in Share Studio',
+  tags: ['Share Studio'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    query: z.object({
+      page: z.coerce.number().int().min(1).optional(),
+      page_size: z.coerce.number().int().min(1).max(100).optional(),
+      source_type: z.enum(['review', 'video_testimonial', 'manual_json']).optional(),
+      status: z
+        .enum(['draft', 'ready', 'pending_approval', 'approved', 'rejected', 'archived'])
+        .optional(),
+      approval_status: z.enum(['approved', 'pending_approval', 'rejected']).optional(),
+      created_after: z.string().datetime().optional(),
+      search: z.string().max(200).optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Share Studio items',
+      content: {
+        'application/json': {
+          schema: createListResponse(ShareStudioItemSchema, 'ShareStudioItem'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/share-studio/items',
+  summary: 'Create Share Studio item',
+  description: 'Create a proof item from a review, video testimonial, or manual JSON',
+  tags: ['Share Studio'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: ShareStudioCreateItemSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Share Studio item created',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ShareStudioItemSchema, 'ShareStudioItem'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/share-studio/items/{id}',
+  summary: 'Get Share Studio item',
+  description: 'Get a proof item and details',
+  tags: ['Share Studio'],
+  security: [{ ApiKeyAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'Share Studio item',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ShareStudioItemSchema, 'ShareStudioItem'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'patch',
+  path: '/api/v1/share-studio/items/{id}',
+  summary: 'Update or approve Share Studio item',
+  description: 'Edit item content or apply an approval action',
+  tags: ['Share Studio'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: {
+      content: {
+        'application/json': {
+          schema: ShareStudioPatchItemSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Share Studio item updated',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ShareStudioItemSchema, 'ShareStudioItem'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/share-studio/items/{id}/publish',
+  summary: 'Publish Share Studio item',
+  description: 'Publish a Share Studio proof item',
+  tags: ['Share Studio'],
+  security: [{ ApiKeyAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'Share Studio item published',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ShareStudioItemSchema, 'ShareStudioItem'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/share-studio/links',
+  summary: 'Create Share Studio smart link',
+  description: 'Create a smart link for a proof item',
+  tags: ['Share Studio'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: CreateShareStudioLinkSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Smart link created',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ShareStudioLinkSchema, 'ShareStudioLink'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/share-studio/render-jobs',
+  summary: 'Create Share Studio render job',
+  description: 'Queue an image/video/Open Graph render job',
+  tags: ['Share Studio'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: CreateShareStudioRenderJobSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Render job queued',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ShareStudioRenderJobSchema, 'ShareStudioRenderJob'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/share-studio/render-jobs/{id}',
+  summary: 'Get Share Studio render job',
+  description: 'Get the status of a render job',
+  tags: ['Share Studio'],
+  security: [{ ApiKeyAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    200: {
+      description: 'Render job',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ShareStudioRenderJobSchema, 'ShareStudioRenderJob'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/widgets/{widgetId}/config',
+  summary: 'Get public widget config',
+  description: 'Public widget endpoint. Security is none; access is gated by widget status and allowed domains at runtime.',
+  tags: ['Widgets'],
+  security: [],
+  request: { params: z.object({ widgetId: z.string() }) },
+  responses: {
+    200: {
+      description: 'Widget configuration',
+      content: { 'application/json': { schema: WidgetPublicResponseSchema } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/widgets/{widgetId}/reviews',
+  summary: 'Get public widget reviews',
+  description: 'Public widget endpoint. Security is none; access is gated by widget status and allowed domains at runtime.',
+  tags: ['Widgets'],
+  security: [],
+  request: {
+    params: z.object({ widgetId: z.string() }),
+    query: z.object({
+      cursor: z.string().optional(),
+      limit: z.coerce.number().int().min(1).max(100).optional(),
+      minRating: z.string().optional(),
+      sortOrder: z.string().optional(),
+      sources: z.string().optional(),
+      loanTypes: z.string().optional(),
+      keywords: z.string().optional(),
+      dateRange: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Widget reviews',
+      content: { 'application/json': { schema: WidgetPublicResponseSchema } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/widgets/{widgetId}/structured-data',
+  summary: 'Get public widget structured data',
+  description: 'Public widget endpoint. Security is none; access is gated by widget status and allowed domains at runtime.',
+  tags: ['Widgets'],
+  security: [],
+  request: { params: z.object({ widgetId: z.string() }) },
+  responses: {
+    200: {
+      description: 'Widget structured data',
+      content: { 'application/json': { schema: WidgetPublicResponseSchema } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/widgets/{widgetId}/pixel',
+  summary: 'Get public widget tracking pixel',
+  description: 'Public widget endpoint. Security is none; access is gated by widget status and allowed domains at runtime.',
+  tags: ['Widgets'],
+  security: [],
+  request: { params: z.object({ widgetId: z.string() }) },
+  responses: {
+    200: {
+      description: 'Tracking pixel',
+      content: { 'image/gif': { schema: z.string().openapi({ format: 'binary' }) } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/widgets/{widgetId}/events',
+  summary: 'Record public widget event',
+  description: 'Public widget endpoint. Security is none; event writes are rate-limited and domain-gated by widget configuration where applicable.',
+  tags: ['Widgets'],
+  security: [],
+  request: {
+    params: z.object({ widgetId: z.string() }),
+    body: {
+      content: {
+        'application/json': {
+          schema: WidgetEventInputSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    202: {
+      description: 'Event accepted',
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/contacts',
+  summary: 'List contacts',
+  description: 'Get a paginated list of contacts for your organization',
+  tags: ['Contacts'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    query: z.object({
+      page: z.coerce.number().int().min(1).optional(),
+      page_size: z.coerce.number().int().min(1).max(100).optional(),
+      search: z.string().max(200).optional(),
+      sort_by: z.enum(['created_at', 'updated_at', 'name', 'email']).optional(),
+      sort_order: z.enum(['asc', 'desc']).optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'List of contacts',
+      content: {
+        'application/json': {
+          schema: createListResponse(ContactSchema, 'Contact'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/contacts',
+  summary: 'Create or update contact',
+  description: 'Find or create a contact by email. Returns 201 for newly created contacts and 200 for existing contacts.',
+  tags: ['Contacts'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: CreateContactSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Existing contact returned',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ContactSchema, 'Contact'),
+        },
+      },
+    },
+    201: {
+      description: 'Contact created',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ContactSchema, 'Contact'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/webhooks/subscriptions',
+  summary: 'List webhook subscriptions',
+  description: 'List active outbound webhook subscriptions. Signing secrets are never returned here.',
+  tags: ['Webhooks'],
+  security: [{ ApiKeyAuth: [] }],
+  responses: {
+    200: {
+      description: 'Webhook subscriptions',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(z.array(WebhookSubscriptionSchema), 'WebhookSubscriptionList'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/webhooks/subscriptions',
+  summary: 'Create webhook subscription',
+  description: 'Create an outbound webhook subscription. The signing secret is returned only in this response.',
+  tags: ['Webhooks'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: CreateWebhookSubscriptionSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: 'Webhook subscription created',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(
+            CreateWebhookSubscriptionResponseSchema,
+            'CreateWebhookSubscription'
+          ),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/api/v1/webhooks/subscriptions/{id}',
+  summary: 'Delete webhook subscription',
+  description: 'Disable an outbound webhook subscription owned by your organization',
+  tags: ['Webhooks'],
+  security: [{ ApiKeyAuth: [] }],
+  request: { params: z.object({ id: z.string().uuid() }) },
+  responses: {
+    204: {
+      description: 'Webhook subscription deleted',
+    },
+    404: {
+      description: 'Webhook subscription not found',
+      content: { 'application/json': { schema: createErrorResponse() } },
+    },
+  },
+});
+
 // ============================================================================
 // Webhook Event Schemas
 // ============================================================================
 
 const WebhookEventSchema = z
   .object({
-    event: z.string().openapi({ example: 'survey.completed' }),
-    timestamp: z.string().datetime().openapi({ example: '2024-01-15T10:30:00Z' }),
+    id: z.string().uuid(),
+    type: OutboundWebhookEventTypeSchema.openapi({ example: 'survey.completed' }),
+    created_at: z.string().datetime().openapi({ example: '2026-01-15T10:30:00Z' }),
+    organization_id: z.string().uuid(),
     data: z.record(z.unknown()),
   })
   .openapi('WebhookEvent');
@@ -859,32 +1824,24 @@ registry.register('WebhookEvent', WebhookEventSchema);
 // Webhook event types documentation
 const webhookEventTypes = [
   {
-    event: 'survey.created',
-    description: 'Triggered when a new survey is created',
+    event: 'review.published',
+    description: 'Triggered when a review is published',
   },
   {
-    event: 'survey.sent',
-    description: 'Triggered when a survey email is sent to a customer',
-  },
-  {
-    event: 'survey.completed',
-    description: 'Triggered when a customer completes a survey',
-  },
-  {
-    event: 'survey.expired',
-    description: 'Triggered when a survey expires without completion',
-  },
-  {
-    event: 'review.received',
-    description: 'Triggered when a new review is received from any platform',
+    event: 'review.negative',
+    description: 'Triggered when a below-threshold review is published',
   },
   {
     event: 'review.responded',
     description: 'Triggered when a response is posted to a review',
   },
   {
-    event: 'review.flagged',
-    description: 'Triggered when a review is flagged for attention',
+    event: 'survey.completed',
+    description: 'Triggered when a customer completes a survey',
+  },
+  {
+    event: 'contact.created',
+    description: 'Triggered when a new contact is created',
   },
 ];
 
@@ -963,6 +1920,10 @@ Common error codes:
 - \`NOT_FOUND\`: Resource not found
 - \`VALIDATION_ERROR\`: Invalid request data
 - \`RATE_LIMIT_EXCEEDED\`: Too many requests
+
+## Notes
+
+\`/api/v1/render\` is intentionally omitted from this API key spec because it is a session-authenticated render helper, not a public API-key endpoint.
       `.trim(),
       contact: {
         name: 'RepWell Support',
@@ -988,6 +1949,11 @@ Common error codes:
       { name: 'Organization', description: 'Organization settings endpoints' },
       { name: 'Users', description: 'User management endpoints' },
       { name: 'Loan Officers (Deprecated)', description: 'Deprecated: Use /professionals endpoints instead' },
+      { name: 'Contacts', description: 'Contact management endpoints' },
+      { name: 'Webhooks', description: 'Outbound webhook subscription endpoints' },
+      { name: 'Share Studio', description: 'Share Studio proof item and rendering endpoints' },
+      { name: 'Testimonials', description: 'Video testimonial endpoints' },
+      { name: 'Widgets', description: 'Public widget endpoints; runtime domain gating applies' },
     ],
   });
 }

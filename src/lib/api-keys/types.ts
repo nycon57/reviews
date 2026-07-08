@@ -33,6 +33,10 @@ export const API_KEY_SCOPES = [
   'users:read',
   'users:write',
 
+  // Contact operations
+  'contacts:read',
+  'contacts:write',
+
   // Webhook operations
   'webhooks:trigger',
   'webhooks:manage',

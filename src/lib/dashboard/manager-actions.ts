@@ -3,6 +3,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
+import {
+  summarizeReviewsBySource,
+  type ReviewsBySourceEntry,
+  type ReviewsBySourceOptions,
+} from "./source-distribution";
 
 // Types for manager dashboard
 export interface TeamMetrics {
@@ -201,6 +206,43 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
       averageRatingChange: 0,
       teamNPSChange: 0,
     },
+  };
+}
+
+export async function getReviewsBySource(
+  options: ReviewsBySourceOptions = {}
+): Promise<ActionResult<ReviewsBySourceEntry[]>> {
+  const context = await getManagerContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized - Manager access required" };
+  }
+
+  const supabase = createAdminClient();
+
+  let query = supabase
+    .from("reviews")
+    .select("source")
+    .eq("organization_id", context.organizationId)
+    .eq("status", "approved");
+
+  if (options.startDate) {
+    query = query.gte("review_date", options.startDate);
+  }
+
+  if (options.endDate) {
+    query = query.lte("review_date", options.endDate);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching reviews by source:", error);
+    return { success: false, error: "Failed to fetch review source data" };
+  }
+
+  return {
+    success: true,
+    data: summarizeReviewsBySource(data || []),
   };
 }
 

@@ -20,6 +20,7 @@ import {
   AreaChart,
   Legend,
 } from "recharts";
+import { CHART_TOOLTIP_STYLE } from "@/components/analytics/chart-primitives";
 import type { VideoTestimonialTrendDataPoint } from "@/lib/video-testimonials/analytics-actions";
 import type { TrendPeriod } from "./analytics-context";
 
@@ -116,9 +117,7 @@ export const TrendChart = memo(function TrendChart({
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
+                  ...CHART_TOOLTIP_STYLE,
                   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                 }}
                 labelStyle={{ color: "hsl(var(--popover-foreground))" }}

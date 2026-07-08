@@ -122,7 +122,10 @@ export async function initializeDefaultBadges(options?: {
     is_default: b.isDefault,
   }));
 
-  const { error } = await supabase.from("recognition_badges").insert(badges);
+  const { error } = await supabase.from("recognition_badges").upsert(badges, {
+    onConflict: "organization_id,name",
+    ignoreDuplicates: true,
+  });
 
   if (error) {
     console.error("Failed to initialize badges:", error);

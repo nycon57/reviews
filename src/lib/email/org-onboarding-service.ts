@@ -14,6 +14,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFromAddress, emailConfig } from "./client";
 import { getUnsubscribeUrl, sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   OrgOnboarding1WelcomeEmailData,
@@ -497,10 +501,15 @@ export async function processOrgOnboardingSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   // Process each sequence
   for (const sequence of sequences as OrgSequenceRecord[]) {
     try {
-      const processResult = await processOrgSequenceStep(sequence);
+      const processResult = await processOrgSequenceStep(
+        sequence,
+        emailTypeSendResolver
+      );
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -530,7 +539,10 @@ export async function processOrgOnboardingSequenceQueue(
 /**
  * Process a single org onboarding sequence step
  */
-async function processOrgSequenceStep(sequence: OrgSequenceRecord): Promise<{
+async function processOrgSequenceStep(
+  sequence: OrgSequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
+): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "exited" | "completed";
   error?: string;
@@ -617,7 +629,7 @@ async function processOrgSequenceStep(sequence: OrgSequenceRecord): Promise<{
         ],
       };
 
-      return processOrgSequenceStep(updatedSequence);
+      return processOrgSequenceStep(updatedSequence, emailTypeSendResolver);
     }
   }
 
@@ -626,7 +638,8 @@ async function processOrgSequenceStep(sequence: OrgSequenceRecord): Promise<{
     sequence,
     user,
     stepConfig,
-    onboardingStatus
+    onboardingStatus,
+    emailTypeSendResolver
   );
 
   if (!sendResult.success) {
@@ -651,7 +664,8 @@ async function sendOrgOnboardingEmail(
   sequence: OrgSequenceRecord,
   user: { id: string; email: string; full_name: string | null },
   stepConfig: OrgOnboardingSequenceConfig["schedule"][number],
-  onboardingStatus: OrgOnboardingStatus
+  onboardingStatus: OrgOnboardingStatus,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
@@ -772,6 +786,7 @@ async function sendOrgOnboardingEmail(
       isTransactional: true,
       organizationId: sequence.organization_id,
       emailType: stepConfig.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: stepConfig.templateName },
         { name: "sequence_id", value: sequence.id },

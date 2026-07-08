@@ -181,7 +181,10 @@ export async function initializeDefaultEXTemplates(options?: {
 
   const { data, error } = await supabase
     .from("ex_survey_templates")
-    .insert(templates)
+    .upsert(templates, {
+      onConflict: "organization_id,name",
+      ignoreDuplicates: true,
+    })
     .select();
 
   if (error || !data) {

@@ -18,8 +18,6 @@ import {
   Gear as Settings,
   Archive,
 } from "@phosphor-icons/react";
-import { ToastAction } from "@/components/ui/toast";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { getNotificationTypeConfig } from "@/lib/notifications/config";
 import type { NotificationWithDetails } from "@/lib/notifications/types";
@@ -27,9 +25,8 @@ import {
   getNotifications,
   getUnreadNotificationCount,
   markNotificationsAsRead,
-  archiveNotification,
-  unarchiveNotification,
 } from "@/lib/notifications/actions";
+import { useArchivableNotifications } from "./use-archivable-notifications";
 import { formatDistanceToNow } from "date-fns";
 
 interface NotificationCenterProps {
@@ -37,7 +34,6 @@ interface NotificationCenterProps {
 }
 
 export function NotificationCenter({ className }: NotificationCenterProps) {
-  const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
   const [notifications, setNotifications] = React.useState<NotificationWithDetails[]>([]);
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -94,69 +90,11 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
     }
   };
 
-  const restoreArchivedNotification = React.useCallback(
-    async (notification: NotificationWithDetails, archiveIndex: number) => {
-      const result = await unarchiveNotification(notification.id);
-      if (!result.success) {
-        toast({
-          title: "Could not restore notification",
-          description: result.error || "Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setNotifications((prev) => {
-        if (prev.some((item) => item.id === notification.id)) return prev;
-        const next = [...prev];
-        next.splice(Math.min(archiveIndex, next.length), 0, {
-          ...notification,
-          is_archived: false,
-          archived_at: null,
-        });
-        return next;
-      });
-
-      if (!notification.is_read) {
-        setUnreadCount((prev) => prev + 1);
-      }
-    },
-    [toast]
-  );
-
-  const handleArchive = async (notificationId: string) => {
-    const notification = notifications.find((n) => n.id === notificationId);
-    const archiveIndex = notifications.findIndex((n) => n.id === notificationId);
-    const result = await archiveNotification(notificationId);
-    if (!result.success) {
-      toast({
-        title: "Could not archive notification",
-        description: result.error || "Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-    if (notification && !notification.is_read) {
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    }
-
-    if (notification) {
-      toast({
-        title: "Notification archived",
-        description: "You can undo this action.",
-        action: (
-          <ToastAction
-            altText="Undo archive"
-            onClick={() => void restoreArchivedNotification(notification, archiveIndex)}
-          >
-            Undo
-          </ToastAction>
-        ),
-      });
-    }
-  };
+  const { handleArchive } = useArchivableNotifications({
+    notifications,
+    setNotifications,
+    setUnreadCount,
+  });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

@@ -18,6 +18,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFromAddress, emailConfig } from "./client";
 import { sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type { EmailTemplate, RoleOnboardingFeatureStatus } from "./types";
 import {
   getRoleOnboardingLO1DashboardEmail,
@@ -569,10 +573,12 @@ export async function processRoleOnboardingSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   // Process each sequence
   for (const sequence of sequences as SequenceRecord[]) {
     try {
-      const processResult = await processSequenceStep(sequence);
+      const processResult = await processSequenceStep(sequence, emailTypeSendResolver);
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -602,7 +608,10 @@ export async function processRoleOnboardingSequenceQueue(
 /**
  * Process a single sequence step
  */
-async function processSequenceStep(sequence: SequenceRecord): Promise<{
+async function processSequenceStep(
+  sequence: SequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
+): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "completed" | "cancelled";
   error?: string;
@@ -675,7 +684,7 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
             },
           ],
         };
-        return processSequenceStep(updatedSequence);
+        return processSequenceStep(updatedSequence, emailTypeSendResolver);
       } else {
         // All steps completed or skipped
         await updateSequenceStatus(sequence.id, "completed");
@@ -685,7 +694,13 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
   }
 
   // Send the email
-  const sendResult = await sendRoleOnboardingEmail(sequence, user, stepConfig, config);
+  const sendResult = await sendRoleOnboardingEmail(
+    sequence,
+    user,
+    stepConfig,
+    config,
+    emailTypeSendResolver
+  );
 
   if (!sendResult.success) {
     return { success: false, error: sendResult.error };
@@ -704,7 +719,8 @@ async function sendRoleOnboardingEmail(
   sequence: SequenceRecord,
   user: { id: string; email: string; full_name: string | null },
   stepConfig: RoleSequenceConfig["schedule"][number],
-  config: RoleSequenceConfig
+  config: RoleSequenceConfig,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
@@ -924,6 +940,7 @@ async function sendRoleOnboardingEmail(
       isTransactional: true,
       organizationId: sequence.organization_id,
       emailType: stepConfig.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: stepConfig.templateName },
         { name: "sequence_id", value: sequence.id },

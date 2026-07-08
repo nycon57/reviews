@@ -15,10 +15,9 @@ export const metadata = {
 };
 
 async function getInitialLeaderboardData() {
-  const [filtersResult, topPerformersResult, leaderboardResult, profileCompletionResult] =
+  const [filtersResult, leaderboardResult, profileCompletionResult] =
     await Promise.all([
       getEnterpriseFilterOptions(),
-      getEnhancedLeaderboard({ period: "monthly", limit: 3 }),
       getEnhancedLeaderboard({ period: "monthly", limit: 20 }),
       getProfileCompletionLeaderboard(10),
     ]);
@@ -27,10 +26,10 @@ async function getInitialLeaderboardData() {
     filters: filtersResult.success
       ? filtersResult.data || { branches: [], regions: [] }
       : { branches: [], regions: [] },
-    topPerformers: topPerformersResult.success ? topPerformersResult.data || [] : [],
-    topPerformersError: topPerformersResult.success
+    topPerformers: leaderboardResult.success ? (leaderboardResult.data || []).slice(0, 3) : [],
+    topPerformersError: leaderboardResult.success
       ? null
-      : topPerformersResult.error || "Failed to load leaderboard data",
+      : leaderboardResult.error || "Failed to load leaderboard data",
     leaderboard: leaderboardResult.success ? leaderboardResult.data || [] : [],
     leaderboardError: leaderboardResult.success
       ? null

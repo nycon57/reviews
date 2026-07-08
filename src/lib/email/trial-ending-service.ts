@@ -15,6 +15,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFromAddress, emailConfig } from "./client";
 import { sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   TrialEnding1AccomplishmentsEmailData,
@@ -721,10 +725,15 @@ export async function processTrialEndingSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   // Process each sequence
   for (const sequence of sequences as TrialSequenceRecord[]) {
     try {
-      const processResult = await processTrialSequenceStep(sequence);
+      const processResult = await processTrialSequenceStep(
+        sequence,
+        emailTypeSendResolver
+      );
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -754,7 +763,10 @@ export async function processTrialEndingSequenceQueue(
 /**
  * Process a single trial ending sequence step
  */
-async function processTrialSequenceStep(sequence: TrialSequenceRecord): Promise<{
+async function processTrialSequenceStep(
+  sequence: TrialSequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
+): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "exited" | "completed";
   error?: string;
@@ -854,7 +866,8 @@ async function processTrialSequenceStep(sequence: TrialSequenceRecord): Promise<
     user,
     stepConfig,
     trialInfo,
-    usageStats
+    usageStats,
+    emailTypeSendResolver
   );
 
   if (!sendResult.success) {
@@ -886,7 +899,8 @@ async function sendTrialEndingEmail(
     isInGracePeriod: boolean;
     gracePeriodEndsAt: string | null;
   },
-  usageStats: TrialUsageStats
+  usageStats: TrialUsageStats,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
@@ -1038,6 +1052,7 @@ async function sendTrialEndingEmail(
       isTransactional: true,
       organizationId: sequence.organization_id,
       emailType: stepConfig.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: stepConfig.templateName },
         { name: "sequence_id", value: sequence.id },

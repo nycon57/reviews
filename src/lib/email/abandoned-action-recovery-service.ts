@@ -28,6 +28,10 @@
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { getFromAddress, emailConfig } from "./client";
 import { sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   AbandonedActionType,
@@ -364,9 +368,15 @@ async function processRecoveryEmailQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   for (const action of actions as ActionReadyForEmail[]) {
     try {
-      const sendResult = await sendRecoveryEmail(action, emailNumber);
+      const sendResult = await sendRecoveryEmail(
+        action,
+        emailNumber,
+        emailTypeSendResolver
+      );
 
       if (sendResult.success) {
         result.processed++;
@@ -430,7 +440,8 @@ export async function expireOldAbandonedActions(): Promise<number> {
 
 async function sendRecoveryEmail(
   action: ActionReadyForEmail,
-  emailNumber: 1 | 2
+  emailNumber: 1 | 2,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{ success: boolean; skipped?: boolean; error?: string }> {
   const supabase = createUntypedAdminClient();
 
@@ -590,6 +601,7 @@ async function sendRecoveryEmail(
       isTransactional: true,
       organizationId: action.organization_id,
       emailType: templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: templateName },
         { name: "action_type", value: action.action_type },

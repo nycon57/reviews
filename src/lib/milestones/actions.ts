@@ -36,6 +36,10 @@ import {
   type MilestoneRecord,
   type MilestoneCheckResult,
 } from "./types";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 
 const MILESTONE_APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
@@ -1105,21 +1109,32 @@ type MilestoneEmailContextData = {
   } | null;
 };
 
+type MilestoneEmailRunContext = {
+  orgNamesById: Map<string, string>;
+  participantCountsByOrgId: Map<string, number>;
+  badgeCatalogCountsByOrgId: Map<string, number>;
+  emailTypeSendResolver: EmailTypeSendResolver;
+};
+
 async function loadMilestoneEmailContext(
-  record: MilestoneRecord
+  record: MilestoneRecord,
+  runContext?: MilestoneEmailRunContext
 ): Promise<MilestoneEmailContextData> {
   const supabase = createAdminClient();
+  const cachedOrgName = runContext?.orgNamesById.get(record.organizationId);
   const [{ data: user }, { data: org }, { data: latestReview }] = await Promise.all([
     supabase
       .from("users")
       .select("id, full_name, email, total_reviews, average_rating, nps_score, reputation_score")
       .eq("id", record.userId)
       .maybeSingle(),
-    supabase
-      .from("organizations")
-      .select("name")
-      .eq("id", record.organizationId)
-      .maybeSingle(),
+    cachedOrgName !== undefined
+      ? Promise.resolve({ data: { name: cachedOrgName } })
+      : supabase
+          .from("organizations")
+          .select("name")
+          .eq("id", record.organizationId)
+          .maybeSingle(),
     supabase
       .from("reviews")
       .select("id, customer_name, rating, review_date")
@@ -1129,9 +1144,12 @@ async function loadMilestoneEmailContext(
       .maybeSingle(),
   ]);
 
+  const orgName = org?.name || "your organization";
+  runContext?.orgNamesById.set(record.organizationId, orgName);
+
   return {
     user: user as MilestoneEmailContextData["user"],
-    orgName: org?.name || "your organization",
+    orgName,
     latestReview: latestReview as MilestoneEmailContextData["latestReview"],
   };
 }
@@ -1283,7 +1301,8 @@ function getRatingPeriodDescription(record: MilestoneRecord): string {
 
 async function loadLeaderboardPayload(
   record: MilestoneRecord,
-  reputationScore: number
+  reputationScore: number,
+  runContext?: MilestoneEmailRunContext
 ): Promise<{
   currentRank: number;
   previousRank?: number;
@@ -1292,12 +1311,15 @@ async function loadLeaderboardPayload(
   reputationScore: number;
 }> {
   const supabase = createAdminClient();
+  const cachedParticipantCount = runContext?.participantCountsByOrgId.get(record.organizationId);
   const [{ count: participantCount }, { data: higherRanked }] = await Promise.all([
-    supabase
-      .from("users")
-      .select("*", { count: "exact", head: true })
-      .eq("organization_id", record.organizationId)
-      .eq("is_active", true),
+    cachedParticipantCount !== undefined
+      ? Promise.resolve({ count: cachedParticipantCount })
+      : supabase
+          .from("users")
+          .select("*", { count: "exact", head: true })
+          .eq("organization_id", record.organizationId)
+          .eq("is_active", true),
     supabase
       .from("users")
       .select("id")
@@ -1305,6 +1327,10 @@ async function loadLeaderboardPayload(
       .eq("is_active", true)
       .gt("reputation_score", reputationScore),
   ]);
+
+  if (participantCount !== null && participantCount !== undefined) {
+    runContext?.participantCountsByOrgId.set(record.organizationId, participantCount);
+  }
 
   const metadata = record.milestoneMetadata;
   const currentRank =
@@ -1325,7 +1351,10 @@ async function loadLeaderboardPayload(
   };
 }
 
-async function loadBadgePayload(record: MilestoneRecord): Promise<{
+async function loadBadgePayload(
+  record: MilestoneRecord,
+  runContext?: MilestoneEmailRunContext
+): Promise<{
   badgeName: string;
   badgeDescription: string;
   badgeIcon: string;
@@ -1337,6 +1366,7 @@ async function loadBadgePayload(record: MilestoneRecord): Promise<{
   const metadata = record.milestoneMetadata;
   const badgeId = metadataString(metadata, "badgeId", "badge_id");
   const supabase = createAdminClient();
+  const cachedBadgeCatalogCount = runContext?.badgeCatalogCountsByOrgId.get(record.organizationId);
 
   const [badgeResult, totalResult, earnedResult] = await Promise.all([
     badgeId
@@ -1345,10 +1375,12 @@ async function loadBadgePayload(record: MilestoneRecord): Promise<{
           .eq("id", badgeId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
-    fromTable(supabase, "badges")
-      .select("*", { count: "exact", head: true })
-      .or(`is_system.eq.true,organization_id.eq.${record.organizationId}`)
-      .eq("is_active", true),
+    cachedBadgeCatalogCount !== undefined
+      ? Promise.resolve({ count: cachedBadgeCatalogCount })
+      : fromTable(supabase, "badges")
+          .select("*", { count: "exact", head: true })
+          .or(`is_system.eq.true,organization_id.eq.${record.organizationId}`)
+          .eq("is_active", true),
     fromTable(supabase, "user_badges")
       .select("*", { count: "exact", head: true })
       .eq("user_id", record.userId)
@@ -1364,6 +1396,10 @@ async function loadBadgePayload(record: MilestoneRecord): Promise<{
         tier?: string | null;
       }
     | null;
+
+  if (totalResult.count !== null && totalResult.count !== undefined) {
+    runContext?.badgeCatalogCountsByOrgId.set(record.organizationId, totalResult.count);
+  }
 
   return {
     badgeName: metadataString(metadata, "badgeName", "badge_name") || badge?.name || "Achievement",
@@ -1427,9 +1463,10 @@ async function countVideoTestimonials(record: MilestoneRecord): Promise<number> 
  * the individual senders, so a non-success send result is treated as a skip.
  */
 export async function dispatchMilestoneEmail(
-  record: MilestoneRecord
+  record: MilestoneRecord,
+  runContext?: MilestoneEmailRunContext
 ): Promise<{ status: "sent" | "skipped"; messageId?: string }> {
-  const { user, orgName, latestReview } = await loadMilestoneEmailContext(record);
+  const { user, orgName, latestReview } = await loadMilestoneEmailContext(record, runContext);
 
   if (!user?.email) {
     return { status: "skipped" };
@@ -1464,7 +1501,7 @@ export async function dispatchMilestoneEmail(
         reviewDate: latestReview?.review_date || achievedAt,
         nextMilestoneCount: 5,
         viewReviewUrl: reviewUrl,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     case "review_milestone": {
       const reviewCount = record.milestoneValue ?? user.total_reviews ?? 0;
@@ -1475,7 +1512,7 @@ export async function dispatchMilestoneEmail(
         previousMilestone: getPreviousMilestone(reviewCount, REVIEW_MILESTONES) ?? undefined,
         nextMilestone: getNextMilestone(reviewCount, REVIEW_MILESTONES) ?? undefined,
         viewReviewsUrl: `${MILESTONE_APP_URL}/dashboard/reviews`,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     }
     case "first_5_star":
@@ -1485,7 +1522,7 @@ export async function dispatchMilestoneEmail(
         reviewDate: latestReview?.review_date || achievedAt,
         totalReviews: user.total_reviews ?? 0,
         viewReviewUrl: reviewUrl,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     case "rating_improvement": {
       const previousRating =
@@ -1506,7 +1543,7 @@ export async function dispatchMilestoneEmail(
         totalReviews: user.total_reviews ?? 0,
         periodDescription: getRatingPeriodDescription(record),
         viewAnalyticsUrl: `${MILESTONE_APP_URL}/dashboard/analytics`,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     }
     case "nps_improvement": {
@@ -1528,7 +1565,7 @@ export async function dispatchMilestoneEmail(
         totalResponses: await countNpsResponses(record),
         npsCategory: getNpsCategory(currentNps),
         viewAnalyticsUrl: `${MILESTONE_APP_URL}/dashboard/analytics`,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     }
     case "streak": {
@@ -1547,11 +1584,11 @@ export async function dispatchMilestoneEmail(
         streakDescription: `${streakDays} days of ${streakType === "response" ? "responding to reviews" : `${streakType} activity`}`,
         nextStreakDays: getNextMilestone(streakDays, STREAK_MILESTONES) ?? undefined,
         viewStreakUrl: `${MILESTONE_APP_URL}/dashboard/analytics`,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     }
     case "leaderboard_achievement": {
-      const leaderboard = await loadLeaderboardPayload(record, user.reputation_score ?? 0);
+      const leaderboard = await loadLeaderboardPayload(record, user.reputation_score ?? 0, runContext);
 
       result = await sendLeaderboardMilestoneEmail({
         ...base,
@@ -1565,11 +1602,11 @@ export async function dispatchMilestoneEmail(
         achievementType: getLeaderboardAchievementType(record),
         reputationScore: leaderboard.reputationScore,
         viewLeaderboardUrl: `${MILESTONE_APP_URL}/dashboard/analytics/leaderboard`,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     }
     case "badge_earned": {
-      const badge = await loadBadgePayload(record);
+      const badge = await loadBadgePayload(record, runContext);
 
       result = await sendBadgeEarnedMilestoneEmail({
         ...base,
@@ -1583,7 +1620,7 @@ export async function dispatchMilestoneEmail(
         nextBadgeName: metadataString(record.milestoneMetadata, "nextBadgeName", "next_badge_name"),
         nextBadgeProgress: metadataNumber(record.milestoneMetadata, "nextBadgeProgress", "next_badge_progress"),
         viewBadgesUrl: `${MILESTONE_APP_URL}/dashboard/recognition`,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     }
     case "profile_completion": {
@@ -1603,7 +1640,7 @@ export async function dispatchMilestoneEmail(
           metadataStringArray(record.milestoneMetadata, "benefitsUnlocked", "benefits_unlocked") ??
           getProfileBenefits(completionPercent),
         profileUrl: `${MILESTONE_APP_URL}/dashboard/settings`,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     }
     case "video_milestone": {
@@ -1621,7 +1658,7 @@ export async function dispatchMilestoneEmail(
         ),
         totalViewsCount: metadataNumber(record.milestoneMetadata, "totalViewsCount", "total_views_count"),
         viewVideosUrl: `${MILESTONE_APP_URL}/dashboard/media`,
-      });
+      }, runContext?.emailTypeSendResolver);
       break;
     }
     default:
@@ -1657,13 +1694,19 @@ export async function processPendingMilestoneEmails(
   }
 
   const records = (pending || []).map(mapMilestoneRecord);
+  const runContext: MilestoneEmailRunContext = {
+    orgNamesById: new Map(),
+    participantCountsByOrgId: new Map(),
+    badgeCatalogCountsByOrgId: new Map(),
+    emailTypeSendResolver: createEmailTypeSendResolver(),
+  };
   let sent = 0;
   let skipped = 0;
   let failed = 0;
 
   for (const record of records) {
     try {
-      const outcome = await dispatchMilestoneEmail(record);
+      const outcome = await dispatchMilestoneEmail(record, runContext);
       await updateMilestoneEmailStatus(record.id, outcome.status, outcome.messageId);
       if (outcome.status === "sent") {
         sent += 1;

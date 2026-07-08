@@ -19,6 +19,8 @@
  * be blocked by the A/B layer.
  */
 
+import type { EmailTemplate } from "@/lib/email/types";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type UntypedClient = import("@supabase/supabase-js").SupabaseClient<any, any, any>;
 
@@ -40,10 +42,22 @@ export interface EmailTypeSendResolution {
 
 interface ResolveInput {
   organizationId?: string | null;
-  emailType?: string | null;
+  emailType?: EmailTemplate | null;
   subject: string;
   previewText?: string;
 }
+
+interface ResolutionPatch {
+  subjectLine?: string | null;
+  previewText?: string | null;
+  abTestId?: string;
+  abTestVariant?: string;
+}
+
+export type EmailTypeSendResolver = (
+  supabase: UntypedClient,
+  input: ResolveInput
+) => Promise<EmailTypeSendResolution>;
 
 /** Test types whose winning copy this choke point can inject at send time. */
 const SUPPORTED_TEST_TYPES = ["subject_line", "preview_text"] as const;
@@ -55,7 +69,7 @@ const SUPPORTED_TEST_TYPES = ["subject_line", "preview_text"] as const;
 export async function resolveEmailTypeOverride(
   supabase: UntypedClient,
   organizationId: string,
-  emailType: string
+  emailType: EmailTemplate
 ): Promise<{ subjectLine: string | null; previewText: string | null } | null> {
   const { data, error } = await supabase
     .from("email_type_overrides")
@@ -78,7 +92,7 @@ export async function resolveEmailTypeOverride(
 export async function assignRunningTestVariant(
   supabase: UntypedClient,
   organizationId: string,
-  emailType: string
+  emailType: EmailTemplate
 ): Promise<{
   abTestId: string;
   variant: string;
@@ -115,6 +129,56 @@ export async function assignRunningTestVariant(
   };
 }
 
+async function resolveEmailTypePatch(
+  supabase: UntypedClient,
+  organizationId: string,
+  emailType: EmailTemplate
+): Promise<ResolutionPatch> {
+  try {
+    const assignment = await assignRunningTestVariant(
+      supabase,
+      organizationId,
+      emailType
+    );
+    if (assignment) {
+      return {
+        subjectLine: assignment.subjectLine,
+        previewText: assignment.previewText,
+        abTestId: assignment.abTestId,
+        abTestVariant: assignment.variant,
+      };
+    }
+
+    const override = await resolveEmailTypeOverride(
+      supabase,
+      organizationId,
+      emailType
+    );
+    if (override) {
+      return {
+        subjectLine: override.subjectLine,
+        previewText: override.previewText,
+      };
+    }
+  } catch (err) {
+    console.error("resolveEmailTypeSend failed; using defaults:", err);
+  }
+
+  return {};
+}
+
+function applyResolutionPatch(
+  { subject, previewText }: ResolveInput,
+  patch: ResolutionPatch
+): EmailTypeSendResolution {
+  return {
+    subject: patch.subjectLine ?? subject,
+    previewText: patch.previewText ?? previewText,
+    abTestId: patch.abTestId,
+    abTestVariant: patch.abTestVariant,
+  };
+}
+
 /**
  * Resolve the effective subject/preview for a send, applying (in priority order)
  * a running test assignment, then an applied winner override, then the caller's
@@ -128,35 +192,31 @@ export async function resolveEmailTypeSend(
     return { subject, previewText };
   }
 
-  try {
-    const assignment = await assignRunningTestVariant(
-      supabase,
-      organizationId,
-      emailType
-    );
-    if (assignment) {
-      return {
-        subject: assignment.subjectLine ?? subject,
-        previewText: assignment.previewText ?? previewText,
-        abTestId: assignment.abTestId,
-        abTestVariant: assignment.variant,
-      };
+  const patch = await resolveEmailTypePatch(supabase, organizationId, emailType);
+  return applyResolutionPatch({ organizationId, emailType, subject, previewText }, patch);
+}
+
+/**
+ * Create a per-invocation resolver for batch processors. It memoizes the
+ * A/B lookup/assignment by organization + email template for this drain only.
+ */
+export function createEmailTypeSendResolver(): EmailTypeSendResolver {
+  const cache = new Map<string, Promise<ResolutionPatch>>();
+
+  return async (supabase, input) => {
+    const { organizationId, emailType, subject, previewText } = input;
+    if (!organizationId || !emailType) {
+      return { subject, previewText };
     }
 
-    const override = await resolveEmailTypeOverride(
-      supabase,
-      organizationId,
-      emailType
-    );
-    if (override) {
-      return {
-        subject: override.subjectLine ?? subject,
-        previewText: override.previewText ?? previewText,
-      };
+    const key = `${organizationId}\0${emailType}`;
+    let patchPromise = cache.get(key);
+    if (!patchPromise) {
+      patchPromise = resolveEmailTypePatch(supabase, organizationId, emailType);
+      cache.set(key, patchPromise);
     }
-  } catch (err) {
-    console.error("resolveEmailTypeSend failed; using defaults:", err);
-  }
 
-  return { subject, previewText };
+    const patch = await patchPromise;
+    return applyResolutionPatch(input, patch);
+  };
 }

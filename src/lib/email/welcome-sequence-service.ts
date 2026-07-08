@@ -14,6 +14,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFromAddress, emailConfig } from "./client";
 import { getUnsubscribeUrl, sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   Welcome1AccessEmailData,
@@ -438,10 +442,12 @@ export async function processWelcomeSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   // Process each sequence
   for (const sequence of sequences as SequenceRecord[]) {
     try {
-      const processResult = await processSequenceStep(sequence);
+      const processResult = await processSequenceStep(sequence, emailTypeSendResolver);
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -471,7 +477,10 @@ export async function processWelcomeSequenceQueue(
 /**
  * Process a single sequence step
  */
-async function processSequenceStep(sequence: SequenceRecord): Promise<{
+async function processSequenceStep(
+  sequence: SequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
+): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "exited" | "completed";
   error?: string;
@@ -557,12 +566,17 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
         ],
       };
 
-      return processSequenceStep(updatedSequence);
+      return processSequenceStep(updatedSequence, emailTypeSendResolver);
     }
   }
 
   // Send the email
-  const sendResult = await sendWelcomeEmail(sequence, user, stepConfig);
+  const sendResult = await sendWelcomeEmail(
+    sequence,
+    user,
+    stepConfig,
+    emailTypeSendResolver
+  );
 
   if (!sendResult.success) {
     return { success: false, error: sendResult.error };
@@ -586,7 +600,8 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
 async function sendWelcomeEmail(
   sequence: SequenceRecord,
   user: { id: string; email: string; full_name: string | null },
-  stepConfig: WelcomeSequenceConfig["schedule"][number]
+  stepConfig: WelcomeSequenceConfig["schedule"][number],
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
@@ -686,6 +701,7 @@ async function sendWelcomeEmail(
       isTransactional: true,
       organizationId: sequence.organization_id,
       emailType: stepConfig.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: stepConfig.templateName },
         { name: "sequence_id", value: sequence.id },

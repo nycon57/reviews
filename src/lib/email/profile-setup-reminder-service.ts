@@ -29,6 +29,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFromAddress, emailConfig } from "./client";
 import { sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   ProfileReminderPhotoEmailData,
@@ -628,9 +632,11 @@ export async function processReminderSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   for (const sequence of sequencesToProcess) {
     try {
-      const processResult = await processSequenceStep(sequence);
+      const processResult = await processSequenceStep(sequence, emailTypeSendResolver);
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -677,7 +683,10 @@ async function resetSequenceToActive(
 /**
  * Process a single sequence step
  */
-async function processSequenceStep(sequence: SequenceRecord): Promise<{
+async function processSequenceStep(
+  sequence: SequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
+): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "exited" | "completed";
   error?: string;
@@ -794,7 +803,13 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
     full_name: user.full_name,
     organization_id: user.organization_id!, // Safe due to null check above
   };
-  const sendResult = await sendReminderEmail(sequence, userWithOrg, reminderToSend, status);
+  const sendResult = await sendReminderEmail(
+    sequence,
+    userWithOrg,
+    reminderToSend,
+    status,
+    emailTypeSendResolver
+  );
 
   if (!sendResult.success) {
     return { success: false, error: sendResult.error };
@@ -817,7 +832,8 @@ async function sendReminderEmail(
   sequence: SequenceRecord,
   user: { id: string; email: string; full_name: string | null; organization_id: string },
   reminder: ReminderScheduleItem,
-  status: UserCompletionStatus
+  status: UserCompletionStatus,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
@@ -941,6 +957,7 @@ async function sendReminderEmail(
       isTransactional: true,
       organizationId: sequence.organization_id,
       emailType: reminder.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: reminder.templateName },
         { name: "sequence_id", value: sequence.id },

@@ -14,6 +14,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFromAddress, emailConfig } from "./client";
 import { sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   Reengagement1MissYouEmailData,
@@ -520,10 +524,12 @@ export async function processReengagementSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   // Process each sequence that we successfully locked
   for (const sequence of sequencesToProcess) {
     try {
-      const processResult = await processSequenceStep(sequence);
+      const processResult = await processSequenceStep(sequence, emailTypeSendResolver);
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -575,7 +581,10 @@ async function resetSequenceToActive(supabase: ReturnType<typeof createAdminClie
 /**
  * Process a single sequence step
  */
-async function processSequenceStep(sequence: SequenceRecord): Promise<{
+async function processSequenceStep(
+  sequence: SequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
+): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "exited" | "completed";
   error?: string;
@@ -655,7 +664,12 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
   }
 
   // Send the email
-  const sendResult = await sendReengagementEmail(sequence, user, stepConfig);
+  const sendResult = await sendReengagementEmail(
+    sequence,
+    user,
+    stepConfig,
+    emailTypeSendResolver
+  );
 
   if (!sendResult.success) {
     return { success: false, error: sendResult.error };
@@ -678,7 +692,8 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
 async function sendReengagementEmail(
   sequence: SequenceRecord,
   user: { id: string; email: string; full_name: string | null },
-  stepConfig: ReengagementSequenceConfig["schedule"][number]
+  stepConfig: ReengagementSequenceConfig["schedule"][number],
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
@@ -783,6 +798,7 @@ async function sendReengagementEmail(
       isTransactional: true,
       organizationId: sequence.organization_id,
       emailType: stepConfig.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: stepConfig.templateName },
         { name: "sequence_id", value: sequence.id },

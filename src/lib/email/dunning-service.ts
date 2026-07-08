@@ -18,6 +18,10 @@
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { getFromAddress, emailConfig } from "./client";
 import { sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   Dunning1PaymentFailedEmailData,
@@ -539,10 +543,15 @@ export async function processDunningSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   // Process each sequence
   for (const sequence of sequences as DunningSequenceRecord[]) {
     try {
-      const processResult = await processDunningSequenceStep(sequence);
+      const processResult = await processDunningSequenceStep(
+        sequence,
+        emailTypeSendResolver
+      );
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -573,7 +582,8 @@ export async function processDunningSequenceQueue(
  * Process a single dunning sequence step
  */
 async function processDunningSequenceStep(
-  sequence: DunningSequenceRecord
+  sequence: DunningSequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "recovered" | "completed";
@@ -654,7 +664,8 @@ async function processDunningSequenceStep(
     sequence,
     user,
     stepConfig,
-    accountSummary
+    accountSummary,
+    emailTypeSendResolver
   );
 
   if (!sendResult.success) {
@@ -679,7 +690,8 @@ async function sendDunningEmail(
   sequence: DunningSequenceRecord,
   user: { id: string; email: string; full_name: string | null },
   stepConfig: DunningSequenceConfig["schedule"][number],
-  accountSummary: DunningAccountSummary
+  accountSummary: DunningAccountSummary,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
@@ -813,6 +825,7 @@ async function sendDunningEmail(
       isTransactional: true,
       organizationId: sequence.organization_id,
       emailType: stepConfig.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: stepConfig.templateName },
         { name: "sequence_id", value: sequence.id },

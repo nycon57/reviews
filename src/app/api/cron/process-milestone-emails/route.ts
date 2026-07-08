@@ -3,6 +3,8 @@ import { timingSafeEqual } from "crypto";
 import { z } from "zod";
 import { processPendingMilestoneEmails } from "@/lib/milestones/actions";
 
+export const maxDuration = 300;
+
 const cronParamsSchema = z.object({
   batch_size: z.coerce
     .number()

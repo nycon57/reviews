@@ -25,17 +25,14 @@ import {
   Tray as Inbox,
   Funnel as Filter,
 } from "@phosphor-icons/react";
-import { ToastAction } from "@/components/ui/toast";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { NOTIFICATION_TYPE_CONFIG, getNotificationTypeConfig } from "@/lib/notifications/config";
 import type { NotificationWithDetails, NotificationType } from "@/lib/notifications/types";
 import {
   getNotifications,
   markNotificationsAsRead,
-  archiveNotification,
-  unarchiveNotification,
 } from "@/lib/notifications/actions";
+import { useArchivableNotifications } from "./use-archivable-notifications";
 import { formatDistanceToNow, format } from "date-fns";
 
 interface NotificationsListProps {
@@ -63,7 +60,6 @@ export function NotificationsList({
   initialTotal,
   initialUnreadCount,
 }: NotificationsListProps) {
-  const { toast } = useToast();
   const [notifications, setNotifications] = React.useState<NotificationWithDetails[]>(initialNotifications);
   const [defaultNotifications, setDefaultNotifications] =
     React.useState<NotificationWithDetails[]>(initialNotifications);
@@ -174,97 +170,16 @@ export function NotificationsList({
     }
   };
 
-  const restoreArchivedNotification = React.useCallback(
-    async (
-      notification: NotificationWithDetails,
-      archiveIndex: number,
-      defaultArchiveIndex: number
-    ) => {
-      const result = await unarchiveNotification(notification.id);
-      if (!result.success) {
-        toast({
-          title: "Could not restore notification",
-          description: result.error || "Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setNotifications((prev) => {
-        if (prev.some((item) => item.id === notification.id)) return prev;
-        const next = [...prev];
-        next.splice(Math.min(archiveIndex, next.length), 0, {
-          ...notification,
-          is_archived: false,
-          archived_at: null,
-        });
-        return next;
-      });
-      if (defaultArchiveIndex >= 0) {
-        setDefaultNotifications((prev) => {
-          if (prev.some((item) => item.id === notification.id)) return prev;
-          const next = [...prev];
-          next.splice(Math.min(defaultArchiveIndex, next.length), 0, {
-            ...notification,
-            is_archived: false,
-            archived_at: null,
-          });
-          return next;
-        });
-      }
-      setTotal((prev) => prev + 1);
-      setDefaultTotal((prev) => prev + 1);
-      if (!notification.is_read) {
-        setUnreadCount((prev) => prev + 1);
-      }
-    },
-    [toast]
-  );
-
-  const handleArchive = async (notificationId: string) => {
-    const notification = notifications.find((n) => n.id === notificationId);
-    const archiveIndex = notifications.findIndex((n) => n.id === notificationId);
-    const defaultArchiveIndex = defaultNotifications.findIndex((n) => n.id === notificationId);
-    const result = await archiveNotification(notificationId);
-    if (!result.success) {
-      toast({
-        title: "Could not archive notification",
-        description: result.error || "Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-    setDefaultNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(notificationId);
-      return next;
-    });
-    setTotal((prev) => Math.max(0, prev - 1));
-    setDefaultTotal((prev) => Math.max(0, prev - 1));
-    if (notification && !notification.is_read) {
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    }
-
-    if (notification) {
-      toast({
-        title: "Notification archived",
-        description: "You can undo this action.",
-        action: (
-          <ToastAction
-            altText="Undo archive"
-            onClick={() =>
-              void restoreArchivedNotification(notification, archiveIndex, defaultArchiveIndex)
-            }
-          >
-            Undo
-          </ToastAction>
-        ),
-      });
-    }
-  };
+  const { handleArchive } = useArchivableNotifications({
+    notifications,
+    setNotifications,
+    setUnreadCount,
+    defaultNotifications,
+    setDefaultNotifications,
+    setSelectedIds,
+    setTotal,
+    setDefaultTotal,
+  });
 
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) => {

@@ -492,7 +492,7 @@ export async function initializeDefaultTemplates(options?: {
   const { DEFAULT_TEMPLATES } = await import("./templates");
 
   // Insert default templates
-  const { error } = await supabase.from("report_templates").insert(
+  const { error } = await supabase.from("report_templates").upsert(
     DEFAULT_TEMPLATES.map((t) => ({
       organization_id: context.organizationId,
       name: t.name,
@@ -501,7 +501,11 @@ export async function initializeDefaultTemplates(options?: {
       config: t.config as unknown as Json,
       is_default: t.isDefault,
       created_by: context.userId,
-    }))
+    })),
+    {
+      onConflict: "organization_id,name",
+      ignoreDuplicates: true,
+    }
   );
 
   if (error) {

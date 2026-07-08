@@ -11,6 +11,7 @@ import {
   getMilestoneIdempotencyKey,
   shouldSendEmail,
 } from "./send-utils";
+import type { EmailTypeSendResolver } from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   EmailSendResult,
@@ -441,7 +442,7 @@ export async function sendReviewResponseEmail(
     userId: data.loanOfficerId,
     isTransactional: true,
     organizationId: data.organizationId,
-    emailType: "review_response",
+    emailType: "review_response_to_reviewer",
     tags: [
       { name: "template", value: "review_response_to_reviewer" },
       ...(data.organizationId
@@ -594,7 +595,7 @@ export async function sendVideoTestimonialReminderEmail(
     userId: data.loanOfficerId,
     isTransactional: true,
     organizationId: data.organizationId,
-    emailType: "video_testimonial_reminder",
+    emailType: templateName,
     tags: [
       { name: "template", value: templateName },
       ...(data.requestId
@@ -1780,7 +1781,8 @@ async function sendRenderedMilestoneEmail(
   templateName: EmailTemplate,
   subject: string,
   html: string,
-  tags: Array<{ name: string; value: string }>
+  tags: Array<{ name: string; value: string }>,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const preferenceCheck = await shouldSendEmail(templateName, data.loanOfficerId);
   if (!preferenceCheck.allowed) {
@@ -1807,6 +1809,7 @@ async function sendRenderedMilestoneEmail(
       isTransactional: true,
       organizationId: data.organizationId,
       emailType: templateName,
+      emailTypeSendResolver,
       tags,
     });
 
@@ -1848,7 +1851,8 @@ async function sendRenderedMilestoneEmail(
 
 // Send first review milestone email
 export async function sendFirstReviewMilestoneEmail(
-  data: FirstReviewMilestoneEmailData
+  data: FirstReviewMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderFirstReviewMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_first_review", subject, html, [
@@ -1860,12 +1864,13 @@ export async function sendFirstReviewMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // Send review count milestone email
 export async function sendReviewCountMilestoneEmail(
-  data: ReviewCountMilestoneEmailData
+  data: ReviewCountMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderReviewCountMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_review_count", subject, html, [
@@ -1878,12 +1883,13 @@ export async function sendReviewCountMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // Send first 5-star milestone email
 export async function sendFirst5StarMilestoneEmail(
-  data: First5StarMilestoneEmailData
+  data: First5StarMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderFirst5StarMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_first_5_star", subject, html, [
@@ -1895,12 +1901,13 @@ export async function sendFirst5StarMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // Send rating improvement milestone email
 export async function sendRatingImprovementMilestoneEmail(
-  data: RatingImprovementMilestoneEmailData
+  data: RatingImprovementMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderRatingImprovementMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_rating_improvement", subject, html, [
@@ -1915,12 +1922,13 @@ export async function sendRatingImprovementMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // Send NPS improvement milestone email
 export async function sendNpsImprovementMilestoneEmail(
-  data: NpsImprovementMilestoneEmailData
+  data: NpsImprovementMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderNpsImprovementMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_nps_improvement", subject, html, [
@@ -1935,12 +1943,13 @@ export async function sendNpsImprovementMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // Send leaderboard milestone email
 export async function sendLeaderboardMilestoneEmail(
-  data: LeaderboardMilestoneEmailData
+  data: LeaderboardMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderLeaderboardMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_leaderboard", subject, html, [
@@ -1954,12 +1963,13 @@ export async function sendLeaderboardMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // Send badge earned milestone email
 export async function sendBadgeEarnedMilestoneEmail(
-  data: BadgeEarnedMilestoneEmailData
+  data: BadgeEarnedMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderBadgeEarnedMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_badge_earned", subject, html, [
@@ -1973,12 +1983,13 @@ export async function sendBadgeEarnedMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // Send streak milestone email
 export async function sendStreakMilestoneEmail(
-  data: StreakMilestoneEmailData
+  data: StreakMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderStreakMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_streak", subject, html, [
@@ -1992,12 +2003,13 @@ export async function sendStreakMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // Send profile completion milestone email
 export async function sendProfileCompletionMilestoneEmail(
-  data: ProfileCompletionMilestoneEmailData
+  data: ProfileCompletionMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderProfileCompletionMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_profile_completion", subject, html, [
@@ -2010,12 +2022,13 @@ export async function sendProfileCompletionMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // Send video milestone email
 export async function sendVideoMilestoneEmail(
-  data: VideoMilestoneEmailData
+  data: VideoMilestoneEmailData,
+  emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderVideoMilestoneEmail(data);
   return sendRenderedMilestoneEmail(data, "milestone_video", subject, html, [
@@ -2028,7 +2041,7 @@ export async function sendVideoMilestoneEmail(
     ...(data.loanOfficerId
       ? [{ name: "user_id", value: data.loanOfficerId }]
       : []),
-  ]);
+  ], emailTypeSendResolver);
 }
 
 // ============================================================================

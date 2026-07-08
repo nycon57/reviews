@@ -56,6 +56,10 @@ import {
   exportReviews,
 } from "@/lib/reviews/aggregation-actions";
 import { AnimatedList, AnimatedItem } from "@/components/motion";
+import {
+  REVIEW_STATUS_FILTER_LABELS,
+  ReviewStatusBadge,
+} from "./review-status-badge";
 
 interface ReviewAggregationDashboardProps {
   initialReviews: AggregatedReview[];
@@ -272,20 +276,6 @@ export function ReviewAggregationDashboard({
     return date.toLocaleDateString();
   };
 
-  const getStatusBadge = (status: AggregatedReview["status"]) => {
-    const variants = {
-      pending: "border-yellow-500 text-yellow-600 bg-yellow-50",
-      approved: "border-green-500 text-green-600 bg-green-50",
-      rejected: "border-red-500 text-red-600 bg-red-50",
-      archived: "border-border text-muted-foreground bg-muted",
-    };
-    return (
-      <Badge variant="outline" className={variants[status]}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
-  };
-
   const getSourceBadge = (source: string) => {
     return <SourceIcon source={source} />;
   };
@@ -379,15 +369,15 @@ export function ReviewAggregationDashboard({
                 Filters:
               </div>
               <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); handleFilterChange(); }}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
+                  <SelectItem value="pending">{REVIEW_STATUS_FILTER_LABELS.pending}</SelectItem>
+                  <SelectItem value="approved">{REVIEW_STATUS_FILTER_LABELS.approved}</SelectItem>
+                  <SelectItem value="rejected">{REVIEW_STATUS_FILTER_LABELS.rejected}</SelectItem>
+                  <SelectItem value="archived">{REVIEW_STATUS_FILTER_LABELS.archived}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -600,7 +590,7 @@ export function ReviewAggregationDashboard({
                             />
                           ))}
                         </div>
-                        {getStatusBadge(review.status)}
+                        <ReviewStatusBadge status={review.status} />
                         {getSourceBadge(review.source)}
                       </div>
                     </div>

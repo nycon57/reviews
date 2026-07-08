@@ -31,6 +31,7 @@ import {
 import { formatReviewSource } from "@/lib/reviews/source-labels";
 import { ResponseComposer } from "./response-composer";
 import { SocialPostComposer } from "@/components/social";
+import { ReviewStatusBadge } from "./review-status-badge";
 
 interface ReviewDetailModalProps {
   review: AggregatedReview | null;
@@ -73,13 +74,6 @@ export function ReviewDetailModal({
     });
   };
 
-  const statusConfig: Record<string, { label: string; className: string }> = {
-    pending: { label: "Pending", className: "border-amber-300 text-amber-700 bg-amber-50" },
-    approved: { label: "Approved", className: "border-green-300 text-green-700 bg-green-50" },
-    rejected: { label: "Rejected", className: "border-red-300 text-red-700 bg-red-50" },
-    archived: { label: "Archived", className: "border-border text-muted-foreground bg-muted" },
-  };
-
   const handleArchive = () => {
     startTransition(async () => {
       const result = await archiveReview(review.id);
@@ -108,7 +102,6 @@ export function ReviewDetailModal({
         .slice(0, 2)
     : "?";
 
-  const status = statusConfig[review.status] || statusConfig.pending;
   const hasAiData = review.sentimentLabel || (review.themes && review.themes.length > 0);
   const hasSourceInfo = review.sourceUrl || review.syncedAt;
 
@@ -159,9 +152,7 @@ export function ReviewDetailModal({
                   ))}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Badge variant="outline" className={status.className}>
-                    {status.label}
-                  </Badge>
+                  <ReviewStatusBadge status={review.status} />
                   <Badge variant="secondary" className="text-xs">
                     {formatReviewSource(review.source)}
                   </Badge>
@@ -288,6 +279,7 @@ export function ReviewDetailModal({
                 }}
                 onCancel={() => setShowResponseForm(false)}
                 hasAiAccess={hasAiAccess}
+                draftOnly={!review.isPublished}
               />
             </div>
           )}
@@ -342,7 +334,7 @@ export function ReviewDetailModal({
           {/* Metadata — single compact line */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span>Created {formatDateTime(review.createdAt)}</span>
-            {review.approvedAt && <span>Approved {formatDateTime(review.approvedAt)}</span>}
+            {review.approvedAt && !review.publishedAt && <span>Published {formatDateTime(review.approvedAt)}</span>}
             {review.publishedAt && <span>Published {formatDateTime(review.publishedAt)}</span>}
           </div>
         </div>

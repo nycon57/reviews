@@ -53,7 +53,6 @@ import { approveReview, rejectReview } from "@/lib/reviews/actions";
 import { reportReviewAsPro } from "@/lib/reviews/flag-actions";
 import {
   FLAG_REASON_LABELS,
-  REVIEW_STATUS_LABELS as STATUS_LABELS,
   type ReviewFlagReason,
 } from "@/lib/reviews/types";
 import { ResponseComposer } from "./response-composer";
@@ -67,6 +66,7 @@ import {
   PublishingStatusPanel,
   type PublishingStatus,
 } from "./publishing-status-panel";
+import { ReviewStatusBadge } from "./review-status-badge";
 import { AnimatedSection } from "@/components/motion";
 
 // ============================================================================
@@ -155,24 +155,6 @@ function formatDateTime(dateString: string | null): string {
   });
 }
 
-// ============================================================================
-// Badge Components
-// ============================================================================
-
-function StatusBadge({ status }: { status: ReviewDetail["status"] }) {
-  const variants = {
-    pending: "border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30 dark:text-yellow-400",
-    approved: "border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400",
-    rejected: "border-red-500 text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400",
-    archived: "border-border text-muted-foreground bg-muted",
-  };
-  return (
-    <Badge variant="outline" className={variants[status]}>
-      {STATUS_LABELS[status] ?? status}
-    </Badge>
-  );
-}
-
 function SentimentBadge({ label }: { label: string | null }) {
   if (!label) return null;
   const colors: Record<string, string> = {
@@ -197,9 +179,9 @@ function formatVideoDuration(seconds: number | null): string | null {
 const VIDEO_ASSET_STATUS_LABELS: Record<string, string> = {
   pending: "Pending review",
   changes_requested: "Changes requested",
-  approved: "Approved",
+  approved: "Ready to publish",
   published: "Published",
-  rejected: "Rejected",
+  rejected: "Removed",
 };
 
 function LinkedVideoCard({ video }: { video: LinkedVideoSummary }) {
@@ -220,7 +202,7 @@ function LinkedVideoCard({ video }: { video: LinkedVideoSummary }) {
         <Link
           href={`/dashboard/reviews/${video.id}?type=video`}
           className="block"
-          aria-label="Open the source video testimonial"
+          aria-label="Open the source video review"
         >
           {video.thumbnailUrl ? (
             <img
@@ -243,8 +225,8 @@ function LinkedVideoCard({ video }: { video: LinkedVideoSummary }) {
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          This review was extracted from a video testimonial. The video has its
-          own approval that controls where it can appear.
+          This review was extracted from a video review. The video has its
+          own publishing controls that determine where it can appear.
         </p>
         <Link href={`/dashboard/reviews/${video.id}?type=video`}>
           <Button variant="outline" size="sm" className="w-full gap-2">
@@ -288,8 +270,12 @@ export function ReviewDetailView({
     canManage || (!!currentUserId && review.loanOfficer?.id === currentUserId);
   const canRespond =
     canManage || (!!currentUserId && review.loanOfficer?.id === currentUserId);
+  const publishingStatus: PublishingStatus =
+    review.status === "approved" && review.isPublished ? "published" : review.status;
+  const isLive = review.status === "approved" && review.isPublished;
   const canComposeResponse =
     canRespond && review.status !== "archived" && review.status !== "rejected";
+  const responseDraftOnly = canComposeResponse && !isLive;
   const responseIsDraft = review.responseStatus === "draft";
   const hasPostedResponse =
     !!review.responseText && review.responseStatus !== "draft";
@@ -298,10 +284,6 @@ export function ReviewDetailView({
     : review.aiSuggestedResponse && review.responseText === review.aiSuggestedResponse
       ? "AI generated"
       : null;
-  const publishingStatus: PublishingStatus =
-    review.status === "approved" && review.isPublished ? "published" : review.status;
-  const isLive = review.status === "approved" && review.isPublished;
-
   const handleReportReview = async () => {
     if (!reportReason) return;
     setReportSubmitting(true);
@@ -348,11 +330,11 @@ export function ReviewDetailView({
   const handleRejectReview = async (reason: string) => {
     const result = await rejectReview({ reviewId: review.id, reason });
     if (result.success) {
-      toast({ title: "Review rejected" });
+      toast({ title: "Review removed" });
       router.refresh();
     } else {
       toast({
-        title: "Failed to reject review",
+        title: "Failed to remove review",
         description: result.error || "Please try again.",
         variant: "destructive",
       });
@@ -483,7 +465,7 @@ export function ReviewDetailView({
                       {review.customerName || "Anonymous"}
                     </h2>
                     <div className="flex items-center gap-2 shrink-0">
-                      <StatusBadge status={review.status} />
+                      <ReviewStatusBadge status={review.status} />
                       {hasOpenDispute && (
                         <Badge
                           variant="outline"
@@ -644,6 +626,7 @@ export function ReviewDetailView({
                     review={review}
                     onSuccess={() => router.refresh()}
                     hasAiAccess={hasAiAccess}
+                    draftOnly={responseDraftOnly}
                   />
                 )}
               </CardContent>
@@ -665,7 +648,7 @@ export function ReviewDetailView({
             />
           </AnimatedSection>
 
-          {/* Source video — for reviews extracted from a video testimonial */}
+          {/* Source video - for reviews extracted from a video review */}
           {linkedVideo && (
             <AnimatedSection delay={0.02}>
               <LinkedVideoCard video={linkedVideo} />
@@ -812,9 +795,9 @@ export function ReviewDetailView({
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Updated</dt>
                   <dd className="font-medium text-heading">{formatDateTime(review.updatedAt)}</dd>
                 </div>
-                {review.approvedAt && (
+                {review.approvedAt && !review.publishedAt && (
                   <div className="flex justify-between">
-                    <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Approved</dt>
+                    <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Published</dt>
                     <dd className="font-medium text-heading">{formatDateTime(review.approvedAt)}</dd>
                   </div>
                 )}

@@ -14,19 +14,13 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ABTestResult, WinningMetric } from "@/lib/email-ab-testing/types";
+import { CHART_COLORS } from "@/components/analytics/chart-primitives";
 
 interface ABTestResultsChartProps {
   results: ABTestResult[];
   metric: WinningMetric;
   winnerVariant: string | null;
 }
-
-const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-];
 
 export function ABTestResultsChart({
   results,

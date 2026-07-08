@@ -31,8 +31,11 @@ import {
   type TeamMetrics,
   type TrendDataPoint,
 } from "@/lib/dashboard";
+import {
+  CHART_TOOLTIP_STYLE,
+  TrendIndicator,
+} from "@/components/analytics/chart-primitives";
 import { calculateTrendStats } from "@/components/analytics/trend-utils";
-import { TrendIndicator } from "@/components/analytics/trend-indicator";
 import type { TimeRange } from "@/components/analytics/trends-page-client";
 
 interface AdminTrendsDashboardProps {
@@ -244,7 +247,7 @@ export function AdminTrendsDashboard({ timeRange }: AdminTrendsDashboardProps) {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
                     <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => [`${value.toFixed(1)} stars`, "Team Avg"]} />
+                    <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value: number) => [`${value.toFixed(1)} stars`, "Team Avg"]} />
                     <Area type="monotone" dataKey="value" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#admin-ratingGradient)" />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -279,7 +282,7 @@ export function AdminTrendsDashboard({ timeRange }: AdminTrendsDashboardProps) {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
                     <YAxis domain={[-100, 100]} ticks={[-100, -50, 0, 50, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} tickFormatter={(value) => (value > 0 ? `+${value}` : value.toString())} />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => [`${value > 0 ? "+" : ""}${value}`, "Team NPS"]} />
+                    <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value: number) => [`${value > 0 ? "+" : ""}${value}`, "Team NPS"]} />
                     <Line type="monotone" dataKey="value" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ fill: "hsl(var(--chart-2))", r: 4 }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
@@ -317,7 +320,7 @@ export function AdminTrendsDashboard({ timeRange }: AdminTrendsDashboardProps) {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => [value, "Reviews"]} />
+                    <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value: number) => [value, "Reviews"]} />
                     <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

@@ -470,21 +470,24 @@ function calculateScores(analysis: {
   if (analysis.images.totalImages > 0) contentScore += 15;
   if (analysis.images.imagesWithoutAlt === 0) contentScore += 20;
 
-  // Performance score (placeholder - would need actual metrics)
-  const performanceScore = 75; // Default without actual measurements
-
   // Mobile score
   let mobileScore = 0;
   if (analysis.mobileFriendliness.viewportConfigured) mobileScore += 50;
   if (analysis.mobileFriendliness.fontSizeReadable) mobileScore += 25;
   if (analysis.mobileFriendliness.tapTargetsSized) mobileScore += 25;
 
-  // Overall SEO score (weighted average)
+  // Overall SEO score (weighted average of measured components only)
+  const measuredWeightTotal = 0.35 + 0.30 + 0.20;
   const seoScore = Math.round(
-    technicalScore * 0.35 +
-    contentScore * 0.30 +
-    performanceScore * 0.15 +
-    mobileScore * 0.20
+    technicalScore * (0.35 / measuredWeightTotal) +
+    contentScore * (0.30 / measuredWeightTotal) +
+    mobileScore * (0.20 / measuredWeightTotal)
+  );
+
+  // The database column is NOT NULL, so persist a non-scoring fallback instead
+  // of the old fabricated constant. The UI labels performance as not measured.
+  const performanceScore = Math.round(
+    (technicalScore + contentScore + mobileScore) / 3
   );
 
   return {

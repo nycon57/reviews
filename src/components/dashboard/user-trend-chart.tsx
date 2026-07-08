@@ -15,6 +15,7 @@ import {
   Users,
 } from "@phosphor-icons/react";
 import type { TrendDataPoint } from "@/lib/dashboard";
+import { CHART_TOOLTIP_STYLE } from "@/components/analytics/chart-primitives";
 import { ChartSkeleton, IconContainer } from "@/components/shared";
 
 interface TrendChartProps {
@@ -145,9 +146,7 @@ export function UserTrendChart({
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
+                  ...CHART_TOOLTIP_STYLE,
                   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                 }}
                 labelStyle={{ color: "hsl(var(--popover-foreground))" }}

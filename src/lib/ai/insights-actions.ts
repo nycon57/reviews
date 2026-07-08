@@ -87,27 +87,39 @@ const getUserContext = cache(async function getUserContextInner() {
   };
 });
 
-/**
- * Get sentiment trend data over time
- */
-export async function getSentimentTrend(
-  loanOfficerId?: string,
-  months: number = 6
-): Promise<ActionResult<SentimentTrendPoint[]>> {
-  const context = await getUserContext();
-  if (!context) {
-    return { success: false, error: "Unauthorized" };
-  }
+type InsightsUserContext = NonNullable<Awaited<ReturnType<typeof getUserContext>>>;
 
+type InsightsReviewRow = {
+  id: string;
+  user_id: string | null;
+  review_date: string;
+  sentiment_score: number | null;
+  sentiment_label: string | null;
+  themes: string[] | null;
+  key_phrases: string[] | null;
+  text: string | null;
+  rating: number | null;
+};
+
+type SharedInsightsDataset = {
+  context: InsightsUserContext;
+  reviews: InsightsReviewRow[];
+};
+
+const getInsightsReviewRows = cache(async function getInsightsReviewRowsInner(
+  organizationId: string,
+  loanOfficerId: string | null,
+  startDateIso: string
+): Promise<ActionResult<InsightsReviewRow[]>> {
   const supabase = createAdminClient();
-  const startDate = new Date();
-  subtractMonths(startDate, months);
 
   let query = supabase
     .from("reviews")
-    .select("id, review_date, sentiment_score, sentiment_label")
-    .eq("organization_id", context.organizationId)
-    .gte("review_date", startDate.toISOString())
+    .select(
+      "id, user_id, review_date, sentiment_score, sentiment_label, themes, key_phrases, text, rating"
+    )
+    .eq("organization_id", organizationId)
+    .gte("review_date", startDateIso)
     .order("review_date", { ascending: true });
 
   if (loanOfficerId) {
@@ -117,8 +129,90 @@ export async function getSentimentTrend(
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error fetching sentiment trend:", error);
-    return { success: false, error: "Failed to fetch sentiment data" };
+    console.error("Error fetching insights review dataset:", error);
+    return { success: false, error: "Failed to fetch review data" };
+  }
+
+  return { success: true, data: (data || []) as InsightsReviewRow[] };
+});
+
+async function getSharedInsightsDataset(
+  context: InsightsUserContext,
+  loanOfficerId: string | undefined,
+  startDate: Date
+): Promise<ActionResult<SharedInsightsDataset>> {
+  const result = await getInsightsReviewRows(
+    context.organizationId,
+    loanOfficerId || null,
+    startDate.toISOString()
+  );
+
+  if (!result.success || !result.data) {
+    return {
+      success: false,
+      error: result.error || "Failed to fetch review data",
+    };
+  }
+
+  return {
+    success: true,
+    data: {
+      context,
+      reviews: result.data,
+    },
+  };
+}
+
+function reviewDate(review: InsightsReviewRow): Date {
+  return new Date(review.review_date);
+}
+
+function filterReviewsFrom(
+  reviews: InsightsReviewRow[],
+  startDate: Date
+): InsightsReviewRow[] {
+  return reviews.filter((review) => reviewDate(review) >= startDate);
+}
+
+function filterReviewsBetween(
+  reviews: InsightsReviewRow[],
+  startDate: Date,
+  endDate: Date
+): InsightsReviewRow[] {
+  return reviews.filter((review) => {
+    const date = reviewDate(review);
+    return date >= startDate && date < endDate;
+  });
+}
+
+/**
+ * Get sentiment trend data over time
+ */
+export async function getSentimentTrend(
+  loanOfficerId?: string,
+  months: number = 6,
+  sharedDataset?: SharedInsightsDataset
+): Promise<ActionResult<SentimentTrendPoint[]>> {
+  const context = sharedDataset?.context ?? await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const startDate = new Date();
+  subtractMonths(startDate, months);
+
+  let data: InsightsReviewRow[];
+  if (sharedDataset) {
+    data = filterReviewsFrom(sharedDataset.reviews, startDate);
+  } else {
+    const dataset = await getSharedInsightsDataset(context, loanOfficerId, startDate);
+    if (!dataset.success || !dataset.data) {
+      return {
+        success: false,
+        error: dataset.error || "Failed to fetch sentiment data",
+      };
+    }
+    data = dataset.data.reviews;
   }
 
   // Group by month
@@ -127,7 +221,7 @@ export async function getSentimentTrend(
     { positive: number; neutral: number; negative: number; scores: number[] }
   >();
 
-  for (const review of data || []) {
+  for (const review of data) {
     const date = new Date(review.review_date);
     const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 
@@ -192,51 +286,37 @@ export async function getSentimentTrend(
  */
 export async function getThemeFrequencies(
   loanOfficerId?: string,
-  months: number = 6
+  months: number = 6,
+  sharedDataset?: SharedInsightsDataset
 ): Promise<ActionResult<ThemeFrequency[]>> {
-  const context = await getUserContext();
+  const context = sharedDataset?.context ?? await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = createAdminClient();
   const startDate = new Date();
   subtractMonths(startDate, months);
-
-  // Get current period data
-  let query = supabase
-    .from("reviews")
-    .select("id, themes, sentiment_label, review_date")
-    .eq("organization_id", context.organizationId)
-    .gte("review_date", startDate.toISOString());
-
-  if (loanOfficerId) {
-    query = query.eq("user_id", loanOfficerId);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Error fetching theme data:", error);
-    return { success: false, error: "Failed to fetch theme data" };
-  }
 
   // Get previous period for trend comparison
   const prevStartDate = new Date(startDate);
   subtractMonths(prevStartDate, months);
 
-  let prevQuery = supabase
-    .from("reviews")
-    .select("themes")
-    .eq("organization_id", context.organizationId)
-    .gte("review_date", prevStartDate.toISOString())
-    .lt("review_date", startDate.toISOString());
-
-  if (loanOfficerId) {
-    prevQuery = prevQuery.eq("user_id", loanOfficerId);
+  let data: InsightsReviewRow[];
+  let prevData: InsightsReviewRow[];
+  if (sharedDataset) {
+    data = filterReviewsFrom(sharedDataset.reviews, startDate);
+    prevData = filterReviewsBetween(sharedDataset.reviews, prevStartDate, startDate);
+  } else {
+    const dataset = await getSharedInsightsDataset(context, loanOfficerId, prevStartDate);
+    if (!dataset.success || !dataset.data) {
+      return {
+        success: false,
+        error: dataset.error || "Failed to fetch theme data",
+      };
+    }
+    data = filterReviewsFrom(dataset.data.reviews, startDate);
+    prevData = filterReviewsBetween(dataset.data.reviews, prevStartDate, startDate);
   }
-
-  const { data: prevData } = await prevQuery;
 
   // Count themes and sentiment breakdown
   const themeCounts = new Map<
@@ -246,7 +326,7 @@ export async function getThemeFrequencies(
   const prevThemeCounts = new Map<string, number>();
 
   // Current period counts
-  for (const review of data || []) {
+  for (const review of data) {
     const themes = (review.themes as string[]) || [];
     const sentiment = (review.sentiment_label as SentimentLabel) || "neutral";
 
@@ -266,14 +346,14 @@ export async function getThemeFrequencies(
   }
 
   // Previous period counts
-  for (const review of prevData || []) {
+  for (const review of prevData) {
     const themes = (review.themes as string[]) || [];
     for (const theme of themes) {
       prevThemeCounts.set(theme, (prevThemeCounts.get(theme) || 0) + 1);
     }
   }
 
-  const totalReviews = data?.length || 0;
+  const totalReviews = data.length;
   const allThemes: ReviewTheme[] = [
     "communication",
     "process",
@@ -326,35 +406,32 @@ export async function getThemeFrequencies(
  */
 export async function getTopKeyPhrases(
   loanOfficerId?: string,
-  limit: number = 20
+  limit: number = 20,
+  sharedDataset?: SharedInsightsDataset
 ): Promise<ActionResult<KeyPhraseData[]>> {
-  const context = await getUserContext();
+  const context = sharedDataset?.context ?? await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = createAdminClient();
   const startDate = new Date();
   subtractMonths(startDate, 3); // Last 3 months
 
   const recentDate = new Date();
   subtractMonths(recentDate, 1); // Last month for "recent"
 
-  let query = supabase
-    .from("reviews")
-    .select("key_phrases, sentiment_label, review_date")
-    .eq("organization_id", context.organizationId)
-    .gte("review_date", startDate.toISOString());
-
-  if (loanOfficerId) {
-    query = query.eq("user_id", loanOfficerId);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Error fetching key phrases:", error);
-    return { success: false, error: "Failed to fetch key phrases" };
+  let data: InsightsReviewRow[];
+  if (sharedDataset) {
+    data = filterReviewsFrom(sharedDataset.reviews, startDate);
+  } else {
+    const dataset = await getSharedInsightsDataset(context, loanOfficerId, startDate);
+    if (!dataset.success || !dataset.data) {
+      return {
+        success: false,
+        error: dataset.error || "Failed to fetch key phrases",
+      };
+    }
+    data = dataset.data.reviews;
   }
 
   // Count phrases and track sentiment
@@ -363,7 +440,7 @@ export async function getTopKeyPhrases(
     { count: number; recentCount: number; sentiments: SentimentLabel[] }
   >();
 
-  for (const review of data || []) {
+  for (const review of data) {
     const phrases = (review.key_phrases as string[]) || [];
     const sentiment = (review.sentiment_label as SentimentLabel) || "neutral";
     const reviewDate = new Date(review.review_date);
@@ -415,7 +492,8 @@ export async function getTopKeyPhrases(
  */
 export async function getSentimentDistribution(
   loanOfficerId?: string,
-  months: number = 6
+  months: number = 6,
+  sharedDataset?: SharedInsightsDataset
 ): Promise<
   ActionResult<{
     positive: number;
@@ -424,35 +502,31 @@ export async function getSentimentDistribution(
     total: number;
   }>
 > {
-  const context = await getUserContext();
+  const context = sharedDataset?.context ?? await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = createAdminClient();
   const startDate = new Date();
   subtractMonths(startDate, months);
 
-  let query = supabase
-    .from("reviews")
-    .select("sentiment_label")
-    .eq("organization_id", context.organizationId)
-    .gte("review_date", startDate.toISOString());
-
-  if (loanOfficerId) {
-    query = query.eq("user_id", loanOfficerId);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Error fetching sentiment distribution:", error);
-    return { success: false, error: "Failed to fetch sentiment data" };
+  let data: InsightsReviewRow[];
+  if (sharedDataset) {
+    data = filterReviewsFrom(sharedDataset.reviews, startDate);
+  } else {
+    const dataset = await getSharedInsightsDataset(context, loanOfficerId, startDate);
+    if (!dataset.success || !dataset.data) {
+      return {
+        success: false,
+        error: dataset.error || "Failed to fetch sentiment data",
+      };
+    }
+    data = dataset.data.reviews;
   }
 
   const distribution = { positive: 0, neutral: 0, negative: 0, total: 0 };
 
-  for (const review of data || []) {
+  for (const review of data) {
     const label = (review.sentiment_label as SentimentLabel) || "neutral";
     distribution[label]++;
     distribution.total++;
@@ -466,41 +540,37 @@ export async function getSentimentDistribution(
  */
 export async function generateAISummary(
   loanOfficerId?: string,
-  months: number = 1
+  months: number = 1,
+  sharedDataset?: SharedInsightsDataset
 ): Promise<ActionResult<AIInsightsSummary>> {
-  const context = await getUserContext();
+  const context = sharedDataset?.context ?? await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = createAdminClient();
   const startDate = new Date();
   subtractMonths(startDate, months);
   const endDate = new Date();
 
-  // Get recent reviews with sentiment data
-  let query = supabase
-    .from("reviews")
-    .select(
-      "text, rating, sentiment_label, sentiment_score, themes, key_phrases, review_date"
-    )
-    .eq("organization_id", context.organizationId)
-    .gte("review_date", startDate.toISOString())
-    .order("review_date", { ascending: false })
-    .limit(50);
-
-  if (loanOfficerId) {
-    query = query.eq("user_id", loanOfficerId);
+  let reviews: InsightsReviewRow[];
+  if (sharedDataset) {
+    reviews = filterReviewsFrom(sharedDataset.reviews, startDate)
+      .sort((a, b) => reviewDate(b).getTime() - reviewDate(a).getTime())
+      .slice(0, 50);
+  } else {
+    const dataset = await getSharedInsightsDataset(context, loanOfficerId, startDate);
+    if (!dataset.success || !dataset.data) {
+      return {
+        success: false,
+        error: dataset.error || "Failed to fetch review data",
+      };
+    }
+    reviews = [...dataset.data.reviews]
+      .sort((a, b) => reviewDate(b).getTime() - reviewDate(a).getTime())
+      .slice(0, 50);
   }
 
-  const { data: reviews, error } = await query;
-
-  if (error) {
-    console.error("Error fetching reviews for summary:", error);
-    return { success: false, error: "Failed to fetch review data" };
-  }
-
-  if (!reviews || reviews.length === 0) {
+  if (reviews.length === 0) {
     return {
       success: true,
       data: {
@@ -731,39 +801,42 @@ Generate a monthly performance summary.`;
  * Generate improvement recommendations based on feedback
  */
 export async function getImprovementRecommendations(
-  loanOfficerId?: string
+  loanOfficerId?: string,
+  sharedDataset?: SharedInsightsDataset
 ): Promise<ActionResult<ImprovementRecommendation[]>> {
-  const context = await getUserContext();
+  const context = sharedDataset?.context ?? await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = createAdminClient();
   const startDate = new Date();
   subtractMonths(startDate, 3);
 
-  // Get negative and neutral reviews for analysis
-  let query = supabase
-    .from("reviews")
-    .select("text, sentiment_label, themes, rating")
-    .eq("organization_id", context.organizationId)
-    .gte("review_date", startDate.toISOString())
-    .in("sentiment_label", ["negative", "neutral"]);
-
-  if (loanOfficerId) {
-    query = query.eq("user_id", loanOfficerId);
-  }
-
-  const { data: negativeReviews, error } = await query;
-
-  if (error) {
-    console.error("Error fetching reviews for recommendations:", error);
-    return { success: false, error: "Failed to fetch review data" };
+  let negativeReviews: InsightsReviewRow[];
+  if (sharedDataset) {
+    negativeReviews = filterReviewsFrom(sharedDataset.reviews, startDate).filter(
+      (review) =>
+        review.sentiment_label === "negative" ||
+        review.sentiment_label === "neutral"
+    );
+  } else {
+    const dataset = await getSharedInsightsDataset(context, loanOfficerId, startDate);
+    if (!dataset.success || !dataset.data) {
+      return {
+        success: false,
+        error: dataset.error || "Failed to fetch review data",
+      };
+    }
+    negativeReviews = dataset.data.reviews.filter(
+      (review) =>
+        review.sentiment_label === "negative" ||
+        review.sentiment_label === "neutral"
+    );
   }
 
   // Count negative themes
   const negativeThemes = new Map<string, number>();
-  for (const review of negativeReviews || []) {
+  for (const review of negativeReviews) {
     const themes = (review.themes as string[]) || [];
     for (const theme of themes) {
       negativeThemes.set(theme, (negativeThemes.get(theme) || 0) + 1);
@@ -1115,7 +1188,53 @@ export async function getAIInsightsData(
   subtractMonths(startDate, months);
   const endDate = new Date();
 
-  // Fetch all insights data in parallel
+  const themePreviousStartDate = new Date(startDate);
+  subtractMonths(themePreviousStartDate, months);
+
+  const keyPhraseStartDate = new Date();
+  subtractMonths(keyPhraseStartDate, 3);
+
+  const summaryStartDate = new Date();
+  subtractMonths(summaryStartDate, 1);
+
+  const earliestReviewDate = new Date(
+    Math.min(
+      themePreviousStartDate.getTime(),
+      keyPhraseStartDate.getTime(),
+      summaryStartDate.getTime()
+    )
+  );
+
+  const sharedDatasetResult = await getSharedInsightsDataset(
+    context,
+    loanOfficerId,
+    earliestReviewDate
+  );
+
+  if (!sharedDatasetResult.success || !sharedDatasetResult.data) {
+    return {
+      success: true,
+      data: {
+        sentimentTrend: [],
+        themeFrequencies: [],
+        topKeyPhrases: [],
+        summary: null,
+        recommendations: [],
+        sentimentDistribution: {
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          total: 0,
+        },
+        periodStart: startDate,
+        periodEnd: endDate,
+      },
+    };
+  }
+
+  const sharedDataset = sharedDatasetResult.data;
+
+  // Derive all review-backed sections from one cached base fetch.
   const [
     sentimentTrendResult,
     themeResult,
@@ -1124,12 +1243,12 @@ export async function getAIInsightsData(
     summaryResult,
     recommendationsResult,
   ] = await Promise.all([
-    getSentimentTrend(loanOfficerId, months),
-    getThemeFrequencies(loanOfficerId, months),
-    getTopKeyPhrases(loanOfficerId, 20),
-    getSentimentDistribution(loanOfficerId, months),
-    generateAISummary(loanOfficerId, 1),
-    getImprovementRecommendations(loanOfficerId),
+    getSentimentTrend(loanOfficerId, months, sharedDataset),
+    getThemeFrequencies(loanOfficerId, months, sharedDataset),
+    getTopKeyPhrases(loanOfficerId, 20, sharedDataset),
+    getSentimentDistribution(loanOfficerId, months, sharedDataset),
+    generateAISummary(loanOfficerId, 1, sharedDataset),
+    getImprovementRecommendations(loanOfficerId, sharedDataset),
   ]);
 
   return {

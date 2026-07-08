@@ -40,6 +40,7 @@ import type {
   WidgetDetailAnalytics as DetailData,
   EnhancedAnalytics,
 } from "@/lib/widgets/analytics-actions";
+import { CHART_TOOLTIP_STYLE } from "@/components/analytics/chart-primitives";
 import { getWidgetEventLevelCsvData } from "@/lib/widgets/analytics-actions";
 import { useToast } from "@/hooks/use-toast";
 
@@ -322,9 +323,7 @@ export const WidgetDetailAnalyticsPanel = memo(
                         />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: "hsl(var(--popover))",
-                            border: "1px solid hsl(var(--border))",
-                            borderRadius: "8px",
+                            ...CHART_TOOLTIP_STYLE,
                             boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                           }}
                         />
@@ -406,9 +405,7 @@ export const WidgetDetailAnalyticsPanel = memo(
                         </Pie>
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: "hsl(var(--popover))",
-                            border: "1px solid hsl(var(--border))",
-                            borderRadius: "8px",
+                            ...CHART_TOOLTIP_STYLE,
                             boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                           }}
                         />

@@ -125,7 +125,36 @@ function StatCard({ title, value, subtitle, icon, trend }: StatCardProps) {
   );
 }
 
-function ScoreCard({ title, score, description }: { title: string; score: number; description?: string }) {
+function ScoreCard({
+  title,
+  score,
+  description,
+  isMeasured = true,
+}: {
+  title: string;
+  score: number | null;
+  description?: string;
+  isMeasured?: boolean;
+}) {
+  if (!isMeasured || score === null) {
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <Badge variant="secondary">Not measured</Badge>
+          </div>
+          <div className="flex min-h-[44px] items-end">
+            <span className="text-lg font-semibold text-muted-foreground">Not measured</span>
+          </div>
+          {description && (
+            <p className="mt-2 text-xs text-muted-foreground">{description}</p>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
   const badge = getScoreBadge(score);
   return (
     <Card>
@@ -648,7 +677,7 @@ export function WebsiteAnalyticsDashboard() {
             />
             <ScoreCard title="Technical" score={seoData.avgTechnicalScore} />
             <ScoreCard title="Content" score={seoData.avgContentScore} />
-            <ScoreCard title="Performance" score={seoData.avgPerformanceScore} />
+            <ScoreCard title="Performance" score={null} isMeasured={false} />
             <ScoreCard title="Mobile" score={seoData.avgMobileScore} />
           </div>
 

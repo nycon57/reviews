@@ -97,6 +97,10 @@
       "schedule": "0 7 * * *"
     },
     {
+      "path": "/api/cron/salesforce-sync",
+      "schedule": "0 6 * * *"
+    },
+    {
       "path": "/api/cron/video-review-recapture",
       "schedule": "0 * * * *"
     },

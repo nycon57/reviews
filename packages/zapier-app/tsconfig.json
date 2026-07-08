@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES2022",
+    "types": ["node"],
+    "skipLibCheck": true
+  },
+  "include": [
+    "*.js",
+    "creates/**/*.js",
+    "triggers/**/*.js",
+    "utils/**/*.js",
+    "test/**/*.js",
+    "scripts/**/*.js"
+  ],
+  "exclude": ["node_modules"]
+}

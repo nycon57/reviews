@@ -1086,6 +1086,69 @@ When a new contact is added:
 }
 \`\`\`
 
+## Outbound Webhooks
+
+Outbound webhooks send RepWell events to an endpoint you control. Use them for Zapier Catch Hook URLs, middleware, data warehouses, or internal workflow services.
+
+### Outbound events
+
+- \`review.published\`
+- \`review.negative\`
+- \`review.responded\`
+- \`survey.completed\`
+- \`contact.created\`
+
+### Delivery envelope
+
+Each outbound delivery uses this JSON envelope:
+
+\`\`\`json
+{
+  "id": "evt_123",
+  "type": "review.published",
+  "created_at": "2026-07-08T12:00:00.000Z",
+  "organization_id": "org_123",
+  "data": {
+    "review_id": "rev_123",
+    "rating": 5,
+    "customer_name": "Jordan Lee"
+  }
+}
+\`\`\`
+
+RepWell includes these headers:
+
+| Header | Description |
+|---|---|
+| \`X-RepWell-Event\` | Event type, such as \`review.published\` |
+| \`X-RepWell-Delivery\` | Unique delivery ID |
+| \`X-RepWell-Signature\` | \`sha256=\` plus the HMAC-SHA256 digest of the raw body |
+
+### Verify signatures
+
+Use the endpoint signing secret shown when you create the outbound endpoint. The secret is only displayed once.
+
+\`\`\`ts
+import { createHmac, timingSafeEqual } from "crypto";
+
+export function verifyRepWellSignature(
+  rawBody: Buffer,
+  signatureHeader: string,
+  secret: string
+) {
+  const expected =
+    "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");
+
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(signatureHeader);
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}
+\`\`\`
+
 ## Security
 
 ### Signature Verification
@@ -1327,12 +1390,38 @@ For API support:
         content: `
 # Zapier & Automation
 
-RepWell does not ship a native Zapier app, but you can still connect RepWell to Zapier — and thousands of other tools — using RepWell **webhooks** and the **REST API**. This gives you the same automation power without waiting on a dedicated connector.
+RepWell has a native Zapier app for RepWell triggers and create actions. The app is pending Zapier directory publication, so it is available by invite link until listing approval. You can also use **Webhooks by Zapier** with RepWell outbound endpoints today.
 
 ## How it works
 
-- **RepWell to other apps:** Configure a webhook in RepWell to push events (such as a new review, a completed survey, or a low-rating alert) to any URL. In Zapier, use the **Webhooks by Zapier** trigger ("Catch Hook") to receive them.
-- **Other apps to RepWell:** Use the **Webhooks by Zapier** action (or any HTTP client) to call the RepWell REST API — create contacts, send survey requests, and more — authenticated with your API key.
+- **Native RepWell app:** Authenticate with a RepWell API key. Zapier sends it as \`X-API-Key\`.
+- **RepWell triggers:** \`review.published\`, \`review.negative\`, \`review.responded\`, \`survey.completed\`, and \`contact.created\`.
+- **RepWell actions:** \`create_contact\` and \`trigger_survey\`.
+- **Fallback:** Use **Webhooks by Zapier** to catch outbound RepWell events or call RepWell REST endpoints directly.
+
+## Set up the native RepWell app
+
+1. Open the RepWell Zapier invite link while directory publication is pending.
+2. Choose RepWell as the trigger or action app.
+3. Paste a scoped RepWell API key when Zapier asks you to connect.
+4. Pick a trigger or action, map the fields, test the Zap, and turn it on.
+
+### Native triggers
+
+| Trigger | Event |
+|---|---|
+| New Review | \`review.published\` |
+| Negative Review | \`review.negative\` |
+| Review Response | \`review.responded\` |
+| Survey Completed | \`survey.completed\` |
+| New Contact | \`contact.created\` |
+
+### Native actions
+
+| Action | RepWell endpoint |
+|---|---|
+| Create Contact | \`POST /api/v1/contacts\` |
+| Trigger Survey | \`POST /api/v1/surveys\` |
 
 ## Send RepWell events to Zapier
 
@@ -1347,7 +1436,7 @@ See the [Webhooks guide](/docs/integrations/webhooks) for the full event list an
 
 1. Add a **Webhooks by Zapier → Custom Request** action to your Zap.
 2. Point it at the relevant RepWell REST API endpoint.
-3. Add an Authorization header of the form "Bearer YOUR_API_KEY" using a key from **Settings → API**.
+3. Add an \`X-API-Key\` header using a key from **Settings → API**.
 4. Map fields from the previous step into the request body.
 
 See [API Authentication](/docs/developers/authentication) to create and use API keys.
@@ -1356,7 +1445,7 @@ See [API Authentication](/docs/developers/authentication) to create and use API 
 
 - **CRM deal closed → send a survey:** Catch the CRM event in Zapier, then call the RepWell API to send a review request.
 - **New review → Slack:** Send a RepWell new-review webhook to Zapier, then post to a Slack channel.
-- **Low rating → email the team:** Send a low-rating webhook to Zapier, then send an email via Gmail.
+- **Negative review → email the team:** Send a \`review.negative\` event to Zapier, then send an email via Gmail.
 
 ## Best practices
 
@@ -1646,6 +1735,67 @@ Trigger a new survey to be sent:
   "meta": {
     "request_id": "req_xyz789"
   }
+}
+\`\`\`
+
+## Outbound Webhooks
+
+RepWell can also send signed event notifications to your application. Create an outbound endpoint in **Settings → Webhooks**, choose the events to send, and copy the signing secret when it is shown.
+
+### Events
+
+| Event | When it fires |
+|---|---|
+| \`review.published\` | A review is published |
+| \`review.negative\` | A negative review is detected or published |
+| \`review.responded\` | A review response is recorded |
+| \`survey.completed\` | A customer completes a survey |
+| \`contact.created\` | A contact is created |
+
+### Envelope
+
+\`\`\`json
+{
+  "id": "evt_123",
+  "type": "review.published",
+  "created_at": "2026-07-08T12:00:00.000Z",
+  "organization_id": "org_123",
+  "data": {
+    "review_id": "rev_123",
+    "rating": 5,
+    "customer_name": "Jordan Lee"
+  }
+}
+\`\`\`
+
+### Headers
+
+| Header | Description |
+|---|---|
+| \`X-RepWell-Event\` | Event type |
+| \`X-RepWell-Delivery\` | Unique delivery ID |
+| \`X-RepWell-Signature\` | \`sha256=\` plus HMAC-SHA256 of the raw request body |
+
+### Signature verification
+
+\`\`\`ts
+import { createHmac, timingSafeEqual } from "crypto";
+
+export function verifyRepWellSignature(
+  rawBody: Buffer,
+  signatureHeader: string,
+  secret: string
+) {
+  const expected =
+    "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");
+
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(signatureHeader);
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
 }
 \`\`\`
 

@@ -1,5 +1,6 @@
 // Social Media API Clients
 
+import { createHash, randomBytes } from "crypto";
 import type {
   SocialPlatform,
   SocialOAuthTokens,
@@ -8,16 +9,12 @@ import type {
   LinkedInPage,
   PostResult,
   PlatformAnalytics,
-} from './types';
-import {
-  PLATFORM_AUTH_URLS,
-  PLATFORM_TOKEN_URLS,
-  PLATFORM_SCOPES,
-} from './types';
+} from "./types";
+import { PLATFORM_AUTH_URLS, PLATFORM_TOKEN_URLS, PLATFORM_SCOPES } from "./types";
 
 // Get base URL for OAuth redirects
 function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
 // Get redirect URI for a platform
@@ -25,42 +22,61 @@ export function getRedirectUri(platform: SocialPlatform): string {
   return `${getBaseUrl()}/api/auth/social/${platform}/callback`;
 }
 
+export interface TwitterPkcePair {
+  codeVerifier: string;
+  codeChallenge: string;
+}
+
+export function createTwitterPkcePair(): TwitterPkcePair {
+  const codeVerifier = randomBytes(64).toString("base64url");
+  const codeChallenge = createHash("sha256").update(codeVerifier).digest("base64url");
+
+  return { codeVerifier, codeChallenge };
+}
+
 // Generate OAuth authorization URL
-export function getAuthorizationUrl(platform: SocialPlatform, state: string): string {
+export function getAuthorizationUrl(
+  platform: SocialPlatform,
+  state: string,
+  options?: { codeChallenge?: string }
+): string {
   const params = new URLSearchParams();
   const redirectUri = getRedirectUri(platform);
 
   switch (platform) {
-    case 'facebook':
-    case 'instagram': {
+    case "facebook":
+    case "instagram": {
       const clientId = process.env.FACEBOOK_APP_ID!;
-      params.set('client_id', clientId);
-      params.set('redirect_uri', redirectUri);
-      params.set('state', state);
-      params.set('scope', PLATFORM_SCOPES.facebook.join(','));
-      params.set('response_type', 'code');
+      params.set("client_id", clientId);
+      params.set("redirect_uri", redirectUri);
+      params.set("state", state);
+      params.set("scope", PLATFORM_SCOPES.facebook.join(","));
+      params.set("response_type", "code");
       return `${PLATFORM_AUTH_URLS.facebook}?${params.toString()}`;
     }
 
-    case 'twitter': {
+    case "twitter": {
       const clientId = process.env.TWITTER_CLIENT_ID!;
-      params.set('client_id', clientId);
-      params.set('redirect_uri', redirectUri);
-      params.set('state', state);
-      params.set('scope', PLATFORM_SCOPES.twitter.join(' '));
-      params.set('response_type', 'code');
-      params.set('code_challenge', 'challenge'); // PKCE - in production use proper challenge
-      params.set('code_challenge_method', 'plain');
+      if (!options?.codeChallenge) {
+        throw new Error("Twitter OAuth requires a PKCE code challenge");
+      }
+      params.set("client_id", clientId);
+      params.set("redirect_uri", redirectUri);
+      params.set("state", state);
+      params.set("scope", PLATFORM_SCOPES.twitter.join(" "));
+      params.set("response_type", "code");
+      params.set("code_challenge", options.codeChallenge);
+      params.set("code_challenge_method", "S256");
       return `${PLATFORM_AUTH_URLS.twitter}?${params.toString()}`;
     }
 
-    case 'linkedin': {
+    case "linkedin": {
       const clientId = process.env.LINKEDIN_CLIENT_ID!;
-      params.set('client_id', clientId);
-      params.set('redirect_uri', redirectUri);
-      params.set('state', state);
-      params.set('scope', PLATFORM_SCOPES.linkedin.join(' '));
-      params.set('response_type', 'code');
+      params.set("client_id", clientId);
+      params.set("redirect_uri", redirectUri);
+      params.set("state", state);
+      params.set("scope", PLATFORM_SCOPES.linkedin.join(" "));
+      params.set("response_type", "code");
       return `${PLATFORM_AUTH_URLS.linkedin}?${params.toString()}`;
     }
 
@@ -72,7 +88,8 @@ export function getAuthorizationUrl(platform: SocialPlatform, state: string): st
 // Exchange authorization code for tokens
 export async function exchangeCodeForTokens(
   platform: SocialPlatform,
-  code: string
+  code: string,
+  codeVerifier?: string
 ): Promise<SocialOAuthTokens> {
   const redirectUri = getRedirectUri(platform);
   const tokenUrl = PLATFORM_TOKEN_URLS[platform];
@@ -81,8 +98,8 @@ export async function exchangeCodeForTokens(
   const headers: Record<string, string> = {};
 
   switch (platform) {
-    case 'facebook':
-    case 'instagram': {
+    case "facebook":
+    case "instagram": {
       body = new URLSearchParams({
         client_id: process.env.FACEBOOK_APP_ID!,
         client_secret: process.env.FACEBOOK_APP_SECRET!,
@@ -92,33 +109,36 @@ export async function exchangeCodeForTokens(
       break;
     }
 
-    case 'twitter': {
+    case "twitter": {
+      if (!codeVerifier) {
+        throw new Error("Twitter OAuth requires a PKCE code verifier");
+      }
       body = new URLSearchParams({
         client_id: process.env.TWITTER_CLIENT_ID!,
         redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
+        grant_type: "authorization_code",
         code,
-        code_verifier: 'challenge', // Must match code_challenge
+        code_verifier: codeVerifier,
       });
-      headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
 
       // Twitter uses Basic auth with client credentials
       const credentials = Buffer.from(
         `${process.env.TWITTER_CLIENT_ID}:${process.env.TWITTER_CLIENT_SECRET}`
-      ).toString('base64');
-      headers['Authorization'] = `Basic ${credentials}`;
+      ).toString("base64");
+      headers["Authorization"] = `Basic ${credentials}`;
       break;
     }
 
-    case 'linkedin': {
+    case "linkedin": {
       body = new URLSearchParams({
         client_id: process.env.LINKEDIN_CLIENT_ID!,
         client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
         redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
+        grant_type: "authorization_code",
         code,
       });
-      headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
       break;
     }
 
@@ -127,7 +147,7 @@ export async function exchangeCodeForTokens(
   }
 
   const response = await fetch(tokenUrl, {
-    method: 'POST',
+    method: "POST",
     headers,
     body,
   });
@@ -142,9 +162,7 @@ export async function exchangeCodeForTokens(
   return {
     accessToken: data.access_token,
     refreshToken: data.refresh_token,
-    expiresAt: data.expires_in
-      ? new Date(Date.now() + data.expires_in * 1000)
-      : undefined,
+    expiresAt: data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : undefined,
     scope: data.scope,
   };
 }
@@ -156,16 +174,16 @@ export async function refreshAccessToken(
 ): Promise<SocialOAuthTokens> {
   const tokenUrl = PLATFORM_TOKEN_URLS[platform];
   const headers: Record<string, string> = {
-    'Content-Type': 'application/x-www-form-urlencoded',
+    "Content-Type": "application/x-www-form-urlencoded",
   };
 
   let body: URLSearchParams;
 
   switch (platform) {
-    case 'facebook':
-    case 'instagram': {
+    case "facebook":
+    case "instagram": {
       body = new URLSearchParams({
-        grant_type: 'fb_exchange_token',
+        grant_type: "fb_exchange_token",
         client_id: process.env.FACEBOOK_APP_ID!,
         client_secret: process.env.FACEBOOK_APP_SECRET!,
         fb_exchange_token: refreshToken,
@@ -173,21 +191,21 @@ export async function refreshAccessToken(
       break;
     }
 
-    case 'twitter': {
+    case "twitter": {
       const credentials = Buffer.from(
         `${process.env.TWITTER_CLIENT_ID}:${process.env.TWITTER_CLIENT_SECRET}`
-      ).toString('base64');
-      headers['Authorization'] = `Basic ${credentials}`;
+      ).toString("base64");
+      headers["Authorization"] = `Basic ${credentials}`;
       body = new URLSearchParams({
-        grant_type: 'refresh_token',
+        grant_type: "refresh_token",
         refresh_token: refreshToken,
       });
       break;
     }
 
-    case 'linkedin': {
+    case "linkedin": {
       body = new URLSearchParams({
-        grant_type: 'refresh_token',
+        grant_type: "refresh_token",
         client_id: process.env.LINKEDIN_CLIENT_ID!,
         client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
         refresh_token: refreshToken,
@@ -200,7 +218,7 @@ export async function refreshAccessToken(
   }
 
   const response = await fetch(tokenUrl, {
-    method: 'POST',
+    method: "POST",
     headers,
     body,
   });
@@ -214,9 +232,7 @@ export async function refreshAccessToken(
   return {
     accessToken: data.access_token,
     refreshToken: data.refresh_token || refreshToken,
-    expiresAt: data.expires_in
-      ? new Date(Date.now() + data.expires_in * 1000)
-      : undefined,
+    expiresAt: data.expires_in ? new Date(Date.now() + data.expires_in * 1000) : undefined,
   };
 }
 
@@ -226,8 +242,8 @@ export async function getUserInfo(
   accessToken: string
 ): Promise<PlatformUserInfo> {
   switch (platform) {
-    case 'facebook':
-    case 'instagram': {
+    case "facebook":
+    case "instagram": {
       const response = await fetch(
         `https://graph.facebook.com/me?fields=id,name,picture&access_token=${accessToken}`
       );
@@ -239,10 +255,13 @@ export async function getUserInfo(
       };
     }
 
-    case 'twitter': {
-      const response = await fetch('https://api.twitter.com/2/users/me?user.fields=profile_image_url,username', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+    case "twitter": {
+      const response = await fetch(
+        "https://api.twitter.com/2/users/me?user.fields=profile_image_url,username",
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
       const data = await response.json();
       return {
         id: data.data.id,
@@ -253,8 +272,8 @@ export async function getUserInfo(
       };
     }
 
-    case 'linkedin': {
-      const response = await fetch('https://api.linkedin.com/v2/me', {
+    case "linkedin": {
+      const response = await fetch("https://api.linkedin.com/v2/me", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const data = await response.json();
@@ -276,7 +295,7 @@ export async function getFacebookPages(accessToken: string): Promise<FacebookPag
   );
 
   if (!response.ok) {
-    throw new Error('Failed to fetch Facebook pages');
+    throw new Error("Failed to fetch Facebook pages");
   }
 
   const data = await response.json();
@@ -292,29 +311,23 @@ export async function getFacebookPages(accessToken: string): Promise<FacebookPag
 
 // Get LinkedIn organization pages
 export async function getLinkedInPages(accessToken: string): Promise<LinkedInPage[]> {
-  const response = await fetch(
-    'https://api.linkedin.com/v2/organizationAcls?q=roleAssignee',
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }
-  );
+  const response = await fetch("https://api.linkedin.com/v2/organizationAcls?q=roleAssignee", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch LinkedIn pages');
+    throw new Error("Failed to fetch LinkedIn pages");
   }
 
   const data = await response.json();
   const pages: LinkedInPage[] = [];
 
   for (const element of data.elements || []) {
-    const orgId = element.organization?.split(':').pop();
+    const orgId = element.organization?.split(":").pop();
     if (orgId) {
-      const orgResponse = await fetch(
-        `https://api.linkedin.com/v2/organizations/${orgId}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const orgResponse = await fetch(`https://api.linkedin.com/v2/organizations/${orgId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (orgResponse.ok) {
         const orgData = await orgResponse.json();
         pages.push({
@@ -353,8 +366,8 @@ export async function postToFacebook(
     }
 
     const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
     });
 
@@ -363,7 +376,7 @@ export async function postToFacebook(
     if (!response.ok) {
       return {
         success: false,
-        error: data.error?.message || 'Failed to post to Facebook',
+        error: data.error?.message || "Failed to post to Facebook",
       };
     }
 
@@ -375,22 +388,19 @@ export async function postToFacebook(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
 
 // Post to Twitter/X
-export async function postToTwitter(
-  accessToken: string,
-  text: string
-): Promise<PostResult> {
+export async function postToTwitter(accessToken: string, text: string): Promise<PostResult> {
   try {
-    const response = await fetch('https://api.twitter.com/2/tweets', {
-      method: 'POST',
+    const response = await fetch("https://api.twitter.com/2/tweets", {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ text }),
     });
@@ -400,7 +410,7 @@ export async function postToTwitter(
     if (!response.ok) {
       return {
         success: false,
-        error: data.detail || data.title || 'Failed to post to Twitter',
+        error: data.detail || data.title || "Failed to post to Twitter",
       };
     }
 
@@ -412,7 +422,7 @@ export async function postToTwitter(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -425,28 +435,26 @@ export async function postToLinkedIn(
   isOrganization: boolean = false
 ): Promise<PostResult> {
   try {
-    const author = isOrganization
-      ? `urn:li:organization:${authorId}`
-      : `urn:li:person:${authorId}`;
+    const author = isOrganization ? `urn:li:organization:${authorId}` : `urn:li:person:${authorId}`;
 
-    const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
-      method: 'POST',
+    const response = await fetch("https://api.linkedin.com/v2/ugcPosts", {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'X-Restli-Protocol-Version': '2.0.0',
+        "Content-Type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0",
       },
       body: JSON.stringify({
         author,
-        lifecycleState: 'PUBLISHED',
+        lifecycleState: "PUBLISHED",
         specificContent: {
-          'com.linkedin.ugc.ShareContent': {
+          "com.linkedin.ugc.ShareContent": {
             shareCommentary: { text },
-            shareMediaCategory: 'NONE',
+            shareMediaCategory: "NONE",
           },
         },
         visibility: {
-          'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+          "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
         },
       }),
     });
@@ -456,11 +464,11 @@ export async function postToLinkedIn(
     if (!response.ok) {
       return {
         success: false,
-        error: responseText || 'Failed to post to LinkedIn',
+        error: responseText || "Failed to post to LinkedIn",
       };
     }
 
-    const postId = response.headers.get('X-RestLi-Id');
+    const postId = response.headers.get("X-RestLi-Id");
 
     return {
       success: true,
@@ -470,7 +478,7 @@ export async function postToLinkedIn(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -487,8 +495,8 @@ export async function postToInstagram(
     const createMediaResponse = await fetch(
       `https://graph.facebook.com/v18.0/${instagramBusinessAccountId}/media`,
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           image_url: imageUrl,
           caption,
@@ -502,7 +510,7 @@ export async function postToInstagram(
     if (!createMediaResponse.ok) {
       return {
         success: false,
-        error: createMediaData.error?.message || 'Failed to create Instagram media',
+        error: createMediaData.error?.message || "Failed to create Instagram media",
       };
     }
 
@@ -512,8 +520,8 @@ export async function postToInstagram(
     const publishResponse = await fetch(
       `https://graph.facebook.com/v18.0/${instagramBusinessAccountId}/media_publish`,
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           creation_id: containerId,
           access_token: pageAccessToken,
@@ -526,7 +534,7 @@ export async function postToInstagram(
     if (!publishResponse.ok) {
       return {
         success: false,
-        error: publishData.error?.message || 'Failed to publish Instagram post',
+        error: publishData.error?.message || "Failed to publish Instagram post",
       };
     }
 
@@ -538,7 +546,7 @@ export async function postToInstagram(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }
@@ -598,9 +606,7 @@ export async function getTwitterPostAnalytics(
       impressions: metrics.impression_count || 0,
       reach: 0, // Twitter doesn't provide reach
       engagements:
-        (metrics.like_count || 0) +
-        (metrics.retweet_count || 0) +
-        (metrics.reply_count || 0),
+        (metrics.like_count || 0) + (metrics.retweet_count || 0) + (metrics.reply_count || 0),
       likes: metrics.like_count || 0,
       comments: metrics.reply_count || 0,
       shares: metrics.retweet_count || 0,

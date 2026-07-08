@@ -1,37 +1,33 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useTransition, useRef } from 'react';
-import {
-  Gear,
-  BuildingOffice,
-  TestTube,
-  Pulse,
-  Book,
-  SpinnerGap,
-} from '@phosphor-icons/react';
-import { cn } from '@/lib/utils';
-import { WebhookConfigManager } from '@/components/distribution';
-import { WebhookTester } from '@/components/webhooks/webhook-tester';
-import { WebhookLogsViewer } from '@/components/webhooks/webhook-logs-viewer';
-import { WebhookDocumentation } from '@/components/webhooks/webhook-documentation';
-import { MilestoneMappingForm } from '@/components/webhooks/milestone-mapping-form';
-import { getWebhookConfigs, type WebhookConfig } from '@/lib/distribution';
+import { useState, useEffect, useTransition, useRef } from "react";
+import { Gear, BuildingOffice, TestTube, Pulse, Book, SpinnerGap } from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
+import { WebhookConfigManager } from "@/components/distribution";
+import { WebhookTester } from "@/components/webhooks/webhook-tester";
+import { WebhookLogsViewer } from "@/components/webhooks/webhook-logs-viewer";
+import { WebhookDocumentation } from "@/components/webhooks/webhook-documentation";
+import { MilestoneMappingForm } from "@/components/webhooks/milestone-mapping-form";
+import { getWebhookConfigs, type WebhookConfig } from "@/lib/distribution";
+import { OutboundEndpointsSection } from "./outbound-endpoints-section";
 
-export type WebhookSubTab = 'configurations' | 'encompass' | 'tester' | 'logs' | 'docs';
+export type WebhookSubTab = "configurations" | "encompass" | "tester" | "logs" | "docs";
 
 const subTabs: { value: WebhookSubTab; label: string; icon: React.ElementType }[] = [
-  { value: 'configurations', label: 'Configurations', icon: Gear },
-  { value: 'encompass', label: 'Encompass', icon: BuildingOffice },
-  { value: 'tester', label: 'Test', icon: TestTube },
-  { value: 'logs', label: 'Logs', icon: Pulse },
-  { value: 'docs', label: 'Docs', icon: Book },
+  { value: "configurations", label: "Configurations", icon: Gear },
+  { value: "encompass", label: "Encompass", icon: BuildingOffice },
+  { value: "tester", label: "Test", icon: TestTube },
+  { value: "logs", label: "Logs", icon: Pulse },
+  { value: "docs", label: "Docs", icon: Book },
 ];
 
 interface WebhookSettingsPanelProps {
   initialSubTab?: WebhookSubTab;
 }
 
-export function WebhookSettingsPanel({ initialSubTab = 'configurations' }: WebhookSettingsPanelProps) {
+export function WebhookSettingsPanel({
+  initialSubTab = "configurations",
+}: WebhookSettingsPanelProps) {
   const [activeSubTab, setActiveSubTab] = useState<WebhookSubTab>(initialSubTab);
   const [webhookConfigs, setWebhookConfigs] = useState<WebhookConfig[] | null>(null);
   const [_isPending, startTransition] = useTransition();
@@ -62,67 +58,72 @@ export function WebhookSettingsPanel({ initialSubTab = 'configurations' }: Webho
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="font-display text-2xl font-bold text-heading-accent tracking-tight">
+        <h2 className="font-display text-2xl font-bold tracking-tight text-heading-accent">
           Webhooks
         </h2>
-        <p className="text-repwell-teal-300 mt-1">
+        <p className="mt-1 text-repwell-teal-300">
           Manage webhook endpoints, test integrations, and view delivery logs.
         </p>
       </div>
-    <div className="flex gap-6">
-      <nav className="w-48 shrink-0 border-r border-border pr-4">
-        <ul className="space-y-1" role="tablist" aria-orientation="vertical">
-          {subTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeSubTab === tab.value;
-            return (
-              <li key={tab.value} role="presentation">
-                <button
-                  role="tab"
-                  id={`tab-${tab.value}`}
-                  aria-selected={isActive}
-                  aria-controls={`panel-${tab.value}`}
-                  onClick={() => setActiveSubTab(tab.value)}
-                  className={cn(
-                    'flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-sans transition-all duration-200',
-                    isActive
-                      ? 'bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-heading-accent font-semibold'
-                      : 'text-repwell-teal-300 hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100/80 hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10'
-                  )}
-                >
-                  <Icon
-                    weight={isActive ? 'duotone' : 'regular'}
+      <div className="flex gap-6">
+        <nav className="w-48 shrink-0 border-r border-border pr-4">
+          <ul className="space-y-1" role="tablist" aria-orientation="vertical">
+            {subTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeSubTab === tab.value;
+              return (
+                <li key={tab.value} role="presentation">
+                  <button
+                    role="tab"
+                    id={`tab-${tab.value}`}
+                    aria-selected={isActive}
+                    aria-controls={`panel-${tab.value}`}
+                    onClick={() => setActiveSubTab(tab.value)}
                     className={cn(
-                      'h-4 w-4 shrink-0',
-                      isActive ? 'text-repwell-teal-300' : 'text-repwell-teal-300/50'
+                      "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 font-sans text-sm transition-all duration-200",
+                      isActive
+                        ? "bg-repwell-sage-100/50 font-semibold text-heading-accent dark:bg-repwell-teal-300/15"
+                        : "text-repwell-teal-300 hover:bg-repwell-sage-100/30 hover:text-repwell-teal-400 dark:hover:bg-repwell-teal-300/10 dark:hover:text-repwell-sage-100/80"
                     )}
-                  />
-                  {tab.label}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+                  >
+                    <Icon
+                      weight={isActive ? "duotone" : "regular"}
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        isActive ? "text-repwell-teal-300" : "text-repwell-teal-300/50"
+                      )}
+                    />
+                    {tab.label}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-      <div className="flex-1 min-w-0 animate-fade-in">
-        {subTabs.map((tab) => (
-          <div
-            key={tab.value}
-            role="tabpanel"
-            id={`panel-${tab.value}`}
-            aria-labelledby={`tab-${tab.value}`}
-            hidden={activeSubTab !== tab.value}
-          >
-            {tab.value === 'configurations' && <WebhookConfigManager />}
-            {tab.value === 'encompass' && <MilestoneMappingForm />}
-            {tab.value === 'tester' && <WebhookTester webhookConfigs={webhookConfigs} />}
-            {tab.value === 'logs' && <WebhookLogsViewer />}
-            {tab.value === 'docs' && <WebhookDocumentation />}
-          </div>
-        ))}
+        <div className="min-w-0 flex-1 animate-fade-in">
+          {subTabs.map((tab) => (
+            <div
+              key={tab.value}
+              role="tabpanel"
+              id={`panel-${tab.value}`}
+              aria-labelledby={`tab-${tab.value}`}
+              hidden={activeSubTab !== tab.value}
+            >
+              {tab.value === "configurations" && (
+                <div className="space-y-6">
+                  <WebhookConfigManager />
+                  <OutboundEndpointsSection />
+                </div>
+              )}
+              {tab.value === "encompass" && <MilestoneMappingForm />}
+              {tab.value === "tester" && <WebhookTester webhookConfigs={webhookConfigs} />}
+              {tab.value === "logs" && <WebhookLogsViewer />}
+              {tab.value === "docs" && <WebhookDocumentation />}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
     </div>
   );
 }

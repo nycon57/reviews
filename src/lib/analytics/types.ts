@@ -18,9 +18,6 @@ export interface DateRange {
 // Existing session-based analytics callers can omit this.
 export interface AnalyticsOrgContext {
   organizationId: string;
-  userId?: string | null;
-  role?: string | null;
-  loanOfficerId?: string | null;
 }
 
 // NPS breakdown

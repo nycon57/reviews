@@ -22,7 +22,7 @@ import type {
   GeneratedReport,
   ReportExportPayload,
 } from "./types";
-import { generateReport } from "./engine";
+import { generateReportForOrg } from "./engine";
 import { exportReportToCSV } from "./export";
 import { getExportFilename } from "./utils";
 
@@ -36,9 +36,29 @@ export interface CreateReportShareForOrgParams {
   sharedBy?: string | null;
 }
 
+export interface CreateScheduledReportParams {
+  templateId: string;
+  name: string;
+  recipients: string[];
+  schedule: ScheduleFrequency;
+  dayOfWeek?: number;
+  dayOfMonth?: number;
+  scheduleTime?: string;
+  filters?: ReportFilters;
+}
+
 export interface ExportAndRecordReportOptions {
   report?: GeneratedReport;
   organizationName?: string;
+}
+
+export interface ExportAndRecordReportForOrgParams extends ExportAndRecordReportOptions {
+  organizationId: string;
+  templateId: string;
+  dateRange: ReportDateRange;
+  format: ExportFormat;
+  filters?: ReportFilters;
+  createdBy?: string | null;
 }
 
 /**
@@ -141,19 +161,85 @@ function mapReportShareRow(data: {
   };
 }
 
+function mapScheduledReportRow(data: {
+  id: string;
+  organization_id: string;
+  template_id: string;
+  name: string;
+  recipients: string[];
+  schedule: string;
+  schedule_day_of_week: number | null;
+  schedule_day_of_month: number | null;
+  schedule_time: string | null;
+  filters: unknown;
+  is_active: boolean | null;
+  next_run_at: string | null;
+  last_run_at: string | null;
+  created_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}): ScheduledReport {
+  return {
+    id: data.id,
+    organizationId: data.organization_id,
+    templateId: data.template_id,
+    name: data.name,
+    recipients: data.recipients,
+    schedule: data.schedule as ScheduleFrequency,
+    scheduleDayOfWeek: data.schedule_day_of_week,
+    scheduleDayOfMonth: data.schedule_day_of_month,
+    scheduleTime: data.schedule_time || "09:00:00",
+    filters: (data.filters || {}) as ReportFilters,
+    isActive: data.is_active ?? true,
+    nextRunAt: data.next_run_at ? new Date(data.next_run_at) : null,
+    lastRunAt: data.last_run_at ? new Date(data.last_run_at) : null,
+    createdBy: data.created_by,
+    createdAt: new Date(data.created_at!),
+    updatedAt: new Date(data.updated_at!),
+  };
+}
+
+function mapReportExportRow(data: {
+  id: string;
+  organization_id: string;
+  template_id: string;
+  export_format: string;
+  file_name: string;
+  date_range_start: string;
+  date_range_end: string;
+  filters: unknown;
+  row_count: number | null;
+  created_by: string | null;
+  created_at: string | null;
+}): ReportExport {
+  return {
+    id: data.id,
+    organizationId: data.organization_id,
+    templateId: data.template_id,
+    exportFormat: data.export_format as ExportFormat,
+    fileName: data.file_name,
+    dateRangeStart: new Date(data.date_range_start),
+    dateRangeEnd: new Date(data.date_range_end),
+    filters: (data.filters || {}) as ReportFilters,
+    rowCount: data.row_count ?? 0,
+    createdBy: data.created_by,
+    createdAt: new Date(data.created_at!),
+  };
+}
+
 /**
  * Create a scheduled report
  */
-export async function createScheduledReport(
-  templateId: string,
-  name: string,
-  recipients: string[],
-  schedule: ScheduleFrequency,
-  dayOfWeek?: number,
-  dayOfMonth?: number,
-  scheduleTime: string = "09:00",
-  filters?: ReportFilters
-): Promise<ActionResult<ScheduledReport>> {
+export async function createScheduledReport({
+  templateId,
+  name,
+  recipients,
+  schedule,
+  dayOfWeek,
+  dayOfMonth,
+  scheduleTime = "09:00",
+  filters,
+}: CreateScheduledReportParams): Promise<ActionResult<ScheduledReport>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
@@ -197,24 +283,7 @@ export async function createScheduledReport(
 
   return {
     success: true,
-    data: {
-      id: data.id,
-      organizationId: data.organization_id,
-      templateId: data.template_id,
-      name: data.name,
-      recipients: data.recipients,
-      schedule: data.schedule as ScheduleFrequency,
-      scheduleDayOfWeek: data.schedule_day_of_week,
-      scheduleDayOfMonth: data.schedule_day_of_month,
-      scheduleTime: data.schedule_time || "09:00:00",
-      filters: data.filters as ReportFilters,
-      isActive: data.is_active ?? true,
-      nextRunAt: data.next_run_at ? new Date(data.next_run_at) : null,
-      lastRunAt: data.last_run_at ? new Date(data.last_run_at) : null,
-      createdBy: data.created_by,
-      createdAt: new Date(data.created_at!),
-      updatedAt: new Date(data.updated_at!),
-    },
+    data: mapScheduledReportRow(data),
   };
 }
 
@@ -247,7 +316,12 @@ export async function updateScheduledReport(
 
   // Calculate new next run if schedule changed
   let nextRunAt: Date | undefined;
-  if (updates.schedule || updates.dayOfWeek !== undefined || updates.dayOfMonth !== undefined || updates.scheduleTime) {
+  if (
+    updates.schedule ||
+    updates.dayOfWeek !== undefined ||
+    updates.dayOfMonth !== undefined ||
+    updates.scheduleTime
+  ) {
     // Get current values if not provided
     const { data: current } = await supabase
       .from("scheduled_reports")
@@ -291,24 +365,7 @@ export async function updateScheduledReport(
 
   return {
     success: true,
-    data: {
-      id: data.id,
-      organizationId: data.organization_id,
-      templateId: data.template_id,
-      name: data.name,
-      recipients: data.recipients,
-      schedule: data.schedule as ScheduleFrequency,
-      scheduleDayOfWeek: data.schedule_day_of_week,
-      scheduleDayOfMonth: data.schedule_day_of_month,
-      scheduleTime: data.schedule_time || "09:00:00",
-      filters: data.filters as ReportFilters,
-      isActive: data.is_active ?? true,
-      nextRunAt: data.next_run_at ? new Date(data.next_run_at) : null,
-      lastRunAt: data.last_run_at ? new Date(data.last_run_at) : null,
-      createdBy: data.created_by,
-      createdAt: new Date(data.created_at!),
-      updatedAt: new Date(data.updated_at!),
-    },
+    data: mapScheduledReportRow(data),
   };
 }
 
@@ -363,24 +420,7 @@ export async function getScheduledReports(): Promise<ActionResult<ScheduledRepor
     return { success: false, error: "Failed to fetch scheduled reports" };
   }
 
-  const reports: ScheduledReport[] = (data || []).map((d) => ({
-    id: d.id,
-    organizationId: d.organization_id,
-    templateId: d.template_id,
-    name: d.name,
-    recipients: d.recipients,
-    schedule: d.schedule as ScheduleFrequency,
-    scheduleDayOfWeek: d.schedule_day_of_week,
-    scheduleDayOfMonth: d.schedule_day_of_month,
-    scheduleTime: d.schedule_time || "09:00:00",
-    filters: d.filters as ReportFilters,
-    isActive: d.is_active ?? true,
-    nextRunAt: d.next_run_at ? new Date(d.next_run_at) : null,
-    lastRunAt: d.last_run_at ? new Date(d.last_run_at) : null,
-    createdBy: d.created_by,
-    createdAt: new Date(d.created_at!),
-    updatedAt: new Date(d.updated_at!),
-  }));
+  const reports = (data || []).map(mapScheduledReportRow);
 
   return { success: true, data: reports };
 }
@@ -430,9 +470,7 @@ export async function createReportShareForOrg({
   const supabase = createAdminClient();
 
   const shareToken = randomBytes(32).toString("hex");
-  const expiresAt = expiresInDays
-    ? addDays(new Date(), expiresInDays).toISOString()
-    : null;
+  const expiresAt = expiresInDays ? addDays(new Date(), expiresInDays).toISOString() : null;
 
   const { data, error } = await supabase
     .from("report_shares")
@@ -464,9 +502,7 @@ export async function createReportShareForOrg({
 /**
  * Get a report share by token (public - no auth required)
  */
-export async function getReportShareByToken(
-  token: string
-): Promise<ActionResult<ReportShare>> {
+export async function getReportShareByToken(token: string): Promise<ActionResult<ReportShare>> {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
@@ -497,19 +533,9 @@ export async function getReportShareByToken(
   return {
     success: true,
     data: {
-      id: data.id,
-      organizationId: data.organization_id,
-      templateId: data.template_id,
-      shareToken: data.share_token,
-      title: data.title,
-      dateRangeStart: new Date(data.date_range_start),
-      dateRangeEnd: new Date(data.date_range_end),
-      filters: (data.filters || {}) as ReportFilters,
-      sharedBy: data.shared_by,
-      expiresAt: data.expires_at ? new Date(data.expires_at) : null,
+      ...mapReportShareRow(data),
       accessCount: (data.access_count || 0) + 1,
       lastAccessedAt: new Date(),
-      createdAt: new Date(data.created_at!),
     },
   };
 }
@@ -561,21 +587,7 @@ export async function getReportShares(): Promise<ActionResult<ReportShare[]>> {
     return { success: false, error: "Failed to fetch shares" };
   }
 
-  const shares = (data || []).map((d) => ({
-    id: d.id,
-    organizationId: d.organization_id,
-    templateId: d.template_id,
-    shareToken: d.share_token,
-    title: d.title,
-    dateRangeStart: new Date(d.date_range_start),
-    dateRangeEnd: new Date(d.date_range_end),
-    filters: (d.filters || {}) as ReportFilters,
-    sharedBy: d.shared_by,
-    expiresAt: d.expires_at ? new Date(d.expires_at) : null,
-    accessCount: d.access_count ?? 0,
-    lastAccessedAt: d.last_accessed_at ? new Date(d.last_accessed_at) : null,
-    createdAt: new Date(d.created_at!),
-  }));
+  const shares = (data || []).map(mapReportShareRow);
 
   return { success: true, data: shares };
 }
@@ -595,9 +607,41 @@ export async function exportAndRecordReport(
     return { success: false, error: "Unauthorized" };
   }
 
-  const report = options.report || (await generateReport(templateId, dateRange, filters)).data;
+  return exportAndRecordReportForOrg({
+    organizationId: context.organizationId,
+    templateId,
+    dateRange,
+    format,
+    filters,
+    createdBy: context.userId,
+    ...options,
+  });
+}
+
+/**
+ * Export a report and record it for a trusted organization context.
+ */
+export async function exportAndRecordReportForOrg({
+  organizationId,
+  templateId,
+  dateRange,
+  format,
+  filters,
+  createdBy = null,
+  report: providedReport,
+  organizationName,
+}: ExportAndRecordReportForOrgParams): Promise<ActionResult<ReportExportPayload>> {
+  const reportResult = providedReport
+    ? { success: true as const, data: providedReport }
+    : await generateReportForOrg({
+        organizationId,
+        templateId,
+        dateRange,
+        filters,
+      });
+  const report = reportResult.data;
   if (!report) {
-    return { success: false, error: "Failed to generate report" };
+    return { success: false, error: reportResult.error || "Failed to generate report" };
   }
 
   let exportData: string;
@@ -617,10 +661,10 @@ export async function exportAndRecordReport(
       break;
     }
     case "pdf": {
-      const organizationName = options.organizationName || (await getOrganizationName(context.organizationId));
+      const pdfOrganizationName = organizationName || (await getOrganizationName(organizationId));
       try {
         const { renderReportPdf } = await import("./pdf");
-        const pdfBuffer = await renderReportPdf(report, organizationName);
+        const pdfBuffer = await renderReportPdf(report, pdfOrganizationName);
         exportData = pdfBuffer.toString("base64");
       } catch (error) {
         console.error("Error generating PDF:", error);
@@ -643,17 +687,26 @@ export async function exportAndRecordReport(
 
   // Record the export
   const supabase = createAdminClient();
-  await supabase.from("report_exports").insert({
-    organization_id: context.organizationId,
-    template_id: templateId,
-    export_format: format,
-    file_name: filename,
-    date_range_start: dateRange.start.toISOString().split("T")[0],
-    date_range_end: dateRange.end.toISOString().split("T")[0],
-    filters: (filters || {}) as Json,
-    row_count: rowCount,
-    created_by: context.userId,
-  });
+  const { data: exportRecord, error: insertError } = await supabase
+    .from("report_exports")
+    .insert({
+      organization_id: organizationId,
+      template_id: templateId,
+      export_format: format,
+      file_name: filename,
+      date_range_start: dateRange.start.toISOString().split("T")[0],
+      date_range_end: dateRange.end.toISOString().split("T")[0],
+      filters: (filters || {}) as Json,
+      row_count: rowCount,
+      created_by: createdBy,
+    })
+    .select()
+    .single();
+
+  if (insertError) {
+    console.error("Error recording report export:", insertError);
+    return { success: false, error: "Failed to record export" };
+  }
 
   return {
     success: true,
@@ -661,6 +714,7 @@ export async function exportAndRecordReport(
       data: exportData,
       filename,
       mimeType,
+      exportRecord: mapReportExportRow(exportRecord),
       ...(encoding ? { encoding } : {}),
     },
   };
@@ -700,19 +754,7 @@ export async function getReportExports(): Promise<ActionResult<ReportExport[]>> 
     return { success: false, error: "Failed to fetch export history" };
   }
 
-  const exports = (data || []).map((d) => ({
-    id: d.id,
-    organizationId: d.organization_id,
-    templateId: d.template_id,
-    exportFormat: d.export_format as ExportFormat,
-    fileName: d.file_name,
-    dateRangeStart: new Date(d.date_range_start),
-    dateRangeEnd: new Date(d.date_range_end),
-    filters: (d.filters || {}) as ReportFilters,
-    rowCount: d.row_count ?? 0,
-    createdBy: d.created_by,
-    createdAt: new Date(d.created_at!),
-  }));
+  const exports = (data || []).map(mapReportExportRow);
 
   return { success: true, data: exports };
 }

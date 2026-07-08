@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import {
-  summarizeReviewsBySource,
+  mapReviewSourceCounts,
   type ReviewsBySourceEntry,
   type ReviewsBySourceOptions,
 } from "./source-distribution";
@@ -87,10 +87,7 @@ async function getBranchUserIds(
   supabase: ReturnType<typeof createAdminClient>,
   branchId: string
 ): Promise<string[]> {
-  const { data } = await supabase
-    .from("users")
-    .select("id")
-    .eq("branch_id", branchId);
+  const { data } = await supabase.from("users").select("id").eq("branch_id", branchId);
 
   return (data || []).map((u) => u.id);
 }
@@ -133,19 +130,22 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
   // Calculate aggregate metrics
   const totalReviews = teamMembers?.reduce((sum, m) => sum + (m.total_reviews || 0), 0) || 0;
   const avgRatings = activeMembers.filter((m) => (m.average_rating || 0) > 0);
-  const averageRating = avgRatings.length > 0
-    ? avgRatings.reduce((sum, m) => sum + (m.average_rating || 0), 0) / avgRatings.length
-    : 0;
+  const averageRating =
+    avgRatings.length > 0
+      ? avgRatings.reduce((sum, m) => sum + (m.average_rating || 0), 0) / avgRatings.length
+      : 0;
 
   // Calculate team NPS from survey responses (DB-level org filter)
   const { data: surveyResponses } = await supabase
     .from("survey_responses")
-    .select(`
+    .select(
+      `
       nps_score,
       surveys!inner (
         organization_id
       )
-    `)
+    `
+    )
     .eq("surveys.organization_id", context.organizationId)
     .not("nps_score", "is", null);
 
@@ -166,7 +166,8 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
 
   const totalSurveys = surveys?.length || 0;
   const completedSurveys = surveys?.filter((s) => s.status === "completed").length || 0;
-  const averageResponseRate = totalSurveys > 0 ? Math.round((completedSurveys / totalSurveys) * 100) : 0;
+  const averageResponseRate =
+    totalSurveys > 0 ? Math.round((completedSurveys / totalSurveys) * 100) : 0;
 
   // Calculate change metrics (compare to 30 days ago)
   const thirtyDaysAgo = new Date();
@@ -189,9 +190,12 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
 
   const recentCount = recentReviews?.length || 0;
   const previousCount = previousReviews?.length || 0;
-  const totalReviewsChange = previousCount > 0
-    ? Math.round(((recentCount - previousCount) / previousCount) * 100)
-    : recentCount > 0 ? 100 : 0;
+  const totalReviewsChange =
+    previousCount > 0
+      ? Math.round(((recentCount - previousCount) / previousCount) * 100)
+      : recentCount > 0
+        ? 100
+        : 0;
 
   return {
     success: true,
@@ -219,21 +223,23 @@ export async function getReviewsBySource(
 
   const supabase = createAdminClient();
 
-  let query = supabase
-    .from("reviews")
-    .select("source")
-    .eq("organization_id", context.organizationId)
-    .eq("status", "approved");
+  const args: {
+    org_id: string;
+    start_date?: string;
+    end_date?: string;
+  } = {
+    org_id: context.organizationId,
+  };
 
   if (options.startDate) {
-    query = query.gte("review_date", options.startDate);
+    args.start_date = options.startDate;
   }
 
   if (options.endDate) {
-    query = query.lte("review_date", options.endDate);
+    args.end_date = options.endDate;
   }
 
-  const { data, error } = await query;
+  const { data, error } = await supabase.rpc("count_reviews_by_source", args);
 
   if (error) {
     console.error("Error fetching reviews by source:", error);
@@ -242,14 +248,12 @@ export async function getReviewsBySource(
 
   return {
     success: true,
-    data: summarizeReviewsBySource(data || []),
+    data: mapReviewSourceCounts(data || []),
   };
 }
 
 // Get user comparison data with optional filtering
-export async function getUserComparison(
-  branch?: string
-): Promise<ActionResult<UserComparison[]>> {
+export async function getUserComparison(branch?: string): Promise<ActionResult<UserComparison[]>> {
   const context = await getManagerContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Manager access required" };
@@ -260,7 +264,8 @@ export async function getUserComparison(
   // Build query with optional filters
   let query = supabase
     .from("users")
-    .select(`
+    .select(
+      `
       id,
       full_name,
       email,
@@ -271,7 +276,8 @@ export async function getUserComparison(
       nps_score,
       reputation_score,
       is_active
-    `)
+    `
+    )
     .eq("organization_id", context.organizationId)
     .order("reputation_score", { ascending: false });
 
@@ -341,7 +347,7 @@ export async function getUserComparison(
 
     return {
       id: u.id,
-      fullName: u.full_name || 'Unknown',
+      fullName: u.full_name || "Unknown",
       email: u.email,
       photoUrl: u.photo_url,
       branch: u.branch,
@@ -418,15 +424,17 @@ export async function getLeaderboard(
   const supabase = createAdminClient();
 
   // Determine sort field
-  const sortField = metric === "reputation"
-    ? "reputation_score"
-    : metric === "reviews"
-      ? "total_reviews"
-      : "average_rating";
+  const sortField =
+    metric === "reputation"
+      ? "reputation_score"
+      : metric === "reviews"
+        ? "total_reviews"
+        : "average_rating";
 
   const { data: leaderboardUsers, error } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       id,
       full_name,
       photo_url,
@@ -434,7 +442,8 @@ export async function getLeaderboard(
       average_rating,
       nps_score,
       reputation_score
-    `)
+    `
+    )
     .eq("organization_id", context.organizationId)
     .eq("is_active", true)
     .order(sortField, { ascending: false })
@@ -447,7 +456,7 @@ export async function getLeaderboard(
   const leaderboard: LeaderboardEntry[] = (leaderboardUsers || []).map((u, index) => ({
     rank: index + 1,
     id: u.id,
-    fullName: u.full_name || 'Unknown',
+    fullName: u.full_name || "Unknown",
     photoUrl: u.photo_url,
     totalReviews: u.total_reviews || 0,
     averageRating: u.average_rating || 0,
@@ -498,14 +507,16 @@ export async function getTeamNPSTrend(
   // Fetch NPS responses, filtering by branch if manager has one
   let surveyQuery = supabase
     .from("survey_responses")
-    .select(`
+    .select(
+      `
       nps_score,
       submitted_at,
       surveys!inner (
         organization_id,
         user_id
       )
-    `)
+    `
+    )
     .eq("surveys.organization_id", context.organizationId)
     .not("nps_score", "is", null)
     .gte("submitted_at", startDate.toISOString());
@@ -526,10 +537,7 @@ export async function getTeamNPSTrend(
   const filteredResponses = surveyResponses || [];
 
   // Group by month and calculate NPS
-  const monthlyData = new Map<
-    string,
-    { promoters: number; detractors: number; total: number }
-  >();
+  const monthlyData = new Map<string, { promoters: number; detractors: number; total: number }>();
 
   for (const response of filteredResponses) {
     if (!response.submitted_at) continue;

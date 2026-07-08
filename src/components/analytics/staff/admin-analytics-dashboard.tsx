@@ -115,14 +115,13 @@ export function AdminAnalyticsDashboard() {
   const [reviewsBySource, setReviewsBySource] = useState<ReviewsBySourceEntry[]>([]);
   const [sourceDateRange, setSourceDateRange] = useState<AdminDateRange>("30d");
 
-  const loadData = useCallback(() => {
+  const loadStaticData = useCallback(() => {
     startTransition(async () => {
-      const [metricsResult, topResult, lowResult, allResult, sourceResult] = await Promise.all([
+      const [metricsResult, topResult, lowResult, allResult] = await Promise.all([
         getTeamMetrics(),
         getLeaderboard(5, "reputation"),
         getLowPerformers(),
         getUserComparison(),
-        getReviewsBySource(getDateRangeValues(sourceDateRange)),
       ]);
 
       if (metricsResult.success && metricsResult.data) {
@@ -137,6 +136,12 @@ export function AdminAnalyticsDashboard() {
       if (allResult.success && allResult.data) {
         setAllUsers(allResult.data);
       }
+    });
+  }, []);
+
+  const loadSourceData = useCallback(() => {
+    startTransition(async () => {
+      const sourceResult = await getReviewsBySource(getDateRangeValues(sourceDateRange));
       if (sourceResult.success && sourceResult.data) {
         setReviewsBySource(sourceResult.data);
       }
@@ -144,8 +149,12 @@ export function AdminAnalyticsDashboard() {
   }, [sourceDateRange]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadStaticData();
+  }, [loadStaticData]);
+
+  useEffect(() => {
+    loadSourceData();
+  }, [loadSourceData]);
 
   // Calculate review distribution by performance status
   const performanceDistribution = allUsers.reduce(
@@ -206,9 +215,7 @@ export function AdminAnalyticsDashboard() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Avg Rating</p>
-                  <p className="text-xl font-bold">
-                    {metrics?.averageRating?.toFixed(1) || "0.0"}
-                  </p>
+                  <p className="text-xl font-bold">{metrics?.averageRating?.toFixed(1) || "0.0"}</p>
                 </div>
               </div>
               <TrendIndicator value={metrics?.averageRatingChange || 0} />
@@ -266,7 +273,9 @@ export function AdminAnalyticsDashboard() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                     <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
                   </div>
-                  <CardTitle className="text-lg font-semibold">Review Distribution by Source</CardTitle>
+                  <CardTitle className="text-lg font-semibold">
+                    Review Distribution by Source
+                  </CardTitle>
                 </div>
                 <div className="flex items-center gap-2">
                   <CalendarDots className="h-4 w-4 text-muted-foreground" />
@@ -274,7 +283,10 @@ export function AdminAnalyticsDashboard() {
                     value={sourceDateRange}
                     onValueChange={(value) => setSourceDateRange(value as AdminDateRange)}
                   >
-                    <SelectTrigger className="h-9 w-[150px]" aria-label="Select review source date range">
+                    <SelectTrigger
+                      className="h-9 w-[150px]"
+                      aria-label="Select review source date range"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -293,15 +305,22 @@ export function AdminAnalyticsDashboard() {
               {reviewBySource.length === 0 ? (
                 <div className="flex h-[250px] items-center justify-center text-muted-foreground">
                   <div className="text-center">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                    <BarChart3 className="mx-auto mb-3 h-12 w-12 opacity-20" />
                     <p className="text-sm">No source data for this range</p>
                   </div>
                 </div>
               ) : (
                 <div className="h-[250px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={reviewBySource} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <BarChart
+                      data={reviewBySource}
+                      margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="hsl(var(--border))"
+                      />
                       <XAxis
                         dataKey="name"
                         axisLine={false}
@@ -319,11 +338,7 @@ export function AdminAnalyticsDashboard() {
                         contentStyle={CHART_TOOLTIP_STYLE}
                         formatter={(value: number) => [value, "Reviews"]}
                       />
-                      <Bar
-                        dataKey="reviews"
-                        fill="hsl(var(--chart-1))"
-                        radius={[4, 4, 0, 0]}
-                      />
+                      <Bar dataKey="reviews" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -346,7 +361,7 @@ export function AdminAnalyticsDashboard() {
             {topPerformers.length === 0 ? (
               <div className="flex h-[220px] items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <Trophy className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <Trophy className="mx-auto mb-3 h-12 w-12 opacity-20" />
                   <p className="text-sm">No data available yet</p>
                 </div>
               </div>
@@ -363,10 +378,11 @@ export function AdminAnalyticsDashboard() {
                         {getInitials(performer.fullName)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{performer.fullName}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{performer.fullName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {performer.averageRating.toFixed(1)} stars / {performer.totalReviews} reviews
+                        {performer.averageRating.toFixed(1)} stars / {performer.totalReviews}{" "}
+                        reviews
                       </p>
                     </div>
                   </div>
@@ -393,7 +409,7 @@ export function AdminAnalyticsDashboard() {
             {pieData.length === 0 ? (
               <div className="flex h-[220px] items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <Users className="mx-auto mb-3 h-12 w-12 opacity-20" />
                   <p className="text-sm">No performance data available yet</p>
                 </div>
               </div>
@@ -412,7 +428,10 @@ export function AdminAnalyticsDashboard() {
                         dataKey="value"
                       >
                         {pieData.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={CHART_COLORS[index % CHART_COLORS.length]}
+                          />
                         ))}
                       </Pie>
                       <Tooltip
@@ -453,7 +472,7 @@ export function AdminAnalyticsDashboard() {
             {lowPerformers.length === 0 ? (
               <div className="flex h-[220px] items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <AlertTriangle className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <AlertTriangle className="mx-auto mb-3 h-12 w-12 opacity-20" />
                   <p className="text-sm">All team members performing well!</p>
                 </div>
               </div>
@@ -467,8 +486,8 @@ export function AdminAnalyticsDashboard() {
                         {getInitials(member.fullName)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{member.fullName}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{member.fullName}</p>
                       <p className="text-xs text-muted-foreground">
                         {member.averageRating.toFixed(1)} stars / NPS: {member.npsScore}
                       </p>

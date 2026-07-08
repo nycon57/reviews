@@ -1,33 +1,24 @@
 import type { ReactNode } from "react";
 import { existsSync } from "fs";
 import { join } from "path";
-import {
-  Document,
-  Font,
-  Page,
-  StyleSheet,
-  Text,
-  View,
-  renderToBuffer,
-} from "@react-pdf/renderer";
+import { Document, Font, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import { format } from "date-fns";
-import type {
-  GeneratedReport,
-  TeamComparisonRow,
-} from "@/lib/reporting/types";
+import { brandColors } from "@/lib/brand/colors";
+import { PERFORMANCE_STATUS_META } from "@/lib/reporting/templates";
+import type { GeneratedReport, TeamComparisonRow } from "@/lib/reporting/types";
 
 const COLORS = {
-  teal500: "#2f3e46",
-  teal400: "#354f52",
-  teal300: "#52796f",
-  sage200: "#84a98c",
-  sage100: "#cad2c5",
-  background: "#f8faf8",
-  muted: "#eef2ee",
-  border: "#e2e8e4",
-  amber: "#d4a574",
-  coral: "#c47c7c",
-  white: "#ffffff",
+  teal500: brandColors.repwell.teal[500],
+  teal400: brandColors.repwell.teal[400],
+  teal300: brandColors.repwell.teal[300],
+  sage200: brandColors.repwell.sage[200],
+  sage100: brandColors.repwell.sage[100],
+  background: brandColors.background.subtle,
+  muted: brandColors.background.muted,
+  border: brandColors.border.default,
+  amber: brandColors.accent.warning,
+  coral: brandColors.accent.error,
+  white: brandColors.background.white,
 };
 
 let headingFontFamily = "Helvetica";
@@ -352,23 +343,25 @@ function BreakdownRow({
         </Text>
       </View>
       <View style={styles.barTrack}>
-        <View style={[styles.barFill, { width: boundedPercent(percent), backgroundColor: color }]} />
+        <View
+          style={[styles.barFill, { width: boundedPercent(percent), backgroundColor: color }]}
+        />
       </View>
     </View>
   );
 }
 
 function StatusBadge({ status }: { status: TeamComparisonRow["performanceStatus"] }) {
-  const colors: Record<TeamComparisonRow["performanceStatus"], { backgroundColor: string; color: string }> = {
-    excellent: { backgroundColor: "#e7efe5", color: COLORS.teal400 },
-    good: { backgroundColor: "#edf3f1", color: COLORS.teal300 },
-    needs_attention: { backgroundColor: "#f6ecdd", color: "#8a6533" },
-    at_risk: { backgroundColor: "#f4e1e1", color: "#8a3d3d" },
-  };
+  const statusMeta = PERFORMANCE_STATUS_META[status];
 
   return (
-    <Text style={[styles.statusBadge, colors[status]]}>
-      {status.replace("_", " ")}
+    <Text
+      style={[
+        styles.statusBadge,
+        { backgroundColor: statusMeta.backgroundColor, color: statusMeta.color },
+      ]}
+    >
+      {statusMeta.label}
     </Text>
   );
 }
@@ -405,9 +398,9 @@ function TrendTable({
 function hasTrendContent(report: GeneratedReport): boolean {
   return Boolean(
     report.trends &&
-      (report.trends.nps.length > 0 ||
-        report.trends.csat.length > 0 ||
-        report.trends.reviews.length > 0)
+    (report.trends.nps.length > 0 ||
+      report.trends.csat.length > 0 ||
+      report.trends.reviews.length > 0)
   );
 }
 
@@ -440,7 +433,9 @@ function ReportPage({
       {children}
       <View style={styles.footerRule} />
       <Text style={styles.footerBrand}>RepWell</Text>
-      <Text style={styles.footerPage}>Page {pageNumber} of {totalPages}</Text>
+      <Text style={styles.footerPage}>
+        Page {pageNumber} of {totalPages}
+      </Text>
     </Page>
   );
 }
@@ -475,10 +470,18 @@ function TeamPerformanceTable({
       <View style={styles.table}>
         <View style={styles.tableHeader}>
           <Text style={[styles.tableCell, styles.tableHeadCell, { width: "32%" }]}>Name</Text>
-          <Text style={[styles.tableCell, styles.tableHeadCell, styles.right, { width: "13%" }]}>Reviews</Text>
-          <Text style={[styles.tableCell, styles.tableHeadCell, styles.right, { width: "13%" }]}>Rating</Text>
-          <Text style={[styles.tableCell, styles.tableHeadCell, styles.right, { width: "13%" }]}>NPS</Text>
-          <Text style={[styles.tableCell, styles.tableHeadCell, styles.right, { width: "14%" }]}>Response</Text>
+          <Text style={[styles.tableCell, styles.tableHeadCell, styles.right, { width: "13%" }]}>
+            Reviews
+          </Text>
+          <Text style={[styles.tableCell, styles.tableHeadCell, styles.right, { width: "13%" }]}>
+            Rating
+          </Text>
+          <Text style={[styles.tableCell, styles.tableHeadCell, styles.right, { width: "13%" }]}>
+            NPS
+          </Text>
+          <Text style={[styles.tableCell, styles.tableHeadCell, styles.right, { width: "14%" }]}>
+            Response
+          </Text>
           <Text style={[styles.tableCell, styles.tableHeadCell, { width: "15%" }]}>Status</Text>
         </View>
         {rows.map((member) => (
@@ -519,9 +522,8 @@ function ReportPdfDocument({
   const trendContent = hasTrendContent(report);
   const teamRows = report.teamComparison || [];
   const teamChunks = chunkTeamRows(teamRows, trendContent ? 12 : 18, 22);
-  const detailPageCount = trendContent || teamChunks.length > 0
-    ? Math.max(1, teamChunks.length)
-    : 0;
+  const detailPageCount =
+    trendContent || teamChunks.length > 0 ? Math.max(1, teamChunks.length) : 0;
   const totalPages = 1 + detailPageCount;
 
   return (
@@ -556,7 +558,7 @@ function ReportPdfDocument({
           </View>
         </View>
 
-        {(report.npsBreakdown || report.csatMetrics) ? (
+        {report.npsBreakdown || report.csatMetrics ? (
           <View style={[styles.section, styles.twoColumnGrid]} wrap={false}>
             {report.npsBreakdown ? (
               <View style={styles.halfColumn}>
@@ -642,7 +644,5 @@ export async function renderReportPdf(
   report: GeneratedReport,
   organizationName: string
 ): Promise<Buffer> {
-  return renderToBuffer(
-    <ReportPdfDocument report={report} organizationName={organizationName} />
-  );
+  return renderToBuffer(<ReportPdfDocument report={report} organizationName={organizationName} />);
 }

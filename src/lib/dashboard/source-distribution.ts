@@ -11,21 +11,15 @@ export interface ReviewsBySourceOptions {
   endDate?: string;
 }
 
-export function summarizeReviewsBySource(
-  reviews: Array<{ source: string | null | undefined }>
-): ReviewsBySourceEntry[] {
-  const counts = new Map<string, number>();
+export type ReviewSourceCountRow = {
+  source: string;
+  review_count: number;
+};
 
-  for (const review of reviews) {
-    const source = String(review.source ?? "").trim() || "unknown";
-    counts.set(source, (counts.get(source) || 0) + 1);
-  }
-
-  return Array.from(counts.entries())
-    .map(([source, count]) => ({
-      source,
-      label: formatReviewSource(source),
-      count,
-    }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+export function mapReviewSourceCounts(rows: ReviewSourceCountRow[]): ReviewsBySourceEntry[] {
+  return rows.map((row) => ({
+    source: row.source,
+    label: formatReviewSource(row.source),
+    count: Number(row.review_count),
+  }));
 }

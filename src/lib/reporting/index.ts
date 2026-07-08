@@ -40,10 +40,7 @@ export {
 } from "./engine";
 
 // Export functions (server actions)
-export {
-  exportReportToCSV,
-  generateReportHTML,
-} from "./export";
+export { exportReportToCSV } from "./export";
 
 // Actions (server actions)
 export {
@@ -57,5 +54,6 @@ export {
   revokeReportShare,
   getReportShares,
   exportAndRecordReport,
+  exportAndRecordReportForOrg,
   getReportExports,
 } from "./actions";

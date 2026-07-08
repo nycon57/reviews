@@ -8,6 +8,7 @@ import type {
   ReportSection,
   ReportMetric,
   ReportChart,
+  TeamComparisonRow,
 } from "./types";
 
 // Monthly Performance Report Template
@@ -57,11 +58,7 @@ export const TEAM_SUMMARY_CONFIG: ReportTemplateConfig = {
     "response_rate",
     "reputation_score",
   ] as ReportMetric[],
-  charts: [
-    "team_comparison_bar",
-    "performance_pie",
-    "nps_trend",
-  ] as ReportChart[],
+  charts: ["team_comparison_bar", "performance_pie", "nps_trend"] as ReportChart[],
   includeComparison: true,
   showTrends: true,
   granularity: "weekly",
@@ -127,6 +124,32 @@ export const METRIC_INFO: Record<ReportMetric, { label: string; description: str
   reputation_score: {
     label: "Reputation Score",
     description: "Overall reputation (0-100)",
+  },
+};
+
+export const PERFORMANCE_STATUS_META: Record<
+  TeamComparisonRow["performanceStatus"],
+  { label: string; backgroundColor: string; color: string }
+> = {
+  excellent: {
+    label: "excellent",
+    backgroundColor: "#e7efe5",
+    color: "#354f52",
+  },
+  good: {
+    label: "good",
+    backgroundColor: "#edf3f1",
+    color: "#52796f",
+  },
+  needs_attention: {
+    label: "needs attention",
+    backgroundColor: "#f6ecdd",
+    color: "#8a6533",
+  },
+  at_risk: {
+    label: "at risk",
+    backgroundColor: "#f4e1e1",
+    color: "#8a3d3d",
   },
 };
 

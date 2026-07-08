@@ -145,7 +145,7 @@ describe("getAIInsightsData", () => {
     expect(result.success).toBe(true);
     expect(supabase.from.mock.calls.filter(([table]) => table === "reviews")).toHaveLength(1);
     expect(supabase.builders.reviews[0].select).toHaveBeenCalledWith(
-      "id, user_id, review_date, sentiment_score, sentiment_label, themes, key_phrases, text, rating"
+      "review_date, sentiment_score, sentiment_label, themes, key_phrases, text, rating"
     );
 
     expect(result.data?.sentimentDistribution).toEqual({
@@ -160,12 +160,8 @@ describe("getAIInsightsData", () => {
       sentiment: "positive",
       recentOccurrences: 1,
     });
-    expect(result.data?.themeFrequencies.map((theme) => theme.theme)).toContain(
-      "communication"
-    );
-    expect(result.data?.recommendations.some((rec) => rec.category === "timeliness")).toBe(
-      true
-    );
+    expect(result.data?.themeFrequencies.map((theme) => theme.theme)).toContain("communication");
+    expect(result.data?.recommendations.some((rec) => rec.category === "timeliness")).toBe(true);
     expect(result.data?.summary?.summary).toContain("2 customer reviews");
   });
 });

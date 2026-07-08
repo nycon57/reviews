@@ -165,6 +165,7 @@ export interface ReportExportPayload {
   filename: string;
   mimeType: string;
   encoding?: "base64";
+  exportRecord: ReportExport;
 }
 
 // Executive summary data

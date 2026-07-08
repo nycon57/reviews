@@ -46,7 +46,20 @@ function stringArray(value: unknown): string[] {
  * Get user context for analytics operations.
  * Wrapped with cache() to deduplicate within a single RSC request.
  */
-const getUserContext = cache(async function getUserContextInner() {
+const getUserContext = cache(async function getUserContextInner(explicitContext?: {
+  organizationId: string;
+}) {
+  if (explicitContext) {
+    return {
+      userId: null,
+      organizationId: explicitContext.organizationId,
+      role: "admin",
+      accountType: "enterprise",
+      loanOfficerId: null,
+      loanOfficerName: null,
+    };
+  }
+
   const user = await unifiedGetUser();
 
   if (!user) {
@@ -57,9 +70,7 @@ const getUserContext = cache(async function getUserContextInner() {
 
   const { data: userData } = await supabase
     .from("users")
-    .select(
-      "id, organization_id, role, full_name, organizations(subscription_tier, account_type)"
-    )
+    .select("id, organization_id, role, full_name, organizations(subscription_tier, account_type)")
     .eq("id", user.id)
     .single();
 
@@ -90,8 +101,6 @@ const getUserContext = cache(async function getUserContextInner() {
 type InsightsUserContext = NonNullable<Awaited<ReturnType<typeof getUserContext>>>;
 
 type InsightsReviewRow = {
-  id: string;
-  user_id: string | null;
   review_date: string;
   sentiment_score: number | null;
   sentiment_label: string | null;
@@ -115,9 +124,7 @@ const getInsightsReviewRows = cache(async function getInsightsReviewRowsInner(
 
   let query = supabase
     .from("reviews")
-    .select(
-      "id, user_id, review_date, sentiment_score, sentiment_label, themes, key_phrases, text, rating"
-    )
+    .select("review_date, sentiment_score, sentiment_label, themes, key_phrases, text, rating")
     .eq("organization_id", organizationId)
     .gte("review_date", startDateIso)
     .order("review_date", { ascending: true });
@@ -167,10 +174,7 @@ function reviewDate(review: InsightsReviewRow): Date {
   return new Date(review.review_date);
 }
 
-function filterReviewsFrom(
-  reviews: InsightsReviewRow[],
-  startDate: Date
-): InsightsReviewRow[] {
+function filterReviewsFrom(reviews: InsightsReviewRow[], startDate: Date): InsightsReviewRow[] {
   return reviews.filter((review) => reviewDate(review) >= startDate);
 }
 
@@ -193,7 +197,7 @@ export async function getSentimentTrend(
   months: number = 6,
   sharedDataset?: SharedInsightsDataset
 ): Promise<ActionResult<SentimentTrendPoint[]>> {
-  const context = sharedDataset?.context ?? await getUserContext();
+  const context = sharedDataset?.context ?? (await getUserContext());
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -264,9 +268,7 @@ export async function getSentimentTrend(
     };
     const total = entry.positive + entry.neutral + entry.negative;
     const avgScore =
-      entry.scores.length > 0
-        ? entry.scores.reduce((a, b) => a + b, 0) / entry.scores.length
-        : 0;
+      entry.scores.length > 0 ? entry.scores.reduce((a, b) => a + b, 0) / entry.scores.length : 0;
 
     trendPoints.push({
       date: monthLabel,
@@ -289,7 +291,7 @@ export async function getThemeFrequencies(
   months: number = 6,
   sharedDataset?: SharedInsightsDataset
 ): Promise<ActionResult<ThemeFrequency[]>> {
-  const context = sharedDataset?.context ?? await getUserContext();
+  const context = sharedDataset?.context ?? (await getUserContext());
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -385,8 +387,7 @@ export async function getThemeFrequencies(
       return {
         theme,
         count: entry.count,
-        percentage:
-          totalReviews > 0 ? Math.round((entry.count / totalReviews) * 100) : 0,
+        percentage: totalReviews > 0 ? Math.round((entry.count / totalReviews) * 100) : 0,
         sentimentBreakdown: {
           positive: entry.positive,
           neutral: entry.neutral,
@@ -409,7 +410,7 @@ export async function getTopKeyPhrases(
   limit: number = 20,
   sharedDataset?: SharedInsightsDataset
 ): Promise<ActionResult<KeyPhraseData[]>> {
-  const context = sharedDataset?.context ?? await getUserContext();
+  const context = sharedDataset?.context ?? (await getUserContext());
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -502,7 +503,7 @@ export async function getSentimentDistribution(
     total: number;
   }>
 > {
-  const context = sharedDataset?.context ?? await getUserContext();
+  const context = sharedDataset?.context ?? (await getUserContext());
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -543,7 +544,7 @@ export async function generateAISummary(
   months: number = 1,
   sharedDataset?: SharedInsightsDataset
 ): Promise<ActionResult<AIInsightsSummary>> {
-  const context = sharedDataset?.context ?? await getUserContext();
+  const context = sharedDataset?.context ?? (await getUserContext());
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -598,15 +599,13 @@ export async function generateAISummary(
     const label = (review.sentiment_label as SentimentLabel) || "neutral";
     sentiments[label]++;
     if (review.themes) allThemes.push(...(review.themes as string[]));
-    if (review.key_phrases)
-      allKeyPhrases.push(...(review.key_phrases as string[]));
+    if (review.key_phrases) allKeyPhrases.push(...(review.key_phrases as string[]));
     if (review.rating) ratings.push(review.rating);
   }
 
   const avgRating =
     ratings.length > 0
-      ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) /
-        10
+      ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
       : 0;
   const total = reviews.length;
   const positiveRate = Math.round((sentiments.positive / total) * 100);
@@ -758,28 +757,22 @@ Generate a monthly performance summary.`;
   const highlights: string[] = [];
   const improvements: string[] = [];
 
-  if (positiveRate >= 70)
-    highlights.push(`${positiveRate}% of reviews were positive`);
-  if (avgRating >= 4.5)
-    highlights.push(`Maintained an excellent ${avgRating}/5 average rating`);
-  if (topThemes.includes("service"))
-    highlights.push("Customer service was frequently praised");
+  if (positiveRate >= 70) highlights.push(`${positiveRate}% of reviews were positive`);
+  if (avgRating >= 4.5) highlights.push(`Maintained an excellent ${avgRating}/5 average rating`);
+  if (topThemes.includes("service")) highlights.push("Customer service was frequently praised");
   if (topThemes.includes("professionalism"))
     highlights.push("Professional conduct noted by customers");
   if (topThemes.includes("communication"))
     highlights.push("Strong communication skills recognized");
 
-  if (negativeRate > 10)
-    improvements.push(`Address the ${negativeRate}% negative feedback`);
+  if (negativeRate > 10) improvements.push(`Address the ${negativeRate}% negative feedback`);
   if (topThemes.includes("timeliness") && negativeRate > 5)
     improvements.push("Consider improving response times");
   if (topThemes.includes("documentation") && negativeRate > 5)
     improvements.push("Streamline documentation process");
 
-  if (highlights.length === 0)
-    highlights.push("Continue maintaining quality service");
-  if (improvements.length === 0)
-    improvements.push("Gather more customer feedback for insights");
+  if (highlights.length === 0) highlights.push("Continue maintaining quality service");
+  if (improvements.length === 0) improvements.push("Gather more customer feedback for insights");
 
   return {
     success: true,
@@ -804,7 +797,7 @@ export async function getImprovementRecommendations(
   loanOfficerId?: string,
   sharedDataset?: SharedInsightsDataset
 ): Promise<ActionResult<ImprovementRecommendation[]>> {
-  const context = sharedDataset?.context ?? await getUserContext();
+  const context = sharedDataset?.context ?? (await getUserContext());
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -815,9 +808,7 @@ export async function getImprovementRecommendations(
   let negativeReviews: InsightsReviewRow[];
   if (sharedDataset) {
     negativeReviews = filterReviewsFrom(sharedDataset.reviews, startDate).filter(
-      (review) =>
-        review.sentiment_label === "negative" ||
-        review.sentiment_label === "neutral"
+      (review) => review.sentiment_label === "negative" || review.sentiment_label === "neutral"
     );
   } else {
     const dataset = await getSharedInsightsDataset(context, loanOfficerId, startDate);
@@ -828,9 +819,7 @@ export async function getImprovementRecommendations(
       };
     }
     negativeReviews = dataset.data.reviews.filter(
-      (review) =>
-        review.sentiment_label === "negative" ||
-        review.sentiment_label === "neutral"
+      (review) => review.sentiment_label === "negative" || review.sentiment_label === "neutral"
     );
   }
 
@@ -868,8 +857,7 @@ export async function getImprovementRecommendations(
     },
     process: {
       title: "Streamline the Loan Process",
-      description:
-        "Reviews indicate the loan process may feel complex or unclear to customers.",
+      description: "Reviews indicate the loan process may feel complex or unclear to customers.",
       actionItems: [
         "Create a visual timeline of the loan journey",
         "Provide clear checklists for required documents",
@@ -880,8 +868,7 @@ export async function getImprovementRecommendations(
     },
     service: {
       title: "Elevate Customer Service Quality",
-      description:
-        "General service experience has room for improvement based on feedback.",
+      description: "General service experience has room for improvement based on feedback.",
       actionItems: [
         "Respond to inquiries within 4 business hours",
         "Personalize interactions by remembering customer details",
@@ -916,8 +903,7 @@ export async function getImprovementRecommendations(
     },
     knowledge: {
       title: "Deepen Product Knowledge",
-      description:
-        "Some customers felt questions were not answered with sufficient expertise.",
+      description: "Some customers felt questions were not answered with sufficient expertise.",
       actionItems: [
         "Attend regular training on new loan products",
         "Stay updated on current market rates",
@@ -940,8 +926,7 @@ export async function getImprovementRecommendations(
     },
     closing: {
       title: "Optimize the Closing Experience",
-      description:
-        "The closing process has been mentioned in negative feedback.",
+      description: "The closing process has been mentioned in negative feedback.",
       actionItems: [
         "Send detailed closing day instructions",
         "Confirm all documents are ready in advance",
@@ -952,8 +937,7 @@ export async function getImprovementRecommendations(
     },
     documentation: {
       title: "Simplify Documentation Requirements",
-      description:
-        "Paperwork and documentation processes have caused friction.",
+      description: "Paperwork and documentation processes have caused friction.",
       actionItems: [
         "Use digital document signing",
         "Create clear document checklists",
@@ -1053,13 +1037,8 @@ export async function getIndustryBenchmarks(
   }
 
   // Calculate current metrics
-  const ratings = (reviews || [])
-    .filter((r) => r.rating !== null)
-    .map((r) => r.rating!);
-  const avgRating =
-    ratings.length > 0
-      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
-      : 0;
+  const ratings = (reviews || []).filter((r) => r.rating !== null).map((r) => r.rating!);
+  const avgRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
 
   const sentiments = { positive: 0, neutral: 0, negative: 0 };
   for (const review of reviews || []) {
@@ -1098,9 +1077,7 @@ export async function getIndustryBenchmarks(
   if (npsScores.length > 0) {
     const promoters = npsScores.filter((s) => s >= 9).length;
     const detractors = npsScores.filter((s) => s <= 6).length;
-    nps = Math.round(
-      ((promoters - detractors) / npsScores.length) * 100
-    );
+    nps = Math.round(((promoters - detractors) / npsScores.length) * 100);
   }
 
   // Industry benchmarks (mortgage industry averages)
@@ -1111,12 +1088,7 @@ export async function getIndustryBenchmarks(
       industryAverage: 4.2,
       topPerformers: 4.8,
       percentile: calculatePercentile(avgRating, 4.2, 4.8),
-      trend:
-        avgRating >= 4.8
-          ? "above"
-          : avgRating >= 4.2
-            ? "at"
-            : "below",
+      trend: avgRating >= 4.8 ? "above" : avgRating >= 4.2 ? "at" : "below",
     },
     {
       metric: "NPS Score",
@@ -1132,12 +1104,7 @@ export async function getIndustryBenchmarks(
       industryAverage: 65,
       topPerformers: 85,
       percentile: calculatePercentile(positiveRate, 65, 85),
-      trend:
-        positiveRate >= 85
-          ? "above"
-          : positiveRate >= 65
-            ? "at"
-            : "below",
+      trend: positiveRate >= 85 ? "above" : positiveRate >= 65 ? "at" : "below",
     },
     {
       metric: "Review Volume (3mo)",
@@ -1152,11 +1119,7 @@ export async function getIndustryBenchmarks(
   return { success: true, data: benchmarks };
 }
 
-function calculatePercentile(
-  value: number,
-  average: number,
-  top: number
-): number {
+function calculatePercentile(value: number, average: number, top: number): number {
   if (value >= top) return 95;
   if (value <= 0) return 5;
 
@@ -1443,23 +1406,15 @@ export async function getSmartActionItems(
   // LOW PRIORITY: Response time improvement
   const ratingData = ratingResult.data || [];
   if (ratingData.length >= 5) {
-    const recent = ratingData.filter(
-      (r) => new Date(r.review_date) >= thirtyDaysAgo
-    );
+    const recent = ratingData.filter((r) => new Date(r.review_date) >= thirtyDaysAgo);
     const older = ratingData.filter(
-      (r) =>
-        new Date(r.review_date) < thirtyDaysAgo &&
-        new Date(r.review_date) >= sixtyDaysAgo
+      (r) => new Date(r.review_date) < thirtyDaysAgo && new Date(r.review_date) >= sixtyDaysAgo
     );
 
     const recentAvg =
-      recent.length > 0
-        ? recent.reduce((sum, r) => sum + r.rating!, 0) / recent.length
-        : 0;
+      recent.length > 0 ? recent.reduce((sum, r) => sum + r.rating!, 0) / recent.length : 0;
     const olderAvg =
-      older.length > 0
-        ? older.reduce((sum, r) => sum + r.rating!, 0) / older.length
-        : 0;
+      older.length > 0 ? older.reduce((sum, r) => sum + r.rating!, 0) / older.length : 0;
 
     if (olderAvg > 0 && recentAvg > olderAvg + 0.2) {
       const improvement = Math.round((recentAvg - olderAvg) * 10) / 10;
@@ -1581,13 +1536,9 @@ export async function getLOPerformanceScorecard(
   const surveys = surveysResult.data || [];
 
   // Review velocity: this month vs last month
-  const thisMonthReviews = reviews.filter(
-    (r) => new Date(r.review_date) >= thirtyDaysAgo
-  );
+  const thisMonthReviews = reviews.filter((r) => new Date(r.review_date) >= thirtyDaysAgo);
   const lastMonthReviews = reviews.filter(
-    (r) =>
-      new Date(r.review_date) >= sixtyDaysAgo &&
-      new Date(r.review_date) < thirtyDaysAgo
+    (r) => new Date(r.review_date) >= sixtyDaysAgo && new Date(r.review_date) < thirtyDaysAgo
   );
 
   const currentVelocity = thisMonthReviews.length;
@@ -1607,51 +1558,38 @@ export async function getLOPerformanceScorecard(
     });
     if (filtered.length === 0) return 0;
     return (
-      Math.round(
-        (filtered.reduce((sum, r) => sum + r.rating!, 0) / filtered.length) * 10
-      ) / 10
+      Math.round((filtered.reduce((sum, r) => sum + r.rating!, 0) / filtered.length) * 10) / 10
     );
   };
 
   const allRatings = reviews.filter((r) => r.rating != null);
   const currentRating =
     allRatings.length > 0
-      ? Math.round(
-          (allRatings.reduce((sum, r) => sum + r.rating!, 0) / allRatings.length) *
-            10
-        ) / 10
+      ? Math.round((allRatings.reduce((sum, r) => sum + r.rating!, 0) / allRatings.length) * 10) /
+        10
       : 0;
 
   // Response rate
-  const respondedCount = thisMonthReviews.filter(
-    (r) => r.response_text != null
-  ).length;
+  const respondedCount = thisMonthReviews.filter((r) => r.response_text != null).length;
   const loResponseRate =
-    thisMonthReviews.length > 0
-      ? Math.round((respondedCount / thisMonthReviews.length) * 100)
-      : 0;
+    thisMonthReviews.length > 0 ? Math.round((respondedCount / thisMonthReviews.length) * 100) : 0;
 
   const orgResponded = orgReviews.filter((r) => r.response_text != null).length;
   const orgResponseRate =
-    orgReviews.length > 0
-      ? Math.round((orgResponded / orgReviews.length) * 100)
-      : 0;
+    orgReviews.length > 0 ? Math.round((orgResponded / orgReviews.length) * 100) : 0;
 
   // Average response time (hours)
   const responseTimes = reviews
     .filter((r) => r.response_at && r.review_date)
     .map((r) => {
-      const diff =
-        new Date(r.response_at!).getTime() - new Date(r.review_date).getTime();
+      const diff = new Date(r.response_at!).getTime() - new Date(r.review_date).getTime();
       return diff / (1000 * 60 * 60); // hours
     })
     .filter((h) => h > 0 && h < 720); // filter outliers > 30 days
 
   const avgResponseTime =
     responseTimes.length > 0
-      ? Math.round(
-          responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
-        )
+      ? Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length)
       : 0;
 
   // Sentiment trajectory
@@ -1679,9 +1617,7 @@ export async function getLOPerformanceScorecard(
         : ("stable" as const);
 
   // Survey completion rate
-  const completedSurveys = surveys.filter(
-    (s) => s.status === "completed"
-  ).length;
+  const completedSurveys = surveys.filter((s) => s.status === "completed").length;
   const sentSurveys = surveys.filter((s) =>
     ["sent", "opened", "completed", "expired"].includes(s.status || "")
   ).length;
@@ -1690,14 +1626,10 @@ export async function getLOPerformanceScorecard(
 
   // Request-to-review conversion (aligned 30-day window)
   const surveysLast30d = surveys.filter(
-    (s) =>
-      s.status !== "draft" &&
-      new Date(s.created_at!) >= thirtyDaysAgo
+    (s) => s.status !== "draft" && new Date(s.created_at!) >= thirtyDaysAgo
   ).length;
   const conversionRate =
-    surveysLast30d > 0
-      ? Math.round((thisMonthReviews.length / surveysLast30d) * 100)
-      : 0;
+    surveysLast30d > 0 ? Math.round((thisMonthReviews.length / surveysLast30d) * 100) : 0;
 
   // Top themes
   const positiveThemes = new Map<string, number>();
@@ -1737,9 +1669,7 @@ export async function getLOPerformanceScorecard(
     .map((r) => r.nps_score!);
   const olderNpsScores = loNps
     .filter(
-      (r) =>
-        new Date(r.submitted_at!) >= sixtyDaysAgo &&
-        new Date(r.submitted_at!) < thirtyDaysAgo
+      (r) => new Date(r.submitted_at!) >= sixtyDaysAgo && new Date(r.submitted_at!) < thirtyDaysAgo
     )
     .map((r) => r.nps_score!);
 
@@ -1786,12 +1716,7 @@ export async function getLOPerformanceScorecard(
       npsTrend: {
         current: currentNPS,
         previous: previousNPS,
-        direction:
-          currentNPS > previousNPS
-            ? "up"
-            : currentNPS < previousNPS
-              ? "down"
-              : "stable",
+        direction: currentNPS > previousNPS ? "up" : currentNPS < previousNPS ? "down" : "stable",
       },
       coachingBrief,
       generatedAt: now,
@@ -1806,9 +1731,7 @@ export async function getLOPerformanceScorecard(
 /**
  * Get team activity monitor data (managers/admins only)
  */
-export async function getTeamActivityMonitor(): Promise<
-  ActionResult<TeamActivityMonitor>
-> {
+export async function getTeamActivityMonitor(): Promise<ActionResult<TeamActivityMonitor>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
@@ -1859,29 +1782,26 @@ export async function getTeamActivityMonitor(): Promise<
   }
 
   // Fetch all org data in parallel
-  const [reviewsResult, surveysThisWeekResult, surveysPrevWeekResult] =
-    await Promise.all([
-      supabase
-        .from("reviews")
-        .select(
-          "id, user_id, rating, review_date, response_text, response_at, sentiment_label"
-        )
-        .eq("organization_id", context.organizationId)
-        .gte("review_date", sixtyDaysAgo.toISOString()),
+  const [reviewsResult, surveysThisWeekResult, surveysPrevWeekResult] = await Promise.all([
+    supabase
+      .from("reviews")
+      .select("id, user_id, rating, review_date, response_text, response_at, sentiment_label")
+      .eq("organization_id", context.organizationId)
+      .gte("review_date", sixtyDaysAgo.toISOString()),
 
-      supabase
-        .from("surveys")
-        .select("id, user_id")
-        .eq("organization_id", context.organizationId)
-        .gte("sent_at", sevenDaysAgo.toISOString()),
+    supabase
+      .from("surveys")
+      .select("id, user_id")
+      .eq("organization_id", context.organizationId)
+      .gte("sent_at", sevenDaysAgo.toISOString()),
 
-      supabase
-        .from("surveys")
-        .select("id, user_id")
-        .eq("organization_id", context.organizationId)
-        .gte("sent_at", fourteenDaysAgo.toISOString())
-        .lt("sent_at", sevenDaysAgo.toISOString()),
-    ]);
+    supabase
+      .from("surveys")
+      .select("id, user_id")
+      .eq("organization_id", context.organizationId)
+      .gte("sent_at", fourteenDaysAgo.toISOString())
+      .lt("sent_at", sevenDaysAgo.toISOString()),
+  ]);
 
   const allReviews = reviewsResult.data || [];
   const surveysThisWeek = surveysThisWeekResult.data || [];
@@ -1893,41 +1813,28 @@ export async function getTeamActivityMonitor(): Promise<
   for (const r of allReviews) {
     if (r.response_at && r.review_date) {
       const diff =
-        (new Date(r.response_at).getTime() -
-          new Date(r.review_date).getTime()) /
-        (1000 * 60 * 60);
+        (new Date(r.response_at).getTime() - new Date(r.review_date).getTime()) / (1000 * 60 * 60);
       if (diff > 0 && diff < 720) orgResponseTimes.push(diff);
     }
   }
   const orgAvgResponseTime =
     orgResponseTimes.length > 0
-      ? Math.round(
-          orgResponseTimes.reduce((a, b) => a + b, 0) /
-            orgResponseTimes.length
-        )
+      ? Math.round(orgResponseTimes.reduce((a, b) => a + b, 0) / orgResponseTimes.length)
       : 0;
 
-  const avgRequestsPerLO =
-    loUsers.length > 0
-      ? Math.round(orgSurveysPerWeek / loUsers.length)
-      : 0;
+  const avgRequestsPerLO = loUsers.length > 0 ? Math.round(orgSurveysPerWeek / loUsers.length) : 0;
 
   // Build per-LO activity status
   const teamMembers: LOActivityStatus[] = [];
 
   for (const lo of loUsers) {
     const loReviews = allReviews.filter((r) => r.user_id === lo.id);
-    const loSurveysThisWeek = surveysThisWeek.filter(
-      (s) => s.user_id === lo.id
-    ).length;
-    const loSurveysPrevWeek = surveysPrevWeek.filter(
-      (s) => s.user_id === lo.id
-    ).length;
+    const loSurveysThisWeek = surveysThisWeek.filter((s) => s.user_id === lo.id).length;
+    const loSurveysPrevWeek = surveysPrevWeek.filter((s) => s.user_id === lo.id).length;
 
     // Unresponded reviews > 48h
     const unresponded = loReviews.filter(
-      (r) =>
-        !r.response_text && new Date(r.review_date) < twoDaysAgo
+      (r) => !r.response_text && new Date(r.review_date) < twoDaysAgo
     ).length;
 
     // Response times
@@ -1938,8 +1845,7 @@ export async function getTeamActivityMonitor(): Promise<
     for (const r of loReviews) {
       if (r.response_at && r.review_date) {
         const diff =
-          (new Date(r.response_at).getTime() -
-            new Date(r.review_date).getTime()) /
+          (new Date(r.response_at).getTime() - new Date(r.review_date).getTime()) /
           (1000 * 60 * 60);
         if (diff > 0 && diff < 720) {
           loResponseTimes.push(diff);
@@ -1954,21 +1860,16 @@ export async function getTeamActivityMonitor(): Promise<
 
     const avgResponseTime =
       loResponseTimes.length > 0
-        ? Math.round(
-            loResponseTimes.reduce((a, b) => a + b, 0) /
-              loResponseTimes.length
-          )
+        ? Math.round(loResponseTimes.reduce((a, b) => a + b, 0) / loResponseTimes.length)
         : 0;
 
     const recentAvgRT =
       recentResponseTimes.length > 0
-        ? recentResponseTimes.reduce((a, b) => a + b, 0) /
-          recentResponseTimes.length
+        ? recentResponseTimes.reduce((a, b) => a + b, 0) / recentResponseTimes.length
         : 0;
     const olderAvgRT =
       olderResponseTimes.length > 0
-        ? olderResponseTimes.reduce((a, b) => a + b, 0) /
-          olderResponseTimes.length
+        ? olderResponseTimes.reduce((a, b) => a + b, 0) / olderResponseTimes.length
         : 0;
 
     const responseTimeTrend =
@@ -1980,9 +1881,7 @@ export async function getTeamActivityMonitor(): Promise<
 
     // Negative reviews last 7 days
     const negativeRecent = loReviews.filter(
-      (r) =>
-        r.sentiment_label === "negative" &&
-        new Date(r.review_date) >= sevenDaysAgo
+      (r) => r.sentiment_label === "negative" && new Date(r.review_date) >= sevenDaysAgo
     ).length;
 
     // Rating trend (30 vs 60 day)
@@ -1998,37 +1897,25 @@ export async function getTeamActivityMonitor(): Promise<
 
     const avg30 =
       reviews30.length > 0
-        ? Math.round(
-            (reviews30.reduce((s, r) => s + r.rating!, 0) / reviews30.length) *
-              10
-          ) / 10
+        ? Math.round((reviews30.reduce((s, r) => s + r.rating!, 0) / reviews30.length) * 10) / 10
         : 0;
     const avg60 =
       reviews60.length > 0
-        ? Math.round(
-            (reviews60.reduce((s, r) => s + r.rating!, 0) / reviews60.length) *
-              10
-          ) / 10
+        ? Math.round((reviews60.reduce((s, r) => s + r.rating!, 0) / reviews60.length) * 10) / 10
         : 0;
 
     // Determine activity status
     const recentActivity =
-      loReviews.filter((r) => new Date(r.review_date) >= sevenDaysAgo).length +
-      loSurveysThisWeek;
+      loReviews.filter((r) => new Date(r.review_date) >= sevenDaysAgo).length + loSurveysThisWeek;
     const prevActivity =
       loReviews.filter(
-        (r) =>
-          new Date(r.review_date) >= fourteenDaysAgo &&
-          new Date(r.review_date) < sevenDaysAgo
+        (r) => new Date(r.review_date) >= fourteenDaysAgo && new Date(r.review_date) < sevenDaysAgo
       ).length + loSurveysPrevWeek;
 
     let activityStatus: "active" | "slowing" | "inactive" = "active";
     if (recentActivity === 0 && prevActivity === 0) {
       activityStatus = "inactive";
-    } else if (
-      prevActivity > 0 &&
-      recentActivity < prevActivity * 0.6
-    ) {
+    } else if (prevActivity > 0 && recentActivity < prevActivity * 0.6) {
       activityStatus = "slowing";
     }
 
@@ -2102,14 +1989,9 @@ export async function getTeamActivityMonitor(): Promise<
       orgMetrics: {
         avgResponseTimeHours: orgAvgResponseTime,
         avgRequestsPerWeek: avgRequestsPerLO,
-        activeCount: teamMembers.filter((m) => m.activityStatus === "active")
-          .length,
-        slowingCount: teamMembers.filter(
-          (m) => m.activityStatus === "slowing"
-        ).length,
-        inactiveCount: teamMembers.filter(
-          (m) => m.activityStatus === "inactive"
-        ).length,
+        activeCount: teamMembers.filter((m) => m.activityStatus === "active").length,
+        slowingCount: teamMembers.filter((m) => m.activityStatus === "slowing").length,
+        inactiveCount: teamMembers.filter((m) => m.activityStatus === "inactive").length,
       },
     },
   };
@@ -2184,10 +2066,7 @@ export async function getChannelEffectiveness(
       reviewCount: data.positive + data.neutral + data.negative,
       avgRating:
         data.ratings.length > 0
-          ? Math.round(
-              (data.ratings.reduce((a, b) => a + b, 0) / data.ratings.length) *
-                10
-            ) / 10
+          ? Math.round((data.ratings.reduce((a, b) => a + b, 0) / data.ratings.length) * 10) / 10
           : 0,
       sentimentDistribution: {
         positive: data.positive,

@@ -45,10 +45,29 @@ beforeEach(() => {
 describe("exportAndRecordReport", () => {
   it("records an export from a pre-generated report without generating again", async () => {
     const userQuery = createUserQuery();
-    const insert = vi.fn().mockResolvedValue({ data: null, error: null });
+    const exportRow = {
+      id: "export-1",
+      organization_id: "org-1",
+      template_id: "template-1",
+      export_format: "json",
+      file_name: "monthly-report-2026-07-08.json",
+      date_range_start: "2026-06-01",
+      date_range_end: "2026-06-30",
+      filters: {},
+      row_count: null,
+      created_by: "user-1",
+      created_at: "2026-07-08T12:00:00.000Z",
+    };
+    const exportInsertQuery = {
+      insert: vi.fn(),
+      select: vi.fn(),
+      single: vi.fn().mockResolvedValue({ data: exportRow, error: null }),
+    };
+    exportInsertQuery.insert.mockReturnValue(exportInsertQuery);
+    exportInsertQuery.select.mockReturnValue(exportInsertQuery);
     const from = vi.fn((table: string) => {
       if (table === "users") return userQuery;
-      if (table === "report_exports") return { insert };
+      if (table === "report_exports") return exportInsertQuery;
       throw new Error(`Unexpected table: ${table}`);
     });
 
@@ -89,14 +108,23 @@ describe("exportAndRecordReport", () => {
     expect(result.success).toBe(true);
     expect(result.data?.mimeType).toBe("application/json");
     expect(result.data?.encoding).toBeUndefined();
+    expect(result.data?.exportRecord).toMatchObject({
+      id: "export-1",
+      organizationId: "org-1",
+      templateId: "template-1",
+      exportFormat: "json",
+      createdBy: "user-1",
+    });
     expect(JSON.parse(result.data?.data || "{}").templateName).toBe("Monthly Report");
     expect(generateReport).not.toHaveBeenCalled();
-    expect(insert).toHaveBeenCalledTimes(1);
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
-      organization_id: "org-1",
-      template_id: "template-1",
-      export_format: "json",
-      created_by: "user-1",
-    }));
+    expect(exportInsertQuery.insert).toHaveBeenCalledTimes(1);
+    expect(exportInsertQuery.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organization_id: "org-1",
+        template_id: "template-1",
+        export_format: "json",
+        created_by: "user-1",
+      })
+    );
   });
 });

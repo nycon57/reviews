@@ -14,18 +14,14 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Bell,
-  Envelope as Mail,
-  Clock,
-  Warning as AlertTriangle,
-} from "@phosphor-icons/react";
+import { Bell, Envelope as Mail, Clock, Warning as AlertTriangle } from "@phosphor-icons/react";
 import type { NotificationPreferences, DigestFrequency } from "@/lib/notifications/types";
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notifications/types";
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
 } from "@/lib/notifications/actions";
+import { DAYS_OF_WEEK } from "@/lib/constants/days";
 
 const TIMEZONES = [
   { value: "America/New_York", label: "Eastern Time (ET)" },
@@ -38,16 +34,6 @@ const TIMEZONES = [
   { value: "UTC", label: "UTC" },
 ];
 
-const DAYS_OF_WEEK = [
-  { value: "0", label: "Sunday" },
-  { value: "1", label: "Monday" },
-  { value: "2", label: "Tuesday" },
-  { value: "3", label: "Wednesday" },
-  { value: "4", label: "Thursday" },
-  { value: "5", label: "Friday" },
-  { value: "6", label: "Saturday" },
-];
-
 const HOURS = Array.from({ length: 24 }, (_, i) => ({
   value: i.toString(),
   label: `${i === 0 ? 12 : i > 12 ? i - 12 : i}:00 ${i >= 12 ? "PM" : "AM"}`,
@@ -57,9 +43,9 @@ export function NotificationPreferencesCard() {
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
-  const [preferences, setPreferences] = React.useState<
-    Partial<NotificationPreferences> | null
-  >(null);
+  const [preferences, setPreferences] = React.useState<Partial<NotificationPreferences> | null>(
+    null
+  );
 
   React.useEffect(() => {
     const fetchPreferences = async () => {
@@ -121,9 +107,7 @@ export function NotificationPreferencesCard() {
           <Bell className="h-5 w-5" />
           Notifications
         </CardTitle>
-        <CardDescription>
-          Configure how and when you receive notifications
-        </CardDescription>
+        <CardDescription>Configure how and when you receive notifications</CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
         {/* In-App Notifications */}
@@ -135,9 +119,7 @@ export function NotificationPreferencesCard() {
             </div>
             <Switch
               checked={preferences?.in_app_enabled ?? true}
-              onCheckedChange={(checked) =>
-                handleSave({ in_app_enabled: checked })
-              }
+              onCheckedChange={(checked) => handleSave({ in_app_enabled: checked })}
               disabled={saving}
             />
           </div>
@@ -148,18 +130,14 @@ export function NotificationPreferencesCard() {
                 label="New reviews"
                 description="When you receive a new review"
                 checked={preferences?.in_app_new_review ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ in_app_new_review: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ in_app_new_review: checked })}
                 disabled={saving}
               />
               <NotificationToggle
                 label="Negative reviews"
                 description="Instant alerts for low ratings"
                 checked={preferences?.in_app_negative_review ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ in_app_negative_review: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ in_app_negative_review: checked })}
                 disabled={saving}
                 important
               />
@@ -167,36 +145,28 @@ export function NotificationPreferencesCard() {
                 label="Review approved"
                 description="When your review is approved"
                 checked={preferences?.in_app_review_approved ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ in_app_review_approved: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ in_app_review_approved: checked })}
                 disabled={saving}
               />
               <NotificationToggle
                 label="Response posted"
                 description="When your response is posted"
                 checked={preferences?.in_app_response_posted ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ in_app_response_posted: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ in_app_response_posted: checked })}
                 disabled={saving}
               />
               <NotificationToggle
                 label="Badges earned"
                 description="When you earn a new badge"
                 checked={preferences?.in_app_badge_earned ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ in_app_badge_earned: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ in_app_badge_earned: checked })}
                 disabled={saving}
               />
               <NotificationToggle
                 label="Mentions"
                 description="When someone mentions you"
                 checked={preferences?.in_app_mention ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ in_app_mention: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ in_app_mention: checked })}
                 disabled={saving}
               />
             </div>
@@ -214,9 +184,7 @@ export function NotificationPreferencesCard() {
             </div>
             <Switch
               checked={preferences?.email_enabled ?? true}
-              onCheckedChange={(checked) =>
-                handleSave({ email_enabled: checked })
-              }
+              onCheckedChange={(checked) => handleSave({ email_enabled: checked })}
               disabled={saving}
             />
           </div>
@@ -227,18 +195,14 @@ export function NotificationPreferencesCard() {
                 label="New reviews"
                 description="Email when you receive a new review"
                 checked={preferences?.email_new_review ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ email_new_review: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ email_new_review: checked })}
                 disabled={saving}
               />
               <NotificationToggle
                 label="Negative reviews"
                 description="Immediate email for low ratings"
                 checked={preferences?.email_negative_review ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ email_negative_review: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ email_negative_review: checked })}
                 disabled={saving}
                 important
               />
@@ -246,27 +210,21 @@ export function NotificationPreferencesCard() {
                 label="Review approved"
                 description="Email when your review is approved"
                 checked={preferences?.email_review_approved ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ email_review_approved: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ email_review_approved: checked })}
                 disabled={saving}
               />
               <NotificationToggle
                 label="Response posted"
                 description="Email when your response is posted"
                 checked={preferences?.email_response_posted ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ email_response_posted: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ email_response_posted: checked })}
                 disabled={saving}
               />
               <NotificationToggle
                 label="Mentions"
                 description="Email when someone mentions you"
                 checked={preferences?.email_mention ?? true}
-                onCheckedChange={(checked) =>
-                  handleSave({ email_mention: checked })
-                }
+                onCheckedChange={(checked) => handleSave({ email_mention: checked })}
                 disabled={saving}
               />
             </div>
@@ -284,9 +242,7 @@ export function NotificationPreferencesCard() {
             </div>
             <Switch
               checked={preferences?.instant_alert_enabled ?? true}
-              onCheckedChange={(checked) =>
-                handleSave({ instant_alert_enabled: checked })
-              }
+              onCheckedChange={(checked) => handleSave({ instant_alert_enabled: checked })}
               disabled={saving}
             />
           </div>
@@ -333,9 +289,7 @@ export function NotificationPreferencesCard() {
             </div>
             <Switch
               checked={preferences?.digest_enabled ?? false}
-              onCheckedChange={(checked) =>
-                handleSave({ digest_enabled: checked })
-              }
+              onCheckedChange={(checked) => handleSave({ digest_enabled: checked })}
               disabled={saving}
             />
           </div>
@@ -368,9 +322,7 @@ export function NotificationPreferencesCard() {
                     <Label>Day of week</Label>
                     <Select
                       value={(preferences?.digest_day_of_week ?? 1).toString()}
-                      onValueChange={(value) =>
-                        handleSave({ digest_day_of_week: parseInt(value) })
-                      }
+                      onValueChange={(value) => handleSave({ digest_day_of_week: parseInt(value) })}
                       disabled={saving}
                     >
                       <SelectTrigger>
@@ -393,9 +345,7 @@ export function NotificationPreferencesCard() {
                   <Label>Time</Label>
                   <Select
                     value={(preferences?.digest_hour ?? 9).toString()}
-                    onValueChange={(value) =>
-                      handleSave({ digest_hour: parseInt(value) })
-                    }
+                    onValueChange={(value) => handleSave({ digest_hour: parseInt(value) })}
                     disabled={saving}
                   >
                     <SelectTrigger>
@@ -415,9 +365,7 @@ export function NotificationPreferencesCard() {
                   <Label>Timezone</Label>
                   <Select
                     value={preferences?.digest_timezone ?? "America/New_York"}
-                    onValueChange={(value) =>
-                      handleSave({ digest_timezone: value })
-                    }
+                    onValueChange={(value) => handleSave({ digest_timezone: value })}
                     disabled={saving}
                   >
                     <SelectTrigger>

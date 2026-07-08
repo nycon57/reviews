@@ -5,7 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | null | undefined, fallback = ""): string {
+  if (!date) return fallback;
+
   return new Date(date).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -13,7 +15,9 @@ export function formatDate(date: Date | string): string {
   });
 }
 
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string | null | undefined, fallback = ""): string {
+  if (!date) return fallback;
+
   return new Date(date).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
@@ -71,7 +75,5 @@ export function getInitials(name: string | null | undefined): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "";
   if (parts.length === 1) return (parts[0]?.[0] ?? "").toUpperCase();
-  return (
-    (parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")
-  ).toUpperCase();
+  return ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase();
 }

@@ -52,8 +52,9 @@ function analyzeMetaTags(html: string): {
   description: string | null;
 } {
   const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i)
-    || html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+  const descMatch =
+    html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
+    html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
   const canonicalMatch = html.match(/<link[^>]*rel=["']canonical["']/i);
   const robotsMatch = html.match(/<meta[^>]*name=["']robots["']/i);
 
@@ -123,7 +124,10 @@ function analyzeImages(html: string): {
 /**
  * Analyze links from HTML
  */
-function analyzeLinks(html: string, baseUrl: string): {
+function analyzeLinks(
+  html: string,
+  baseUrl: string
+): {
   internalLinks: number;
   externalLinks: number;
 } {
@@ -186,7 +190,8 @@ function analyzeStructuredData(html: string): {
   hasStructuredData: boolean;
   types: string[];
 } {
-  const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+  const jsonLdMatches =
+    html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
   const types: string[] = [];
 
   jsonLdMatches.forEach((match) => {
@@ -299,7 +304,7 @@ function generateIssues(analysis: {
       title: "Missing canonical URL",
       description: "No canonical URL is specified, which may cause duplicate content issues.",
       impact: "medium",
-      howToFix: "Add a <link rel=\"canonical\" href=\"...\"> tag to the page.",
+      howToFix: 'Add a <link rel="canonical" href="..."> tag to the page.',
     });
   }
 
@@ -361,7 +366,7 @@ function generateIssues(analysis: {
       title: "Viewport not configured",
       description: "The page doesn't have a viewport meta tag, making it not mobile-friendly.",
       impact: "high",
-      howToFix: "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+      howToFix: 'Add <meta name="viewport" content="width=device-width, initial-scale=1">',
     });
   }
 
@@ -402,7 +407,8 @@ function generateRecommendations(analysis: {
       priority: "medium",
       category: "structured_data",
       title: "Add structured data markup",
-      description: "Implement JSON-LD structured data to help search engines understand your content and enable rich snippets.",
+      description:
+        "Implement JSON-LD structured data to help search engines understand your content and enable rich snippets.",
       estimatedImpact: 6,
       effort: "moderate",
     });
@@ -428,7 +434,8 @@ function generateRecommendations(analysis: {
       priority: "low",
       category: "content",
       title: "Add relevant images",
-      description: "Images can improve engagement and provide additional context for search engines.",
+      description:
+        "Images can improve engagement and provide additional context for search engines.",
       estimatedImpact: 4,
       effort: "moderate",
     });
@@ -451,7 +458,7 @@ function calculateScores(analysis: {
   seoScore: number;
   technicalScore: number;
   contentScore: number;
-  performanceScore: number;
+  performanceScore: number | null;
   mobileScore: number;
 } {
   // Technical score (meta tags, canonical, robots)
@@ -477,24 +484,18 @@ function calculateScores(analysis: {
   if (analysis.mobileFriendliness.tapTargetsSized) mobileScore += 25;
 
   // Overall SEO score (weighted average of measured components only)
-  const measuredWeightTotal = 0.35 + 0.30 + 0.20;
+  const measuredWeightTotal = 0.35 + 0.3 + 0.2;
   const seoScore = Math.round(
     technicalScore * (0.35 / measuredWeightTotal) +
-    contentScore * (0.30 / measuredWeightTotal) +
-    mobileScore * (0.20 / measuredWeightTotal)
-  );
-
-  // The database column is NOT NULL, so persist a non-scoring fallback instead
-  // of the old fabricated constant. The UI labels performance as not measured.
-  const performanceScore = Math.round(
-    (technicalScore + contentScore + mobileScore) / 3
+      contentScore * (0.3 / measuredWeightTotal) +
+      mobileScore * (0.2 / measuredWeightTotal)
   );
 
   return {
     seoScore,
     technicalScore,
     contentScore,
-    performanceScore,
+    performanceScore: null,
     mobileScore,
   };
 }
@@ -502,9 +503,7 @@ function calculateScores(analysis: {
 /**
  * Run SEO audit on a URL
  */
-export async function runPageSEOAudit(
-  pageUrl: string
-): Promise<ActionResult<SEOAuditResult>> {
+export async function runPageSEOAudit(pageUrl: string): Promise<ActionResult<SEOAuditResult>> {
   try {
     const context = await getUserContext();
     if (!context) {
@@ -543,11 +542,30 @@ export async function runPageSEOAudit(
     const mobileFriendliness = analyzeMobileFriendliness(html);
 
     // Generate issues and recommendations
-    const issues = generateIssues({ metaTags, headers, images, structuredData, mobileFriendliness });
-    const recommendations = generateRecommendations({ metaTags, headers, images, content, structuredData });
+    const issues = generateIssues({
+      metaTags,
+      headers,
+      images,
+      structuredData,
+      mobileFriendliness,
+    });
+    const recommendations = generateRecommendations({
+      metaTags,
+      headers,
+      images,
+      content,
+      structuredData,
+    });
 
     // Calculate scores
-    const scores = calculateScores({ metaTags, headers, images, content, structuredData, mobileFriendliness });
+    const scores = calculateScores({
+      metaTags,
+      headers,
+      images,
+      content,
+      structuredData,
+      mobileFriendliness,
+    });
 
     // Get previous audit for comparison
     // Use untyped client for website_seo_audits table (not in generated types yet)
@@ -641,7 +659,8 @@ export async function runPageSEOAudit(
         titleLength: metaTags.titleLength,
         descriptionLength: metaTags.descriptionLength,
         titleOptimal: (metaTags.titleLength || 0) >= 30 && (metaTags.titleLength || 0) <= 60,
-        descriptionOptimal: (metaTags.descriptionLength || 0) >= 120 && (metaTags.descriptionLength || 0) <= 160,
+        descriptionOptimal:
+          (metaTags.descriptionLength || 0) >= 120 && (metaTags.descriptionLength || 0) <= 160,
         hasCanonical: metaTags.hasCanonical,
         hasRobotsMeta: metaTags.hasRobotsMeta,
       },
@@ -656,7 +675,8 @@ export async function runPageSEOAudit(
         totalImages: images.totalImages,
         imagesWithAlt: images.imagesWithAlt,
         imagesWithoutAlt: images.imagesWithoutAlt,
-        altTextScore: images.totalImages > 0 ? (images.imagesWithAlt / images.totalImages) * 100 : 100,
+        altTextScore:
+          images.totalImages > 0 ? (images.imagesWithAlt / images.totalImages) * 100 : 100,
       },
       links: {
         internalLinks: links.internalLinks,
@@ -718,7 +738,8 @@ export async function runBatchSEOAudit(
     let successful = 0;
     let failed = 0;
 
-    for (const url of pageUrls.slice(0, 10)) { // Limit to 10 pages at a time
+    for (const url of pageUrls.slice(0, 10)) {
+      // Limit to 10 pages at a time
       const result = await runPageSEOAudit(url);
       if (result.success && result.data) {
         results.push(result.data);

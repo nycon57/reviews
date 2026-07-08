@@ -26,6 +26,7 @@ function createSupabaseMock(results: Record<string, Result[]>) {
     Object.entries(results).map(([table, tableResults]) => [table, [...tableResults]])
   );
   const builders: Record<string, ReturnType<typeof createQueryBuilder>[]> = {};
+  const rpcResults: Result[] = [];
 
   const from = vi.fn((table: string) => {
     const queue = queues[table];
@@ -39,7 +40,15 @@ function createSupabaseMock(results: Record<string, Result[]>) {
     return builder;
   });
 
-  return { from, builders };
+  const rpc = vi.fn(() => {
+    const result = rpcResults.shift();
+    if (!result) {
+      throw new Error("No queued result for rpc");
+    }
+    return Promise.resolve(result);
+  });
+
+  return { from, rpc, builders, rpcResults };
 }
 
 beforeEach(() => {
@@ -61,15 +70,12 @@ describe("getReviewsBySource", () => {
           },
         },
       ],
-      reviews: [
-        {
-          data: [
-            { source: "google" },
-            { source: "google" },
-            { source: "internal" },
-            { source: "video-testimonial" },
-          ],
-        },
+    });
+    supabase.rpcResults.push({
+      data: [
+        { source: "google", review_count: 2 },
+        { source: "internal", review_count: 1 },
+        { source: "video-testimonial", review_count: 1 },
       ],
     });
 
@@ -87,17 +93,10 @@ describe("getReviewsBySource", () => {
       { source: "video-testimonial", label: "Video review", count: 1 },
     ]);
 
-    const reviewsQuery = supabase.builders.reviews[0];
-    expect(reviewsQuery.select).toHaveBeenCalledWith("source");
-    expect(reviewsQuery.eq).toHaveBeenCalledWith("organization_id", "org-1");
-    expect(reviewsQuery.eq).toHaveBeenCalledWith("status", "approved");
-    expect(reviewsQuery.gte).toHaveBeenCalledWith(
-      "review_date",
-      "2026-06-01T00:00:00.000Z"
-    );
-    expect(reviewsQuery.lte).toHaveBeenCalledWith(
-      "review_date",
-      "2026-07-01T00:00:00.000Z"
-    );
+    expect(supabase.rpc).toHaveBeenCalledWith("count_reviews_by_source", {
+      org_id: "org-1",
+      start_date: "2026-06-01T00:00:00.000Z",
+      end_date: "2026-07-01T00:00:00.000Z",
+    });
   });
 });

@@ -54,10 +54,10 @@ async function getUserContext(
 ): Promise<ResolvedAnalyticsContext | null> {
   if (explicitContext) {
     return {
-      userId: explicitContext.userId ?? null,
+      userId: null,
       organizationId: explicitContext.organizationId,
-      role: explicitContext.role ?? null,
-      loanOfficerId: explicitContext.loanOfficerId ?? null,
+      role: null,
+      loanOfficerId: null,
     };
   }
 
@@ -70,16 +70,8 @@ async function getUserContext(
 
   // Parallelize independent queries
   const [userDataResult, loanOfficerResult] = await Promise.all([
-    supabase
-      .from("users")
-      .select("id, organization_id, role")
-      .eq("id", user.id)
-      .single(),
-    supabase
-      .from("users")
-      .select("id")
-      .eq("user_id", user.id)
-      .single(),
+    supabase.from("users").select("id, organization_id, role").eq("id", user.id).single(),
+    supabase.from("users").select("id").eq("user_id", user.id).single(),
   ]);
 
   const userData = userDataResult.data;
@@ -113,14 +105,16 @@ export async function getNPSMetrics(
 
   let query = supabase
     .from("survey_responses")
-    .select(`
+    .select(
+      `
       nps_score,
       submitted_at,
       surveys!inner (
         user_id,
         organization_id
       )
-    `)
+    `
+    )
     .not("nps_score", "is", null)
     .gte("submitted_at", range.start.toISOString())
     .lte("submitted_at", range.end.toISOString());
@@ -165,14 +159,16 @@ export async function getCSATMetrics(
 
   let query = supabase
     .from("survey_responses")
-    .select(`
+    .select(
+      `
       overall_rating,
       submitted_at,
       surveys!inner (
         user_id,
         organization_id
       )
-    `)
+    `
+    )
     .not("overall_rating", "is", null)
     .gte("submitted_at", range.start.toISOString())
     .lte("submitted_at", range.end.toISOString());
@@ -301,10 +297,7 @@ export async function getUserAnalytics(
   }
 
   // Check authorization
-  if (
-    context.role === "user" &&
-    userId !== context.loanOfficerId
-  ) {
+  if (context.role === "user" && userId !== context.loanOfficerId) {
     return { success: false, error: "Unauthorized - Can only view own analytics" };
   }
 
@@ -357,7 +350,12 @@ export async function getUserAnalytics(
     getReviewVelocityMetrics(userId, dateRange, ctx),
   ]);
 
-  if (!npsResult.success || !csatResult.success || !responseRateResult.success || !velocityResult.success) {
+  if (
+    !npsResult.success ||
+    !csatResult.success ||
+    !responseRateResult.success ||
+    !velocityResult.success
+  ) {
     return { success: false, error: "Failed to fetch analytics data" };
   }
 
@@ -447,7 +445,12 @@ export async function getOrganizationAnalytics(
     getReviewVelocityMetrics(undefined, dateRange, ctx),
   ]);
 
-  if (!npsResult.success || !csatResult.success || !responseRateResult.success || !velocityResult.success) {
+  if (
+    !npsResult.success ||
+    !csatResult.success ||
+    !responseRateResult.success ||
+    !velocityResult.success
+  ) {
     return { success: false, error: "Failed to fetch organization analytics" };
   }
 
@@ -464,9 +467,11 @@ export async function getOrganizationAnalytics(
   // Calculate aggregate rating and reviews
   const totalReviews = users?.reduce((sum, u) => sum + (u.total_reviews || 0), 0) || 0;
   const ratingsWithData = activeUsers.filter((u) => (u.average_rating || 0) > 0);
-  const averageRating = ratingsWithData.length > 0
-    ? ratingsWithData.reduce((sum, u) => sum + (u.average_rating || 0), 0) / ratingsWithData.length
-    : 0;
+  const averageRating =
+    ratingsWithData.length > 0
+      ? ratingsWithData.reduce((sum, u) => sum + (u.average_rating || 0), 0) /
+        ratingsWithData.length
+      : 0;
 
   // Identify top performers and those needing attention
   const topPerformers = activeUsers
@@ -515,14 +520,16 @@ export async function getNPSTrendData(
 
   const { data, error } = await supabase
     .from("survey_responses")
-    .select(`
+    .select(
+      `
       nps_score,
       submitted_at,
       surveys!inner (
         user_id,
         organization_id
       )
-    `)
+    `
+    )
     .not("nps_score", "is", null)
     .gte("submitted_at", startDate.toISOString());
 
@@ -568,14 +575,16 @@ export async function getCSATTrendData(
 
   const { data, error } = await supabase
     .from("survey_responses")
-    .select(`
+    .select(
+      `
       overall_rating,
       submitted_at,
       surveys!inner (
         user_id,
         organization_id
       )
-    `)
+    `
+    )
     .not("overall_rating", "is", null)
     .gte("submitted_at", startDate.toISOString());
 
@@ -750,35 +759,35 @@ async function cacheMetrics(
   const supabase = createAdminClient();
 
   // Serialize metrics to JSON-safe format (using JSON.parse/stringify to strip type info)
-  const metricsJson = JSON.parse(JSON.stringify({
-    nps: metrics.nps,
-    csat: metrics.csat,
-    responseRate: metrics.responseRate,
-    reviewVelocity: metrics.reviewVelocity,
-    averageRating: metrics.averageRating,
-    totalReviews: metrics.totalReviews,
-    periodStart: metrics.periodStart.toISOString(),
-    periodEnd: metrics.periodEnd.toISOString(),
-    computedAt: metrics.computedAt.toISOString(),
-  }));
+  const metricsJson = JSON.parse(
+    JSON.stringify({
+      nps: metrics.nps,
+      csat: metrics.csat,
+      responseRate: metrics.responseRate,
+      reviewVelocity: metrics.reviewVelocity,
+      averageRating: metrics.averageRating,
+      totalReviews: metrics.totalReviews,
+      periodStart: metrics.periodStart.toISOString(),
+      periodEnd: metrics.periodEnd.toISOString(),
+      computedAt: metrics.computedAt.toISOString(),
+    })
+  );
 
-  const { error } = await supabase
-    .from("metrics_snapshots")
-    .upsert(
-      {
-        organization_id: context.organizationId,
-        user_id: loanOfficerId,
-        period_type: periodType,
-        period_start: metrics.periodStart.toISOString().split("T")[0],
-        period_end: metrics.periodEnd.toISOString().split("T")[0],
-        metrics: metricsJson,
-        computed_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "organization_id,user_id,period_type,period_start",
-        ignoreDuplicates: false,
-      }
-    );
+  const { error } = await supabase.from("metrics_snapshots").upsert(
+    {
+      organization_id: context.organizationId,
+      user_id: loanOfficerId,
+      period_type: periodType,
+      period_start: metrics.periodStart.toISOString().split("T")[0],
+      period_end: metrics.periodEnd.toISOString().split("T")[0],
+      metrics: metricsJson,
+      computed_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "organization_id,user_id,period_type,period_start",
+      ignoreDuplicates: false,
+    }
+  );
 
   if (error) {
     console.error("Error caching metrics:", error);
@@ -843,9 +852,7 @@ async function getCachedMetrics(
 /**
  * Invalidate cached metrics (force refresh on next request)
  */
-export async function invalidateMetricsCache(
-  loanOfficerId?: string
-): Promise<ActionResult<void>> {
+export async function invalidateMetricsCache(loanOfficerId?: string): Promise<ActionResult<void>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
@@ -902,7 +909,12 @@ export async function computeHistoricalSnapshots(
       getReviewVelocityMetrics(loanOfficerId, dateRange),
     ]);
 
-    if (npsResult.success && csatResult.success && responseRateResult.success && velocityResult.success) {
+    if (
+      npsResult.success &&
+      csatResult.success &&
+      responseRateResult.success &&
+      velocityResult.success
+    ) {
       const snapshot: MetricsSnapshot = {
         nps: npsResult.data!,
         csat: csatResult.data!,

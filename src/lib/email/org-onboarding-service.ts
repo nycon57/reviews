@@ -12,8 +12,12 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getResendClient, getFromAddress, emailConfig } from "./client";
-import { getUnsubscribeUrl } from "./send-utils";
+import { getFromAddress, emailConfig } from "./client";
+import { getUnsubscribeUrl, sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   OrgOnboarding1WelcomeEmailData,
@@ -190,6 +194,8 @@ async function logEmail(params: {
   resendMessageId?: string;
   status: string;
   errorMessage?: string;
+  abTestId?: string;
+  abTestVariant?: string;
 }): Promise<string | null> {
   const supabase = createAdminClient();
 
@@ -207,6 +213,8 @@ async function logEmail(params: {
       status: params.status,
       sent_at: params.status === "sent" ? new Date().toISOString() : null,
       error_message: params.errorMessage,
+      ab_test_id: params.abTestId ?? null,
+      ab_test_variant: params.abTestVariant ?? null,
     })
     .select("id")
     .single();
@@ -493,10 +501,15 @@ export async function processOrgOnboardingSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   // Process each sequence
   for (const sequence of sequences as OrgSequenceRecord[]) {
     try {
-      const processResult = await processOrgSequenceStep(sequence);
+      const processResult = await processOrgSequenceStep(
+        sequence,
+        emailTypeSendResolver
+      );
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -526,7 +539,10 @@ export async function processOrgOnboardingSequenceQueue(
 /**
  * Process a single org onboarding sequence step
  */
-async function processOrgSequenceStep(sequence: OrgSequenceRecord): Promise<{
+async function processOrgSequenceStep(
+  sequence: OrgSequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
+): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "exited" | "completed";
   error?: string;
@@ -613,7 +629,7 @@ async function processOrgSequenceStep(sequence: OrgSequenceRecord): Promise<{
         ],
       };
 
-      return processOrgSequenceStep(updatedSequence);
+      return processOrgSequenceStep(updatedSequence, emailTypeSendResolver);
     }
   }
 
@@ -622,7 +638,8 @@ async function processOrgSequenceStep(sequence: OrgSequenceRecord): Promise<{
     sequence,
     user,
     stepConfig,
-    onboardingStatus
+    onboardingStatus,
+    emailTypeSendResolver
   );
 
   if (!sendResult.success) {
@@ -647,13 +664,13 @@ async function sendOrgOnboardingEmail(
   sequence: OrgSequenceRecord,
   user: { id: string; email: string; full_name: string | null },
   stepConfig: OrgOnboardingSequenceConfig["schedule"][number],
-  onboardingStatus: OrgOnboardingStatus
+  onboardingStatus: OrgOnboardingStatus,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
   error?: string;
 }> {
-  const resend = getResendClient();
   const baseUrl = emailConfig.baseUrl;
   // Use token-based unsubscribe URL for better privacy
   const unsubscribeUrl = await getUnsubscribeUrl(user.id, user.email);
@@ -745,9 +762,9 @@ async function sendOrgOnboardingEmail(
     case 6: {
       const data: OrgOnboarding6AdvancedEmailData = {
         ...baseData,
-        leaderboardsUrl: `${baseUrl}/dashboard/leaderboards`,
+        leaderboardsUrl: `${baseUrl}/dashboard/analytics/leaderboard`,
         reportsUrl: `${baseUrl}/dashboard/reports`,
-        automationUrl: `${baseUrl}/dashboard/settings/automation`,
+        automationUrl: `${baseUrl}/dashboard/settings`,
         analyticsUrl: `${baseUrl}/dashboard/analytics`,
       };
       emailContent = getOrgOnboarding6AdvancedEmail(data);
@@ -759,11 +776,17 @@ async function sendOrgOnboardingEmail(
   }
 
   try {
-    const response = await resend.emails.send({
+    const result = await sendWithReliability({
       from: getFromAddress(),
       to: user.email,
       subject: emailContent.subject,
       html: emailContent.html,
+      idempotencyKey: `org-onboarding-sequence-${sequence.id}-step-${stepConfig.step}`,
+      userId: user.id,
+      isTransactional: true,
+      organizationId: sequence.organization_id,
+      emailType: stepConfig.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: stepConfig.templateName },
         { name: "sequence_id", value: sequence.id },
@@ -775,35 +798,39 @@ async function sendOrgOnboardingEmail(
       ],
     });
 
-    if (response.error) {
+    if (!result.success) {
       await logEmail({
         toEmail: user.email,
         toName: user.full_name || undefined,
         fromEmail: emailConfig.defaultFromEmail,
-        subject: emailContent.subject,
+        subject: result.effectiveSubject ?? emailContent.subject,
         templateName: stepConfig.templateName,
         organizationId: sequence.organization_id,
         userId: user.id,
         status: "failed",
-        errorMessage: response.error.message,
+        errorMessage: result.error,
+        abTestId: result.abTestId,
+        abTestVariant: result.abTestVariant,
       });
 
-      return { success: false, error: response.error.message };
+      return { success: false, error: result.error };
     }
 
     const emailId = await logEmail({
       toEmail: user.email,
       toName: user.full_name || undefined,
       fromEmail: emailConfig.defaultFromEmail,
-      subject: emailContent.subject,
+      subject: result.effectiveSubject ?? emailContent.subject,
       templateName: stepConfig.templateName,
       organizationId: sequence.organization_id,
       userId: user.id,
-      resendMessageId: response.data?.id,
+      resendMessageId: result.messageId,
       status: "sent",
+      abTestId: result.abTestId,
+      abTestVariant: result.abTestVariant,
     });
 
-    return { success: true, emailId: emailId || response.data?.id };
+    return { success: true, emailId: emailId || result.messageId };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";

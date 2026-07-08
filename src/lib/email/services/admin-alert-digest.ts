@@ -409,7 +409,7 @@ async function sendDigestToUser(
       subject = `[Important] ${subject}`;
     }
 
-    // Send email
+    // Operational admin alert digest; leave direct because it is not A/B material.
     const { data: sendData, error: sendError } = await resend.emails.send({
       from: getFromAddress(),
       to: user.email,

@@ -16,7 +16,12 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getResendClient, getFromAddress, emailConfig } from "./client";
+import { getFromAddress, emailConfig } from "./client";
+import { sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type { EmailTemplate, RoleOnboardingFeatureStatus } from "./types";
 import {
   getRoleOnboardingLO1DashboardEmail,
@@ -284,6 +289,8 @@ async function logEmail(params: {
   resendMessageId?: string;
   status: string;
   errorMessage?: string;
+  abTestId?: string;
+  abTestVariant?: string;
 }): Promise<string | null> {
   const supabase = createAdminClient();
 
@@ -301,6 +308,8 @@ async function logEmail(params: {
       status: params.status,
       sent_at: params.status === "sent" ? new Date().toISOString() : null,
       error_message: params.errorMessage,
+      ab_test_id: params.abTestId ?? null,
+      ab_test_variant: params.abTestVariant ?? null,
     })
     .select("id")
     .single();
@@ -564,10 +573,12 @@ export async function processRoleOnboardingSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   // Process each sequence
   for (const sequence of sequences as SequenceRecord[]) {
     try {
-      const processResult = await processSequenceStep(sequence);
+      const processResult = await processSequenceStep(sequence, emailTypeSendResolver);
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -597,7 +608,10 @@ export async function processRoleOnboardingSequenceQueue(
 /**
  * Process a single sequence step
  */
-async function processSequenceStep(sequence: SequenceRecord): Promise<{
+async function processSequenceStep(
+  sequence: SequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
+): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "completed" | "cancelled";
   error?: string;
@@ -670,7 +684,7 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
             },
           ],
         };
-        return processSequenceStep(updatedSequence);
+        return processSequenceStep(updatedSequence, emailTypeSendResolver);
       } else {
         // All steps completed or skipped
         await updateSequenceStatus(sequence.id, "completed");
@@ -680,7 +694,13 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
   }
 
   // Send the email
-  const sendResult = await sendRoleOnboardingEmail(sequence, user, stepConfig, config);
+  const sendResult = await sendRoleOnboardingEmail(
+    sequence,
+    user,
+    stepConfig,
+    config,
+    emailTypeSendResolver
+  );
 
   if (!sendResult.success) {
     return { success: false, error: sendResult.error };
@@ -699,13 +719,13 @@ async function sendRoleOnboardingEmail(
   sequence: SequenceRecord,
   user: { id: string; email: string; full_name: string | null },
   stepConfig: RoleSequenceConfig["schedule"][number],
-  config: RoleSequenceConfig
+  config: RoleSequenceConfig,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
   error?: string;
 }> {
-  const resend = getResendClient();
   const baseUrl = emailConfig.baseUrl;
   const unsubscribeUrl = `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}`;
   const dashboardUrl = `${baseUrl}/dashboard`;
@@ -817,8 +837,8 @@ async function sendRoleOnboardingEmail(
     case "role_onboarding_mgr_3_leaderboards":
       emailContent = getRoleOnboardingMgr3LeaderboardsEmail({
         ...baseData,
-        leaderboardUrl: `${baseUrl}/dashboard/leaderboard`,
-        gamificationSettingsUrl: `${baseUrl}/dashboard/settings/gamification`,
+        leaderboardUrl: `${baseUrl}/dashboard/analytics/leaderboard`,
+        gamificationSettingsUrl: `${baseUrl}/dashboard/settings`,
         hasViewedLeaderboard: false,
       });
       break;
@@ -910,11 +930,17 @@ async function sendRoleOnboardingEmail(
   }
 
   try {
-    const response = await resend.emails.send({
+    const result = await sendWithReliability({
       from: getFromAddress(),
       to: user.email,
       subject: emailContent.subject,
       html: emailContent.html,
+      idempotencyKey: `role-onboarding-sequence-${sequence.id}-step-${stepConfig.step}`,
+      userId: user.id,
+      isTransactional: true,
+      organizationId: sequence.organization_id,
+      emailType: stepConfig.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: stepConfig.templateName },
         { name: "sequence_id", value: sequence.id },
@@ -926,35 +952,39 @@ async function sendRoleOnboardingEmail(
       ],
     });
 
-    if (response.error) {
+    if (!result.success) {
       await logEmail({
         toEmail: user.email,
         toName: user.full_name || undefined,
         fromEmail: emailConfig.defaultFromEmail,
-        subject: emailContent.subject,
+        subject: result.effectiveSubject ?? emailContent.subject,
         templateName: stepConfig.templateName,
         organizationId: sequence.organization_id,
         userId: user.id,
         status: "failed",
-        errorMessage: response.error.message,
+        errorMessage: result.error,
+        abTestId: result.abTestId,
+        abTestVariant: result.abTestVariant,
       });
 
-      return { success: false, error: response.error.message };
+      return { success: false, error: result.error };
     }
 
     const emailId = await logEmail({
       toEmail: user.email,
       toName: user.full_name || undefined,
       fromEmail: emailConfig.defaultFromEmail,
-      subject: emailContent.subject,
+      subject: result.effectiveSubject ?? emailContent.subject,
       templateName: stepConfig.templateName,
       organizationId: sequence.organization_id,
       userId: user.id,
-      resendMessageId: response.data?.id,
+      resendMessageId: result.messageId,
       status: "sent",
+      abTestId: result.abTestId,
+      abTestVariant: result.abTestVariant,
     });
 
-    return { success: true, emailId: emailId || response.data?.id };
+    return { success: true, emailId: emailId || result.messageId };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 

@@ -26,7 +26,12 @@
  */
 
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
-import { getResendClient, getFromAddress, emailConfig } from "./client";
+import { getFromAddress, emailConfig } from "./client";
+import { sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   AbandonedActionType,
@@ -165,6 +170,8 @@ async function logEmail(params: {
   resendMessageId?: string;
   status: string;
   errorMessage?: string;
+  abTestId?: string;
+  abTestVariant?: string;
 }): Promise<string | null> {
   const supabase = createUntypedAdminClient();
 
@@ -183,6 +190,8 @@ async function logEmail(params: {
       status: params.status,
       sent_at: params.status === "sent" ? new Date().toISOString() : null,
       error_message: params.errorMessage,
+      ab_test_id: params.abTestId ?? null,
+      ab_test_variant: params.abTestVariant ?? null,
     })
     .select("id")
     .single();
@@ -359,9 +368,15 @@ async function processRecoveryEmailQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   for (const action of actions as ActionReadyForEmail[]) {
     try {
-      const sendResult = await sendRecoveryEmail(action, emailNumber);
+      const sendResult = await sendRecoveryEmail(
+        action,
+        emailNumber,
+        emailTypeSendResolver
+      );
 
       if (sendResult.success) {
         result.processed++;
@@ -425,10 +440,10 @@ export async function expireOldAbandonedActions(): Promise<number> {
 
 async function sendRecoveryEmail(
   action: ActionReadyForEmail,
-  emailNumber: 1 | 2
+  emailNumber: 1 | 2,
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{ success: boolean; skipped?: boolean; error?: string }> {
   const supabase = createUntypedAdminClient();
-  const resend = getResendClient();
 
   // Get user data
   const { data: user, error: userError } = await supabase
@@ -537,7 +552,7 @@ async function sendRecoveryEmail(
         ...baseEmailData,
         completionPercent: safeInteger(context.completion_percent, 0, 0, 100),
         fieldsIncomplete: safeStringArray(context.fields_incomplete),
-        profileUrl: `${baseUrl}/dashboard/profile`,
+        profileUrl: `${baseUrl}/dashboard/settings`,
       };
       break;
 
@@ -574,13 +589,19 @@ async function sendRecoveryEmail(
     };
   }
 
-  // Send email via Resend
+  // Send email through the reliability choke point.
   try {
-    const response = await resend.emails.send({
+    const result = await sendWithReliability({
       from: getFromAddress(),
       to: user.email,
       subject: emailContent.subject,
       html: emailContent.html,
+      idempotencyKey: `abandoned-action-${action.action_id}-email-${emailNumber}`,
+      userId: user.id,
+      isTransactional: true,
+      organizationId: action.organization_id,
+      emailType: templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: templateName },
         { name: "action_type", value: action.action_type },
@@ -592,20 +613,22 @@ async function sendRecoveryEmail(
       ],
     });
 
-    if (response.error) {
+    if (!result.success) {
       await logEmail({
         toEmail: user.email,
         toName: user.full_name || undefined,
         fromEmail: emailConfig.defaultFromEmail,
-        subject: emailContent.subject,
+        subject: result.effectiveSubject ?? emailContent.subject,
         templateName,
         organizationId: action.organization_id,
         userId: user.id,
         status: "failed",
-        errorMessage: response.error.message,
+        errorMessage: result.error,
+        abTestId: result.abTestId,
+        abTestVariant: result.abTestVariant,
       });
 
-      return { success: false, error: response.error.message };
+      return { success: false, error: result.error };
     }
 
     // Log successful email
@@ -613,12 +636,14 @@ async function sendRecoveryEmail(
       toEmail: user.email,
       toName: user.full_name || undefined,
       fromEmail: emailConfig.defaultFromEmail,
-      subject: emailContent.subject,
+      subject: result.effectiveSubject ?? emailContent.subject,
       templateName,
       organizationId: action.organization_id,
       userId: user.id,
-      resendMessageId: response.data?.id,
+      resendMessageId: result.messageId,
       status: "sent",
+      abTestId: result.abTestId,
+      abTestVariant: result.abTestVariant,
     });
 
     // Update abandoned action record

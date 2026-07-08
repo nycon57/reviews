@@ -637,6 +637,7 @@ export async function sendTestAnnouncement(params: {
   const resend = getResendClient();
 
   try {
+    // Operational/test announcement send; leave direct because it is not A/B material.
     const response = await resend.emails.send({
       from: getFromAddress(),
       to: params.testEmail,
@@ -757,7 +758,7 @@ export async function sendAnnouncement(
       const emailData = buildEmailData(announcement, recipient, urls);
       const { subject, html } = await renderEmail(announcement.type, emailData);
 
-      // Send email
+      // Operational announcement send; leave direct because it is not A/B material.
       const response = await resend.emails.send({
         from: getFromAddress(),
         to: recipient.email,

@@ -12,7 +12,12 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getResendClient, getFromAddress, emailConfig } from "./client";
+import { getFromAddress, emailConfig } from "./client";
+import { sendWithReliability } from "./send-utils";
+import {
+  createEmailTypeSendResolver,
+  type EmailTypeSendResolver,
+} from "@/lib/email-ab-testing/overrides";
 import type {
   EmailTemplate,
   Reengagement1MissYouEmailData,
@@ -179,6 +184,8 @@ async function logEmail(params: {
   resendMessageId?: string;
   status: string;
   errorMessage?: string;
+  abTestId?: string;
+  abTestVariant?: string;
 }): Promise<string | null> {
   const supabase = createAdminClient();
 
@@ -196,6 +203,8 @@ async function logEmail(params: {
       status: params.status,
       sent_at: params.status === "sent" ? new Date().toISOString() : null,
       error_message: params.errorMessage,
+      ab_test_id: params.abTestId ?? null,
+      ab_test_variant: params.abTestVariant ?? null,
     })
     .select("id")
     .single();
@@ -515,10 +524,12 @@ export async function processReengagementSequenceQueue(
     return result;
   }
 
+  const emailTypeSendResolver = createEmailTypeSendResolver();
+
   // Process each sequence that we successfully locked
   for (const sequence of sequencesToProcess) {
     try {
-      const processResult = await processSequenceStep(sequence);
+      const processResult = await processSequenceStep(sequence, emailTypeSendResolver);
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -570,7 +581,10 @@ async function resetSequenceToActive(supabase: ReturnType<typeof createAdminClie
 /**
  * Process a single sequence step
  */
-async function processSequenceStep(sequence: SequenceRecord): Promise<{
+async function processSequenceStep(
+  sequence: SequenceRecord,
+  emailTypeSendResolver: EmailTypeSendResolver
+): Promise<{
   success: boolean;
   action?: "sent" | "skipped" | "exited" | "completed";
   error?: string;
@@ -650,7 +664,12 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
   }
 
   // Send the email
-  const sendResult = await sendReengagementEmail(sequence, user, stepConfig);
+  const sendResult = await sendReengagementEmail(
+    sequence,
+    user,
+    stepConfig,
+    emailTypeSendResolver
+  );
 
   if (!sendResult.success) {
     return { success: false, error: sendResult.error };
@@ -673,13 +692,13 @@ async function processSequenceStep(sequence: SequenceRecord): Promise<{
 async function sendReengagementEmail(
   sequence: SequenceRecord,
   user: { id: string; email: string; full_name: string | null },
-  stepConfig: ReengagementSequenceConfig["schedule"][number]
+  stepConfig: ReengagementSequenceConfig["schedule"][number],
+  emailTypeSendResolver: EmailTypeSendResolver
 ): Promise<{
   success: boolean;
   emailId?: string;
   error?: string;
 }> {
-  const resend = getResendClient();
   const baseUrl = emailConfig.baseUrl;
   const unsubscribeUrl = `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}`;
   const dashboardUrl = `${baseUrl}/dashboard`;
@@ -769,11 +788,17 @@ async function sendReengagementEmail(
   }
 
   try {
-    const response = await resend.emails.send({
+    const result = await sendWithReliability({
       from: getFromAddress(),
       to: user.email,
       subject: emailContent.subject,
       html: emailContent.html,
+      idempotencyKey: `reengagement-sequence-${sequence.id}-step-${stepConfig.step}`,
+      userId: user.id,
+      isTransactional: true,
+      organizationId: sequence.organization_id,
+      emailType: stepConfig.templateName,
+      emailTypeSendResolver,
       tags: [
         { name: "template", value: stepConfig.templateName },
         { name: "sequence_id", value: sequence.id },
@@ -786,35 +811,39 @@ async function sendReengagementEmail(
       ],
     });
 
-    if (response.error) {
+    if (!result.success) {
       await logEmail({
         toEmail: user.email,
         toName: user.full_name || undefined,
         fromEmail: emailConfig.defaultFromEmail,
-        subject: emailContent.subject,
+        subject: result.effectiveSubject ?? emailContent.subject,
         templateName: stepConfig.templateName,
         organizationId: sequence.organization_id,
         userId: user.id,
         status: "failed",
-        errorMessage: response.error.message,
+        errorMessage: result.error,
+        abTestId: result.abTestId,
+        abTestVariant: result.abTestVariant,
       });
 
-      return { success: false, error: response.error.message };
+      return { success: false, error: result.error };
     }
 
     const emailId = await logEmail({
       toEmail: user.email,
       toName: user.full_name || undefined,
       fromEmail: emailConfig.defaultFromEmail,
-      subject: emailContent.subject,
+      subject: result.effectiveSubject ?? emailContent.subject,
       templateName: stepConfig.templateName,
       organizationId: sequence.organization_id,
       userId: user.id,
-      resendMessageId: response.data?.id,
+      resendMessageId: result.messageId,
       status: "sent",
+      abTestId: result.abTestId,
+      abTestVariant: result.abTestVariant,
     });
 
-    return { success: true, emailId: emailId || response.data?.id };
+    return { success: true, emailId: emailId || result.messageId };
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";

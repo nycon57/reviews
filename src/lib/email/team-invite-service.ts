@@ -233,6 +233,7 @@ async function sendTeamInviteEmail(
   }
 
   try {
+    // Transactional team invite; leave direct because it is not A/B material.
     const { data: resendData, error: resendError } = await resend.emails.send({
       from: getFromAddress(organizationInfo.name),
       to: invitation.email,
@@ -423,7 +424,7 @@ export async function sendTeamInviteWelcomeEmail(
         : undefined,
     leaderboardUrl:
       invitation.role === "user"
-        ? `${baseUrl}/dashboard/leaderboard`
+        ? `${baseUrl}/dashboard/analytics/leaderboard`
         : undefined,
     teamAnalyticsUrl:
       invitation.role === "manager"
@@ -439,6 +440,7 @@ export async function sendTeamInviteWelcomeEmail(
 
   try {
     const resend = getResendClient();
+    // Transactional team invite welcome; leave direct because it is not A/B material.
     const { data: resendData, error: resendError } = await resend.emails.send({
       from: getFromAddress(orgInfo.name),
       to: user.email,

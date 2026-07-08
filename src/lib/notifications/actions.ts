@@ -34,33 +34,6 @@ function isValidSlackWebhookUrl(url: string): boolean {
   }
 }
 
-/**
- * Validates that a Teams webhook URL is legitimate.
- * Prevents SSRF attacks by ensuring the URL points to Microsoft's webhook service.
- */
-function isValidTeamsWebhookUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    // Must be HTTPS
-    if (parsed.protocol !== "https:") return false;
-    // Must be one of Microsoft's webhook domains
-    const validDomains = [
-      "webhook.office.com",
-      "outlook.office.com",
-      "outlook.office365.com",
-    ];
-    const isValidDomain = validDomains.some(
-      (domain) => parsed.hostname === domain || parsed.hostname.endsWith(`.${domain}`)
-    );
-    if (!isValidDomain) return false;
-    // Must have webhookb2 in the path (Teams incoming webhook pattern)
-    if (!parsed.pathname.includes("/webhookb2/") && !parsed.pathname.includes("/IncomingWebhook/")) return false;
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 // Get notifications for the current user
 export async function getNotifications(options: {
   limit?: number;
@@ -192,6 +165,31 @@ export async function archiveNotification(
 
   if (error) {
     console.error("Error archiving notification:", error);
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// Unarchive a notification
+export async function unarchiveNotification(
+  notificationId: string
+): Promise<{ success: boolean; error?: string }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createUntypedAdminClient();
+  const { error } = await supabase
+    .from("notifications")
+    .update({ is_archived: false, archived_at: null })
+    .eq("id", notificationId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error unarchiving notification:", error);
     return { success: false, error: error.message };
   }
 
@@ -609,70 +607,4 @@ function getDigestCutoffTime(): string {
   const now = new Date();
   now.setHours(now.getHours() - 1); // Allow 1 hour buffer
   return now.toISOString();
-}
-
-// Test MS Teams webhook with Adaptive Card
-export async function testTeamsWebhook(
-  webhookUrl: string
-): Promise<{ success: boolean; error?: string }> {
-  // Validate webhook URL to prevent SSRF attacks
-  if (!isValidTeamsWebhookUrl(webhookUrl)) {
-    return {
-      success: false,
-      error: "Invalid Teams webhook URL. Must be a valid Microsoft webhook.office.com URL.",
-    };
-  }
-
-  const testPayload = {
-    type: "message",
-    attachments: [
-      {
-        contentType: "application/vnd.microsoft.card.adaptive",
-        contentUrl: null,
-        content: {
-          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-          type: "AdaptiveCard",
-          version: "1.5",
-          body: [
-            {
-              type: "TextBlock",
-              text: "Webhook Test Successful",
-              size: "Medium",
-              weight: "Bolder",
-              color: "Good",
-            },
-            {
-              type: "TextBlock",
-              text: "Your Microsoft Teams integration is configured correctly.",
-              wrap: true,
-            },
-            {
-              type: "TextBlock",
-              text: "RepWell",
-              size: "Small",
-              isSubtle: true,
-            },
-          ],
-        },
-      },
-    ],
-  };
-
-  try {
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(testPayload),
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      return { success: false, error: `Teams returned: ${body}` };
-    }
-
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return { success: false, error: errorMessage };
-  }
 }

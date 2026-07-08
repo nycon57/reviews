@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback } from "react";
 import Image from "next/image";
 import { EnhancedLeaderboard, ProfileCompletionLeaderboard } from "@/components/gamification";
 import {
@@ -18,19 +18,36 @@ import { getEnhancedLeaderboard } from "@/lib/gamification/actions";
 import { getInitials } from "@/lib/utils";
 import type { FilterOptions } from "@/lib/dashboard";
 import type { EnhancedLeaderboardEntry } from "@/lib/gamification/types";
+import type { ProfileCompletionLeaderboardEntry } from "@/lib/gamification/profile-completion-types";
 
 interface LeaderboardDashboardProps {
   initialFilters: FilterOptions;
+  initialTopPerformers: EnhancedLeaderboardEntry[];
+  initialTopPerformersError: string | null;
+  initialLeaderboard: EnhancedLeaderboardEntry[];
+  initialLeaderboardError: string | null;
+  initialProfileCompletion: ProfileCompletionLeaderboardEntry[];
 }
 
-function CompactProfileCompletionLeaderboard() {
-  return <ProfileCompletionLeaderboard limit={10} showPodium={false} />;
+function CompactProfileCompletionLeaderboard({
+  initialData,
+}: {
+  initialData: ProfileCompletionLeaderboardEntry[];
+}) {
+  return <ProfileCompletionLeaderboard limit={10} showPodium={false} initialData={initialData} />;
 }
 
-export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardProps) {
+export function LeaderboardDashboard({
+  initialFilters,
+  initialTopPerformers,
+  initialTopPerformersError,
+  initialLeaderboard,
+  initialLeaderboardError,
+  initialProfileCompletion,
+}: LeaderboardDashboardProps) {
   const [isPending, startTransition] = useTransition();
-  const [topPerformers, setTopPerformers] = useState<EnhancedLeaderboardEntry[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [topPerformers, setTopPerformers] = useState<EnhancedLeaderboardEntry[]>(initialTopPerformers);
+  const [error, setError] = useState<string | null>(initialTopPerformersError);
 
   const loadTopPerformers = useCallback(() => {
     startTransition(async () => {
@@ -46,10 +63,6 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
       }
     });
   }, []);
-
-  useEffect(() => {
-    loadTopPerformers();
-  }, [loadTopPerformers]);
 
   const podiumConfig = [
     {
@@ -197,10 +210,15 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
       </div>
 
       {/* Full leaderboard */}
-      <EnhancedLeaderboard filterOptions={initialFilters} initialPeriod="monthly" />
+      <EnhancedLeaderboard
+        filterOptions={initialFilters}
+        initialPeriod="monthly"
+        initialData={initialLeaderboard}
+        initialError={initialLeaderboardError}
+      />
 
       {/* Profile completion leaderboard */}
-      <CompactProfileCompletionLeaderboard />
+      <CompactProfileCompletionLeaderboard initialData={initialProfileCompletion} />
 
       {/* Info card */}
       <div className="rounded-xl border border-dashed border-border/50 bg-repwell-sage-100/10 dark:bg-repwell-teal-300/10 p-5">

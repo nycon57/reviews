@@ -376,6 +376,7 @@ export async function sendAdminAlert<T extends AlertEmailData>(
         const html = await renderAlertEmail(alertType, emailData);
         const templateName = alertTypeToTemplate[alertType];
 
+        // Operational admin alert; leave direct because it is not A/B material.
         const { data: sendData, error: sendError } = await resend.emails.send({
           from: getFromAddress(),
           to: recipient.email,

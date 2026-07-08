@@ -394,7 +394,7 @@ export function ProfileCompletionCard({
               ))}
             </div>
             <Button variant="outline" size="sm" className="w-full" asChild>
-              <a href="/dashboard/profile">
+              <a href="/dashboard/settings">
                 Complete Profile
                 <ChevronRight className="ml-1 h-4 w-4" />
               </a>

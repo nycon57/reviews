@@ -465,7 +465,9 @@ export async function generateReport(
 /**
  * Initialize default templates for an organization
  */
-export async function initializeDefaultTemplates(): Promise<ActionResult<void>> {
+export async function initializeDefaultTemplates(options?: {
+  skipExistingCheck?: boolean;
+}): Promise<ActionResult<void>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
@@ -473,23 +475,24 @@ export async function initializeDefaultTemplates(): Promise<ActionResult<void>> 
 
   const supabase = createAdminClient();
 
-  // Check if templates already exist
-  const { data: existing } = await supabase
-    .from("report_templates")
-    .select("id")
-    .eq("organization_id", context.organizationId)
-    .eq("is_default", true)
-    .limit(1);
+  if (!options?.skipExistingCheck) {
+    const { data: existing } = await supabase
+      .from("report_templates")
+      .select("id")
+      .eq("organization_id", context.organizationId)
+      .eq("is_default", true)
+      .limit(1);
 
-  if (existing && existing.length > 0) {
-    return { success: true, data: undefined };
+    if (existing && existing.length > 0) {
+      return { success: true, data: undefined };
+    }
   }
 
   // Import default templates
   const { DEFAULT_TEMPLATES } = await import("./templates");
 
   // Insert default templates
-  const { error } = await supabase.from("report_templates").insert(
+  const { error } = await supabase.from("report_templates").upsert(
     DEFAULT_TEMPLATES.map((t) => ({
       organization_id: context.organizationId,
       name: t.name,
@@ -498,7 +501,11 @@ export async function initializeDefaultTemplates(): Promise<ActionResult<void>> 
       config: t.config as unknown as Json,
       is_default: t.isDefault,
       created_by: context.userId,
-    }))
+    })),
+    {
+      onConflict: "organization_id,name",
+      ignoreDuplicates: true,
+    }
   );
 
   if (error) {

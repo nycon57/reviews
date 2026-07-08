@@ -42,15 +42,26 @@ export const NAV_CONFIG: NavConfig = {
       icon: "Star",
       permission: PERMISSIONS.VIEW_REVIEWS,
     },
+    // Contacts is a tab in the reviews content hub, promoted to a Core
+    // destination (ADR 0007). Deep-links to the hub's Contacts tab.
+    {
+      title: "Contacts",
+      href: "/dashboard/reviews?tab=contacts",
+      icon: "AddressBook",
+      permission: PERMISSIONS.VIEW_REVIEWS,
+      isNew: true,
+    },
     {
       title: "Tasks",
       href: "/dashboard/tasks",
       icon: "ClipboardText",
       permission: PERMISSIONS.VIEW_TASKS,
     },
+    // Campaigns absorbs the former "Emails" nav item (ADR 0007): Sequences
+    // (workflow builder) + Templates (email builder) tabs.
     {
-      title: "Emails",
-      href: "/dashboard/emails",
+      title: "Campaigns",
+      href: "/dashboard/campaigns",
       icon: "Envelope",
       permission: PERMISSIONS.VIEW_CAMPAIGNS,
     },
@@ -85,6 +96,14 @@ export const NAV_CONFIG: NavConfig = {
           icon: "Trophy",
           permission: PERMISSIONS.VIEW_LEADERBOARD,
         },
+        // Team performance overview moved out of the Team page into Insights
+        // (ADR 0007); member management now lives under People.
+        {
+          title: "Team",
+          href: "/dashboard/analytics/team",
+          icon: "SquaresFour",
+          permission: PERMISSIONS.VIEW_TEAM,
+        },
         {
           title: "AI Insights",
           href: "/dashboard/insights",
@@ -95,36 +114,17 @@ export const NAV_CONFIG: NavConfig = {
       ],
     },
     {
-      label: "Team",
+      label: "Manage",
       items: [
+        // People: one destination, two rosters — Members (platform accounts)
+        // and Employees (EX roster). Absorbs Team→Management, Org→Users, and
+        // the standalone Employees page (ADR 0007).
         {
-          title: "Team",
-          href: "/dashboard/team",
+          title: "People",
+          href: "/dashboard/people",
           icon: "Users",
           permission: PERMISSIONS.VIEW_TEAM,
-        },
-        {
-          title: "Employees",
-          href: "/dashboard/employees",
-          icon: "AddressBook",
-          permission: PERMISSIONS.VIEW_EX_SURVEYS,
-        },
-        {
-          title: "Campaigns",
-          href: "/dashboard/campaigns",
-          icon: "Envelope",
-          permission: PERMISSIONS.VIEW_CAMPAIGNS,
-        },
-      ],
-    },
-    {
-      label: "Workspace",
-      items: [
-        {
-          title: "Organization",
-          href: "/dashboard/organization",
-          icon: "Buildings",
-          permission: PERMISSIONS.VIEW_ORGANIZATION,
+          isNew: true,
         },
         {
           title: "Surveys",
@@ -133,21 +133,30 @@ export const NAV_CONFIG: NavConfig = {
           permission: PERMISSIONS.VIEW_SURVEYS,
         },
         {
-          title: "Widgets",
-          href: "/dashboard/widgets",
-          icon: "Code",
-          permission: PERMISSIONS.VIEW_DASHBOARD,
-        },
-        {
           title: "EX Surveys",
           href: "/dashboard/ex-surveys",
           icon: "ClipboardText",
           permission: PERMISSIONS.VIEW_EX_SURVEYS,
         },
         {
+          title: "Widgets",
+          href: "/dashboard/widgets",
+          icon: "Code",
+          permission: PERMISSIONS.VIEW_DASHBOARD,
+        },
+        {
           title: "Media",
           href: "/dashboard/media",
           icon: "Images",
+          permission: PERMISSIONS.VIEW_ORGANIZATION,
+        },
+        // The org-scoped area ("Us") — billing, branding, integrations,
+        // webhooks, API keys, templates, org settings (ADR 0007). Route stays
+        // /dashboard/organization; the destination reads as "Workspace".
+        {
+          title: "Workspace",
+          href: "/dashboard/organization",
+          icon: "Buildings",
           permission: PERMISSIONS.VIEW_ORGANIZATION,
         },
       ],

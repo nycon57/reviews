@@ -37,7 +37,7 @@ export default function ApiReferencePage() {
                 </Link>
               </Button>
               <Button asChild size="sm">
-                <Link href="/dashboard/settings/api-keys">
+                <Link href="/dashboard/organization?tab=api">
                   Get API Key
                 </Link>
               </Button>

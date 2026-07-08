@@ -1,5 +1,5 @@
 import { DashboardSkeleton } from "@/components/shared";
 
-export default function TeamLoading() {
+export default function PeopleLoading() {
   return <DashboardSkeleton />;
 }

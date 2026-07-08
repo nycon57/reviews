@@ -904,7 +904,7 @@ async function sendReminderEmail(
       const data: SetupReminderGoogleConnectEmailData = {
         ...baseData,
         completionPercent: status.setupCompletionPercent,
-        googleConnectUrl: `${baseUrl}/dashboard/settings/integrations/google`,
+        googleConnectUrl: `${baseUrl}/dashboard/organization?tab=integrations`,
         setupProgress: status.setupCompletionPercent,
       };
       emailContent = getSetupReminderGoogleConnectEmail(data);

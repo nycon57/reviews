@@ -90,7 +90,7 @@ const quickLinks: SearchResult[] = [
     id: "team",
     title: "Team",
     description: "Manage team members",
-    href: "/dashboard/team",
+    href: "/dashboard/people",
     icon: Users,
     category: "Pages",
   },

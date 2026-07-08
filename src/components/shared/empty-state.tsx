@@ -211,7 +211,7 @@ export function WelcomeBanner({
   const steps = [
     { label: "Complete your profile", href: "/dashboard/settings", done: completionPercent > 25 },
     { label: "Send your first survey", href: "/dashboard/reviews?tab=requests", done: false },
-    { label: "Connect review sources", href: "/dashboard/settings#integrations", done: false },
+    { label: "Connect review sources", href: "/dashboard/organization?tab=integrations", done: false },
   ];
 
   return (

@@ -217,7 +217,7 @@ export function TemplateGallery({
         subject: starter.subject,
         document,
       });
-      router.push(`/dashboard/emails/${created.id}`);
+      router.push(`/dashboard/campaigns/templates/${created.id}`);
     } catch (err) {
       toast({
         title: "Error",
@@ -362,7 +362,7 @@ export function TemplateGallery({
               </button>
             </div>
 
-            <Button onClick={() => router.push("/dashboard/emails/new")}>
+            <Button onClick={() => router.push("/dashboard/campaigns/templates/new")}>
               <Plus size={16} className="mr-1.5" />
               New Template
             </Button>
@@ -408,7 +408,7 @@ export function TemplateGallery({
                 <motion.div key={template.id} variants={fadeInUp}>
                   <TemplateCard
                     template={template}
-                    onEdit={() => router.push(`/dashboard/emails/${template.id}`)}
+                    onEdit={() => router.push(`/dashboard/campaigns/templates/${template.id}`)}
                     onDelete={() => handleDelete(template.id)}
                     onDuplicate={() => handleDuplicate(template.id)}
                     onPreview={() => setPreviewTemplate(template)}
@@ -428,7 +428,7 @@ export function TemplateGallery({
                 <motion.div key={template.id} variants={fadeInUp}>
                   <TemplateListRow
                     template={template}
-                    onEdit={() => router.push(`/dashboard/emails/${template.id}`)}
+                    onEdit={() => router.push(`/dashboard/campaigns/templates/${template.id}`)}
                     onDelete={() => handleDelete(template.id)}
                     onDuplicate={() => handleDuplicate(template.id)}
                     onPreview={() => setPreviewTemplate(template)}

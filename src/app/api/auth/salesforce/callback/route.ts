@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   if (error) {
     console.error('Salesforce OAuth error:', error, errorDescription);
     return NextResponse.redirect(
-      `${appUrl}/dashboard/settings/integrations?salesforce_error=${encodeURIComponent(
+      `${appUrl}/dashboard/organization?tab=integrations&salesforce_error=${encodeURIComponent(
         errorDescription || error
       )}`
     );
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   // Validate required parameters
   if (!code || !state) {
     return NextResponse.redirect(
-      `${appUrl}/dashboard/settings/integrations?salesforce_error=${encodeURIComponent(
+      `${appUrl}/dashboard/organization?tab=integrations&salesforce_error=${encodeURIComponent(
         'Missing OAuth parameters'
       )}`
     );
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
   if (!result.success) {
     return NextResponse.redirect(
-      `${appUrl}/dashboard/settings/integrations?salesforce_error=${encodeURIComponent(
+      `${appUrl}/dashboard/organization?tab=integrations&salesforce_error=${encodeURIComponent(
         result.error || 'Authentication failed'
       )}`
     );
@@ -47,6 +47,6 @@ export async function GET(request: NextRequest) {
 
   // Redirect to settings with success message
   return NextResponse.redirect(
-    `${appUrl}/dashboard/settings/integrations?salesforce_success=true&connection_id=${result.data!.connectionId}`
+    `${appUrl}/dashboard/organization?tab=integrations&salesforce_success=true&connection_id=${result.data!.connectionId}`
   );
 }

@@ -798,7 +798,7 @@ async function sendRoleOnboardingEmail(
     case "role_onboarding_mgr_1_team_dashboard":
       emailContent = getRoleOnboardingMgr1TeamDashboardEmail({
         ...baseData,
-        teamDashboardUrl: `${baseUrl}/dashboard/team`,
+        teamDashboardUrl: `${baseUrl}/dashboard/people`,
         teamMembersUrl: `${baseUrl}/dashboard/settings/team`,
         teamSize: 0,
       });
@@ -887,9 +887,9 @@ async function sendRoleOnboardingEmail(
     case "role_onboarding_admin_4_billing":
       emailContent = getRoleOnboardingAdmin4BillingEmail({
         ...baseData,
-        billingUrl: `${baseUrl}/dashboard/settings?tab=billing`,
+        billingUrl: `${baseUrl}/dashboard/organization?tab=billing`,
         plansUrl: `${baseUrl}/pricing`,
-        invoicesUrl: `${baseUrl}/dashboard/settings?tab=billing`,
+        invoicesUrl: `${baseUrl}/dashboard/organization?tab=billing`,
         currentPlan: "Free Trial",
         billingConfigured: false,
       });

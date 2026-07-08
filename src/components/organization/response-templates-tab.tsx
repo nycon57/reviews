@@ -95,7 +95,6 @@ export function ResponseTemplatesTab() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadTemplates();
   }, [loadTemplates]);
 

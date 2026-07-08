@@ -11,13 +11,18 @@
       "permission": "VIEW_REVIEWS"
     },
     {
+      "title": "Contacts",
+      "route": "/dashboard/reviews?tab=contacts",
+      "permission": "VIEW_REVIEWS"
+    },
+    {
       "title": "Tasks",
       "route": "/dashboard/tasks",
       "permission": "VIEW_TASKS"
     },
     {
-      "title": "Emails",
-      "route": "/dashboard/emails",
+      "title": "Campaigns",
+      "route": "/dashboard/campaigns",
       "permission": "VIEW_CAMPAIGNS"
     },
     {
@@ -41,29 +46,19 @@
       "permission": "VIEW_LEADERBOARD"
     },
     {
+      "title": "Team",
+      "route": "/dashboard/analytics/team",
+      "permission": "VIEW_TEAM"
+    },
+    {
       "title": "AI Insights",
       "route": "/dashboard/insights",
       "permission": "VIEW_AI_INSIGHTS"
     },
     {
-      "title": "Team",
-      "route": "/dashboard/team",
+      "title": "People",
+      "route": "/dashboard/people",
       "permission": "VIEW_TEAM"
-    },
-    {
-      "title": "Employees",
-      "route": "/dashboard/employees",
-      "permission": "VIEW_EX_SURVEYS"
-    },
-    {
-      "title": "Campaigns",
-      "route": "/dashboard/campaigns",
-      "permission": "VIEW_CAMPAIGNS"
-    },
-    {
-      "title": "Organization",
-      "route": "/dashboard/organization",
-      "permission": "VIEW_ORGANIZATION"
     },
     {
       "title": "Surveys",
@@ -71,18 +66,23 @@
       "permission": "VIEW_SURVEYS"
     },
     {
-      "title": "Widgets",
-      "route": "/dashboard/widgets",
-      "permission": "VIEW_DASHBOARD"
-    },
-    {
       "title": "EX Surveys",
       "route": "/dashboard/ex-surveys",
       "permission": "VIEW_EX_SURVEYS"
     },
     {
+      "title": "Widgets",
+      "route": "/dashboard/widgets",
+      "permission": "VIEW_DASHBOARD"
+    },
+    {
       "title": "Media",
       "route": "/dashboard/media",
+      "permission": "VIEW_ORGANIZATION"
+    },
+    {
+      "title": "Workspace",
+      "route": "/dashboard/organization",
       "permission": "VIEW_ORGANIZATION"
     },
     {
@@ -104,7 +104,7 @@
       ]
     },
     {
-      "route": "/dashboard/team",
+      "route": "/dashboard/people",
       "guards": [
         "requiresEnterprise",
         "allowedRoles:admin,manager"
@@ -132,7 +132,7 @@
       ]
     },
     {
-      "route": "/dashboard/employees",
+      "route": "/dashboard/analytics/team",
       "guards": [
         "requiresEnterprise",
         "allowedRoles:admin,manager"
@@ -166,24 +166,24 @@
   "docRoutes": [
     "/dashboard",
     "/dashboard/reviews",
+    "/dashboard/reviews?tab=contacts",
     "/dashboard/tasks",
-    "/dashboard/emails",
+    "/dashboard/campaigns",
     "/dashboard/recognition",
     "/dashboard/analytics",
     "/dashboard/analytics/trends",
     "/dashboard/analytics/leaderboard",
+    "/dashboard/analytics/team",
     "/dashboard/insights",
-    "/dashboard/team",
-    "/dashboard/employees",
-    "/dashboard/campaigns",
-    "/dashboard/approvals",
-    "/dashboard/organization",
+    "/dashboard/people",
     "/dashboard/surveys",
-    "/dashboard/widgets",
     "/dashboard/ex-surveys",
+    "/dashboard/widgets",
     "/dashboard/media",
+    "/dashboard/organization",
     "/dashboard/settings",
     "/dashboard/help",
+    "/dashboard/approvals",
     "/staff",
     "/staff/announcements",
     "/staff/email-ab-tests",

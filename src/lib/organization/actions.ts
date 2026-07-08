@@ -974,7 +974,7 @@ export async function updateMemberRole(
   }
 
   revalidatePath("/dashboard/organization/team");
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
   return { success: true, error: null };
 }
 
@@ -1026,7 +1026,7 @@ export async function updateMemberDetails(
   }
 
   revalidatePath("/dashboard/organization/team");
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
   return { success: true, error: null };
 }
 

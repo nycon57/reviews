@@ -88,7 +88,7 @@ export function CheckoutSuccessClient() {
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/dashboard/settings?tab=billing">
+              <Link href="/dashboard/organization?tab=billing">
                 View Subscription Details
               </Link>
             </Button>

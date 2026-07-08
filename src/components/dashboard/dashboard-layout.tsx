@@ -4,6 +4,7 @@ import * as React from "react";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { MobileNavTrigger } from "./mobile-nav";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { cn } from "@/lib/utils";
 import { PermissionProvider } from "@/lib/permissions/context";
 import type { UserContext } from "@/lib/permissions";
@@ -159,6 +160,7 @@ export function DashboardLayout({
               "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border"
             )}
           >
+            <Breadcrumbs className="mb-4" />
             {children}
           </main>
         </div>

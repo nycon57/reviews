@@ -137,7 +137,7 @@ export function EmailBuilderPage({
         });
         setTemplateId(created.id);
         toast({ title: "Template created" });
-        window.history.replaceState(null, "", `/dashboard/emails/${created.id}`);
+        window.history.replaceState(null, "", `/dashboard/campaigns/templates/${created.id}`);
       }
     } catch (err) {
       toast({
@@ -222,7 +222,7 @@ export function EmailBuilderPage({
         {/* Top bar */}
         <div className="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-background px-3">
           {/* Back button */}
-          <Link href="/dashboard/emails">
+          <Link href="/dashboard/campaigns?tab=templates">
             <Button variant="ghost" size="sm">
               <ArrowLeft size={16} className="mr-1" />
               Back

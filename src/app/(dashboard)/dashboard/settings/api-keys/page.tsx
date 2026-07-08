@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-// Redirect to the main settings page with the API tab selected
+// API keys are org-scoped and live in the Workspace (ADR 0007).
 export default function ApiKeysPage() {
-  redirect('/dashboard/settings?tab=api');
+  redirect('/dashboard/organization?tab=api');
 }

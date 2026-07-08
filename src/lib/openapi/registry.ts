@@ -916,7 +916,7 @@ All API requests require authentication via an API key. Include your API key in 
 X-API-Key: rw_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 \`\`\`
 
-You can manage your API keys in the [API Keys settings](/dashboard/settings/api-keys) page.
+You can manage your API keys in the [API Keys settings](/dashboard/organization?tab=api) page.
 
 ## Rate Limiting
 

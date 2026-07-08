@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { UrlSyncedTabs } from "@/components/shared/url-synced-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -7,26 +8,42 @@ import {
   ChartBar,
   GearSix,
   Palette,
-  Users,
   Buildings,
   FileText,
   PlugsConnected,
   CreditCard,
+  Key,
+  Plugs,
 } from "@phosphor-icons/react/dist/ssr";
 import { OrganizationSettings } from "@/components/organization/organization-settings";
 import { OrganizationBranding } from "@/components/organization/organization-branding";
-import { OrganizationTeam } from "@/components/organization/organization-team";
 import { OrganizationBilling } from "@/components/organization/organization-billing";
 import { OrganizationOverview } from "@/components/organization/organization-overview";
 import { OrganizationBranches } from "@/components/organization/organization-branches";
 import { ResponseTemplatesTab } from "@/components/organization/response-templates-tab";
-import { OrganizationIntegrations } from "@/components/organization/organization-integrations";
+import { IntegrationsTab } from "@/components/organization/integrations-tab";
+import { ApiTab } from "@/components/organization/api-tab";
+import { WebhookSettingsPanel } from "@/components/settings/webhooks/webhook-settings-panel";
 import { requireIndividualOrEnterpriseAdmin } from "@/lib/access";
 
 export const metadata = {
-  title: "Organization Settings | RepWell",
-  description: "Manage your organization settings, branding, and team",
+  title: "Workspace | RepWell",
+  description: "Billing, branding, integrations, and everything org-scoped",
 };
+
+// Org-scoped tabs available in the Workspace. `branches` is enterprise-only.
+const VALID_TABS = [
+  "overview",
+  "settings",
+  "branding",
+  "branches",
+  "templates",
+  "integrations",
+  "billing",
+  "api",
+  "webhooks",
+] as const;
+type WorkspaceTab = (typeof VALID_TABS)[number];
 
 function TabSkeleton() {
   return (
@@ -47,9 +64,7 @@ function TabSkeleton() {
   );
 }
 
-const triggerClassName = "relative px-4 py-3 text-sm font-medium text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100/80 data-[state=active]:text-repwell-teal-300 border-b-2 border-transparent data-[state=active]:border-repwell-teal-300 rounded-none bg-transparent shadow-none transition-colors duration-200 flex items-center gap-2 whitespace-nowrap";
-
-export default async function OrganizationPage() {
+export default async function WorkspacePage() {
   // Allow individual license users and enterprise org admins
   const ctx = await requireIndividualOrEnterpriseAdmin();
   const isEnterpriseAccount = ctx.accountType === "enterprise";
@@ -62,53 +77,31 @@ export default async function OrganizationPage() {
           <Building2 className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-heading-accent">Organization</h1>
+          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-heading-accent">Workspace</h1>
           <p className="text-sm leading-snug text-repwell-teal-300">
-            Manage your organization settings, branding, and team
+            Billing, branding, integrations, and everything org-scoped
           </p>
         </div>
       </div>
 
-      {/* Organization tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto gap-0 overflow-x-auto">
-          <TabsTrigger value="overview" className={triggerClassName}>
-            <ChartBar className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="settings" className={triggerClassName}>
-            <GearSix className="h-4 w-4" />
-            Settings
-          </TabsTrigger>
-          <TabsTrigger value="branding" className={triggerClassName}>
-            <Palette className="h-4 w-4" />
-            Branding
-          </TabsTrigger>
-          {isEnterpriseAccount && (
-            <TabsTrigger value="team" className={triggerClassName}>
-              <Users className="h-4 w-4" />
-              Users
-            </TabsTrigger>
-          )}
-          {isEnterpriseAccount && (
-            <TabsTrigger value="branches" className={triggerClassName}>
-              <Buildings className="h-4 w-4" />
-              Branches
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="templates" className={triggerClassName}>
-            <FileText className="h-4 w-4" />
-            Templates
-          </TabsTrigger>
-          <TabsTrigger value="integrations" className={triggerClassName}>
-            <PlugsConnected className="h-4 w-4" />
-            Integrations
-          </TabsTrigger>
-          <TabsTrigger value="billing" className={triggerClassName}>
-            <CreditCard className="h-4 w-4" />
-            Billing
-          </TabsTrigger>
-        </TabsList>
+      {/* Workspace tabs */}
+      <UrlSyncedTabs
+        basePath="/dashboard/organization"
+        defaultTab="overview"
+        tabs={[
+          { value: "overview", label: "Overview", icon: <ChartBar className="h-4 w-4" /> },
+          { value: "settings", label: "Settings", icon: <GearSix className="h-4 w-4" /> },
+          { value: "branding", label: "Branding", icon: <Palette className="h-4 w-4" /> },
+          ...(isEnterpriseAccount
+            ? [{ value: "branches", label: "Branches", icon: <Buildings className="h-4 w-4" /> }]
+            : []),
+          { value: "templates", label: "Templates", icon: <FileText className="h-4 w-4" /> },
+          { value: "integrations", label: "Integrations", icon: <PlugsConnected className="h-4 w-4" /> },
+          { value: "billing", label: "Billing", icon: <CreditCard className="h-4 w-4" /> },
+          { value: "api", label: "API", icon: <Key className="h-4 w-4" /> },
+          { value: "webhooks", label: "Webhooks", icon: <Plugs className="h-4 w-4" /> },
+        ]}
+      >
 
         <TabsContent value="overview" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
@@ -129,14 +122,6 @@ export default async function OrganizationPage() {
         </TabsContent>
 
         {isEnterpriseAccount && (
-          <TabsContent value="team" className="space-y-6">
-            <Suspense fallback={<TabSkeleton />}>
-              <OrganizationTeam />
-            </Suspense>
-          </TabsContent>
-        )}
-
-        {isEnterpriseAccount && (
           <TabsContent value="branches" className="space-y-6">
             <Suspense fallback={<TabSkeleton />}>
               <OrganizationBranches />
@@ -152,7 +137,7 @@ export default async function OrganizationPage() {
 
         <TabsContent value="integrations" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
-            <OrganizationIntegrations />
+            <IntegrationsTab />
           </Suspense>
         </TabsContent>
 
@@ -161,7 +146,19 @@ export default async function OrganizationPage() {
             <OrganizationBilling />
           </Suspense>
         </TabsContent>
-      </Tabs>
+
+        <TabsContent value="api" className="space-y-6">
+          <Suspense fallback={<TabSkeleton />}>
+            <ApiTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="webhooks" className="space-y-6">
+          <Suspense fallback={<TabSkeleton />}>
+            <WebhookSettingsPanel />
+          </Suspense>
+        </TabsContent>
+      </UrlSyncedTabs>
     </div>
   );
 }

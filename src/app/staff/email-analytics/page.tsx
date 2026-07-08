@@ -39,7 +39,7 @@ export default async function EmailAnalyticsPage() {
         </div>
         {canUseBuilder && (
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/emails">
+            <Link href="/dashboard/campaigns?tab=templates">
               <PencilSimple className="mr-2 h-4 w-4" />
               Open template builder
             </Link>

@@ -126,7 +126,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
             <p className="text-xs text-white/80 mb-3 leading-relaxed">
               Unlock AI insights, unlimited surveys, and priority support.
             </p>
-            <Link href="/dashboard/settings?tab=billing">
+            <Link href="/dashboard/organization?tab=billing">
               <Button
                 size="sm"
                 className="w-full bg-white text-repwell-teal-300 hover:bg-white/90 dark:bg-foreground dark:text-repwell-teal-300 dark:hover:bg-foreground/90 font-medium text-sm h-9 group"
@@ -199,7 +199,7 @@ interface NavLinkProps {
 const NavLink = React.memo(function NavLink({ item, isActive, collapsed, dynamicBadge }: NavLinkProps) {
   const { isProLocked } = item;
   // If Pro locked, link to billing instead of the actual route
-  const href = isProLocked ? "/dashboard/settings?tab=billing" : item.href;
+  const href = isProLocked ? "/dashboard/organization?tab=billing" : item.href;
 
   const IconComponent = ICON_MAP[item.icon];
 

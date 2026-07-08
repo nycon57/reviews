@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
-import { generateReport, exportReportToCSV, generateReportHTML, exportAndRecordReport } from "@/lib/reporting";
+import { generateReport, exportAndRecordReport } from "@/lib/reporting";
 import type { DateRangePreset, ExportFormat } from "@/lib/reporting/types";
 import { verifyNotBot } from "@/lib/botid";
+
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,54 +70,35 @@ export async function POST(request: NextRequest) {
     }
 
     const report = reportResult.data;
-    let exportContent: string;
-    let contentType: string;
-    let fileExtension: string;
 
-    // Generate export content based on format
-    if (format === "csv") {
-      const csvResult = await exportReportToCSV(report, "summary");
-      if (!csvResult.success || !csvResult.data) {
-        return NextResponse.json(
-          { success: false, error: csvResult.error || "Failed to export CSV" },
-          { status: 500 }
-        );
-      }
-      exportContent = csvResult.data;
-      contentType = "text/csv";
-      fileExtension = "csv";
-    } else if (format === "pdf") {
-      const htmlResult = await generateReportHTML(report, organizationName);
-      if (!htmlResult.success || !htmlResult.data) {
-        return NextResponse.json(
-          { success: false, error: htmlResult.error || "Failed to generate HTML" },
-          { status: 500 }
-        );
-      }
-      exportContent = htmlResult.data;
-      contentType = "text/html";
-      fileExtension = "html";
-    } else {
-      exportContent = JSON.stringify(report, null, 2);
-      contentType = "application/json";
-      fileExtension = "json";
-    }
-
-    // Record the export
-    await exportAndRecordReport(
+    const exportResult = await exportAndRecordReport(
       templateId,
       parsedDateRange,
       format as ExportFormat,
-      filters || {}
+      filters || {},
+      {
+        report,
+        organizationName,
+      }
     );
 
-    // Generate filename
-    const filename = `report-${report.templateName.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.${fileExtension}`;
+    if (!exportResult.success || !exportResult.data) {
+      return NextResponse.json(
+        { success: false, error: exportResult.error || "Failed to export report" },
+        { status: 500 }
+      );
+    }
 
-    return new NextResponse(exportContent, {
+    const exportPayload = exportResult.data;
+    const responseBody =
+      exportPayload.encoding === "base64"
+        ? Buffer.from(exportPayload.data, "base64")
+        : exportPayload.data;
+
+    return new NextResponse(responseBody, {
       headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Type": exportPayload.mimeType,
+        "Content-Disposition": `attachment; filename="${exportPayload.filename}"`,
       },
     });
   } catch (error) {

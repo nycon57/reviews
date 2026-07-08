@@ -14,6 +14,15 @@ export interface DateRange {
   end: Date;
 }
 
+// Explicit organization context for trusted server/system callers.
+// Existing session-based analytics callers can omit this.
+export interface AnalyticsOrgContext {
+  organizationId: string;
+  userId?: string | null;
+  role?: string | null;
+  loanOfficerId?: string | null;
+}
+
 // NPS breakdown
 export interface NPSBreakdown {
   score: number; // -100 to 100

@@ -26,21 +26,16 @@ export type {
   TeamComparisonRow,
   GeneratedReport,
   ReportCSVRow,
+  ReportExportPayload,
   PDFReportData,
-  GenerateReportRequest,
-  ExportReportRequest,
-  ScheduleReportRequest,
-  ShareReportRequest,
-  CreateTemplateRequest,
-  UpdateTemplateRequest,
 } from "./types";
 
 // Engine (server actions)
 export {
   getReportTemplate,
   getReportTemplates,
+  generateReportForOrg,
   generateReport,
-  createReportTemplate,
   initializeDefaultTemplates,
 } from "./engine";
 
@@ -57,6 +52,7 @@ export {
   deleteScheduledReport,
   getScheduledReports,
   createReportShare,
+  createReportShareForOrg,
   getReportShareByToken,
   revokeReportShare,
   getReportShares,

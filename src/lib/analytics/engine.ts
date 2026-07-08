@@ -11,6 +11,7 @@ import type { ActionResult } from "@/lib/reviews/types";
 import type {
   PeriodType,
   DateRange,
+  AnalyticsOrgContext,
   MetricsSnapshot,
   NPSBreakdown,
   CSATMetrics,
@@ -38,10 +39,28 @@ import { getDateRangeForPeriod } from "./utils";
 // Cache duration in minutes
 const CACHE_DURATION_MINUTES = 60;
 
+type ResolvedAnalyticsContext = {
+  userId: string | null;
+  organizationId: string;
+  role: string | null;
+  loanOfficerId: string | null;
+};
+
 /**
  * Get user context for analytics operations - parallelized queries
  */
-async function getUserContext() {
+async function getUserContext(
+  explicitContext?: AnalyticsOrgContext
+): Promise<ResolvedAnalyticsContext | null> {
+  if (explicitContext) {
+    return {
+      userId: explicitContext.userId ?? null,
+      organizationId: explicitContext.organizationId,
+      role: explicitContext.role ?? null,
+      loanOfficerId: explicitContext.loanOfficerId ?? null,
+    };
+  }
+
   const user = await unifiedGetUser();
   if (!user) {
     return null;
@@ -81,9 +100,10 @@ async function getUserContext() {
  */
 export async function getNPSMetrics(
   loanOfficerId?: string,
-  dateRange?: DateRange
+  dateRange?: DateRange,
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<NPSBreakdown>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -132,9 +152,10 @@ export async function getNPSMetrics(
  */
 export async function getCSATMetrics(
   loanOfficerId?: string,
-  dateRange?: DateRange
+  dateRange?: DateRange,
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<CSATMetrics>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -183,9 +204,10 @@ export async function getCSATMetrics(
  */
 export async function getResponseRateMetrics(
   loanOfficerId?: string,
-  dateRange?: DateRange
+  dateRange?: DateRange,
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<ResponseRateMetrics>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -227,9 +249,10 @@ export async function getResponseRateMetrics(
  */
 export async function getReviewVelocityMetrics(
   loanOfficerId?: string,
-  dateRange?: DateRange
+  dateRange?: DateRange,
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<ReviewVelocityMetrics>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -269,9 +292,10 @@ export async function getReviewVelocityMetrics(
  */
 export async function getUserAnalytics(
   userId: string,
-  periodType: PeriodType = "monthly"
+  periodType: PeriodType = "monthly",
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<UserAnalytics>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -288,7 +312,7 @@ export async function getUserAnalytics(
   const dateRange = getDateRangeForPeriod(periodType);
 
   // Try to get cached metrics first
-  const cachedResult = await getCachedMetrics(userId, periodType);
+  const cachedResult = await getCachedMetrics(userId, periodType, ctx);
   if (cachedResult.success && cachedResult.data) {
     const cached = cachedResult.data;
     const cacheAge = Date.now() - new Date(cached.computedAt).getTime();
@@ -327,10 +351,10 @@ export async function getUserAnalytics(
 
   // Fetch fresh data
   const [npsResult, csatResult, responseRateResult, velocityResult] = await Promise.all([
-    getNPSMetrics(userId, dateRange),
-    getCSATMetrics(userId, dateRange),
-    getResponseRateMetrics(userId, dateRange),
-    getReviewVelocityMetrics(userId, dateRange),
+    getNPSMetrics(userId, dateRange, ctx),
+    getCSATMetrics(userId, dateRange, ctx),
+    getResponseRateMetrics(userId, dateRange, ctx),
+    getReviewVelocityMetrics(userId, dateRange, ctx),
   ]);
 
   if (!npsResult.success || !csatResult.success || !responseRateResult.success || !velocityResult.success) {
@@ -387,7 +411,7 @@ export async function getUserAnalytics(
     computedAt: new Date(),
   };
 
-  await cacheMetrics(userId, periodType, snapshot);
+  await cacheMetrics(userId, periodType, snapshot, ctx);
 
   return { success: true, data: analytics };
 }
@@ -399,15 +423,16 @@ export const getLoanOfficerAnalytics = getUserAnalytics;
  * Get organization-wide analytics
  */
 export async function getOrganizationAnalytics(
-  periodType: PeriodType = "monthly"
+  periodType: PeriodType = "monthly",
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<OrganizationMetrics>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
 
   // Only managers and admins can view org analytics
-  if (context.role !== "manager" && context.role !== "admin") {
+  if (!ctx && context.role !== "manager" && context.role !== "admin") {
     return { success: false, error: "Unauthorized - Manager or admin access required" };
   }
 
@@ -416,10 +441,10 @@ export async function getOrganizationAnalytics(
 
   // Fetch all metrics without user filter (org-wide)
   const [npsResult, csatResult, responseRateResult, velocityResult] = await Promise.all([
-    getNPSMetrics(undefined, dateRange),
-    getCSATMetrics(undefined, dateRange),
-    getResponseRateMetrics(undefined, dateRange),
-    getReviewVelocityMetrics(undefined, dateRange),
+    getNPSMetrics(undefined, dateRange, ctx),
+    getCSATMetrics(undefined, dateRange, ctx),
+    getResponseRateMetrics(undefined, dateRange, ctx),
+    getReviewVelocityMetrics(undefined, dateRange, ctx),
   ]);
 
   if (!npsResult.success || !csatResult.success || !responseRateResult.success || !velocityResult.success) {
@@ -476,9 +501,10 @@ export async function getOrganizationAnalytics(
  */
 export async function getNPSTrendData(
   loanOfficerId?: string,
-  months: number = 6
+  months: number = 6,
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<TrendPoint[]>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -528,9 +554,10 @@ export async function getNPSTrendData(
  */
 export async function getCSATTrendData(
   loanOfficerId?: string,
-  months: number = 6
+  months: number = 6,
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<TrendPoint[]>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -580,9 +607,10 @@ export async function getCSATTrendData(
  */
 export async function getReviewVelocityTrendData(
   loanOfficerId?: string,
-  months: number = 6
+  months: number = 6,
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<TrendPoint[]>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -645,9 +673,10 @@ export async function getReviewVelocityTrendData(
  */
 export async function getMetricComparison(
   metric: "nps" | "csat" | "responseRate" | "reviews",
-  loanOfficerId?: string
+  loanOfficerId?: string,
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<PeriodComparison>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
@@ -665,8 +694,8 @@ export async function getMetricComparison(
   switch (metric) {
     case "nps": {
       const [current, previous] = await Promise.all([
-        getNPSMetrics(loanOfficerId, currentRange),
-        getNPSMetrics(loanOfficerId, previousRange),
+        getNPSMetrics(loanOfficerId, currentRange, ctx),
+        getNPSMetrics(loanOfficerId, previousRange, ctx),
       ]);
       currentValue = current.data?.score || 0;
       previousValue = previous.data?.score || 0;
@@ -674,8 +703,8 @@ export async function getMetricComparison(
     }
     case "csat": {
       const [current, previous] = await Promise.all([
-        getCSATMetrics(loanOfficerId, currentRange),
-        getCSATMetrics(loanOfficerId, previousRange),
+        getCSATMetrics(loanOfficerId, currentRange, ctx),
+        getCSATMetrics(loanOfficerId, previousRange, ctx),
       ]);
       currentValue = current.data?.score || 0;
       previousValue = previous.data?.score || 0;
@@ -683,8 +712,8 @@ export async function getMetricComparison(
     }
     case "responseRate": {
       const [current, previous] = await Promise.all([
-        getResponseRateMetrics(loanOfficerId, currentRange),
-        getResponseRateMetrics(loanOfficerId, previousRange),
+        getResponseRateMetrics(loanOfficerId, currentRange, ctx),
+        getResponseRateMetrics(loanOfficerId, previousRange, ctx),
       ]);
       currentValue = current.data?.rate || 0;
       previousValue = previous.data?.rate || 0;
@@ -692,8 +721,8 @@ export async function getMetricComparison(
     }
     case "reviews": {
       const [current, previous] = await Promise.all([
-        getReviewVelocityMetrics(loanOfficerId, currentRange),
-        getReviewVelocityMetrics(loanOfficerId, previousRange),
+        getReviewVelocityMetrics(loanOfficerId, currentRange, ctx),
+        getReviewVelocityMetrics(loanOfficerId, previousRange, ctx),
       ]);
       currentValue = current.data?.totalReviews || 0;
       previousValue = previous.data?.totalReviews || 0;
@@ -712,9 +741,10 @@ export async function getMetricComparison(
 async function cacheMetrics(
   loanOfficerId: string | null,
   periodType: PeriodType,
-  metrics: MetricsSnapshot
+  metrics: MetricsSnapshot,
+  ctx?: AnalyticsOrgContext
 ): Promise<void> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) return;
 
   const supabase = createAdminClient();
@@ -760,9 +790,10 @@ async function cacheMetrics(
  */
 async function getCachedMetrics(
   loanOfficerId: string | null,
-  periodType: PeriodType
+  periodType: PeriodType,
+  ctx?: AnalyticsOrgContext
 ): Promise<ActionResult<CachedMetrics | null>> {
-  const context = await getUserContext();
+  const context = await getUserContext(ctx);
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }

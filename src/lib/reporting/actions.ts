@@ -19,10 +19,27 @@ import type {
   ReportFilters,
   ReportDateRange,
   ExportFormat,
+  GeneratedReport,
+  ReportExportPayload,
 } from "./types";
 import { generateReport } from "./engine";
-import { exportReportToCSV, generateReportHTML } from "./export";
+import { exportReportToCSV } from "./export";
 import { getExportFilename } from "./utils";
+
+export interface CreateReportShareForOrgParams {
+  organizationId: string;
+  templateId: string;
+  title: string;
+  dateRange: ReportDateRange;
+  filters?: ReportFilters;
+  expiresInDays?: number;
+  sharedBy?: string | null;
+}
+
+export interface ExportAndRecordReportOptions {
+  report?: GeneratedReport;
+  organizationName?: string;
+}
 
 /**
  * Get user context
@@ -90,6 +107,38 @@ function calculateNextRunTime(
   nextRun = setMinutes(nextRun, minutes);
 
   return nextRun;
+}
+
+function mapReportShareRow(data: {
+  id: string;
+  organization_id: string;
+  template_id: string;
+  share_token: string;
+  title: string;
+  date_range_start: string;
+  date_range_end: string;
+  filters: unknown;
+  shared_by: string | null;
+  expires_at: string | null;
+  access_count: number | null;
+  last_accessed_at: string | null;
+  created_at: string | null;
+}): ReportShare {
+  return {
+    id: data.id,
+    organizationId: data.organization_id,
+    templateId: data.template_id,
+    shareToken: data.share_token,
+    title: data.title,
+    dateRangeStart: new Date(data.date_range_start),
+    dateRangeEnd: new Date(data.date_range_end),
+    filters: (data.filters || {}) as ReportFilters,
+    sharedBy: data.shared_by,
+    expiresAt: data.expires_at ? new Date(data.expires_at) : null,
+    accessCount: data.access_count ?? 0,
+    lastAccessedAt: data.last_accessed_at ? new Date(data.last_accessed_at) : null,
+    createdAt: new Date(data.created_at!),
+  };
 }
 
 /**
@@ -355,6 +404,29 @@ export async function createReportShare(
     return { success: false, error: "Only managers and admins can share reports" };
   }
 
+  return createReportShareForOrg({
+    organizationId: context.organizationId,
+    templateId,
+    title,
+    dateRange,
+    filters,
+    expiresInDays,
+    sharedBy: context.userId,
+  });
+}
+
+/**
+ * Create a shareable report link for a trusted organization context
+ */
+export async function createReportShareForOrg({
+  organizationId,
+  templateId,
+  title,
+  dateRange,
+  filters,
+  expiresInDays,
+  sharedBy = null,
+}: CreateReportShareForOrgParams): Promise<ActionResult<ReportShare>> {
   const supabase = createAdminClient();
 
   const shareToken = randomBytes(32).toString("hex");
@@ -365,14 +437,14 @@ export async function createReportShare(
   const { data, error } = await supabase
     .from("report_shares")
     .insert({
-      organization_id: context.organizationId,
+      organization_id: organizationId,
       template_id: templateId,
       share_token: shareToken,
       title,
       date_range_start: dateRange.start.toISOString().split("T")[0],
       date_range_end: dateRange.end.toISOString().split("T")[0],
       filters: (filters || {}) as Json,
-      shared_by: context.userId,
+      shared_by: sharedBy,
       expires_at: expiresAt,
     })
     .select()
@@ -385,21 +457,7 @@ export async function createReportShare(
 
   return {
     success: true,
-    data: {
-      id: data.id,
-      organizationId: data.organization_id,
-      templateId: data.template_id,
-      shareToken: data.share_token,
-      title: data.title,
-      dateRangeStart: new Date(data.date_range_start),
-      dateRangeEnd: new Date(data.date_range_end),
-      filters: (data.filters || {}) as ReportFilters,
-      sharedBy: data.shared_by,
-      expiresAt: data.expires_at ? new Date(data.expires_at) : null,
-      accessCount: data.access_count ?? 0,
-      lastAccessedAt: data.last_accessed_at ? new Date(data.last_accessed_at) : null,
-      createdAt: new Date(data.created_at!),
-    },
+    data: mapReportShareRow(data),
   };
 }
 
@@ -529,22 +587,22 @@ export async function exportAndRecordReport(
   templateId: string,
   dateRange: ReportDateRange,
   format: ExportFormat,
-  filters?: ReportFilters
-): Promise<ActionResult<{ data: string; filename: string; mimeType: string }>> {
+  filters?: ReportFilters,
+  options: ExportAndRecordReportOptions = {}
+): Promise<ActionResult<ReportExportPayload>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Generate the report
-  const reportResult = await generateReport(templateId, dateRange, filters);
-  if (!reportResult.success || !reportResult.data) {
+  const report = options.report || (await generateReport(templateId, dateRange, filters)).data;
+  if (!report) {
     return { success: false, error: "Failed to generate report" };
   }
 
-  const report = reportResult.data;
   let exportData: string;
   let mimeType: string;
+  let encoding: ReportExportPayload["encoding"];
   let rowCount: number | null = null;
 
   switch (format) {
@@ -559,20 +617,17 @@ export async function exportAndRecordReport(
       break;
     }
     case "pdf": {
-      // Get organization name
-      const supabase = createAdminClient();
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("name")
-        .eq("id", context.organizationId)
-        .single();
-
-      const htmlResult = await generateReportHTML(report, org?.name || "Organization");
-      if (!htmlResult.success || !htmlResult.data) {
+      const organizationName = options.organizationName || (await getOrganizationName(context.organizationId));
+      try {
+        const { renderReportPdf } = await import("./pdf");
+        const pdfBuffer = await renderReportPdf(report, organizationName);
+        exportData = pdfBuffer.toString("base64");
+      } catch (error) {
+        console.error("Error generating PDF:", error);
         return { success: false, error: "Failed to generate PDF" };
       }
-      exportData = htmlResult.data;
-      mimeType = "text/html"; // Client will handle printing to PDF
+      mimeType = "application/pdf";
+      encoding = "base64";
       break;
     }
     case "json": {
@@ -606,8 +661,20 @@ export async function exportAndRecordReport(
       data: exportData,
       filename,
       mimeType,
+      ...(encoding ? { encoding } : {}),
     },
   };
+}
+
+async function getOrganizationName(organizationId: string): Promise<string> {
+  const supabase = createAdminClient();
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", organizationId)
+    .single();
+
+  return org?.name || "Organization";
 }
 
 /**

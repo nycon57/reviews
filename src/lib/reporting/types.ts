@@ -158,6 +158,15 @@ export interface ReportExport {
   createdAt: Date;
 }
 
+// Export payload returned by exportAndRecordReport.
+// PDF data is base64 encoded so server actions and JSON callers can move it safely.
+export interface ReportExportPayload {
+  data: string;
+  filename: string;
+  mimeType: string;
+  encoding?: "base64";
+}
+
 // Executive summary data
 export interface ExecutiveSummary {
   periodLabel: string;
@@ -235,55 +244,4 @@ export interface PDFReportData {
     title: string;
     data: Record<string, unknown>;
   }[];
-}
-
-// Report generation request
-export interface GenerateReportRequest {
-  templateId: string;
-  dateRange: ReportDateRange;
-  filters?: ReportFilters;
-}
-
-// Export report request
-export interface ExportReportRequest {
-  templateId: string;
-  dateRange: ReportDateRange;
-  filters?: ReportFilters;
-  format: ExportFormat;
-}
-
-// Schedule report request
-export interface ScheduleReportRequest {
-  templateId: string;
-  name: string;
-  recipients: string[];
-  schedule: ScheduleFrequency;
-  scheduleDayOfWeek?: number;
-  scheduleDayOfMonth?: number;
-  scheduleTime?: string;
-  filters?: ReportFilters;
-}
-
-// Share report request
-export interface ShareReportRequest {
-  templateId: string;
-  title: string;
-  dateRange: ReportDateRange;
-  filters?: ReportFilters;
-  expiresInDays?: number;
-}
-
-// Create template request
-export interface CreateTemplateRequest {
-  name: string;
-  description?: string;
-  templateType: ReportTemplateType;
-  config: ReportTemplateConfig;
-}
-
-// Update template request
-export interface UpdateTemplateRequest {
-  name?: string;
-  description?: string;
-  config?: ReportTemplateConfig;
 }

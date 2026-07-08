@@ -9,6 +9,7 @@ import {
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import { BranchProfileContent } from "./branch-profile-content";
 import { buildBranchBreadcrumbs } from "@/lib/directory/breadcrumb-utils";
+import { getBranchPublicPath } from "@/lib/branches/utils";
 
 interface PageProps {
   params: Promise<{
@@ -100,6 +101,7 @@ export default async function BranchProfilePage({ params }: PageProps) {
         reviews={reviews}
         breadcrumbs={breadcrumbs}
         isEnterprise={is_enterprise}
+        profileUrl={`${baseUrl}${getBranchPublicPath(branch)}`}
       />
     </>
   );

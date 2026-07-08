@@ -100,6 +100,7 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
         featuredProfessionals={featuredProfessionals}
         testimonials={testimonials}
         breadcrumbs={breadcrumbs}
+        profileUrl={`${baseUrl}/org/${organization.slug || organization.id}`}
       />
     </>
   );

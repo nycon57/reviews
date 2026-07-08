@@ -133,13 +133,6 @@ const SUPPORT_OPTIONS = [
     actionLabel: "Send Email",
   },
   {
-    title: "Email Support",
-    description: "Reach our support team by email",
-    icon: Mail,
-    action: "support@repwell.com",
-    actionLabel: "Send Email",
-  },
-  {
     title: "Security",
     description: "Report security concerns",
     icon: Shield,
@@ -180,7 +173,7 @@ export function HelpCenter() {
       </Card>
 
       {/* Quick links */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {QUICK_LINKS.map((link) => (
           <Link key={link.title} href={link.href} className="block">
             <Card className="h-full hover:shadow-md transition-shadow">

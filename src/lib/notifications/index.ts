@@ -21,6 +21,7 @@ export {
   getUnreadNotificationCount,
   markNotificationsAsRead,
   archiveNotification,
+  unarchiveNotification,
   getNotificationPreferences,
   updateNotificationPreferences,
   createNotification,
@@ -30,3 +31,5 @@ export {
   markDigestSent,
   getUsersNeedingDigest,
 } from "./actions";
+
+export { NOTIFICATION_TYPE_CONFIG, getNotificationTypeConfig } from "./config";

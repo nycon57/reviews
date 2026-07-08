@@ -6,21 +6,43 @@ import {
 import { LeaderboardDashboard } from "./leaderboard-dashboard";
 import { getEnterpriseFilterOptions } from "@/lib/dashboard";
 import { requireEnterprise } from "@/lib/access";
+import { getEnhancedLeaderboard } from "@/lib/gamification/actions";
+import { getProfileCompletionLeaderboard } from "@/lib/gamification/profile-completion-actions";
 
 export const metadata = {
   title: "Leaderboard | RepWell",
   description: "View team performance rankings and achievements",
 };
 
-async function getInitialFilters() {
-  const result = await getEnterpriseFilterOptions();
-  return result.success ? result.data || { branches: [], regions: [] } : { branches: [], regions: [] };
+async function getInitialLeaderboardData() {
+  const [filtersResult, topPerformersResult, leaderboardResult, profileCompletionResult] =
+    await Promise.all([
+      getEnterpriseFilterOptions(),
+      getEnhancedLeaderboard({ period: "monthly", limit: 3 }),
+      getEnhancedLeaderboard({ period: "monthly", limit: 20 }),
+      getProfileCompletionLeaderboard(10),
+    ]);
+
+  return {
+    filters: filtersResult.success
+      ? filtersResult.data || { branches: [], regions: [] }
+      : { branches: [], regions: [] },
+    topPerformers: topPerformersResult.success ? topPerformersResult.data || [] : [],
+    topPerformersError: topPerformersResult.success
+      ? null
+      : topPerformersResult.error || "Failed to load leaderboard data",
+    leaderboard: leaderboardResult.success ? leaderboardResult.data || [] : [],
+    leaderboardError: leaderboardResult.success
+      ? null
+      : leaderboardResult.error || "Failed to load leaderboard",
+    profileCompletion: profileCompletionResult.success ? profileCompletionResult.data || [] : [],
+  };
 }
 
 export default async function LeaderboardPage() {
   // Check access - requires enterprise account (all enterprise users can view leaderboard)
   await requireEnterprise();
-  const filters = await getInitialFilters();
+  const initialData = await getInitialLeaderboardData();
 
   return (
     <div className="flex-1 space-y-6">
@@ -55,7 +77,14 @@ export default async function LeaderboardPage() {
           </div>
         }
       >
-        <LeaderboardDashboard initialFilters={filters} />
+        <LeaderboardDashboard
+          initialFilters={initialData.filters}
+          initialTopPerformers={initialData.topPerformers}
+          initialTopPerformersError={initialData.topPerformersError}
+          initialLeaderboard={initialData.leaderboard}
+          initialLeaderboardError={initialData.leaderboardError}
+          initialProfileCompletion={initialData.profileCompletion}
+        />
       </Suspense>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,21 +37,44 @@ import type { FilterOptions } from "@/lib/dashboard";
 interface EnhancedLeaderboardProps {
   filterOptions: FilterOptions;
   initialPeriod?: LeaderboardPeriod;
+  initialBranch?: string;
+  initialData?: EnhancedLeaderboardEntry[];
+  initialError?: string | null;
 }
 
 export function EnhancedLeaderboard({
   filterOptions,
   initialPeriod = "monthly",
+  initialBranch = "all",
+  initialData,
+  initialError,
 }: EnhancedLeaderboardProps) {
-  const [data, setData] = useState<EnhancedLeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const hasInitialResult = initialData !== undefined || initialError !== undefined;
+  const didRunInitialEffect = useRef(false);
+  const [data, setData] = useState<EnhancedLeaderboardEntry[]>(initialData ?? []);
+  const [isLoading, setIsLoading] = useState(!hasInitialResult);
+  const [error, setError] = useState<string | null>(initialError ?? null);
   const [period, setPeriod] = useState<LeaderboardPeriod>(initialPeriod);
-  const [branch, setBranch] = useState<string>("all");
+  const [branch, setBranch] = useState<string>(initialBranch);
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!didRunInitialEffect.current) {
+      didRunInitialEffect.current = true;
+      if (
+        hasInitialResult &&
+        period === initialPeriod &&
+        branch === initialBranch &&
+        retryCount === 0
+      ) {
+        return () => {
+          cancelled = true;
+        };
+      }
+    }
+
     async function loadLeaderboard() {
       setIsLoading(true);
       setError(null);
@@ -73,7 +96,7 @@ export function EnhancedLeaderboard({
     return () => {
       cancelled = true;
     };
-  }, [period, branch, retryCount]);
+  }, [period, branch, retryCount, hasInitialResult, initialPeriod, initialBranch]);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {

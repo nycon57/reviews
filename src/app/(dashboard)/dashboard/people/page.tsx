@@ -6,6 +6,8 @@ import { UrlSyncedTabs } from "@/components/shared/url-synced-tabs";
 import { TeamManagement } from "./team-management";
 import { EmployeesPageClient } from "./employees-page-client";
 import { requireEnterpriseManager } from "@/lib/access";
+import { getEmployees } from "@/lib/employees/actions";
+import { getOrganizationMembers, getPendingInvitations } from "@/lib/organization";
 
 export const metadata = {
   title: "People | RepWell",
@@ -28,6 +30,11 @@ function TabsSkeleton() {
 export default async function PeoplePage() {
   const ctx = await requireEnterpriseManager();
   const role = ctx.role;
+  const [membersResult, invitationsResult, employeesResult] = await Promise.all([
+    getOrganizationMembers(),
+    getPendingInvitations(),
+    getEmployees(1, 25),
+  ]);
 
   return (
     <div className="flex-1 space-y-6">
@@ -64,10 +71,18 @@ export default async function PeoplePage() {
           ]}
         >
           <TabsContent value="members" className="m-0 animate-fade-in">
-            <TeamManagement userRole={role} />
+            <TeamManagement
+              userRole={role}
+              initialMembers={membersResult.members}
+              initialInvitations={invitationsResult.invitations}
+            />
           </TabsContent>
           <TabsContent value="employees" className="m-0 animate-fade-in">
-            <EmployeesPageClient />
+            <EmployeesPageClient
+              initialEmployees={employeesResult.data ?? []}
+              initialTotal={employeesResult.total ?? 0}
+              initialError={employeesResult.success ? null : employeesResult.error}
+            />
           </TabsContent>
         </UrlSyncedTabs>
       </Suspense>

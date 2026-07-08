@@ -15,22 +15,20 @@ import {
   Bell,
   Check,
   Checks as CheckCheck,
-  Star,
-  Warning as AlertTriangle,
-  Chats as MessageSquare,
-  EnvelopeOpen,
-  Trophy,
-  FileText,
   Gear as Settings,
   Archive,
 } from "@phosphor-icons/react";
+import { ToastAction } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import type { NotificationWithDetails, NotificationType } from "@/lib/notifications/types";
+import { getNotificationTypeConfig } from "@/lib/notifications/config";
+import type { NotificationWithDetails } from "@/lib/notifications/types";
 import {
   getNotifications,
   getUnreadNotificationCount,
   markNotificationsAsRead,
   archiveNotification,
+  unarchiveNotification,
 } from "@/lib/notifications/actions";
 import { formatDistanceToNow } from "date-fns";
 
@@ -38,39 +36,8 @@ interface NotificationCenterProps {
   className?: string;
 }
 
-const notificationIcons: Record<NotificationType, React.ElementType> = {
-  new_review: Star,
-  negative_review: AlertTriangle,
-  review_approved: Check,
-  review_rejected: AlertTriangle,
-  review_needs_response: EnvelopeOpen,
-  review_dispute: AlertTriangle,
-  response_posted: MessageSquare,
-  badge_earned: Trophy,
-  milestone_reached: Trophy,
-  mention: MessageSquare,
-  report_ready: FileText,
-  digest: FileText,
-  system: Bell,
-};
-
-const notificationColors: Record<NotificationType, string> = {
-  new_review: "bg-amber-100 text-amber-600",
-  negative_review: "bg-red-100 text-red-600",
-  review_approved: "bg-green-100 text-green-600",
-  review_rejected: "bg-red-100 text-red-600",
-  review_needs_response: "bg-amber-100 text-amber-600",
-  review_dispute: "bg-red-100 text-red-600",
-  response_posted: "bg-blue-100 text-blue-600",
-  badge_earned: "bg-purple-100 text-purple-600",
-  milestone_reached: "bg-purple-100 text-purple-600",
-  mention: "bg-blue-100 text-blue-600",
-  report_ready: "bg-indigo-100 text-indigo-600",
-  digest: "bg-indigo-100 text-indigo-600",
-  system: "bg-muted text-muted-foreground",
-};
-
 export function NotificationCenter({ className }: NotificationCenterProps) {
+  const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
   const [notifications, setNotifications] = React.useState<NotificationWithDetails[]>([]);
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -127,14 +94,67 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
     }
   };
 
-  const handleArchive = async (notificationId: string) => {
-    const result = await archiveNotification(notificationId);
-    if (result.success) {
-      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-      const notification = notifications.find((n) => n.id === notificationId);
-      if (notification && !notification.is_read) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+  const restoreArchivedNotification = React.useCallback(
+    async (notification: NotificationWithDetails, archiveIndex: number) => {
+      const result = await unarchiveNotification(notification.id);
+      if (!result.success) {
+        toast({
+          title: "Could not restore notification",
+          description: result.error || "Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
+
+      setNotifications((prev) => {
+        if (prev.some((item) => item.id === notification.id)) return prev;
+        const next = [...prev];
+        next.splice(Math.min(archiveIndex, next.length), 0, {
+          ...notification,
+          is_archived: false,
+          archived_at: null,
+        });
+        return next;
+      });
+
+      if (!notification.is_read) {
+        setUnreadCount((prev) => prev + 1);
+      }
+    },
+    [toast]
+  );
+
+  const handleArchive = async (notificationId: string) => {
+    const notification = notifications.find((n) => n.id === notificationId);
+    const archiveIndex = notifications.findIndex((n) => n.id === notificationId);
+    const result = await archiveNotification(notificationId);
+    if (!result.success) {
+      toast({
+        title: "Could not archive notification",
+        description: result.error || "Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+    if (notification && !notification.is_read) {
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+
+    if (notification) {
+      toast({
+        title: "Notification archived",
+        description: "You can undo this action.",
+        action: (
+          <ToastAction
+            altText="Undo archive"
+            onClick={() => void restoreArchivedNotification(notification, archiveIndex)}
+          >
+            Undo
+          </ToastAction>
+        ),
+      });
     }
   };
 
@@ -260,8 +280,7 @@ function NotificationItem({
   onArchive,
   onClick,
 }: NotificationItemProps) {
-  const Icon = notificationIcons[notification.type as NotificationType] || Bell;
-  const colorClass = notificationColors[notification.type as NotificationType] || notificationColors.system;
+  const { icon: Icon, colorClass } = getNotificationTypeConfig(notification.type);
 
   const content = (
     <div

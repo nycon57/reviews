@@ -3,7 +3,6 @@
 import { useState, useTransition, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +37,10 @@ import { useToast } from "@/hooks/use-toast";
 import { ensureReviewSmartLink } from "@/lib/share-studio/actions";
 import { formatReviewSource } from "@/lib/reviews/source-labels";
 import { AnimatedTransition, AnimatedList, AnimatedItem } from "@/components/motion";
+import {
+  REVIEW_STATUS_FILTER_LABELS,
+  ReviewStatusBadge,
+} from "@/components/reviews/review-status-badge";
 
 interface RecentReviewsProps {
   initialReviews: RecentReview[];
@@ -156,15 +159,21 @@ export function UserRecentReviews({
         </CardTitle>
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={handleFilterChange}>
-            <SelectTrigger className="h-8 w-[100px]">
+            <SelectTrigger className="h-8 w-[132px]">
               <Filter className="mr-1 h-3 w-3" />
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="approved">
+                {REVIEW_STATUS_FILTER_LABELS.approved}
+              </SelectItem>
+              <SelectItem value="pending">
+                {REVIEW_STATUS_FILTER_LABELS.pending}
+              </SelectItem>
+              <SelectItem value="rejected">
+                {REVIEW_STATUS_FILTER_LABELS.rejected}
+              </SelectItem>
             </SelectContent>
           </Select>
           <Button variant="ghost" size="sm" asChild>
@@ -238,18 +247,7 @@ export function UserRecentReviews({
                         >
                           {review.customerName || "Anonymous"}
                         </a>
-                        <Badge
-                          variant={
-                            review.status === "approved"
-                              ? "default"
-                              : review.status === "pending"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                          className="h-5 text-xs"
-                        >
-                          {review.status}
-                        </Badge>
+                        <ReviewStatusBadge status={review.status} className="h-5 text-xs" />
                       </div>
                       <div className="flex items-center gap-1">
                         {Array.from({ length: 5 }).map((_, i) => (

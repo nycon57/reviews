@@ -51,7 +51,7 @@ function makeConfig(overrides?: Partial<PublicWidgetConfig>): PublicWidgetConfig
     widget_type: "video_testimonial",
     entity_type: "user",
     entity_id: "user-1",
-    name: "Video Testimonials",
+    name: "Video reviews",
     config: {
       content: {
         showHeader: true,
@@ -81,9 +81,9 @@ function makeConfig(overrides?: Partial<PublicWidgetConfig>): PublicWidgetConfig
   };
 }
 
-// ── Video Testimonial Widget tests ──────────────────────────────────
+// ── Video review widget tests ────────────────────────────────────────
 
-describe("Video Testimonial Widget", () => {
+describe("Video review widget", () => {
   beforeEach(() => {
     vi.resetModules();
   });
@@ -118,7 +118,7 @@ describe("Video Testimonial Widget", () => {
 
     const placeholders = dom.querySelectorAll(".rw-vt__poster-placeholder");
     expect(placeholders).toHaveLength(1);
-    expect(placeholders[0].textContent).toBe("Video Testimonial");
+    expect(placeholders[0].textContent).toBe("Video review");
   });
 
   it("renders play button overlay with accessible attributes", async () => {
@@ -276,7 +276,7 @@ describe("Video Testimonial Widget", () => {
 
     const empty = dom.querySelector(".rw-empty");
     expect(empty).not.toBeNull();
-    expect(empty?.textContent).toBe("No video testimonials available.");
+    expect(empty?.textContent).toBe("No video reviews available.");
   });
 
   it("renders disclaimer when showDisclaimer is true", async () => {
@@ -323,7 +323,7 @@ describe("Video Testimonial Widget", () => {
     const dom = buildVideoTestimonialDOM(makeConfig(), [], "https://api.test");
 
     expect(dom.getAttribute("role")).toBe("region");
-    expect(dom.getAttribute("aria-label")).toBe("Video Testimonials");
+    expect(dom.getAttribute("aria-label")).toBe("Video reviews");
   });
 
   it("renders custom controls (play/pause, progress, volume, fullscreen)", async () => {
@@ -375,10 +375,10 @@ describe("Video Testimonial Widget", () => {
     const playerWraps = dom.querySelectorAll(".rw-vt__player-wrap");
     expect(playerWraps[0].getAttribute("role")).toBe("region");
     expect(playerWraps[0].getAttribute("aria-label")).toBe(
-      "Video testimonial by John Doe"
+      "Video review by John Doe"
     );
     expect(playerWraps[1].getAttribute("aria-label")).toBe(
-      "Video testimonial by Sarah Connor"
+      "Video review by Sarah Connor"
     );
   });
 });
@@ -423,7 +423,7 @@ describe("Video Transcript component", () => {
 
 // ── Registration test ────────────────────────────────────────────────
 
-describe("Video Testimonial Widget registration", () => {
+describe("Video review widget registration", () => {
   beforeEach(() => {
     vi.resetModules();
   });

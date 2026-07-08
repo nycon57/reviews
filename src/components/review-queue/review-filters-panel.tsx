@@ -20,6 +20,7 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { formatReviewSource } from "@/lib/reviews/source-labels";
+import { REVIEW_STATUS_FILTER_LABELS } from "@/components/reviews/review-status-badge";
 import { useReviewQueue } from "./review-queue-context";
 
 export function ReviewFiltersPanel() {
@@ -66,15 +67,15 @@ export function ReviewFiltersPanel() {
           value={state.filters.statusFilter}
           onValueChange={(v) => { actions.dispatch({ type: "SET_STATUS", value: v }); actions.handleFilterChange(); }}
         >
-          <SelectTrigger className="h-9 w-[140px]">
+          <SelectTrigger className="h-9 w-[150px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Needs attention</SelectItem>
-            <SelectItem value="approved">Live</SelectItem>
-            <SelectItem value="rejected">Removed</SelectItem>
-            <SelectItem value="archived">Archived</SelectItem>
+            <SelectItem value="pending">{REVIEW_STATUS_FILTER_LABELS.pending}</SelectItem>
+            <SelectItem value="approved">{REVIEW_STATUS_FILTER_LABELS.approved}</SelectItem>
+            <SelectItem value="rejected">{REVIEW_STATUS_FILTER_LABELS.rejected}</SelectItem>
+            <SelectItem value="archived">{REVIEW_STATUS_FILTER_LABELS.archived}</SelectItem>
           </SelectContent>
         </Select>
 

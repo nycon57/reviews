@@ -36,8 +36,8 @@ const STATUS_COPY: Record<
   { label: string; description: string; icon: typeof Clock }
 > = {
   pending: {
-    label: "Needs attention",
-    description: "Held by automated screening. Review and publish or remove.",
+    label: "Quarantined",
+    description: "Held by automated screening. Publish to make it live, or remove it from review surfaces.",
     icon: Clock,
   },
   changes_requested: {
@@ -46,8 +46,8 @@ const STATUS_COPY: Record<
     icon: Chats,
   },
   approved: {
-    label: "Approved",
-    description: "Ready to share. Publish to make it publicly visible.",
+    label: "Ready to publish",
+    description: "Screening has cleared it. Publish to make it publicly visible.",
     icon: CheckCircle,
   },
   published: {
@@ -57,7 +57,7 @@ const STATUS_COPY: Record<
   },
   rejected: {
     label: "Removed",
-    description: "Not approved for publishing.",
+    description: "Removed from public publishing surfaces.",
     icon: XCircle,
   },
   archived: {
@@ -72,19 +72,19 @@ interface PublishingStatusPanelProps {
   canManage: boolean;
   publishedAt?: string | null;
   rejectionReason?: string | null;
-  /** When provided, shows an Approve action for pending / changes_requested items. */
+  /** When provided, shows a release action for pending / changes_requested items. */
   onApprove?: () => Promise<void>;
   onPublish: () => Promise<void>;
   onReject: (reason: string) => Promise<void>;
   /**
-   * Whether Reject is offered for live (approved/published) items.
+   * Whether Remove is offered for live (approved/published) items.
    * Reviews set this to false: live reviews can only be removed through an
-   * upheld dispute. Video testimonials keep the default.
+   * upheld dispute. Video reviews keep the default.
    */
   allowRejectWhenLive?: boolean;
   /**
    * Extra line under the status description clarifying what the actions
-   * govern (e.g. that video approval is separate from the written review).
+   * govern (e.g. that video publishing is separate from the written review).
    */
   contextNote?: string;
 }
@@ -182,7 +182,7 @@ export function PublishingStatusPanel({
                   ) : (
                     <CheckCircle className="h-4 w-4" />
                   )}
-                  Approve
+                  Clear for publishing
                 </Button>
               )}
               {canPublish && (
@@ -208,14 +208,14 @@ export function PublishingStatusPanel({
                   disabled={busyAction !== null}
                 >
                   <XCircle className="h-4 w-4" />
-                  Reject
+                  Remove
                 </Button>
               )}
             </div>
           )
         ) : (
           <p className="text-sm text-muted-foreground">
-            Only admins and managers can approve or publish.
+            Only admins and managers can manage publishing.
           </p>
         )}
       </CardContent>
@@ -223,9 +223,9 @@ export function PublishingStatusPanel({
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject from publishing?</DialogTitle>
+            <DialogTitle>Remove from publishing?</DialogTitle>
             <DialogDescription>
-              This removes the item from public publishing. Add a short reason for the record.
+              This keeps the item off public review surfaces. Add a short reason for the record.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -234,7 +234,7 @@ export function PublishingStatusPanel({
               id="publishing-rejection-reason"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              placeholder="Why should this not be published?"
+              placeholder="Why should this stay unpublished?"
               rows={4}
             />
           </div>
@@ -254,7 +254,7 @@ export function PublishingStatusPanel({
               disabled={!reason.trim() || busyAction === "reject"}
             >
               {busyAction === "reject" && <SpinnerGap className="mr-2 h-4 w-4 animate-spin" />}
-              Reject
+              Remove
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -62,13 +62,13 @@ function SentimentBadge({ label }: { label: string | null }) {
 }
 
 // ============================================================================
-// Approval Panel
+// Publishing Panel
 // ============================================================================
 
 export function VideoApprovalPanel({ video, canManage, onAction }: VideoApprovalPanelProps) {
   return (
     <div className="space-y-6">
-      {/* Approval Actions */}
+      {/* Publishing Actions */}
       {canManage && (
         <Card>
           <CardHeader>
@@ -83,7 +83,7 @@ export function VideoApprovalPanel({ video, canManage, onAction }: VideoApproval
                   className="w-full gap-2 bg-repwell-sage-200 text-white hover:bg-repwell-sage-200/80"
                 >
                   <ThumbsUp className="h-4 w-4" />
-                  Approve
+                  Clear for publishing
                 </Button>
                 <Button
                   variant="outline"
@@ -99,7 +99,7 @@ export function VideoApprovalPanel({ video, canManage, onAction }: VideoApproval
                   className="w-full gap-2 border-[#c47c7c]/50 text-[#c47c7c] hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-[#c47c7c]"
                 >
                   <ThumbsDown className="h-4 w-4" />
-                  Reject
+                  Remove
                 </Button>
               </>
             )}
@@ -119,7 +119,7 @@ export function VideoApprovalPanel({ video, canManage, onAction }: VideoApproval
             )}
             {video.approvalStatus === "rejected" && (
               <div className="text-center text-sm text-muted-foreground">
-                This video has been rejected
+                This video has been removed
               </div>
             )}
           </CardContent>
@@ -172,11 +172,11 @@ export function VideoApprovalPanel({ video, canManage, onAction }: VideoApproval
         </Card>
       )}
 
-      {/* Rejection Reason */}
+      {/* Removal Reason */}
       {video.approvalStatus === "rejected" && video.rejectionReason && (
         <Card className="border-red-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-red-600">Rejection Reason</CardTitle>
+            <CardTitle className="text-base text-red-600">Removal Reason</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-wrap text-sm text-red-600">

@@ -1,5 +1,5 @@
 /**
- * Video Testimonial Widget — registers the `video_testimonial` widget type.
+ * Video review widget — registers the `video_testimonial` widget type.
  * Self-registers on import via side effect.
  */
 
@@ -10,7 +10,7 @@ import { VIDEO_TESTIMONIAL_STYLES } from "./styles";
 import { buildVideoTestimonialDOM } from "./template";
 
 /**
- * Renders the Video Testimonial Widget inside a Shadow DOM root.
+ * Renders the video review widget inside a Shadow DOM root.
  */
 function renderVideoTestimonialWidget(
   root: ShadowRoot,

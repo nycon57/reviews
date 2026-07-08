@@ -11,6 +11,7 @@ import {
   MOCK_WIDGET_ID,
   mockWidgetConfig,
   mockReviewsResponse,
+  waitForWidgetRendered,
 } from "./fixtures";
 
 test.describe("Domain Restriction", () => {
@@ -43,7 +44,7 @@ test.describe("Domain Restriction", () => {
     });
 
     await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(page);
 
     const widgetHost = page.locator(
       `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
@@ -78,7 +79,7 @@ test.describe("Domain Restriction", () => {
     );
 
     await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(page);
 
     const widgetHost = page.locator(
       `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
@@ -94,11 +95,12 @@ test.describe("Domain Restriction", () => {
   });
 
   test("console warns about domain restriction", async ({ page }) => {
-    const consoleMessages: string[] = [];
-    page.on("console", (msg) => {
-      if (msg.type() === "warning") {
-        consoleMessages.push(msg.text());
-      }
+    const warningPromise = page.waitForEvent("console", (msg) => {
+      return (
+        msg.type() === "warning" &&
+        (msg.text().includes("not authorized") ||
+          msg.text().includes("DomainNotAllowed"))
+      );
     });
 
     await page.route(
@@ -117,12 +119,9 @@ test.describe("Domain Restriction", () => {
     );
 
     await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(page);
 
-    const domainWarning = consoleMessages.some(
-      (msg) =>
-        msg.includes("not authorized") || msg.includes("DomainNotAllowed")
-    );
-    expect(domainWarning).toBe(true);
+    const domainWarning = await warningPromise;
+    expect(domainWarning.text()).toMatch(/not authorized|DomainNotAllowed/);
   });
 });

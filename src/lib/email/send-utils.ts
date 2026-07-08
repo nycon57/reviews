@@ -644,6 +644,9 @@ export const EMAIL_TEMPLATE_CATEGORIES: Record<string, EmailCategory> = {
   milestone_badge_earned: "milestones",
   milestone_streak: "milestones",
   milestone_video: "milestones",
+  milestone_rating_improvement: "milestones",
+  milestone_nps_improvement: "milestones",
+  milestone_profile_completion: "milestones",
 
   // Product updates
   announcement_feature: "product_updates",

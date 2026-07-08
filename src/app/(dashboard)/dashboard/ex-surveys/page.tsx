@@ -13,7 +13,13 @@ import {
   ArrowRight,
   ChartBar as BarChart3,
 } from "@phosphor-icons/react/dist/ssr";
-import { getEXSurveys, getEXMetrics, getEXTrends, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
+import {
+  getEXSurveyTemplates,
+  getEXSurveys,
+  getEXMetrics,
+  getEXTrends,
+  initializeDefaultEXTemplates,
+} from "@/lib/ex-surveys/actions";
 import { interpretENPS } from "@/types/ex-survey.types";
 import { EXMultiMetricChart } from "@/components/ex-surveys";
 import { requireEnterpriseManager } from "@/lib/access";
@@ -174,12 +180,22 @@ async function TrendChartSection() {
   return <EXMultiMetricChart data={trendData} />;
 }
 
+async function ensureEXSurveyTemplates() {
+  let result = await getEXSurveyTemplates();
+
+  if (result.success && (result.data?.length ?? 0) === 0) {
+    await initializeDefaultEXTemplates({ skipExistingCheck: true });
+    result = await getEXSurveyTemplates();
+  }
+
+  return result;
+}
+
 export default async function EXSurveysPage() {
   // Check access - requires enterprise account + manager/admin role
   await requireEnterpriseManager();
 
-  // Initialize default templates if needed
-  await initializeDefaultEXTemplates();
+  await ensureEXSurveyTemplates();
 
   return (
     <div className="flex-1 space-y-6">

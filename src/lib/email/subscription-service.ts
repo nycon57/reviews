@@ -981,6 +981,7 @@ async function sendEmail(params: {
   };
 
   try {
+    // Transactional subscription lifecycle send; leave direct because it is not A/B material.
     const response = await resend.emails.send({
       from: getFromAddress(),
       to: params.to,

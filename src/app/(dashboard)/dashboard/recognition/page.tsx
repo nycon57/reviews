@@ -8,6 +8,7 @@ import {
   Chats as MessageSquare,
 } from "@phosphor-icons/react/dist/ssr";
 import {
+  getRecognitionBadges,
   getRecognitions,
   getManagerFeedback,
   initializeDefaultBadges,
@@ -80,14 +81,24 @@ async function ManagerFeedbackSection({ currentUserId }: { currentUserId: string
   return <ReadOnlyManagerFeedbackList initialFeedback={result.data} currentUserId={currentUserId} />;
 }
 
+async function ensureRecognitionBadges() {
+  let result = await getRecognitionBadges();
+
+  if (result.success && (result.data?.length ?? 0) === 0) {
+    await initializeDefaultBadges({ skipExistingCheck: true });
+    result = await getRecognitionBadges();
+  }
+
+  return result;
+}
+
 export default async function RecognitionPage() {
   // Check access - requires enterprise account (all enterprise users can view)
   const ctx = await requireEnterprise();
   const userId = ctx.userId;
   const isManager = isManagerOrAbove(ctx);
 
-  // Initialize default badges if needed
-  await initializeDefaultBadges();
+  await ensureRecognitionBadges();
 
   return (
     <div className="flex-1 space-y-6">

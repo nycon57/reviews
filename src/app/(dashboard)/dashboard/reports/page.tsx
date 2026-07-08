@@ -34,11 +34,11 @@ export default async function ReportsPage() {
     redirect("/dashboard");
   }
 
-  // Initialize default templates for the organization if needed
-  await initializeDefaultTemplates();
-
-  // Get templates
-  const templatesResult = await getReportTemplates();
+  let templatesResult = await getReportTemplates();
+  if (templatesResult.success && (templatesResult.data?.length ?? 0) === 0) {
+    await initializeDefaultTemplates({ skipExistingCheck: true });
+    templatesResult = await getReportTemplates();
+  }
   const templates = templatesResult.success ? templatesResult.data || [] : [];
 
   // Get professionals for filtering

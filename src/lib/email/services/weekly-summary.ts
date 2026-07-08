@@ -242,7 +242,7 @@ export async function sendWeeklyLOSummaries(): Promise<SendWeeklySummaryResult> 
           unsubscribeUrl: `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}&type=weekly_summary`,
         };
 
-        // Render and send email
+        // Render and send operational weekly summary; leave direct because it is not A/B material.
         const { subject, html } = await renderWeeklySummaryLOEmail(emailData);
         const fromAddress = getFromAddress();
 
@@ -377,7 +377,7 @@ export async function sendWeeklyManagerSummaries(): Promise<SendWeeklySummaryRes
           unsubscribeUrl: `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}&type=weekly_summary`,
         };
 
-        // Render and send email
+        // Render and send operational weekly summary; leave direct because it is not A/B material.
         const { subject, html } =
           await renderWeeklySummaryManagerEmail(emailData);
         const fromAddress = getFromAddress();
@@ -510,6 +510,7 @@ export async function sendTestWeeklySummary(
 
       const { subject, html } = await renderWeeklySummaryLOEmail(emailData);
 
+      // Operational/test weekly summary send; leave direct because it is not A/B material.
       const { error: sendError } = await resend.emails.send({
         from: getFromAddress(),
         to: user.email as string,
@@ -544,6 +545,7 @@ export async function sendTestWeeklySummary(
       const { subject, html } =
         await renderWeeklySummaryManagerEmail(emailData);
 
+      // Operational/test weekly summary send; leave direct because it is not A/B material.
       const { error: sendError } = await resend.emails.send({
         from: getFromAddress(),
         to: user.email as string,

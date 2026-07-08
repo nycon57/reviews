@@ -8,6 +8,7 @@ import {
   getSurveyReminderIdempotencyKey,
   getReviewNotificationIdempotencyKey,
   getVideoTestimonialIdempotencyKey,
+  getMilestoneIdempotencyKey,
   shouldSendEmail,
 } from "./send-utils";
 import type {
@@ -37,9 +38,12 @@ import type {
   FirstReviewMilestoneEmailData,
   ReviewCountMilestoneEmailData,
   First5StarMilestoneEmailData,
+  RatingImprovementMilestoneEmailData,
+  NpsImprovementMilestoneEmailData,
   LeaderboardMilestoneEmailData,
   BadgeEarnedMilestoneEmailData,
   StreakMilestoneEmailData,
+  ProfileCompletionMilestoneEmailData,
   VideoMilestoneEmailData,
   // Trial ending email types (S085)
   TrialEnding1AccomplishmentsEmailData,
@@ -83,9 +87,12 @@ import {
   renderFirstReviewMilestoneEmail,
   renderReviewCountMilestoneEmail,
   renderFirst5StarMilestoneEmail,
+  renderRatingImprovementMilestoneEmail,
+  renderNpsImprovementMilestoneEmail,
   renderLeaderboardMilestoneEmail,
   renderBadgeEarnedMilestoneEmail,
   renderStreakMilestoneEmail,
+  renderProfileCompletionMilestoneEmail,
   renderVideoMilestoneEmail,
 } from "./templates/milestones";
 import {
@@ -345,6 +352,8 @@ export async function sendNewReviewNotificationEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: "new_review_notification",
     tags: [
       { name: "template", value: "new_review_notification" },
       ...(data.organizationId
@@ -358,13 +367,15 @@ export async function sendNewReviewNotificationEmail(
     toEmail: data.toEmail,
     toName: data.loanOfficerName,
     fromEmail: emailConfig.defaultFromEmail,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName: "new_review_notification",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;
@@ -429,6 +440,8 @@ export async function sendReviewResponseEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: "review_response",
     tags: [
       { name: "template", value: "review_response_to_reviewer" },
       ...(data.organizationId
@@ -446,13 +459,15 @@ export async function sendReviewResponseEmail(
     toName: data.customerName,
     fromEmail: emailConfig.defaultFromEmail,
     fromName: data.organizationName,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName: "review_response_to_reviewer",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;
@@ -578,6 +593,8 @@ export async function sendVideoTestimonialReminderEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: "video_testimonial_reminder",
     tags: [
       { name: "template", value: templateName },
       ...(data.requestId
@@ -595,7 +612,7 @@ export async function sendVideoTestimonialReminderEmail(
     toName: data.customerName,
     fromEmail: emailConfig.defaultFromEmail,
     fromName: data.organizationName,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName,
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
@@ -603,6 +620,8 @@ export async function sendVideoTestimonialReminderEmail(
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;
@@ -634,6 +653,8 @@ export async function sendVideoTestimonialReceivedEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: "video_testimonial_received",
     tags: [
       { name: "template", value: "video_testimonial_received" },
       ...(data.testimonialId
@@ -650,13 +671,15 @@ export async function sendVideoTestimonialReceivedEmail(
     toEmail: data.toEmail,
     toName: data.loanOfficerName,
     fromEmail: emailConfig.defaultFromEmail,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName: "video_testimonial_received",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;
@@ -1744,12 +1767,22 @@ export async function sendNegativeReviewAlertEnhancedEmail(
 // MILESTONE & ACHIEVEMENT EMAIL SEND FUNCTIONS (S081)
 // =============================================================================
 
-// Send first review milestone email
-export async function sendFirstReviewMilestoneEmail(
-  data: FirstReviewMilestoneEmailData
+type MilestoneSendData = {
+  toEmail: string;
+  firstName: string;
+  organizationId?: string;
+  loanOfficerId?: string;
+  milestoneId: string;
+};
+
+async function sendRenderedMilestoneEmail(
+  data: MilestoneSendData,
+  templateName: EmailTemplate,
+  subject: string,
+  html: string,
+  tags: Array<{ name: string; value: string }>
 ): Promise<EmailSendResult> {
-  // Check user email preferences for milestone category
-  const preferenceCheck = await shouldSendEmail("milestone_first_review", data.loanOfficerId);
+  const preferenceCheck = await shouldSendEmail(templateName, data.loanOfficerId);
   if (!preferenceCheck.allowed) {
     return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
   }
@@ -1759,57 +1792,40 @@ export async function sendFirstReviewMilestoneEmail(
     return { success: false, error: "Email is unsubscribed" };
   }
 
-  const resend = getResendClient();
-  const fromAddress = getFromAddress();
-  const { subject, html } = await renderFirstReviewMilestoneEmail(data);
-
   try {
-    const response = await resend.emails.send({
-      from: fromAddress,
+    const result = await sendWithReliability({
       to: data.toEmail,
+      from: getFromAddress(),
       subject,
       html,
-      tags: [
-        { name: "template", value: "milestone_first_review" },
-        { name: "milestone_id", value: data.milestoneId },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
-      ],
+      idempotencyKey: getMilestoneIdempotencyKey(
+        data.loanOfficerId || data.toEmail.toLowerCase(),
+        templateName,
+        data.milestoneId
+      ),
+      userId: data.loanOfficerId,
+      isTransactional: true,
+      organizationId: data.organizationId,
+      emailType: templateName,
+      tags,
     });
-
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.firstName,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject,
-        templateName: "milestone_first_review",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
-
-      return { success: false, error: response.error.message };
-    }
 
     await logEmail({
       toEmail: data.toEmail,
       toName: data.firstName,
       fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_first_review",
+      subject: result.effectiveSubject ?? subject,
+      templateName,
       organizationId: data.organizationId,
       loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
+      resendMessageId: result.messageId,
+      status: result.success ? "sent" : "failed",
+      errorMessage: result.error,
+      abTestId: result.abTestId,
+      abTestVariant: result.abTestVariant,
     });
 
-    return { success: true, messageId: response.data?.id };
+    return result;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
@@ -1819,7 +1835,7 @@ export async function sendFirstReviewMilestoneEmail(
       toName: data.firstName,
       fromEmail: emailConfig.defaultFromEmail,
       subject,
-      templateName: "milestone_first_review",
+      templateName,
       organizationId: data.organizationId,
       loanOfficerId: data.loanOfficerId,
       status: "failed",
@@ -1828,530 +1844,191 @@ export async function sendFirstReviewMilestoneEmail(
 
     return { success: false, error: errorMessage };
   }
+}
+
+// Send first review milestone email
+export async function sendFirstReviewMilestoneEmail(
+  data: FirstReviewMilestoneEmailData
+): Promise<EmailSendResult> {
+  const { subject, html } = await renderFirstReviewMilestoneEmail(data);
+  return sendRenderedMilestoneEmail(data, "milestone_first_review", subject, html, [
+    { name: "template", value: "milestone_first_review" },
+    { name: "milestone_id", value: data.milestoneId },
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
 }
 
 // Send review count milestone email
 export async function sendReviewCountMilestoneEmail(
   data: ReviewCountMilestoneEmailData
 ): Promise<EmailSendResult> {
-  // Check user email preferences for milestone category
-  const preferenceCheck = await shouldSendEmail("milestone_review_count", data.loanOfficerId);
-  if (!preferenceCheck.allowed) {
-    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const resend = getResendClient();
-  const fromAddress = getFromAddress();
   const { subject, html } = await renderReviewCountMilestoneEmail(data);
-
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "milestone_review_count" },
-        { name: "milestone_id", value: data.milestoneId },
-        { name: "review_count", value: String(data.reviewCount) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
-      ],
-    });
-
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.firstName,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject,
-        templateName: "milestone_review_count",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
-
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_review_count",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_review_count",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return sendRenderedMilestoneEmail(data, "milestone_review_count", subject, html, [
+    { name: "template", value: "milestone_review_count" },
+    { name: "milestone_id", value: data.milestoneId },
+    { name: "review_count", value: String(data.reviewCount) },
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
 }
 
 // Send first 5-star milestone email
 export async function sendFirst5StarMilestoneEmail(
   data: First5StarMilestoneEmailData
 ): Promise<EmailSendResult> {
-  // Check user email preferences for milestone category
-  const preferenceCheck = await shouldSendEmail("milestone_first_5_star", data.loanOfficerId);
-  if (!preferenceCheck.allowed) {
-    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const resend = getResendClient();
-  const fromAddress = getFromAddress();
   const { subject, html } = await renderFirst5StarMilestoneEmail(data);
+  return sendRenderedMilestoneEmail(data, "milestone_first_5_star", subject, html, [
+    { name: "template", value: "milestone_first_5_star" },
+    { name: "milestone_id", value: data.milestoneId },
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
+}
 
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "milestone_first_5_star" },
-        { name: "milestone_id", value: data.milestoneId },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
-      ],
-    });
+// Send rating improvement milestone email
+export async function sendRatingImprovementMilestoneEmail(
+  data: RatingImprovementMilestoneEmailData
+): Promise<EmailSendResult> {
+  const { subject, html } = await renderRatingImprovementMilestoneEmail(data);
+  return sendRenderedMilestoneEmail(data, "milestone_rating_improvement", subject, html, [
+    { name: "template", value: "milestone_rating_improvement" },
+    { name: "milestone_id", value: data.milestoneId },
+    { name: "previous_rating", value: String(data.previousRating) },
+    { name: "current_rating", value: String(data.currentRating) },
+    { name: "improvement_amount", value: String(data.improvementAmount) },
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
+}
 
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.firstName,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject,
-        templateName: "milestone_first_5_star",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
-
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_first_5_star",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_first_5_star",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+// Send NPS improvement milestone email
+export async function sendNpsImprovementMilestoneEmail(
+  data: NpsImprovementMilestoneEmailData
+): Promise<EmailSendResult> {
+  const { subject, html } = await renderNpsImprovementMilestoneEmail(data);
+  return sendRenderedMilestoneEmail(data, "milestone_nps_improvement", subject, html, [
+    { name: "template", value: "milestone_nps_improvement" },
+    { name: "milestone_id", value: data.milestoneId },
+    { name: "previous_nps", value: String(data.previousNps) },
+    { name: "current_nps", value: String(data.currentNps) },
+    { name: "improvement_amount", value: String(data.improvementAmount) },
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
 }
 
 // Send leaderboard milestone email
 export async function sendLeaderboardMilestoneEmail(
   data: LeaderboardMilestoneEmailData
 ): Promise<EmailSendResult> {
-  // Check user email preferences for milestone category
-  const preferenceCheck = await shouldSendEmail("milestone_leaderboard", data.loanOfficerId);
-  if (!preferenceCheck.allowed) {
-    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const resend = getResendClient();
-  const fromAddress = getFromAddress();
   const { subject, html } = await renderLeaderboardMilestoneEmail(data);
-
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "milestone_leaderboard" },
-        { name: "milestone_id", value: data.milestoneId },
-        { name: "achievement_type", value: data.achievementType },
-        { name: "current_rank", value: String(data.currentRank) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
-      ],
-    });
-
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.firstName,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject,
-        templateName: "milestone_leaderboard",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
-
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_leaderboard",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_leaderboard",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return sendRenderedMilestoneEmail(data, "milestone_leaderboard", subject, html, [
+    { name: "template", value: "milestone_leaderboard" },
+    { name: "milestone_id", value: data.milestoneId },
+    { name: "achievement_type", value: data.achievementType },
+    { name: "current_rank", value: String(data.currentRank) },
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
 }
 
 // Send badge earned milestone email
 export async function sendBadgeEarnedMilestoneEmail(
   data: BadgeEarnedMilestoneEmailData
 ): Promise<EmailSendResult> {
-  // Check user email preferences for milestone category
-  const preferenceCheck = await shouldSendEmail("milestone_badge_earned", data.loanOfficerId);
-  if (!preferenceCheck.allowed) {
-    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const resend = getResendClient();
-  const fromAddress = getFromAddress();
   const { subject, html } = await renderBadgeEarnedMilestoneEmail(data);
-
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "milestone_badge_earned" },
-        { name: "milestone_id", value: data.milestoneId },
-        { name: "badge_name", value: data.badgeName },
-        ...(data.badgeTier ? [{ name: "badge_tier", value: data.badgeTier }] : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
-      ],
-    });
-
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.firstName,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject,
-        templateName: "milestone_badge_earned",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
-
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_badge_earned",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_badge_earned",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return sendRenderedMilestoneEmail(data, "milestone_badge_earned", subject, html, [
+    { name: "template", value: "milestone_badge_earned" },
+    { name: "milestone_id", value: data.milestoneId },
+    { name: "badge_name", value: data.badgeName },
+    ...(data.badgeTier ? [{ name: "badge_tier", value: data.badgeTier }] : []),
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
 }
 
 // Send streak milestone email
 export async function sendStreakMilestoneEmail(
   data: StreakMilestoneEmailData
 ): Promise<EmailSendResult> {
-  // Check user email preferences for milestone category
-  const preferenceCheck = await shouldSendEmail("milestone_streak", data.loanOfficerId);
-  if (!preferenceCheck.allowed) {
-    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const resend = getResendClient();
-  const fromAddress = getFromAddress();
   const { subject, html } = await renderStreakMilestoneEmail(data);
+  return sendRenderedMilestoneEmail(data, "milestone_streak", subject, html, [
+    { name: "template", value: "milestone_streak" },
+    { name: "milestone_id", value: data.milestoneId },
+    { name: "streak_days", value: String(data.streakDays) },
+    { name: "streak_type", value: data.streakType },
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
+}
 
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "milestone_streak" },
-        { name: "milestone_id", value: data.milestoneId },
-        { name: "streak_days", value: String(data.streakDays) },
-        { name: "streak_type", value: data.streakType },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
-      ],
-    });
-
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.firstName,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject,
-        templateName: "milestone_streak",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
-
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_streak",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_streak",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+// Send profile completion milestone email
+export async function sendProfileCompletionMilestoneEmail(
+  data: ProfileCompletionMilestoneEmailData
+): Promise<EmailSendResult> {
+  const { subject, html } = await renderProfileCompletionMilestoneEmail(data);
+  return sendRenderedMilestoneEmail(data, "milestone_profile_completion", subject, html, [
+    { name: "template", value: "milestone_profile_completion" },
+    { name: "milestone_id", value: data.milestoneId },
+    { name: "completion_percent", value: String(data.completionPercent) },
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
 }
 
 // Send video milestone email
 export async function sendVideoMilestoneEmail(
   data: VideoMilestoneEmailData
 ): Promise<EmailSendResult> {
-  // Check user email preferences for milestone category
-  const preferenceCheck = await shouldSendEmail("milestone_video", data.loanOfficerId);
-  if (!preferenceCheck.allowed) {
-    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const resend = getResendClient();
-  const fromAddress = getFromAddress();
   const { subject, html } = await renderVideoMilestoneEmail(data);
-
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "milestone_video" },
-        { name: "milestone_id", value: data.milestoneId },
-        { name: "video_count", value: String(data.videoCount) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
-      ],
-    });
-
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.firstName,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject,
-        templateName: "milestone_video",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
-
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_video",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.firstName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "milestone_video",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return sendRenderedMilestoneEmail(data, "milestone_video", subject, html, [
+    { name: "template", value: "milestone_video" },
+    { name: "milestone_id", value: data.milestoneId },
+    { name: "video_count", value: String(data.videoCount) },
+    ...(data.organizationId
+      ? [{ name: "organization_id", value: data.organizationId }]
+      : []),
+    ...(data.loanOfficerId
+      ? [{ name: "user_id", value: data.loanOfficerId }]
+      : []),
+  ]);
 }
 
 // ============================================================================
@@ -2765,6 +2442,8 @@ export async function sendProfileReferralIntroductionEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: "profile_referral_introduction",
     tags: [
       { name: "template", value: "profile_referral_introduction" },
       { name: "referral_id", value: referralId },
@@ -2780,13 +2459,15 @@ export async function sendProfileReferralIntroductionEmail(
     toName: data.referredName,
     fromEmail: emailConfig.defaultFromEmail,
     fromName: data.organizationName,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName: "profile_referral_introduction",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;
@@ -2818,6 +2499,8 @@ export async function sendReviewVerificationEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: "review_verification",
     tags: [
       { name: "template", value: "review_verification" },
       { name: "review_id", value: data.reviewId },
@@ -2833,13 +2516,15 @@ export async function sendReviewVerificationEmail(
     toName: data.customerName,
     fromEmail: emailConfig.defaultFromEmail,
     fromName: data.organizationName,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName: "review_verification",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;
@@ -2865,6 +2550,8 @@ export async function sendReviewVideoUpsellEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: "review_video_upsell",
     tags: [
       { name: "template", value: "review_video_upsell" },
       { name: "review_id", value: data.reviewId },
@@ -2880,13 +2567,15 @@ export async function sendReviewVideoUpsellEmail(
     toName: data.customerName,
     fromEmail: emailConfig.defaultFromEmail,
     fromName: data.organizationName,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName: "review_video_upsell",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;
@@ -2910,6 +2599,8 @@ export async function sendReviewDisputeEscalationEmail(
     html,
     idempotencyKey,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: "review_dispute_escalation",
     tags: [
       { name: "template", value: "review_dispute_escalation" },
       { name: "review_id", value: data.reviewId },
@@ -2924,12 +2615,14 @@ export async function sendReviewDisputeEscalationEmail(
     toEmail: data.toEmail,
     fromEmail: emailConfig.defaultFromEmail,
     fromName: "RepWell",
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName: "review_dispute_escalation",
     organizationId: data.organizationId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;

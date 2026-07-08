@@ -142,20 +142,23 @@ export async function getEXSurveyTemplates(): Promise<{ success: boolean; data?:
   };
 }
 
-export async function initializeDefaultEXTemplates(): Promise<{ success: boolean; error?: string }> {
+export async function initializeDefaultEXTemplates(options?: {
+  skipExistingCheck?: boolean;
+}): Promise<{ success: boolean; error?: string }> {
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
   const supabase = createAdminClient();
 
-  // Check if templates already exist
-  const { count } = await supabase
-    .from("ex_survey_templates")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", result.organizationId);
+  if (!options?.skipExistingCheck) {
+    const { count } = await supabase
+      .from("ex_survey_templates")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", result.organizationId);
 
-  if (count && count > 0) {
-    return { success: true };
+    if (count && count > 0) {
+      return { success: true };
+    }
   }
 
   // Create default templates
@@ -846,4 +849,3 @@ export async function getEXMetrics(): Promise<{ success: boolean; data?: { enpsS
     },
   };
 }
-

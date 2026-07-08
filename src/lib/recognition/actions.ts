@@ -90,20 +90,23 @@ export async function getRecognitionBadges(): Promise<{ success: boolean; data?:
   };
 }
 
-export async function initializeDefaultBadges(): Promise<{ success: boolean; error?: string }> {
+export async function initializeDefaultBadges(options?: {
+  skipExistingCheck?: boolean;
+}): Promise<{ success: boolean; error?: string }> {
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
   const supabase = createAdminClient();
 
-  // Check if badges already exist
-  const { count } = await supabase
-    .from("recognition_badges")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", result.organizationId);
+  if (!options?.skipExistingCheck) {
+    const { count } = await supabase
+      .from("recognition_badges")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", result.organizationId);
 
-  if (count && count > 0) {
-    return { success: true };
+    if (count && count > 0) {
+      return { success: true };
+    }
   }
 
   // Create default badges

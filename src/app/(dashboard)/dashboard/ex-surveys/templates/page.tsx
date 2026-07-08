@@ -59,11 +59,13 @@ function TemplatesSkeleton() {
   );
 }
 
-async function TemplatesList() {
-  const result = await getEXSurveyTemplates();
-  const templates = result.data || [];
-
-  if (templates.length === 0) {
+function TemplatesList({
+  templates,
+}: {
+  templates: Awaited<ReturnType<typeof getEXSurveyTemplates>>["data"] | undefined;
+}) {
+  const availableTemplates = templates || [];
+  if (availableTemplates.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <FileText className="h-12 w-12 text-muted-foreground/50" />
@@ -79,7 +81,7 @@ async function TemplatesList() {
   }
 
   // Pass templates to client component for interactive features
-  return <TemplatesListClient templates={templates} />;
+  return <TemplatesListClient templates={availableTemplates} />;
 }
 
 function SurveysSkeleton() {
@@ -153,8 +155,11 @@ async function ExistingSurveysList() {
 export default async function EXSurveyTemplatesPage() {
   await checkAccess();
 
-  // Initialize default templates if needed
-  await initializeDefaultEXTemplates();
+  let templatesResult = await getEXSurveyTemplates();
+  if (templatesResult.success && (templatesResult.data?.length ?? 0) === 0) {
+    await initializeDefaultEXTemplates({ skipExistingCheck: true });
+    templatesResult = await getEXSurveyTemplates();
+  }
 
   return (
     <div className="flex-1 space-y-6">
@@ -192,7 +197,7 @@ export default async function EXSurveyTemplatesPage() {
       <div>
         <h2 className="mb-4 text-lg font-semibold">Available Templates</h2>
         <Suspense fallback={<TemplatesSkeleton />}>
-          <TemplatesList />
+          <TemplatesList templates={templatesResult.data} />
         </Suspense>
       </div>
 

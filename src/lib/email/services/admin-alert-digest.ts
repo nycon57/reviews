@@ -95,7 +95,7 @@ async function getOrgEmailHealth(): Promise<Map<string, AdminAlertEmailHealth>> 
     );
   }
 
-  const analyticsUrl = `${emailConfig.baseUrl}/dashboard/admin/email-analytics`;
+  const analyticsUrl = `${emailConfig.baseUrl}/staff/email-analytics`;
   const result = new Map<string, AdminAlertEmailHealth>();
   for (const [orgId, entry] of perOrg) {
     const threshold = thresholds.get(orgId) ?? EMAIL_FAILURE_THRESHOLD_DEFAULT;

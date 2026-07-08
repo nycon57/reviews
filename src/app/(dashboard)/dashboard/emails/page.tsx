@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Envelope, ChartBar } from "@phosphor-icons/react/dist/ssr";
 import { requireEnterpriseManager } from "@/lib/access";
-import { checkAdminAccess } from "@/lib/auth/actions";
+import { isPlatformAdmin } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
 import { TemplateGallery } from "@/components/email-builder/template-gallery";
 import { listTemplates } from "@/lib/email-builder/actions";
@@ -16,10 +16,10 @@ export const metadata = {
 
 export default async function EmailsPage() {
   await requireEnterpriseManager();
-  const [templates, { organization }, isAdmin] = await Promise.all([
+  const [templates, { organization }, isStaff] = await Promise.all([
     listTemplates(),
     getCurrentOrganization(),
-    checkAdminAccess(),
+    isPlatformAdmin(),
   ]);
 
   return (
@@ -38,9 +38,9 @@ export default async function EmailsPage() {
             </p>
           </div>
         </div>
-        {isAdmin && (
+        {isStaff && (
           <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard/admin/email-analytics">
+            <Link href="/staff/email-analytics">
               <ChartBar className="mr-2 h-4 w-4" />
               View analytics
             </Link>

@@ -1,5 +1,6 @@
 import { getMediaLibraryData, getMediaStats } from "@/lib/media/actions";
 import { MediaManager } from "@/components/media/media-manager";
+import { requireIndividualOrEnterpriseAdmin } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,8 @@ export const metadata = {
 };
 
 export default async function MediaPage() {
+  await requireIndividualOrEnterpriseAdmin();
+
   const [data, stats] = await Promise.all([
     getMediaLibraryData(),
     getMediaStats(),

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { checkAdminAccess } from "@/lib/auth/actions";
+import { requirePlatformAdmin } from "@/lib/auth/actions";
 import { getAccessContext, isEnterprise, isManagerOrAbove } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { StatsRowSkeleton, ChartSkeleton, TableSkeleton } from "@/components/shared";
@@ -17,11 +16,7 @@ export const metadata = {
 };
 
 export default async function EmailAnalyticsPage() {
-  const hasAccess = await checkAdminAccess();
-
-  if (!hasAccess) {
-    redirect("/dashboard");
-  }
+  await requirePlatformAdmin();
 
   // Reciprocal cross-link to the template builder, shown only to users who can
   // actually reach it (enterprise managers) so the link is never a dead end.

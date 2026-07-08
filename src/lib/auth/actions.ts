@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import {
   signUpSchema,
@@ -313,6 +314,42 @@ export async function checkAdminAccess(): Promise<boolean> {
   const isEnterprise = organization?.account_type === "enterprise";
 
   return isAdmin && isEnterprise;
+}
+
+/**
+ * Check whether the current authenticated user is RepWell platform staff.
+ */
+export async function isPlatformAdmin(): Promise<boolean> {
+  const user = await unifiedGetUser();
+
+  if (!user) return false;
+
+  // TODO(database-types): switch to the typed admin client after
+  // users.is_platform_admin is present in generated database types.
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("is_platform_admin")
+    .eq("id", user.id)
+    .limit(1);
+
+  if (error) {
+    console.error("Platform admin lookup failed:", error.message);
+    return false;
+  }
+
+  return data?.[0]?.is_platform_admin === true;
+}
+
+/**
+ * Require RepWell platform staff access.
+ */
+export async function requirePlatformAdmin(): Promise<void> {
+  const hasAccess = await isPlatformAdmin();
+
+  if (!hasAccess) {
+    redirect("/dashboard");
+  }
 }
 
 // =============================================

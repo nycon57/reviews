@@ -202,7 +202,7 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
       const result = await deleteABTest(test.id);
       if (result.success) {
         toast({ title: "Test deleted" });
-        router.push("/dashboard/admin/email-ab-tests");
+        router.push("/staff/email-ab-tests");
       } else {
         toast({ title: result.error || "Failed to delete test", variant: "destructive" });
       }
@@ -258,7 +258,7 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" asChild className="-ml-2">
-              <Link href="/dashboard/admin/email-ab-tests">
+              <Link href="/staff/email-ab-tests">
                 <ArrowLeft className="h-4 w-4 mr-1" />
                 Back
               </Link>
@@ -321,7 +321,7 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
             <DropdownMenuContent align="end">
               {test.status === "draft" && (
                 <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/admin/email-ab-tests/${test.id}/edit`}>
+                  <Link href={`/staff/email-ab-tests/${test.id}/edit`}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Edit Test
                   </Link>

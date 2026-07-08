@@ -294,7 +294,7 @@ export function CreateABTestForm() {
 
       if (result.success && result.data) {
         toast({ title: "A/B test created successfully" });
-        router.push(`/dashboard/admin/email-ab-tests/${result.data.id}`);
+        router.push(`/staff/email-ab-tests/${result.data.id}`);
       } else {
         toast({ title: result.error || "Failed to create A/B test", variant: "destructive" });
       }
@@ -306,7 +306,7 @@ export function CreateABTestForm() {
       {/* Header */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild className="-ml-2">
-          <Link href="/dashboard/admin/email-ab-tests">
+          <Link href="/staff/email-ab-tests">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back
           </Link>
@@ -747,7 +747,7 @@ export function CreateABTestForm() {
       {/* Actions */}
       <div className="flex items-center justify-end gap-3">
         <Button type="button" variant="outline" asChild>
-          <Link href="/dashboard/admin/email-ab-tests">Cancel</Link>
+          <Link href="/staff/email-ab-tests">Cancel</Link>
         </Button>
         <Button type="submit" disabled={isPending}>
           {isPending ? (

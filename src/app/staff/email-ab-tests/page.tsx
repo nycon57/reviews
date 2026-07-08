@@ -1,6 +1,5 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { checkAdminAccess } from "@/lib/auth/actions";
+import { requirePlatformAdmin } from "@/lib/auth/actions";
 import { StatsRowSkeleton, TableSkeleton } from "@/components/shared";
 import {
   Flask as FlaskConical,
@@ -13,11 +12,7 @@ export const metadata = {
 };
 
 export default async function EmailABTestsPage() {
-  const hasAccess = await checkAdminAccess();
-
-  if (!hasAccess) {
-    redirect("/dashboard");
-  }
+  await requirePlatformAdmin();
 
   return (
     <div className="flex-1 space-y-6">

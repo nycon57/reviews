@@ -1,0 +1,195 @@
+{
+  "navRoutes": [
+    {
+      "title": "Dashboard",
+      "route": "/dashboard",
+      "permission": "VIEW_DASHBOARD"
+    },
+    {
+      "title": "Reviews",
+      "route": "/dashboard/reviews",
+      "permission": "VIEW_REVIEWS"
+    },
+    {
+      "title": "Tasks",
+      "route": "/dashboard/tasks",
+      "permission": "VIEW_TASKS"
+    },
+    {
+      "title": "Emails",
+      "route": "/dashboard/emails",
+      "permission": "VIEW_CAMPAIGNS"
+    },
+    {
+      "title": "Recognition",
+      "route": "/dashboard/recognition",
+      "permission": "VIEW_RECOGNITION"
+    },
+    {
+      "title": "Analytics",
+      "route": "/dashboard/analytics",
+      "permission": "VIEW_ANALYTICS"
+    },
+    {
+      "title": "Trends",
+      "route": "/dashboard/analytics/trends",
+      "permission": "VIEW_TRENDS"
+    },
+    {
+      "title": "Leaderboard",
+      "route": "/dashboard/analytics/leaderboard",
+      "permission": "VIEW_LEADERBOARD"
+    },
+    {
+      "title": "AI Insights",
+      "route": "/dashboard/insights",
+      "permission": "VIEW_AI_INSIGHTS"
+    },
+    {
+      "title": "Team",
+      "route": "/dashboard/team",
+      "permission": "VIEW_TEAM"
+    },
+    {
+      "title": "Employees",
+      "route": "/dashboard/employees",
+      "permission": "VIEW_EX_SURVEYS"
+    },
+    {
+      "title": "Campaigns",
+      "route": "/dashboard/campaigns",
+      "permission": "VIEW_CAMPAIGNS"
+    },
+    {
+      "title": "Organization",
+      "route": "/dashboard/organization",
+      "permission": "VIEW_ORGANIZATION"
+    },
+    {
+      "title": "Surveys",
+      "route": "/dashboard/surveys",
+      "permission": "VIEW_SURVEYS"
+    },
+    {
+      "title": "Widgets",
+      "route": "/dashboard/widgets",
+      "permission": "VIEW_DASHBOARD"
+    },
+    {
+      "title": "EX Surveys",
+      "route": "/dashboard/ex-surveys",
+      "permission": "VIEW_EX_SURVEYS"
+    },
+    {
+      "title": "Media",
+      "route": "/dashboard/media",
+      "permission": "VIEW_ORGANIZATION"
+    },
+    {
+      "title": "Settings",
+      "route": "/dashboard/settings",
+      "permission": "VIEW_SETTINGS"
+    },
+    {
+      "title": "Help & Support",
+      "route": "/dashboard/help",
+      "permission": "VIEW_HELP"
+    }
+  ],
+  "middlewareRoutes": [
+    {
+      "route": "/staff",
+      "guards": [
+        "requiresPlatformAdmin"
+      ]
+    },
+    {
+      "route": "/dashboard/team",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/campaigns",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/approvals",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/ex-surveys",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/employees",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/recognition",
+      "guards": [
+        "requiresEnterprise"
+      ]
+    },
+    {
+      "route": "/dashboard/analytics/leaderboard",
+      "guards": [
+        "requiresEnterprise"
+      ]
+    },
+    {
+      "route": "/dashboard/organization",
+      "guards": [
+        "requiresOrgAdmin"
+      ]
+    },
+    {
+      "route": "/dashboard/insights",
+      "guards": [
+        "minTier:pro"
+      ]
+    }
+  ],
+  "docRoutes": [
+    "/dashboard",
+    "/dashboard/reviews",
+    "/dashboard/tasks",
+    "/dashboard/emails",
+    "/dashboard/recognition",
+    "/dashboard/analytics",
+    "/dashboard/analytics/trends",
+    "/dashboard/analytics/leaderboard",
+    "/dashboard/insights",
+    "/dashboard/team",
+    "/dashboard/employees",
+    "/dashboard/campaigns",
+    "/dashboard/approvals",
+    "/dashboard/organization",
+    "/dashboard/surveys",
+    "/dashboard/widgets",
+    "/dashboard/ex-surveys",
+    "/dashboard/media",
+    "/dashboard/settings",
+    "/dashboard/help",
+    "/staff",
+    "/staff/announcements",
+    "/staff/email-ab-tests",
+    "/staff/email-ab-tests/new",
+    "/staff/email-ab-tests/[id]",
+    "/staff/email-analytics",
+    "/staff/email-preview"
+  ]
+}

@@ -271,7 +271,7 @@ export function ABTestsListClient() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem asChild>
-            <Link href={`/dashboard/admin/email-ab-tests/${test.id}`}>
+            <Link href={`/staff/email-ab-tests/${test.id}`}>
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </Link>
@@ -280,7 +280,7 @@ export function ABTestsListClient() {
           {test.status === "draft" && (
             <>
               <DropdownMenuItem asChild>
-                <Link href={`/dashboard/admin/email-ab-tests/${test.id}/edit`}>
+                <Link href={`/staff/email-ab-tests/${test.id}/edit`}>
                   <Pencil className="mr-2 h-4 w-4" />
                   Edit
                 </Link>
@@ -369,7 +369,7 @@ export function ABTestsListClient() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle>A/B Tests</CardTitle>
             <Button asChild>
-              <Link href="/dashboard/admin/email-ab-tests/new">
+              <Link href="/staff/email-ab-tests/new">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Test
               </Link>
@@ -440,7 +440,7 @@ export function ABTestsListClient() {
               </p>
               {!filters.search && filters.status === "all" && filters.testType === "all" && (
                 <Button asChild>
-                  <Link href="/dashboard/admin/email-ab-tests/new">
+                  <Link href="/staff/email-ab-tests/new">
                     <Plus className="mr-2 h-4 w-4" />
                     Create Test
                   </Link>
@@ -466,7 +466,7 @@ export function ABTestsListClient() {
                     <TableRow key={test.id}>
                       <TableCell>
                         <Link
-                          href={`/dashboard/admin/email-ab-tests/${test.id}`}
+                          href={`/staff/email-ab-tests/${test.id}`}
                           className="font-medium hover:underline"
                         >
                           {test.name}

@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { checkAdminAccess } from "@/lib/auth/actions";
+import { requirePlatformAdmin } from "@/lib/auth/actions";
 import { CreateABTestForm } from "./create-ab-test-form";
 
 export const metadata = {
@@ -8,11 +7,7 @@ export const metadata = {
 };
 
 export default async function CreateABTestPage() {
-  const hasAccess = await checkAdminAccess();
-
-  if (!hasAccess) {
-    redirect("/dashboard");
-  }
+  await requirePlatformAdmin();
 
   return (
     <div className="flex-1 space-y-6">

@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TrendsDashboard } from "@/app/(dashboard)/dashboard/analytics/trends/trends-dashboard";
-import { AdminTrendsDashboard } from "@/app/(dashboard)/dashboard/admin/trends/admin-trends-dashboard";
+import { AdminTrendsDashboard } from "@/components/analytics/staff/admin-trends-dashboard";
 import { ScopeSelector, type AnalyticsScope } from "./scope-selector";
 
 export type TimeRange = "3m" | "6m" | "12m" | "24m";

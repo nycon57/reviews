@@ -28,6 +28,8 @@ interface RouteConfig {
    * middleware and the page guard agree (ADR 0007).
    */
   requiresOrgAdmin?: boolean;
+  /** Requires RepWell platform staff access */
+  requiresPlatformAdmin?: boolean;
 }
 
 // Tier hierarchy for comparison
@@ -39,6 +41,9 @@ const TIER_LEVELS: Record<SubscriptionTier, number> = {
 
 // Routes that require specific roles, subscription tiers, or account types
 const roleProtectedRoutes: RouteConfig[] = [
+  // RepWell platform staff tooling
+  { path: "/staff", requiresPlatformAdmin: true },
+
   // Enterprise-only management routes (hidden from individual users)
   { path: "/dashboard/team", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/campaigns", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
@@ -144,6 +149,76 @@ async function getSupabaseUser(request: NextRequest, response: NextResponse) {
   return { user, supabase };
 }
 
+async function getPlatformAdminFlag(
+  request: NextRequest,
+  response: NextResponse,
+  userId: string
+): Promise<boolean> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = USE_BETTER_AUTH
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY
+    : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error(`[Middleware] Missing Supabase config for platform staff lookup`);
+    return false;
+  }
+
+  const supabase = USE_BETTER_AUTH
+    ? createClient(supabaseUrl, supabaseKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+    : createServerClient(supabaseUrl, supabaseKey, {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            request.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+            response.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+          },
+          remove(name: string, options: CookieOptions) {
+            request.cookies.set({
+              name,
+              value: "",
+              ...options,
+            });
+            response.cookies.set({
+              name,
+              value: "",
+              ...options,
+            });
+          },
+        },
+      });
+
+  // Untyped client: users.is_platform_admin is added by the pending staff
+  // migration and is not in generated database types yet.
+  const { data, error } = await supabase
+    .from("users")
+    .select("is_platform_admin")
+    .eq("id", userId)
+    .limit(1);
+
+  if (error) {
+    console.error(`[Middleware] Platform staff query error:`, error.message);
+    return false;
+  }
+
+  return data?.[0]?.is_platform_admin === true;
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -180,9 +255,12 @@ export async function proxy(request: NextRequest) {
   }
 
   // Protected routes - require authentication
-  const protectedPaths = ["/dashboard", "/reviews", "/surveys", "/analytics", "/team", "/settings", "/profile"];
+  const protectedPaths = ["/dashboard", "/staff", "/reviews", "/surveys", "/analytics", "/team", "/settings", "/profile"];
   const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
   const isOnboardingPath = onboardingPaths.some((path) => request.nextUrl.pathname.startsWith(path));
+  const routeConfig = roleProtectedRoutes.find((route) =>
+    request.nextUrl.pathname.startsWith(route.path)
+  );
 
   if (isProtectedPath && !user) {
     const redirectUrl = new URL("/login", request.url);
@@ -265,7 +343,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Check onboarding status for protected paths (not onboarding paths themselves)
-  if (user && isProtectedPath && !isOnboardingPath && cachedOrgData) {
+  if (user && isProtectedPath && !isOnboardingPath && !routeConfig?.requiresPlatformAdmin && cachedOrgData) {
     const onboardingStatus = (cachedOrgData.onboarding_status || "pending") as OnboardingStatus;
 
     // If onboarding not completed, redirect to onboarding
@@ -276,12 +354,15 @@ export async function proxy(request: NextRequest) {
 
   // Role-based and subscription-based access control for authenticated users
   if (user && supabase && isProtectedPath) {
-    // Find if current path requires role-based or subscription-based access
-    const routeConfig = roleProtectedRoutes.find((route) =>
-      request.nextUrl.pathname.startsWith(route.path)
-    );
+    if (routeConfig?.allowedRoles || routeConfig?.minTier || routeConfig?.requiresEnterprise || routeConfig?.requiresEnterpriseAdmin || routeConfig?.requiresOrgAdmin || routeConfig?.requiresPlatformAdmin) {
+      if (routeConfig.requiresPlatformAdmin) {
+        const isStaff = await getPlatformAdminFlag(request, response, user.id);
 
-    if (routeConfig?.allowedRoles || routeConfig?.minTier || routeConfig?.requiresEnterprise || routeConfig?.requiresEnterpriseAdmin || routeConfig?.requiresOrgAdmin) {
+        if (!isStaff) {
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+      }
+
       // Default to "user" role if not set (consistent with access module)
       // Also handle legacy "loan_officer" role by treating it as "user"
       const rawRole = cachedUserData?.role;

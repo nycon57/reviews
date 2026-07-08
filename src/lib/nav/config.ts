@@ -16,8 +16,6 @@ export interface NavItemConfig {
 export interface NavSectionConfig {
   label: string;
   items: NavItemConfig[];
-  /** Hide the entire section for enterprise users with role "user" */
-  hideForEnterpriseUser?: boolean;
 }
 
 export interface NavConfig {
@@ -56,7 +54,7 @@ export const NAV_CONFIG: NavConfig = {
       icon: "Envelope",
       permission: PERMISSIONS.VIEW_CAMPAIGNS,
     },
-    // Enterprise-only: Recognition (after Messages in core nav)
+    // Enterprise-only
     {
       title: "Recognition",
       href: "/dashboard/recognition",
@@ -120,8 +118,7 @@ export const NAV_CONFIG: NavConfig = {
       ],
     },
     {
-      label: "Admin",
-      hideForEnterpriseUser: true,
+      label: "Workspace",
       items: [
         {
           title: "Organization",

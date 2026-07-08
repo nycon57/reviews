@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { redirect, notFound } from "next/navigation";
-import { checkAdminAccess } from "@/lib/auth/actions";
+import { notFound } from "next/navigation";
+import { requirePlatformAdmin } from "@/lib/auth/actions";
 import { LoadingSpinner } from "@/components/shared";
 import { ABTestDetailClient } from "./ab-test-detail-client";
 import { getABTestWithResults } from "@/lib/email-ab-testing";
@@ -29,11 +29,7 @@ async function ABTestDetailLoader({ id }: { id: string }) {
 
 export default async function ABTestDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const hasAccess = await checkAdminAccess();
-
-  if (!hasAccess) {
-    redirect("/dashboard");
-  }
+  await requirePlatformAdmin();
 
   return (
     <div className="flex-1 space-y-6">

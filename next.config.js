@@ -294,6 +294,12 @@ const nextConfig = {
         destination: "/dashboard/team",
         permanent: true,
       },
+      // Platform staff tooling moved out of the org-scoped dashboard.
+      {
+        source: "/dashboard/admin/:path*",
+        destination: "/staff/:path*",
+        permanent: true,
+      },
       // Documentation consolidation: /developers/docs/* → /docs/developers/*
       {
         source: "/developers/docs",

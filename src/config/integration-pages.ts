@@ -418,97 +418,98 @@ const slackConfig: IntegrationPageConfig = {
 /**
  * Zapier integration configuration
  */
+const ZAPIER_INVITE_LINK = "https://zapier.com/app/invite/repwell";
+
 const zapierConfig: IntegrationPageConfig = {
   slug: "zapier",
   name: "Zapier",
   shortDescription:
-    "Connect RepWell with 5,000+ apps. Automate workflows between your review platform and any tool.",
+    "Use RepWell's Zapier app or Webhooks by Zapier to automate review, survey, and contact workflows.",
   category: "automation",
   icon: "Lightning",
 
   hero: {
     headline: "Connect RepWell with Zapier",
     description:
-      "Use Zapier to connect RepWell with over 5,000 apps. Automate review workflows, sync data between tools, and build custom integrations without writing code.",
+      "Connect RepWell to Zapier's 9,000+ app ecosystem with five RepWell triggers, two create actions, and API-key authentication.",
     badge: "Automation",
   },
 
   overview: {
     whatItDoes:
-      "The Zapier integration exposes RepWell triggers and actions to the Zapier platform, letting you build automated workflows (Zaps) that connect RepWell with thousands of other applications. Trigger Zaps when reviews arrive, NPS changes, or milestones are reached.",
+      "The RepWell Zapier app exposes five event triggers and two create actions. It is pending Zapier directory publication and is available by invite link until listing approval; Webhooks by Zapier remains the fallback that works today.",
     dataFlow: [
-      { direction: "out", label: "Review events as Zapier triggers" },
-      { direction: "in", label: "Contact data from other apps via Zapier" },
-      { direction: "both", label: "Custom workflow data between tools" },
+      { direction: "out", label: "Review, survey, and contact events as Zapier triggers" },
+      { direction: "in", label: "Create contacts and trigger surveys from Zapier actions" },
+      { direction: "both", label: "API-key authenticated workflows between RepWell and Zapier" },
     ],
   },
 
   features: [
     {
       icon: "Lightning",
-      title: "Pre-Built Triggers",
+      title: "Five RepWell Triggers",
       description:
-        "New review, negative review, NPS change, milestone reached -- choose from a library of RepWell triggers.",
+        "Trigger Zaps from review.published, review.negative, review.responded, survey.completed, and contact.created events.",
     },
     {
       icon: "Plug",
-      title: "5,000+ App Connections",
+      title: "Zapier Ecosystem",
       description:
-        "Connect RepWell with any app in the Zapier ecosystem. CRMs, email tools, spreadsheets, project management, and more.",
+        "Zapier currently describes its ecosystem as 9,000+ apps, so RepWell workflows can hand data to the tools your team already uses.",
     },
     {
       icon: "ArrowsClockwise",
-      title: "Two-Way Actions",
+      title: "Two Create Actions",
       description:
-        "Not just triggers -- use Zapier actions to create contacts in RepWell, trigger surveys, or update records.",
+        "Use Zapier to create or update contacts in RepWell and to trigger survey requests through the RepWell API.",
     },
     {
-      icon: "Code",
-      title: "No Code Required",
+      icon: "Key",
+      title: "API-Key Authentication",
       description:
-        "Build sophisticated workflows with Zapier's visual builder. No developers needed.",
+        "Connect with a RepWell API key sent in the X-API-Key header; use scoped keys for the actions your Zap needs.",
     },
     {
       icon: "GitBranch",
-      title: "Conditional Logic",
+      title: "Filters and Paths",
       description:
-        "Use Zapier Paths and Filters to create conditional workflows based on review rating, customer data, or custom fields.",
+        "Use Zapier Filters and Paths to branch on review rating, event type, customer data, or survey details.",
     },
     {
       icon: "Table",
-      title: "Data Transformation",
+      title: "Webhooks Fallback",
       description:
-        "Format, filter, and transform data between RepWell and your other tools using Zapier's built-in tools.",
+        "Until the native RepWell app is directory-published, Webhooks by Zapier can receive outbound RepWell events or call RepWell REST endpoints.",
     },
   ],
 
   setupSteps: [
     {
       step: 1,
-      title: "Create a Zap",
-      description:
-        "Log in to Zapier and search for RepWell. Choose RepWell as your trigger or action app.",
+      title: "Open the RepWell Zapier app",
+      description: `Use the RepWell invite link (${ZAPIER_INVITE_LINK}) while directory publication is pending, then choose RepWell as your trigger or action app.`,
       icon: "Plus",
     },
     {
       step: 2,
-      title: "Authenticate",
+      title: "Authenticate with an API key",
       description:
-        "Connect your RepWell account by entering your API key or signing in through OAuth.",
+        "Create a scoped RepWell API key and paste it into Zapier. The app authenticates with the X-API-Key header.",
       icon: "Key",
     },
     {
       step: 3,
-      title: "Configure Workflow",
+      title: "Choose a trigger or action",
       description:
-        "Choose your trigger event, map data fields, and connect your destination app.",
+        "Pick one of five triggers or the create_contact / trigger_survey actions, then map fields into the next Zap step.",
       icon: "Sliders",
     },
     {
       step: 4,
-      title: "Test & Enable",
+      title: "Test and enable",
       description:
-        "Run a test to verify data flows correctly, then turn on your Zap to automate.",
+        "Run a Zapier test using RepWell sample data. If you do not have invite access yet, use Webhooks by Zapier with RepWell outbound endpoints.",
       icon: "Play",
     },
   ],
@@ -517,17 +518,17 @@ const zapierConfig: IntegrationPageConfig = {
     {
       title: "CRM Sync Without Native Integration",
       description:
-        "Connect RepWell with any CRM -- even niche or industry-specific ones -- using Zapier as the bridge.",
+        "Create or update RepWell contacts from CRMs that do not have a dedicated RepWell integration.",
     },
     {
       title: "Custom Notification Workflows",
       description:
-        "Send review alerts to any channel: email, SMS, Discord, Telegram, or your custom webhook endpoint.",
+        "Send published, negative, or responded review events into Slack, email, SMS, or your team's workflow queue.",
     },
     {
       title: "Spreadsheet Reporting",
       description:
-        "Automatically log every review to Google Sheets or Airtable for custom reporting and analysis.",
+        "Log review, survey, and contact events to Google Sheets, Airtable, or a data warehouse through Zapier.",
     },
   ],
 
@@ -536,7 +537,7 @@ const zapierConfig: IntegrationPageConfig = {
   seo: {
     title: "Zapier Integration | RepWell",
     description:
-      "Connect RepWell with 5,000+ apps through Zapier. Automate review workflows, sync customer data, and build custom integrations without code.",
+      "Connect RepWell with Zapier's 9,000+ app ecosystem. Use five RepWell triggers, two create actions, and Webhooks by Zapier fallback workflows.",
     keywords: [
       "zapier integration",
       "review automation zapier",
@@ -840,12 +841,8 @@ export function getIntegrationBySlug(slug: string): IntegrationPageConfig | null
 /**
  * Get all integrations for a given category
  */
-export function getIntegrationsByCategory(
-  category: IntegrationCategory
-): IntegrationPageConfig[] {
-  return Object.values(integrationPageConfigs).filter(
-    (config) => config.category === category
-  );
+export function getIntegrationsByCategory(category: IntegrationCategory): IntegrationPageConfig[] {
+  return Object.values(integrationPageConfigs).filter((config) => config.category === category);
 }
 
 /**

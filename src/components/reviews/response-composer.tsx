@@ -55,6 +55,7 @@ interface ResponseComposerProps {
   onSuccess?: () => void;
   onCancel?: () => void;
   hasAiAccess?: boolean;
+  draftOnly?: boolean;
 }
 
 export function ResponseComposer({
@@ -62,6 +63,7 @@ export function ResponseComposer({
   onSuccess,
   onCancel,
   hasAiAccess = true,
+  draftOnly = false,
 }: ResponseComposerProps) {
   const [isPending, startTransition] = useTransition();
   const [responseText, setResponseText] = useState("");
@@ -164,6 +166,10 @@ export function ResponseComposer({
 
   const handlePostResponse = () => {
     if (!responseText.trim()) return;
+    if (draftOnly) {
+      setError("Only draft responses can be saved until the review is published");
+      return;
+    }
 
     startTransition(async () => {
       setError(null);
@@ -212,6 +218,19 @@ export function ResponseComposer({
 
   return (
     <div className="space-y-4">
+      {draftOnly && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">Draft-only response</p>
+            <p className="text-xs">
+              This review isn't public yet — your response will be saved as a
+              draft and published with it.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Canned responses */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -384,36 +403,42 @@ export function ResponseComposer({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p className="text-xs">Save as draft to continue later</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  onClick={handlePostResponse}
-                  disabled={isPending || !responseText.trim()}
-                >
-                  {isPending ? (
-                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4 mr-1.5" />
-                  )}
-                  Post Response
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
                 <p className="text-xs">
-                  {review.source === "google"
-                    ? "Post response to Google"
-                    : "Post response to this review"}
+                  {draftOnly
+                    ? "Save as a draft until the review is published"
+                    : "Save as draft to continue later"}
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {!draftOnly && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={handlePostResponse}
+                    disabled={isPending || !responseText.trim()}
+                  >
+                    {isPending ? (
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4 mr-1.5" />
+                    )}
+                    Post Response
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">
+                    {review.source === "google"
+                      ? "Post response to Google"
+                      : "Post response to this review"}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </div>
     </div>

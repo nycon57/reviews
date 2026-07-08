@@ -26,6 +26,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { Review, AggregatedReview } from "@/lib/reviews/types";
+import { ReviewStatusBadge } from "@/components/reviews/review-status-badge";
 import { useReviewQueue } from "./review-queue-context";
 import { CreateSmartLinkModal } from "@/components/share-studio/create-smart-link-modal";
 import { motion } from "framer-motion";
@@ -41,21 +42,6 @@ function formatDate(dateString: string) {
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString();
-}
-
-function getStatusBadge(status: Review["status"]) {
-  switch (status) {
-    case "pending":
-      return <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50">Needs attention</Badge>;
-    case "approved":
-      return <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">Live</Badge>;
-    case "rejected":
-      return <Badge variant="outline" className="border-red-500 text-red-600 bg-red-50">Removed</Badge>;
-    case "archived":
-      return <Badge variant="outline" className="border-border text-muted-foreground">Archived</Badge>;
-    default:
-      return null;
-  }
 }
 
 const MODERATION_REASON_LABELS: Record<string, string> = {
@@ -125,7 +111,7 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
                 />
               ))}
             </div>
-            {getStatusBadge(review.status)}
+            <ReviewStatusBadge status={review.status} />
             <SourceIcon source={review.source} />
           </div>
         </div>
@@ -190,10 +176,10 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
               {review.status === "pending" && !state.isPendingMode && (
                 <>
                   <DropdownMenuItem onClick={() => actions.handleApprove(review)}>
-                    <Check className="mr-2 h-4 w-4" />Approve
+                    <Check className="mr-2 h-4 w-4" />Publish
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => actions.setRejectingReview(review)} className="text-red-600">
-                    <X className="mr-2 h-4 w-4" />Reject
+                    <X className="mr-2 h-4 w-4" />Remove
                   </DropdownMenuItem>
                 </>
               )}
@@ -207,7 +193,7 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
                 <>
                   <DropdownMenuSeparator />
                   <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    <span className="font-medium">Reason:</span> {review.rejectionReason}
+                    <span className="font-medium">Removal reason:</span> {review.rejectionReason}
                   </div>
                 </>
               )}

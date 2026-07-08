@@ -11,7 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getFromAddress, emailConfig } from "@/lib/email/client";
 import { sendWithReliability } from "@/lib/email/send-utils";
 import { ensureSmartLinkForSource } from "@/lib/share-studio/service";
-import { getCelebrationThreshold } from "./public-actions";
+import { getCelebrationThreshold } from "@/lib/reviews/asset-kit";
 import { escapeHtml, validateSafeUrl } from "./types";
 
 // =============================================================================

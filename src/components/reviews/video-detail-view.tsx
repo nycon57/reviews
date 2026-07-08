@@ -43,6 +43,7 @@ import {
   PublishingStatusPanel,
   type PublishingStatus,
 } from "./publishing-status-panel";
+import { ReviewStatusBadge } from "./review-status-badge";
 import { AnimatedSection } from "@/components/motion";
 
 // ============================================================================
@@ -139,15 +140,15 @@ function ApprovalStatusBadge({ status }: { status: string }) {
       className?: string;
     }
   > = {
-    pending: { label: "Pending Review", variant: "secondary", icon: Clock },
+    pending: { label: "Pending review", variant: "secondary", icon: Clock },
     changes_requested: {
-      label: "Changes Requested",
+      label: "Changes requested",
       variant: "outline",
       icon: MessageSquare,
       className: "border-amber-500/50 text-amber-600",
     },
-    approved: { label: "Approved", variant: "default", icon: CheckCircle },
-    rejected: { label: "Rejected", variant: "destructive", icon: XCircle },
+    approved: { label: "Ready to publish", variant: "default", icon: CheckCircle },
+    rejected: { label: "Removed", variant: "destructive", icon: XCircle },
     published: { label: "Published", variant: "default", icon: Share2 },
   };
 
@@ -166,52 +167,6 @@ function ApprovalStatusBadge({ status }: { status: string }) {
   );
 }
 
-function ReviewRecordBadge({
-  status,
-  isPublished,
-}: {
-  status: LinkedReviewSummary["status"];
-  isPublished: boolean;
-}) {
-  if (status === "approved" && isPublished) {
-    return (
-      <Badge
-        variant="outline"
-        className="border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400"
-      >
-        Live
-      </Badge>
-    );
-  }
-  const config: Record<LinkedReviewSummary["status"], { label: string; className: string }> = {
-    pending: {
-      label: "Needs attention",
-      className:
-        "border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30 dark:text-yellow-400",
-    },
-    approved: {
-      label: "Approved",
-      className:
-        "border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400",
-    },
-    rejected: {
-      label: "Removed",
-      className:
-        "border-red-500 text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400",
-    },
-    archived: {
-      label: "Archived",
-      className: "border-border text-muted-foreground bg-muted",
-    },
-  };
-  const { label, className } = config[status];
-  return (
-    <Badge variant="outline" className={className}>
-      {label}
-    </Badge>
-  );
-}
-
 function LinkedReviewCard({ review }: { review: LinkedReviewSummary }) {
   return (
     <Card>
@@ -221,7 +176,7 @@ function LinkedReviewCard({ review }: { review: LinkedReviewSummary }) {
             <FileText className="h-4 w-4" />
             Review record
           </span>
-          <ReviewRecordBadge status={review.status} isPublished={review.isPublished} />
+          <ReviewStatusBadge status={review.status} />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -558,7 +513,7 @@ export function VideoDetailView({ video, userRole, linkedReview }: Props) {
                     </div>
                     {video.approvedAt && (
                       <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Approved</dt>
+                        <dt className="text-muted-foreground">Ready</dt>
                         <dd className="font-medium">{formatDateLong(video.approvedAt)}</dd>
                       </div>
                     )}

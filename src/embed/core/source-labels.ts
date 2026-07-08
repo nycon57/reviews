@@ -6,7 +6,7 @@ const SOURCE_LABELS: Record<string, string> = {
   other: "Other",
   repwell: "RepWell",
   survey: "RepWell",
-  video_testimonial: "Video Testimonial",
+  video_testimonial: "Video review",
   yelp: "Yelp",
   zillow: "Zillow",
 };

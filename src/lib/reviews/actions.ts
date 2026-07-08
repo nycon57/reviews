@@ -4,8 +4,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import type { Review, ActionResult } from "./types";
-import { queueQuoteCardKitAfterPublish } from "./asset-kit";
+import type { Review, ReviewSource, ActionResult } from "./types";
+import {
+  publishReviewIfClean,
+  type PublishReviewScreening,
+} from "./publish";
 
 // Get user's role and organization ID
 async function getUserContext() {
@@ -75,6 +78,9 @@ async function requireReviewPublishingAccess(reviewId: string): Promise<{
     id: string;
     status: string | null;
     user_id: string | null;
+    rating: number;
+    customer_name: string | null;
+    text: string | null;
   };
 } | null> {
   const context = await getUserContext();
@@ -86,7 +92,7 @@ async function requireReviewPublishingAccess(reviewId: string): Promise<{
   const supabase = createAdminClient();
   const { data: existingReview } = await supabase
     .from("reviews")
-    .select("id, status, user_id")
+    .select("id, status, user_id, rating, customer_name, text")
     .eq("id", reviewId)
     .eq("organization_id", context.organization_id)
     .single();
@@ -109,12 +115,46 @@ async function requireReviewPublishingAccess(reviewId: string): Promise<{
   };
 }
 
+const STAFF_RELEASE_SCREENING: PublishReviewScreening = {
+  mode: "precomputed",
+  result: {
+    verdict: "pass",
+    reasons: [],
+    provider: "baseline",
+  },
+};
+
+async function publishStaffReleasedReview(params: {
+  review: {
+    id: string;
+    user_id: string | null;
+    rating: number;
+    customer_name: string | null;
+    text: string | null;
+  };
+  organizationId: string;
+  actorUserId: string;
+  now?: string;
+}) {
+  return publishReviewIfClean({
+    reviewId: params.review.id,
+    organizationId: params.organizationId,
+    ownerUserId: params.review.user_id ?? params.actorUserId,
+    rating: params.review.rating,
+    customerName: params.review.customer_name,
+    reviewText: params.review.text,
+    screening: STAFF_RELEASE_SCREENING,
+    actorUserId: params.actorUserId,
+    now: params.now,
+  });
+}
+
 // Get pending reviews for approval queue
 export async function getPendingReviews(params?: {
   loanOfficerId?: string;
   minRating?: number;
   maxRating?: number;
-  source?: string;
+  source?: ReviewSource | "all";
   page?: number;
   limit?: number;
 }): Promise<ActionResult<{ reviews: Review[]; total: number }>> {
@@ -179,7 +219,7 @@ export async function getPendingReviews(params?: {
   if (params?.maxRating) {
     query = query.lte("rating", params.maxRating);
   }
-  if (params?.source) {
+  if (params?.source && params.source !== "all") {
     query = query.eq("source", params.source);
   }
 
@@ -209,7 +249,7 @@ export async function getPendingReviews(params?: {
       id: row.id,
       organizationId: row.organization_id,
       loanOfficerId: row.user_id,
-      source: row.source,
+      source: row.source as ReviewSource,
       rating: row.rating,
       title: row.title,
       text: row.text,
@@ -250,7 +290,7 @@ export async function getPendingReviews(params?: {
 export async function getReviews(params?: {
   status?: "pending" | "approved" | "rejected" | "archived" | "all";
   loanOfficerId?: string;
-  source?: string;
+  source?: ReviewSource | "all";
   page?: number;
   limit?: number;
 }): Promise<ActionResult<{ reviews: Review[]; total: number }>> {
@@ -313,7 +353,7 @@ export async function getReviews(params?: {
   if (params?.loanOfficerId) {
     query = query.eq("user_id", params.loanOfficerId);
   }
-  if (params?.source) {
+  if (params?.source && params.source !== "all") {
     query = query.eq("source", params.source);
   }
 
@@ -343,7 +383,7 @@ export async function getReviews(params?: {
       id: row.id,
       organizationId: row.organization_id,
       loanOfficerId: row.user_id,
-      source: row.source,
+      source: row.source as ReviewSource,
       rating: row.rating,
       title: row.title,
       text: row.text,
@@ -452,7 +492,7 @@ export async function getReviewById(
     id: data.id,
     organizationId: data.organization_id,
     loanOfficerId: data.user_id,
-    source: data.source,
+    source: data.source as ReviewSource,
     rating: data.rating,
     title: data.title,
     text: data.text,
@@ -512,29 +552,21 @@ export async function approveReview(
     return { success: false, error: "Only quarantined reviews can be released" };
   }
 
-  const supabase = createAdminClient();
+  try {
+    const result = await publishStaffReleasedReview({
+      review: access.existingReview,
+      organizationId: access.organizationId,
+      actorUserId: access.userId,
+      now: new Date().toISOString(),
+    });
 
-  const now = new Date().toISOString();
-  const { error } = await supabase
-    .from("reviews")
-    .update({
-      status: "approved",
-      approved_at: now,
-      approved_by: access.userId,
-      rejection_reason: null,
-      is_published: true,
-      published_at: now,
-    })
-    .eq("id", reviewId)
-    .eq("organization_id", access.organizationId)
-    .eq("status", "pending");
-
-  if (error) {
+    if (result.outcome !== "published" && result.outcome !== "already_published") {
+      return { success: false, error: "Failed to approve review" };
+    }
+  } catch (error) {
     console.error("Error approving review:", error);
     return { success: false, error: "Failed to approve review" };
   }
-
-  queueQuoteCardKitAfterPublish(access.organizationId, [reviewId], access.userId);
 
   revalidatePath("/dashboard/reviews");
   return { success: true };
@@ -627,32 +659,55 @@ export async function bulkApproveReviews(
   // Only quarantined (pending) reviews can be released
   const { data, error } = await supabase
     .from("reviews")
-    .update({
-      status: "approved",
-      approved_at: now,
-      approved_by: context.userId,
-      rejection_reason: null,
-      is_published: true,
-      published_at: now,
-    })
+    .select("id, user_id, rating, customer_name, text")
     .in("id", reviewIds)
     .eq("organization_id", context.organizationId)
-    .eq("status", "pending")
-    .select("id");
+    .eq("status", "pending");
 
   if (error) {
     console.error("Error bulk approving reviews:", error);
     return { success: false, error: "Failed to approve reviews" };
   }
 
-  const approved = data?.length || 0;
-  const failed = reviewIds.length - approved;
+  const pendingReviews = data ?? [];
+  const chunks: Array<typeof pendingReviews> = [];
+  for (let index = 0; index < pendingReviews.length; index += 5) {
+    chunks.push(pendingReviews.slice(index, index + 5));
+  }
 
-  queueQuoteCardKitAfterPublish(
-    context.organizationId,
-    (data || []).map((r) => String(r.id)),
-    context.userId
-  );
+  const publishResults: Array<{
+    reviewId: string;
+    outcome: string | null;
+    error: unknown;
+  }> = [];
+  for (const chunk of chunks) {
+    const chunkResults = await Promise.all(
+      chunk.map(async (review) => {
+        try {
+          const result = await publishStaffReleasedReview({
+            review,
+            organizationId: context.organizationId,
+            actorUserId: context.userId,
+            now,
+          });
+          return { reviewId: review.id, outcome: result.outcome, error: null };
+        } catch (error) {
+          console.error("Error bulk approving review:", {
+            reviewId: review.id,
+            error,
+          });
+          return { reviewId: review.id, outcome: null, error };
+        }
+      })
+    );
+    publishResults.push(...chunkResults);
+  }
+
+  const approved = publishResults.filter(
+    (result) =>
+      result.outcome === "published" || result.outcome === "already_published"
+  ).length;
+  const failed = reviewIds.length - approved;
 
   revalidatePath("/dashboard/reviews");
   return { success: true, data: { approved, failed } };

@@ -6,6 +6,7 @@ export type NotificationType =
   | "review_approved"
   | "review_rejected"
   | "review_needs_response"
+  | "review_dispute"
   | "response_posted"
   | "badge_earned"
   | "milestone_reached"

@@ -23,19 +23,14 @@ import {
 } from "./types";
 import { createChatCompletion, isAIEnabled } from "@/lib/ai/client";
 import { generateReviewFromTranscript } from "@/lib/ai/transcript-to-review";
-import { screenReviewText } from "@/lib/reviews/moderation";
-import { queueQuoteCardKitAfterPublish } from "@/lib/reviews/asset-kit";
-import {
-  notifyReviewNeedsResponse,
-  notifyReviewPublished,
-} from "@/lib/reviews/notifications";
-import { checkAllMilestonesForReview } from "@/lib/milestones/actions";
+import { publishReviewIfClean } from "@/lib/reviews/publish";
 import { transcribeWithWordTimestamps } from "@/lib/share-studio/transcription-service";
 import { ensureSmartLinkForSource } from "@/lib/share-studio/service";
 import {
   sendVideoTestimonialPendingApprovalEmail,
   sendVideoTestimonialReceivedEmail,
 } from "@/lib/email";
+import { getCelebrationThreshold } from "@/lib/reviews/asset-kit";
 
 // ============================================================================
 // Validation Schemas
@@ -364,36 +359,6 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
     return { success: false, error: "Failed to load video testimonial request" };
   }
 });
-
-/**
- * Read the org's celebration threshold from organizations.settings.
- * Ratings at or above this value take the High Path. Default 4.
- * Request-scoped cache: several publish-time hooks ask for it per request.
- */
-const getCelebrationThresholdCached = cache(readCelebrationThreshold);
-
-export async function getCelebrationThreshold(organizationId: string): Promise<number> {
-  return getCelebrationThresholdCached(organizationId);
-}
-
-async function readCelebrationThreshold(organizationId: string): Promise<number> {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("organizations")
-    .select("settings")
-    .eq("id", organizationId)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Error reading celebration threshold, using default:", error);
-    return 4;
-  }
-
-  const settings = data?.settings as { videoCelebrationThreshold?: unknown } | null;
-  const raw = settings?.videoCelebrationThreshold;
-  const value = typeof raw === "number" ? raw : Number(raw);
-  return Number.isInteger(value) && value >= 1 && value <= 5 ? value : 4;
-}
 
 /**
  * Submit customer info and consent for video testimonial
@@ -1509,8 +1474,8 @@ export interface AIProcessingResult {
  * Idempotent — skipped when `review_id` is already set. Legacy responses
  * without a customer rating get no review row (`reviews.rating` is NOT NULL).
  *
- * Publish inversion: the text is machine-screened via screenReviewText and,
- * on a pass verdict, published immediately at ANY rating — the customer
+ * Publish inversion: the shared review publish helper machine-screens the text
+ * and, on a pass verdict, publishes immediately at ANY rating — the customer
  * already approved this text in-flow. A quarantine verdict leaves the review
  * status='pending' (machine-quarantined awaiting human release). The video
  * `quarantined` flag is NOT consulted here; it only gates video surfaces.
@@ -1530,7 +1495,7 @@ async function createCanonicalReviewForResponse(params: {
 
     const { data: response, error: responseError } = await supabase
       .from("video_testimonial_responses")
-      .select("id, customer_rating, review_id, sentiment_score, sentiment_label")
+      .select("id, customer_rating, review_id, request_id, sentiment_score, sentiment_label")
       .eq("id", params.responseId)
       .single();
 
@@ -1553,14 +1518,12 @@ async function createCanonicalReviewForResponse(params: {
     }
 
     const now = new Date().toISOString();
+    const { data: request } = await supabase
+      .from("video_testimonial_requests")
+      .select("customer_email")
+      .eq("id", response.request_id)
+      .maybeSingle();
 
-    // Machine screening is the only gate between this text and the public
-    // record. Pass publishes at any rating; quarantine awaits human release.
-    const moderation = await screenReviewText(params.reviewText, params.customerName);
-    const publish = moderation.verdict === "pass";
-
-    // moderation_* columns are not in the generated types yet (database.types.ts
-    // not regenerated after migration) — use the untyped admin client.
     const untypedAdmin = createUntypedAdminClient();
     const { data: review, error: insertError } = await untypedAdmin
       .from("reviews")
@@ -1572,17 +1535,14 @@ async function createCanonicalReviewForResponse(params: {
         rating: response.customer_rating,
         text: params.reviewText,
         customer_name: params.customerName,
+        customer_email:
+          (request as { customer_email?: string | null } | null)?.customer_email ??
+          null,
         sentiment_score: response.sentiment_score,
         sentiment_label: response.sentiment_label,
         review_date: now,
-        status: publish ? "approved" : "pending",
-        is_published: publish,
-        approved_at: publish ? now : null,
-        published_at: publish ? now : null,
-        moderation_verdict: moderation.verdict,
-        moderation_reasons: moderation.reasons,
-        moderation_checked_at: now,
-        moderation_provider: moderation.provider,
+        status: "pending",
+        is_published: false,
       })
       .select("id")
       .single();
@@ -1609,45 +1569,19 @@ async function createCanonicalReviewForResponse(params: {
       );
     }
 
-    if (publish) {
-      // Reached from a request scope (cron route handler, or nested inside a
-      // submit-action after() callback — nesting after() is supported), so
-      // the shared after()-based helper is safe here.
-      queueQuoteCardKitAfterPublish(params.organizationId, [reviewId], params.ownerUserId);
-
-      const threshold = await getCelebrationThreshold(params.organizationId);
-      const belowThreshold = response.customer_rating < threshold;
-
-      await notifyReviewPublished({
-        reviewId,
-        organizationId: params.organizationId,
-        ownerUserId: params.ownerUserId,
+    await publishReviewIfClean({
+      reviewId,
+      organizationId: params.organizationId,
+      ownerUserId: params.ownerUserId,
+      customerName: params.customerName,
+      rating: response.customer_rating,
+      reviewText: params.reviewText,
+      screening: {
+        mode: "compute",
+        text: params.reviewText,
         customerName: params.customerName,
-        rating: response.customer_rating,
-        reviewText: params.reviewText,
-        belowThreshold,
-      });
-
-      if (belowThreshold) {
-        await notifyReviewNeedsResponse({
-          reviewId,
-          organizationId: params.organizationId,
-          ownerUserId: params.ownerUserId,
-          customerName: params.customerName,
-          rating: response.customer_rating,
-        });
-      }
-
-      // Cheapest-correct milestone detection; best-effort, never blocks.
-      await checkAllMilestonesForReview(
-        params.ownerUserId,
-        params.organizationId,
-        params.ownerUserId,
-        response.customer_rating
-      ).catch((error) => {
-        console.error("Error checking review milestones:", error);
-      });
-    }
+      },
+    });
   } catch (error) {
     console.error("Unified review: error creating canonical review:", error);
   }

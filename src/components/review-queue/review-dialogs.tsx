@@ -20,14 +20,14 @@ export function ReviewDialogs() {
 
   return (
     <>
-      {/* Reject Review Dialog */}
+      {/* Remove Review Dialog */}
       <Dialog open={!!state.rejectingReview} onOpenChange={() => actions.setRejectingReview(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Review</DialogTitle>
+            <DialogTitle>Remove review from publishing?</DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting this review. This will be
-              recorded for reference.
+              Add a reason for keeping this review off public review surfaces.
+              This will be recorded for reference.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -49,13 +49,13 @@ export function ReviewDialogs() {
               </span>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="rejection-reason">Rejection Reason</Label>
+              <Label htmlFor="rejection-reason">Removal reason</Label>
               <Textarea
                 id="rejection-reason"
                 value={state.rejectionReason}
                 onChange={(e) => actions.setRejectionReason(e.target.value)}
                 rows={3}
-                placeholder="Enter reason for rejection..."
+                placeholder="Why should this review stay unpublished?"
               />
             </div>
           </div>
@@ -68,33 +68,33 @@ export function ReviewDialogs() {
               onClick={actions.handleReject}
               disabled={state.isPending || !state.rejectionReason}
             >
-              Reject Review
+              Remove review
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Bulk Reject Dialog */}
+      {/* Bulk Remove Dialog */}
       <Dialog
         open={state.openDialog === "bulkReject"}
         onOpenChange={(open) => actions.setBulkRejectDialogOpen(open)}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject {state.selectedIds.size} Reviews</DialogTitle>
+            <DialogTitle>Remove {state.selectedIds.size} reviews from publishing?</DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting these reviews. This will be
-              applied to all selected reviews.
+              Add a reason for keeping these reviews off public review surfaces.
+              This will be applied to all selected reviews.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="bulk-rejection-reason">Rejection Reason</Label>
+            <Label htmlFor="bulk-rejection-reason">Removal reason</Label>
             <Textarea
               id="bulk-rejection-reason"
               value={state.bulkRejectionReason}
               onChange={(e) => actions.setBulkRejectionReason(e.target.value)}
               rows={3}
-              placeholder="Enter reason for rejection..."
+              placeholder="Why should these reviews stay unpublished?"
             />
           </div>
           <DialogFooter>
@@ -106,7 +106,7 @@ export function ReviewDialogs() {
               onClick={actions.handleBulkReject}
               disabled={state.isPending || !state.bulkRejectionReason}
             >
-              Reject All
+              Remove all
             </Button>
           </DialogFooter>
         </DialogContent>

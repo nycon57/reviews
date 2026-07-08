@@ -1,5 +1,9 @@
 // Application types for RepWell
 
+import type { ReviewSource } from "@/lib/reviews/types";
+
+export type { ReviewSource };
+
 export type UserRole = "admin" | "manager" | "user";
 
 export type AccountType = "individual" | "enterprise";
@@ -7,8 +11,6 @@ export type AccountType = "individual" | "enterprise";
 export type SubscriptionTier = "basic" | "pro" | "enterprise";
 
 export type SurveyStatus = "pending" | "sent" | "opened" | "completed" | "expired";
-
-export type ReviewSource = "internal" | "google" | "zillow" | "facebook" | "yelp" | "other";
 
 export type ReviewStatus = "pending" | "approved" | "rejected" | "archived";
 

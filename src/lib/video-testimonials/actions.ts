@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { queueClipRender } from "@/lib/share-studio/service";
-import { getCelebrationThreshold } from "./public-actions";
+import { getCelebrationThreshold } from "@/lib/reviews/asset-kit";
 import { z } from "zod";
 import type { Json, Database } from "@/types/database.types";
 import { sendInitialVideoTestimonialEmailImmediately } from "./queue-service";

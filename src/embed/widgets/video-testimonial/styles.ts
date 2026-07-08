@@ -1,5 +1,5 @@
 /**
- * Video Testimonial Widget styles — injected into Shadow DOM alongside BASE_STYLES.
+ * Video review widget styles — injected into Shadow DOM alongside BASE_STYLES.
  * Pre-minified to stay within the 15KB gzipped embed budget.
  */
 

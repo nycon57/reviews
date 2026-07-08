@@ -1,5 +1,5 @@
 /**
- * Video Testimonial Widget template — builds the DOM tree for video testimonials.
+ * Video review widget template — builds the DOM tree for video reviews.
  * Displays inline video player, transcript, LO/reviewer info, and compliance footer.
  * All DOM construction uses safe methods (createElement/textContent) — no innerHTML.
  */
@@ -164,7 +164,7 @@ function buildVideoItem(
 }
 
 /**
- * Builds the Video Testimonial widget DOM tree.
+ * Builds the video review widget DOM tree.
  */
 export function buildVideoTestimonialDOM(
   config: PublicWidgetConfig,
@@ -188,7 +188,7 @@ export function buildVideoTestimonialDOM(
   const transcriptPosition = videoConfig?.transcriptPosition ?? "below";
   const layout = videoConfig?.layout ?? "list";
 
-  // Video testimonials data
+  // Video review data
   const testimonials = config.video_testimonials ?? [];
 
   if (testimonials.length === 0) {

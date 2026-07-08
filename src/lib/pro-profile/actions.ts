@@ -12,7 +12,7 @@ import type {
   ProfileReferralIntroductionEmailData,
   ReviewVerificationEmailData,
 } from "@/lib/email/types";
-import { screenReviewText } from "@/lib/reviews/moderation";
+import { publishReviewIfClean } from "@/lib/reviews/publish";
 import { generateVerificationToken } from "@/lib/reviews/verification";
 import { routeNewFlag } from "@/lib/reviews/flag-actions";
 
@@ -125,12 +125,6 @@ export async function submitPublicReview(
       }
     }
 
-    // Machine screening (fail-closed: errors quarantine)
-    const screenInput = validated.title
-      ? `${validated.text}\n${validated.title}`
-      : validated.text;
-    const screen = await screenReviewText(screenInput, validated.customerName);
-
     // Email verification token: store only the sha256 hash
     const { rawToken, tokenHash } = generateVerificationToken();
 
@@ -157,10 +151,6 @@ export async function submitPublicReview(
           ip_address: ipAddress,
           user_agent: userAgent,
         },
-        moderation_verdict: screen.verdict,
-        moderation_reasons: screen.reasons,
-        moderation_checked_at: new Date().toISOString(),
-        moderation_provider: screen.provider,
         verification_token_hash: tokenHash,
       })
       .select("id")
@@ -170,6 +160,23 @@ export async function submitPublicReview(
       console.error("Error submitting review:", insertError);
       return { success: false, error: "Failed to submit review" };
     }
+
+    await publishReviewIfClean({
+      reviewId: review.id,
+      organizationId: user.organization_id,
+      ownerUserId: validated.loanOfficerId,
+      customerName: validated.customerName || null,
+      rating: validated.rating,
+      reviewText: validated.text,
+      publishWhenClean: false,
+      screening: {
+        mode: "compute",
+        text: validated.title
+          ? `${validated.text}\n${validated.title}`
+          : validated.text,
+        customerName: validated.customerName || null,
+      },
+    });
 
     // Send verification email (fire-and-forget — don't block the response)
     const emailData: ReviewVerificationEmailData = {

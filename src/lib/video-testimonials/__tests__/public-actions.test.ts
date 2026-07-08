@@ -31,12 +31,26 @@ vi.mock("@/lib/reviews/moderation", () => ({
 }));
 
 vi.mock("@/lib/reviews/asset-kit", () => ({
+  getCelebrationThreshold: vi.fn().mockResolvedValue(4),
   queueQuoteCardKitAfterPublish: vi.fn(),
 }));
 
 vi.mock("@/lib/reviews/notifications", () => ({
   notifyReviewNeedsResponse: vi.fn(),
   notifyReviewPublished: vi.fn(),
+}));
+
+vi.mock("@/lib/reviews/publish", () => ({
+  publishReviewIfClean: vi.fn().mockResolvedValue({
+    outcome: "published",
+    moderation: {
+      verdict: "pass",
+      reasons: [],
+      provider: "baseline",
+    },
+    belowThreshold: false,
+    draftResponseSurfaced: false,
+  }),
 }));
 
 vi.mock("@/lib/milestones/actions", () => ({

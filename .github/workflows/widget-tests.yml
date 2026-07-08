@@ -67,6 +67,12 @@ jobs:
   e2e-tests:
     name: Widget E2E Tests
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: mock-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: mock-service-role-key
+      DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
+      BETTER_AUTH_SECRET: mock-ci-secret-not-used-at-runtime
     needs: [bundle-size, unit-tests]
     # Pre-dates the golden-flows E2E workstream; needs real env to be trustworthy.
     # Non-blocking until replaced (docs/plans/2026-07-06-feature-audit-campaign.md §6k.2).
@@ -92,12 +98,6 @@ jobs:
 
       - name: Build Next.js app
         run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: mock-anon-key
-          SUPABASE_SERVICE_ROLE_KEY: mock-service-role-key
-          BETTER_AUTH_SECRET: mock-ci-secret-not-used-at-runtime
-          DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
 
       - name: Run E2E widget tests
         run: npx playwright test tests/e2e/widgets/
@@ -117,6 +117,12 @@ jobs:
   performance-benchmarks:
     name: Performance Benchmarks
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: mock-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: mock-service-role-key
+      DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
+      BETTER_AUTH_SECRET: mock-ci-secret-not-used-at-runtime
     needs: [bundle-size, unit-tests]
     # Non-blocking until golden-flows replacement (see e2e-tests note).
     continue-on-error: true
@@ -141,12 +147,6 @@ jobs:
 
       - name: Build Next.js app
         run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: mock-anon-key
-          SUPABASE_SERVICE_ROLE_KEY: mock-service-role-key
-          BETTER_AUTH_SECRET: mock-ci-secret-not-used-at-runtime
-          DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
 
       - name: Run render timing benchmarks
         run: npx playwright test tests/performance/render-timing.test.ts

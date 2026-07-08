@@ -15,6 +15,7 @@ import {
   createUntypedAdminClient,
 } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { createNotification } from "@/lib/notifications/actions";
 import { sendReviewDisputeEscalationEmail } from "@/lib/email/send";
 import { emailConfig } from "@/lib/email/client";
 import {
@@ -23,6 +24,7 @@ import {
   type ReviewFlag,
   type ReviewFlagReason,
 } from "./types";
+import { resolveReviewFlag } from "./dispute-resolution";
 
 const INDIVIDUAL_DISPUTE_ERROR =
   "Disputes for individual accounts are reviewed by RepWell.";
@@ -337,16 +339,16 @@ export async function upholdFlag(
     return { success: false, error: "Failed to remove the review" };
   }
 
-  const { error: flagError } = await supabase
-    .from("review_flags")
-    .update({
-      status: "actioned",
-      reviewed_by: context.userId,
-      reviewed_at: now,
-      resolution_note: resolutionNote,
-    })
-    .eq("id", flag.id)
-    .eq("organization_id", context.organizationId);
+  const { error: flagError } = await resolveReviewFlag({
+    supabase,
+    flagId: flag.id,
+    organizationId: context.organizationId,
+    status: "actioned",
+    reviewedBy: context.userId,
+    reviewedAt: now,
+    resolutionNote,
+    resolutionVerdict: "upheld",
+  });
 
   if (flagError) {
     console.error("Error updating review flag:", flagError);
@@ -398,16 +400,16 @@ export async function dismissFlag(
   const { flag } = result;
 
   const supabase = createUntypedAdminClient();
-  const { error: flagError } = await supabase
-    .from("review_flags")
-    .update({
-      status: "dismissed",
-      reviewed_by: context.userId,
-      reviewed_at: new Date().toISOString(),
-      resolution_note: validated.data.resolutionNote?.trim() || null,
-    })
-    .eq("id", flag.id)
-    .eq("organization_id", context.organizationId);
+  const { error: flagError } = await resolveReviewFlag({
+    supabase,
+    flagId: flag.id,
+    organizationId: context.organizationId,
+    status: "dismissed",
+    reviewedBy: context.userId,
+    reviewedAt: new Date().toISOString(),
+    resolutionNote: validated.data.resolutionNote?.trim() || null,
+    resolutionVerdict: "dismissed",
+  });
 
   if (flagError) {
     console.error("Error dismissing review flag:", flagError);
@@ -577,15 +579,6 @@ export async function routeNewFlag(
       .update({ escalated_to_platform_at: new Date().toISOString() })
       .eq("id", flagRow.id);
 
-    const escalationEmail = process.env.REVIEW_DISPUTE_ESCALATION_EMAIL;
-    if (!escalationEmail) {
-      console.warn(
-        "REVIEW_DISPUTE_ESCALATION_EMAIL is not set; skipping dispute escalation email for flag",
-        flagRow.id
-      );
-      return;
-    }
-
     const { data: review } = await supabase
       .from("reviews")
       .select("id, rating, customer_name, text")
@@ -602,23 +595,80 @@ export async function routeNewFlag(
       reporterName = reporter?.full_name ?? null;
     }
 
-    await sendReviewDisputeEscalationEmail({
-      toEmail: escalationEmail,
-      organizationId,
-      flagId: flagRow.id,
-      reviewId: flagRow.review_id,
-      organizationName: org.name,
-      reporterName: reporterName ?? undefined,
-      reporterEmail: (flagRow.reporter_email as string | null) ?? undefined,
-      reasonLabel,
-      details: (flagRow.details as string | null) ?? undefined,
-      rating: review?.rating ?? 0,
-      customerName: review?.customer_name ?? undefined,
-      reviewExcerpt: review?.text
-        ? review.text.slice(0, REVIEW_EXCERPT_LENGTH)
-        : "",
-      reviewUrl: `${emailConfig.baseUrl}/dashboard/reviews/${flagRow.review_id}`,
-    });
+    const { data: platformAdmins, error: platformAdminsError } = await untyped
+      .from("users")
+      .select("id")
+      .eq("is_platform_admin", true)
+      .eq("is_active", true);
+
+    if (platformAdminsError) {
+      console.error(
+        "Error querying platform admins for dispute notification:",
+        platformAdminsError
+      );
+    } else if (!platformAdmins?.length) {
+      console.error(
+        "No active platform admins found for individual dispute notification",
+        { flagId: flagRow.id, organizationId }
+      );
+    } else {
+      await Promise.all(
+        platformAdmins.map(async (admin: { id: string }) => {
+          const notification = await createNotification({
+            userId: admin.id,
+            type: "system",
+            title: "Individual dispute needs review",
+            message: `${org.name} reported a review for ${reasonLabel.toLowerCase()}. Review the staff dispute queue to uphold or dismiss it.`,
+            organizationId,
+            reviewId: flagRow.review_id,
+            actionUrl: "/staff/disputes",
+            priority: 2,
+            metadata: {
+              event: "individual_review_dispute_pending",
+              flag_id: flagRow.id,
+              review_id: flagRow.review_id,
+              reason: flagRow.reason,
+              reporter_name: reporterName,
+              reporter_email: flagRow.reporter_email,
+              created_at: new Date().toISOString(),
+            },
+          });
+
+          if (!notification.success) {
+            console.error(
+              "Error creating platform dispute notification:",
+              notification.error
+            );
+          }
+        })
+      );
+    }
+
+    const escalationEmail = process.env.REVIEW_DISPUTE_ESCALATION_EMAIL;
+    if (escalationEmail) {
+      await sendReviewDisputeEscalationEmail({
+        toEmail: escalationEmail,
+        organizationId,
+        flagId: flagRow.id,
+        reviewId: flagRow.review_id,
+        organizationName: org.name,
+        reporterName: reporterName ?? undefined,
+        reporterEmail: (flagRow.reporter_email as string | null) ?? undefined,
+        reasonLabel,
+        details: (flagRow.details as string | null) ?? undefined,
+        rating: review?.rating ?? 0,
+        customerName: review?.customer_name ?? undefined,
+        reviewExcerpt: review?.text
+          ? review.text.slice(0, REVIEW_EXCERPT_LENGTH)
+          : "",
+        reviewUrl: `${emailConfig.baseUrl}/staff/disputes`,
+      });
+    } else {
+      console.error(
+        "REVIEW_DISPUTE_ESCALATION_EMAIL is not set; skipping optional dispute escalation email after queue notification",
+        { flagId: flagRow.id, organizationId }
+      );
+    }
   } catch (error) {
     // Routing is best-effort; never fail the flag submission itself
     console.error("Error routing new review flag:", error);

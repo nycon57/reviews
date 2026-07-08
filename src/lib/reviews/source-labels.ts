@@ -1,4 +1,5 @@
 export const REVIEW_SOURCE_LABELS: Record<string, string> = {
+  direct: "Direct",
   facebook: "Facebook",
   google: "Google",
   internal: "Survey",

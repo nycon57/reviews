@@ -9,13 +9,8 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { queueQuoteCardKitAfterPublish } from "@/lib/reviews/asset-kit";
-import {
-  notifyReviewNeedsResponse,
-  notifyReviewPublished,
-} from "@/lib/reviews/notifications";
-import { getCelebrationThreshold } from "@/lib/video-testimonials/public-actions";
-import { checkAllMilestonesForReview } from "@/lib/milestones/actions";
+import { publishReviewIfClean } from "@/lib/reviews/publish";
+import type { ModerationResult } from "@/lib/reviews/moderation";
 import { findOrCreateContact } from "@/lib/contacts/actions";
 
 /** Single source of truth for verification token crypto (raw token emailed, only the hash stored). */
@@ -54,7 +49,7 @@ export async function verifyDirectReview(
   const { data: review, error } = await (supabase as any)
     .from("reviews")
     .select(
-      "id, organization_id, user_id, rating, customer_name, customer_email, moderation_verdict"
+      "id, organization_id, user_id, rating, text, customer_name, customer_email, moderation_verdict, moderation_reasons, moderation_provider"
     )
     .eq("verification_token_hash", tokenHash)
     .is("verified_at", null)
@@ -79,14 +74,6 @@ export async function verifyDirectReview(
     .update({
       verified_at: now,
       verification_token_hash: null,
-      ...(passed
-        ? {
-            status: "approved",
-            is_published: true,
-            published_at: now,
-            approved_at: now,
-          }
-        : {}),
     })
     .eq("id", review.id)
     .is("verified_at", null)
@@ -139,47 +126,28 @@ export async function verifyDirectReview(
   let showVideoUpsell = false;
 
   if (passed && isFirstVerification) {
-    queueQuoteCardKitAfterPublish(
-      review.organization_id,
-      [review.id],
-      review.user_id
-    );
-
-    const threshold = await getCelebrationThreshold(review.organization_id);
-    const belowThreshold = review.rating < threshold;
-
-    await notifyReviewPublished({
+    const publishResult = await publishReviewIfClean({
       reviewId: review.id,
       organizationId: review.organization_id,
       ownerUserId: review.user_id,
       customerName: review.customer_name,
       rating: review.rating,
-      belowThreshold,
+      reviewText: review.text,
+      screening: {
+        mode: "precomputed",
+        result: {
+          verdict: "pass",
+          reasons: (review.moderation_reasons ?? []) as ModerationResult["reasons"],
+          provider:
+            (review.moderation_provider as ModerationResult["provider"] | null) ??
+            "baseline",
+        },
+      },
     });
 
-    if (belowThreshold) {
-      await notifyReviewNeedsResponse({
-        reviewId: review.id,
-        organizationId: review.organization_id,
-        ownerUserId: review.user_id,
-        customerName: review.customer_name,
-        rating: review.rating,
-      });
-    } else {
+    if (publishResult.outcome === "published" && !publishResult.belowThreshold) {
       showVideoUpsell = true;
     }
-
-    // Cheapest-correct milestone detection (populates the pending queue that
-    // the process-milestone-emails cron drains). Best-effort: never block or
-    // fail publish over a milestone check.
-    await checkAllMilestonesForReview(
-      review.user_id,
-      review.organization_id,
-      review.user_id,
-      review.rating
-    ).catch((error) => {
-      console.error("Error checking review milestones:", error);
-    });
   }
 
   return {

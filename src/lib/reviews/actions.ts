@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import type { Review, ActionResult } from "./types";
+import type { Review, ReviewSource, ActionResult } from "./types";
 import { queueQuoteCardKitAfterPublish } from "./asset-kit";
 
 // Get user's role and organization ID
@@ -114,7 +114,7 @@ export async function getPendingReviews(params?: {
   loanOfficerId?: string;
   minRating?: number;
   maxRating?: number;
-  source?: string;
+  source?: ReviewSource | "all";
   page?: number;
   limit?: number;
 }): Promise<ActionResult<{ reviews: Review[]; total: number }>> {
@@ -179,7 +179,7 @@ export async function getPendingReviews(params?: {
   if (params?.maxRating) {
     query = query.lte("rating", params.maxRating);
   }
-  if (params?.source) {
+  if (params?.source && params.source !== "all") {
     query = query.eq("source", params.source);
   }
 
@@ -209,7 +209,7 @@ export async function getPendingReviews(params?: {
       id: row.id,
       organizationId: row.organization_id,
       loanOfficerId: row.user_id,
-      source: row.source,
+      source: row.source as ReviewSource,
       rating: row.rating,
       title: row.title,
       text: row.text,
@@ -250,7 +250,7 @@ export async function getPendingReviews(params?: {
 export async function getReviews(params?: {
   status?: "pending" | "approved" | "rejected" | "archived" | "all";
   loanOfficerId?: string;
-  source?: string;
+  source?: ReviewSource | "all";
   page?: number;
   limit?: number;
 }): Promise<ActionResult<{ reviews: Review[]; total: number }>> {
@@ -313,7 +313,7 @@ export async function getReviews(params?: {
   if (params?.loanOfficerId) {
     query = query.eq("user_id", params.loanOfficerId);
   }
-  if (params?.source) {
+  if (params?.source && params.source !== "all") {
     query = query.eq("source", params.source);
   }
 
@@ -343,7 +343,7 @@ export async function getReviews(params?: {
       id: row.id,
       organizationId: row.organization_id,
       loanOfficerId: row.user_id,
-      source: row.source,
+      source: row.source as ReviewSource,
       rating: row.rating,
       title: row.title,
       text: row.text,
@@ -452,7 +452,7 @@ export async function getReviewById(
     id: data.id,
     organizationId: data.organization_id,
     loanOfficerId: data.user_id,
-    source: data.source,
+    source: data.source as ReviewSource,
     rating: data.rating,
     title: data.title,
     text: data.text,

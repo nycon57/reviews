@@ -10,8 +10,10 @@ describe("formatReviewSource", () => {
   });
 
   it("preserves known review source labels", () => {
+    expect(formatReviewSource("direct")).toBe("Direct");
     expect(formatReviewSource("google")).toBe("Google");
     expect(formatReviewSource("internal")).toBe("Survey");
+    expect(formatReviewSource("survey")).toBe("Survey");
   });
 
   it("humanizes unknown source values", () => {

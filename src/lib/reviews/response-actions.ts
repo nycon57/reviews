@@ -10,7 +10,7 @@ import {
   type ResponseTone,
   type ReviewContext,
 } from "@/lib/ai/response-suggestions";
-import { sendReviewResponseEmail } from "@/lib/email/send";
+import { sendReviewResponseConfirmationEmail } from "./response-confirmation";
 
 // Response template types
 export interface ResponseTemplate {
@@ -337,7 +337,7 @@ export async function postResponse(
     .from("reviews")
     .select(`
       id, source, source_review_id, user_id, customer_name, customer_email,
-      sentiment_score, review_date, text,
+      sentiment_score, review_date, text, rating, is_published,
       users!user_id(full_name),
       organizations!inner(name)
     `)
@@ -347,6 +347,13 @@ export async function postResponse(
 
   if (fetchError || !review) {
     return { success: false, error: "Review not found" };
+  }
+
+  if (review.is_published !== true) {
+    return {
+      success: false,
+      error: "Only draft responses can be saved until the review is published",
+    };
   }
 
   const now = new Date().toISOString();
@@ -417,27 +424,14 @@ export async function postResponse(
     }
   }
 
-  // Send email notification to reviewer (only for internal reviews with customer email)
-  if (review.source === "internal" && review.customer_email) {
-    const loanOfficer = review.users as { full_name: string } | null;
-    const organization = review.organizations as unknown as { name: string };
-
-    await sendReviewResponseEmail({
-      toEmail: review.customer_email,
-      toName: review.customer_name || undefined,
-      customerName: review.customer_name || "Valued Customer",
-      loanOfficerName: loanOfficer?.full_name ?? "Team Member",
-      organizationName: organization.name,
-      originalReviewText: review.text || null,
-      responseText: responseText,
-      rating: review.rating || 5,
-      organizationId: context.organizationId,
-      loanOfficerId: review.user_id,
-    }).catch((err) => {
-      // Log error but don't fail the response posting
-      console.error("Failed to send review response email:", err);
-    });
-  }
+  await sendReviewResponseConfirmationEmail({
+    reviewId,
+    organizationId: context.organizationId,
+    responseText,
+  }).catch((err) => {
+    // Log error but don't fail the response posting
+    console.error("Failed to send review response confirmation:", err);
+  });
 
   revalidatePath("/dashboard/all-reviews");
   revalidatePath("/dashboard/reviews");

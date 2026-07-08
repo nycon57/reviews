@@ -7,14 +7,7 @@ import type {
   SurveyBranding,
   ThankYouConfig,
 } from "@/types/survey.types";
-import { screenReviewText } from "@/lib/reviews/moderation";
-import { queueQuoteCardKitAfterPublish } from "@/lib/reviews/asset-kit";
-import {
-  notifyReviewNeedsResponse,
-  notifyReviewPublished,
-} from "@/lib/reviews/notifications";
-import { getCelebrationThreshold } from "@/lib/video-testimonials/public-actions";
-import { checkAllMilestonesForReview } from "@/lib/milestones/actions";
+import { publishReviewIfClean } from "@/lib/reviews/publish";
 import { analyzeNewReview } from "@/lib/ai/actions";
 import type { PublicSurvey, ActionResult } from "./public-types";
 
@@ -308,10 +301,6 @@ export async function submitSurveyResponse(
       const customerName = surveyDetails?.customer_name || null;
       const now = new Date().toISOString();
 
-      const moderation = await screenReviewText(reviewText ?? "", customerName);
-      const publish = moderation.verdict === "pass";
-
-      // moderation_* columns are not in the generated types yet — untyped client
       const untypedAdmin = createUntypedAdminClient();
       const { data: newReview, error: reviewError } = await untypedAdmin
         .from("reviews")
@@ -323,14 +312,8 @@ export async function submitSurveyResponse(
           rating: overallRating,
           text: reviewText,
           customer_name: customerName,
-          status: publish ? "approved" : "pending",
-          is_published: publish,
-          approved_at: publish ? now : null,
-          published_at: publish ? now : null,
-          moderation_verdict: moderation.verdict,
-          moderation_reasons: moderation.reasons,
-          moderation_checked_at: now,
-          moderation_provider: moderation.provider,
+          status: "pending",
+          is_published: false,
           review_date: now,
         })
         .select("id")
@@ -339,40 +322,19 @@ export async function submitSurveyResponse(
       if (!reviewError && newReview) {
         const reviewId = String((newReview as { id: string }).id);
 
-        if (publish && survey.user_id) {
-          queueQuoteCardKitAfterPublish(survey.organization_id, [reviewId], survey.user_id);
-
-          const threshold = await getCelebrationThreshold(survey.organization_id);
-          const belowThreshold = overallRating < threshold;
-
-          await notifyReviewPublished({
+        if (survey.user_id) {
+          await publishReviewIfClean({
             reviewId,
             organizationId: survey.organization_id,
             ownerUserId: survey.user_id,
             customerName,
             rating: overallRating,
             reviewText,
-            belowThreshold,
-          });
-
-          if (belowThreshold) {
-            await notifyReviewNeedsResponse({
-              reviewId,
-              organizationId: survey.organization_id,
-              ownerUserId: survey.user_id,
+            screening: {
+              mode: "compute",
+              text: reviewText ?? "",
               customerName,
-              rating: overallRating,
-            });
-          }
-
-          // Cheapest-correct milestone detection; best-effort, never blocks.
-          await checkAllMilestonesForReview(
-            survey.user_id,
-            survey.organization_id,
-            survey.user_id,
-            overallRating
-          ).catch((error) => {
-            console.error("Error checking review milestones:", error);
+            },
           });
         }
 

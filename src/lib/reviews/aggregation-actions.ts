@@ -9,6 +9,7 @@ import type {
   ReviewAggregationStats,
   ReviewExportData,
   ActionResult,
+  ReviewSource,
 } from "./types";
 
 // Get user's role and organization ID
@@ -82,7 +83,7 @@ function mapRowToAggregatedReview(
     id: row.id as string,
     organizationId: row.organization_id as string,
     loanOfficerId: row.user_id as string,
-    source: row.source as string,
+    source: row.source as ReviewSource,
     rating: row.rating as number,
     title: row.title as string | null,
     text: row.text as string | null,

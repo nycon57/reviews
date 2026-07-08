@@ -4,7 +4,7 @@ export interface Review {
   id: string;
   organizationId: string;
   loanOfficerId: string | null;
-  source: string;
+  source: ReviewSource;
   rating: number;
   title: string | null;
   text: string | null;
@@ -54,8 +54,21 @@ export interface AggregatedReview extends Review {
   updatedAt: string;
 }
 
-// Review source options
-export type ReviewSource = "internal" | "google" | "zillow" | "facebook" | "yelp" | "other";
+// Review source options. `reviews.source` is text in the generated schema, but
+// these are the values the product writes, accepts, or has to filter honestly.
+export const REVIEW_SOURCES = [
+  "internal",
+  "survey",
+  "direct",
+  "video_testimonial",
+  "google",
+  "zillow",
+  "facebook",
+  "yelp",
+  "other",
+] as const;
+
+export type ReviewSource = (typeof REVIEW_SOURCES)[number];
 
 // Filter parameters for aggregated reviews
 export interface AggregatedReviewFilters {

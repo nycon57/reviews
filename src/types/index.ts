@@ -8,7 +8,16 @@ export type SubscriptionTier = "basic" | "pro" | "enterprise";
 
 export type SurveyStatus = "pending" | "sent" | "opened" | "completed" | "expired";
 
-export type ReviewSource = "internal" | "google" | "zillow" | "facebook" | "yelp" | "other";
+export type ReviewSource =
+  | "internal"
+  | "survey"
+  | "direct"
+  | "video_testimonial"
+  | "google"
+  | "zillow"
+  | "facebook"
+  | "yelp"
+  | "other";
 
 export type ReviewStatus = "pending" | "approved" | "rejected" | "archived";
 

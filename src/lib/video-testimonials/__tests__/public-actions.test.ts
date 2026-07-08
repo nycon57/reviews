@@ -39,6 +39,19 @@ vi.mock("@/lib/reviews/notifications", () => ({
   notifyReviewPublished: vi.fn(),
 }));
 
+vi.mock("@/lib/reviews/publish", () => ({
+  publishReviewIfClean: vi.fn().mockResolvedValue({
+    outcome: "published",
+    moderation: {
+      verdict: "pass",
+      reasons: [],
+      provider: "baseline",
+    },
+    belowThreshold: false,
+    draftResponseSurfaced: false,
+  }),
+}));
+
 vi.mock("@/lib/milestones/actions", () => ({
   checkAllMilestonesForReview: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));

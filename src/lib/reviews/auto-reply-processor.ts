@@ -4,8 +4,8 @@ import {
   type ResponseTone,
   type ReviewContext,
 } from "@/lib/ai/response-suggestions";
-import { sendReviewResponseEmail } from "@/lib/email/send";
 import { createNotification } from "@/lib/notifications/actions";
+import { sendReviewResponseConfirmationEmail } from "./response-confirmation";
 import { coerceAutoReplySettings, hasAutoReplyFeature } from "./auto-reply-config";
 import { sanitizeExternalText } from "./utils";
 
@@ -130,11 +130,12 @@ async function checkSkipConditions(supabase: any, item: any): Promise<boolean> {
   // 3. Check review already has a response
   const { data: review } = await supabase
     .from("reviews")
-    .select("response_text, response_status")
+    .select("response_text, response_status, is_published")
     .eq("id", item.review_id)
     .single();
 
   if (!review) return true;
+  if (review.is_published !== true) return true;
   if (review.response_text || review.response_status === "posted") return true;
 
   return false;
@@ -148,9 +149,8 @@ async function processQueueItem(supabase: any, item: any): Promise<void> {
     .select(`
       id, source, source_review_id, user_id, customer_name, customer_email,
       rating, text, sentiment_score, sentiment_label, themes, key_phrases,
-      review_date, organization_id,
-      users!user_id(full_name),
-      organizations!inner(name)
+      review_date, organization_id, is_published,
+      users!user_id(full_name)
     `)
     .eq("id", item.review_id)
     .single();
@@ -159,8 +159,11 @@ async function processQueueItem(supabase: any, item: any): Promise<void> {
     throw new Error(`Review ${item.review_id} not found`);
   }
 
+  if (review.is_published !== true) {
+    throw new Error(`Review ${item.review_id} is not published`);
+  }
+
   const loanOfficer = review.users as { full_name: string } | null;
-  const organization = review.organizations as unknown as { name: string };
 
   // Build review context for AI (sanitize external text to prevent prompt injection)
   const reviewContext: ReviewContext = {
@@ -271,23 +274,14 @@ async function processQueueItem(supabase: any, item: any): Promise<void> {
       }
     }
 
-    // Internal reviews: send response email
-    if (review.source === "internal" && review.customer_email) {
-      await sendReviewResponseEmail({
-        toEmail: review.customer_email,
-        toName: review.customer_name || undefined,
-        customerName: review.customer_name || "Valued Customer",
-        loanOfficerName: loanOfficer?.full_name ?? "Team Member",
-        organizationName: organization.name,
-        originalReviewText: review.text || null,
-        responseText: suggestion.response,
-        rating: review.rating ?? undefined,
-        organizationId: item.organization_id,
-        loanOfficerId: review.user_id,
-      }).catch((err) => {
-        console.error("Auto-reply: failed to send response email:", err);
-      });
-    }
+    await sendReviewResponseConfirmationEmail({
+      reviewId: item.review_id,
+      organizationId: item.organization_id,
+      responseText: suggestion.response,
+      supabase,
+    }).catch((err) => {
+      console.error("Auto-reply: failed to send response confirmation:", err);
+    });
 
     // Send in-app notification to the LO
     await createNotification({

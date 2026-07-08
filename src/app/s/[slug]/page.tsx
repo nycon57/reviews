@@ -6,6 +6,12 @@ import { platformLabel } from "@/lib/share-studio/utils";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { SmartLinkContent, type Professional } from "./smart-link-content";
 import { getInitials } from "@/lib/utils";
+import {
+  generateOrganizationReviewSnippetSchema,
+  generateVideoObjectSchema,
+  getBaseUrl,
+} from "@/lib/seo";
+import { StructuredData } from "@/components/seo/structured-data";
 import { VideoTestimonialPlayer } from "@/app/(public)/testimonials/video/[id]/video-testimonial-player";
 import type { PublicVideoTestimonial } from "@/lib/video-testimonials/public-actions";
 import { applyPublicProfessionalFilters } from "@/lib/users/public-visibility";
@@ -20,14 +26,6 @@ interface RouteParams {
 
 export const dynamic = "force-dynamic";
 
-function baseUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.SITE_URL ||
-    "http://localhost:3000"
-  ).replace(/\/$/, "");
-}
-
 export async function generateMetadata({ params }: RouteParams): Promise<Metadata> {
   const { slug } = await params;
   const data = await getProofLinkBySlug(slug);
@@ -41,8 +39,9 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
 
   const link = data.link;
   const item = data.item;
-  const canonical = `${baseUrl()}/s/${slug}`;
-  const ogImage = `${baseUrl()}/s/${slug}/opengraph-image`;
+  const baseUrl = getBaseUrl();
+  const canonical = `${baseUrl}/s/${slug}`;
+  const ogImage = `${baseUrl}/s/${slug}/opengraph-image`;
 
   const title =
     (link.title as string | null) ||
@@ -120,7 +119,7 @@ async function fetchLandingContact(
   type ContactQuery = {
     eq(column: string, value: unknown): ContactQuery;
     neq(column: string, value: unknown): ContactQuery;
-    or(filters: string): ContactQuery;
+    is(column: string, value: boolean | null): ContactQuery;
     maybeSingle(): Promise<{ data: ContactRow | null }>;
   };
 
@@ -293,7 +292,8 @@ export default async function SmartLinkPage({ params }: RouteParams) {
     }
   }
 
-  const pageUrl = `${baseUrl()}/s/${slug}`;
+  const baseUrl = getBaseUrl();
+  const pageUrl = `${baseUrl}/s/${slug}`;
 
   if (sourceType === "video_testimonial") {
     const sourceId = (item.source_id as string | null) || null;
@@ -427,20 +427,39 @@ export default async function SmartLinkPage({ params }: RouteParams) {
       );
     }
 
+    const videoSchema = generateVideoObjectSchema({
+      name: `${customerDisplayName}'s Experience with ${videoProfessionalName}`,
+      description:
+        videoData.aiGeneratedText ||
+        videoData.transcription ||
+        `Video testimonial from ${customerDisplayName}`,
+      thumbnailUrl: videoData.thumbnailUrl,
+      uploadDate: videoData.publishedAt || videoData.submittedAt,
+      publisherName: organizationName,
+      publisherLogoUrl: logoUrl,
+      authorName: customerDisplayName,
+      aboutName: videoProfessionalName,
+      aboutJobTitle: videoData.professional.title,
+      aboutOrganizationName: organizationName,
+    });
+
     return (
-      <VideoTestimonialPlayer
-        video={videoData}
-        pageUrl={pageUrl}
-        embedUrl={`${baseUrl()}/embed/video/${sourceId}`}
-        belowContent={
-          landingContact ? (
-            <LandingPanel
-              contact={landingContact}
-              primaryColor={primaryColor}
-            />
-          ) : undefined
-        }
-      />
+      <>
+        <StructuredData data={videoSchema} />
+        <VideoTestimonialPlayer
+          video={videoData}
+          pageUrl={pageUrl}
+          embedUrl={`${baseUrl}/embed/video/${sourceId}`}
+          belowContent={
+            landingContact ? (
+              <LandingPanel
+                contact={landingContact}
+                primaryColor={primaryColor}
+              />
+            ) : undefined
+          }
+        />
+      </>
     );
   }
 
@@ -465,9 +484,19 @@ export default async function SmartLinkPage({ params }: RouteParams) {
     (item.title as string | null) ||
     (item.summary as string | null) ||
     "Verified customer experience";
+  const reviewSchema = generateOrganizationReviewSnippetSchema({
+    organizationName,
+    organizationUrl: orgProfileUrl ? `${baseUrl}${orgProfileUrl}` : undefined,
+    authorName: customerName,
+    rating,
+    reviewBody: fullQuote,
+    datePublished: (item.source_review_date as string | null) || undefined,
+    publisherName: "RepWell",
+  });
 
   return (
     <main className="min-h-screen">
+      <StructuredData data={reviewSchema} />
       <SmartLinkContent
         quote={fullQuote}
         fallbackText={fallbackText}

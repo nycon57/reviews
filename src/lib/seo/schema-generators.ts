@@ -140,6 +140,50 @@ export interface SchemaReview {
   status?: string;
 }
 
+interface OrganizationReviewSchemaInput {
+  organizationName: string;
+  organizationUrl?: string;
+  authorName: string;
+  rating: number;
+  reviewBody?: string | null;
+  datePublished?: string | null;
+  publisherName?: string;
+}
+
+interface VideoObjectSchemaInput {
+  name: string;
+  description: string;
+  thumbnailUrl?: string | null;
+  uploadDate?: string | null;
+  durationSeconds?: number | null;
+  contentUrl?: string | null;
+  embedUrl?: string | null;
+  publisherName?: string | null;
+  publisherLogoUrl?: string | null;
+  authorName?: string | null;
+  aboutName?: string | null;
+  aboutJobTitle?: string | null;
+  aboutOrganizationName?: string | null;
+}
+
+interface VideoTestimonialReviewSchemaInput {
+  authorName: string;
+  organizationName: string;
+  organizationLogoUrl?: string | null;
+  reviewBody?: string | null;
+  videoContentUrl?: string | null;
+  videoThumbnailUrl?: string | null;
+  videoDurationSeconds?: number | null;
+}
+
+function durationToIso8601(durationSeconds?: number | null): string | undefined {
+  if (!durationSeconds || durationSeconds <= 0) return undefined;
+
+  const minutes = Math.floor(durationSeconds / 60);
+  const seconds = Math.floor(durationSeconds % 60);
+  return `PT${minutes}M${seconds}S`;
+}
+
 /**
  * Generate Person schema with embedded AggregateRating for a professional profile
  */
@@ -263,6 +307,24 @@ export function generateAggregateRatingSchema(
   };
 }
 
+export function buildAggregateRatingSchema(
+  averageRating: number | null | undefined,
+  totalReviews: number | null | undefined
+) {
+  if (!averageRating || !totalReviews || totalReviews === 0) {
+    return null;
+  }
+
+  return {
+    "@type": "AggregateRating",
+    ratingValue: Number(averageRating),
+    bestRating: 5,
+    worstRating: 1,
+    ratingCount: totalReviews,
+    reviewCount: totalReviews,
+  };
+}
+
 /**
  * Generate Review schema for an individual review
  */
@@ -314,6 +376,108 @@ export function generateReviewListSchema(
   return reviews
     .filter((review) => review.is_published && review.status === "approved")
     .map((review) => generateReviewSchema(review, professional, organization, baseUrl));
+}
+
+export function generateOrganizationReviewSnippetSchema(
+  input: OrganizationReviewSchemaInput
+): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Review",
+    author: {
+      "@type": "Person",
+      name: input.authorName,
+    },
+    itemReviewed: {
+      "@type": "Organization",
+      name: input.organizationName,
+      url: input.organizationUrl,
+    },
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: input.rating,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    reviewBody: input.reviewBody || undefined,
+    datePublished: input.datePublished || undefined,
+    publisher: input.publisherName
+      ? {
+          "@type": "Organization",
+          name: input.publisherName,
+        }
+      : undefined,
+  };
+}
+
+export function generateVideoObjectSchema(input: VideoObjectSchemaInput): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: input.name,
+    description: input.description,
+    thumbnailUrl: input.thumbnailUrl || undefined,
+    uploadDate: input.uploadDate || undefined,
+    duration: durationToIso8601(input.durationSeconds),
+    contentUrl: input.contentUrl || undefined,
+    embedUrl: input.embedUrl || undefined,
+    publisher: input.publisherName
+      ? {
+          "@type": "Organization",
+          name: input.publisherName,
+          logo: input.publisherLogoUrl
+            ? {
+                "@type": "ImageObject",
+                url: input.publisherLogoUrl,
+              }
+            : undefined,
+        }
+      : undefined,
+    author: input.authorName
+      ? {
+          "@type": "Person",
+          name: input.authorName,
+        }
+      : undefined,
+    about: input.aboutName
+      ? {
+          "@type": "Person",
+          name: input.aboutName,
+          jobTitle: input.aboutJobTitle || "Professional",
+          worksFor: input.aboutOrganizationName
+            ? {
+                "@type": "Organization",
+                name: input.aboutOrganizationName,
+              }
+            : undefined,
+        }
+      : undefined,
+  };
+}
+
+export function generateVideoTestimonialReviewSchema(
+  input: VideoTestimonialReviewSchemaInput
+): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Review",
+    author: {
+      "@type": "Person",
+      name: input.authorName,
+    },
+    itemReviewed: {
+      "@type": "LocalBusiness",
+      name: input.organizationName,
+      image: input.organizationLogoUrl || undefined,
+    },
+    reviewBody: input.reviewBody || undefined,
+    video: {
+      "@type": "VideoObject",
+      contentUrl: input.videoContentUrl || undefined,
+      thumbnailUrl: input.videoThumbnailUrl || undefined,
+      duration: durationToIso8601(input.videoDurationSeconds),
+    },
+  };
 }
 
 /**

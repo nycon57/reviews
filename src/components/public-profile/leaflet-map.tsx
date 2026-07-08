@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import "leaflet/dist/leaflet.css";
 
 interface LeafletMapProps {
   latitude: number;
@@ -40,16 +41,16 @@ export default function LeafletMap({ latitude, longitude }: LeafletMapProps) {
       const map = L.map(containerRef.current, {
         center: [latitude, longitude],
         zoom: 14,
-        zoomControl: false,
-        scrollWheelZoom: false,
+        zoomControl: true,
+        scrollWheelZoom: true,
         attributionControl: true,
       });
 
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
           attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           maxZoom: 19,
         }
       ).addTo(map);

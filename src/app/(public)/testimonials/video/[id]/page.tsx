@@ -5,7 +5,12 @@ import {
   getPublicVideoMetadata,
 } from "@/lib/video-testimonials/public-actions";
 import { VideoTestimonialPlayer } from "./video-testimonial-player";
-import { JsonLd } from "@/components/seo/json-ld";
+import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
+import {
+  generateVideoObjectSchema,
+  generateVideoTestimonialReviewSchema,
+  getBaseUrl,
+} from "@/lib/seo";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPublishedSmartLinkBySource } from "@/lib/share-studio/service";
 
@@ -47,7 +52,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const { title, description, customerName, thumbnailUrl, durationSeconds } = result.data;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
+  const baseUrl = getBaseUrl();
   const pageUrl = smartLink ? `${baseUrl}/s/${smartLink.slug}` : `${baseUrl}/testimonials/video/${id}`;
 
   // Format duration for schema.org (ISO 8601 duration)
@@ -129,75 +134,38 @@ export default async function PublicVideoTestimonialPage({ params }: PageProps) 
   }
 
   const video = result.data;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
+  const baseUrl = getBaseUrl();
   const pageUrl = `${baseUrl}/testimonials/video/${id}`;
 
-  // Schema.org VideoObject structured data
-  const videoSchema = {
-    "@context": "https://schema.org",
-    "@type": "VideoObject",
+  const videoSchema = generateVideoObjectSchema({
     name: `${video.customer.displayName}'s Experience with ${video.professional.fullName}`,
     description: video.aiGeneratedText || `Video testimonial from ${video.customer.displayName}`,
-    thumbnailUrl: video.thumbnailUrl || undefined,
+    thumbnailUrl: video.thumbnailUrl,
     uploadDate: video.submittedAt,
-    duration: video.durationSeconds
-      ? `PT${Math.floor(video.durationSeconds / 60)}M${video.durationSeconds % 60}S`
-      : undefined,
+    durationSeconds: video.durationSeconds,
     contentUrl: video.videoUrl,
     embedUrl: `${baseUrl}/embed/video/${id}`,
-    publisher: {
-      "@type": "Organization",
-      name: video.organization.name,
-      logo: video.organization.logoUrl
-        ? {
-            "@type": "ImageObject",
-            url: video.organization.logoUrl,
-          }
-        : undefined,
-    },
-    author: {
-      "@type": "Person",
-      name: video.customer.displayName,
-    },
-    about: {
-      "@type": "Person",
-      name: video.professional.fullName,
-      jobTitle: video.professional.title || "Professional",
-      worksFor: {
-        "@type": "Organization",
-        name: video.organization.name,
-      },
-    },
-  };
+    publisherName: video.organization.name,
+    publisherLogoUrl: video.organization.logoUrl,
+    authorName: video.customer.displayName,
+    aboutName: video.professional.fullName,
+    aboutJobTitle: video.professional.title,
+    aboutOrganizationName: video.organization.name,
+  });
 
-  // Review schema for testimonial context
-  const reviewSchema = {
-    "@context": "https://schema.org",
-    "@type": "Review",
-    author: {
-      "@type": "Person",
-      name: video.customer.displayName,
-    },
-    itemReviewed: {
-      "@type": "LocalBusiness",
-      name: video.organization.name,
-      image: video.organization.logoUrl || undefined,
-    },
+  const reviewSchema = generateVideoTestimonialReviewSchema({
+    authorName: video.customer.displayName,
+    organizationName: video.organization.name,
+    organizationLogoUrl: video.organization.logoUrl,
     reviewBody: video.aiGeneratedText || video.transcription || undefined,
-    video: {
-      "@type": "VideoObject",
-      contentUrl: video.videoUrl,
-      thumbnailUrl: video.thumbnailUrl || undefined,
-      duration: video.durationSeconds
-        ? `PT${Math.floor(video.durationSeconds / 60)}M${video.durationSeconds % 60}S`
-        : undefined,
-    },
-  };
+    videoContentUrl: video.videoUrl,
+    videoThumbnailUrl: video.thumbnailUrl,
+    videoDurationSeconds: video.durationSeconds,
+  });
 
   return (
     <>
-      <JsonLd data={videoSchema} />
-      <JsonLd data={reviewSchema} />
+      <MultiSchemaStructuredData schemas={[videoSchema, reviewSchema]} />
 
       <VideoTestimonialPlayer
         video={video}

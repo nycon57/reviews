@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star } from "@phosphor-icons/react";
+import { RatingStars } from "@/components/reviews/rating-stars";
+import { getInitials } from "@/lib/utils";
 
 interface CompactProfileCardProps {
   fullName: string;
@@ -10,31 +11,6 @@ interface CompactProfileCardProps {
   title: string | null;
   averageRating: string | number | null;
   totalReviews: number | null;
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-function CompactStarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          weight="fill"
-          className={`h-3 w-3 ${
-            star <= rating ? "text-amber-500" : "text-gray-200"
-          }`}
-        />
-      ))}
-    </div>
-  );
 }
 
 export function CompactProfileCard({
@@ -82,7 +58,7 @@ export function CompactProfileCard({
           <div className="flex flex-wrap items-center gap-2 mt-2">
             {averageRating && totalReviews ? (
               <div className="flex items-center gap-1.5">
-                <CompactStarRating rating={Math.round(rating)} />
+                <RatingStars rating={rating} size="sm" />
                 <span className="text-sm font-medium text-repwell-teal-500">
                   {rating.toFixed(1)} ({totalReviews})
                 </span>

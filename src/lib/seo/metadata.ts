@@ -46,6 +46,27 @@ interface MetadataOrganization {
   name: string;
 }
 
+function buildOgImageMetadata(profileUrl: string, alt: string) {
+  const profileImageUrl = `${profileUrl}/opengraph-image`;
+
+  return {
+    openGraph: {
+      images: [
+        {
+          url: profileImageUrl,
+          width: 1200,
+          height: 630,
+          alt,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      images: [profileImageUrl],
+    },
+  };
+}
+
 /**
  * Generate metadata for a professional profile page
  */
@@ -58,7 +79,12 @@ export function generateLOProfileMetadata(
   const description =
     professional.bio ||
     `Read reviews and ratings for ${professional.full_name}, ${professional.title || "Professional"}${organization ? ` at ${organization.name}` : ""}. ${professional.total_reviews || 0} reviews with ${professional.average_rating ? `${Number(professional.average_rating).toFixed(1)} average rating` : "ratings available"}.`;
-  const profileUrl = `${baseUrl}/pro/${professional.slug}`;
+  const publicSlug = professional.slug || professional.id;
+  const profileUrl = `${baseUrl}/pro/${publicSlug}`;
+  const ogImageMetadata = buildOgImageMetadata(
+    profileUrl,
+    `${professional.full_name} reviews on RepWell`
+  );
 
   const metadata: Metadata = {
     title,
@@ -73,9 +99,10 @@ export function generateLOProfileMetadata(
       type: "profile",
       siteName: organization?.name || "RepWell",
       locale: "en_US",
+      ...ogImageMetadata.openGraph,
     },
     twitter: {
-      card: "summary",
+      ...ogImageMetadata.twitter,
       title,
       description,
     },
@@ -84,25 +111,6 @@ export function generateLOProfileMetadata(
       follow: true,
     },
   };
-
-  // Add image if photo exists
-  if (professional.photo_url) {
-    metadata.openGraph = {
-      ...metadata.openGraph,
-      images: [
-        {
-          url: professional.photo_url,
-          width: 400,
-          height: 400,
-          alt: `${professional.full_name} profile photo`,
-        },
-      ],
-    };
-    metadata.twitter = {
-      ...metadata.twitter,
-      images: [professional.photo_url],
-    };
-  }
 
   return metadata;
 }
@@ -148,15 +156,14 @@ export function generateLOListingMetadata(
  * Generate base URL from environment or request
  */
 export function getBaseUrl(): string {
-  // Check for explicit base URL env var first
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
   }
-  // Vercel deployment URL
+
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+    return `https://${process.env.VERCEL_URL}`.replace(/\/$/, "");
   }
-  // Default to localhost in development
+
   return "http://localhost:3000";
 }
 
@@ -236,6 +243,10 @@ export function generateBranchProfileMetadata(
     `Visit ${branch.name}${locationStr ? ` in ${locationStr}` : ""}. Meet our team of ${loCount} experienced professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}.`;
 
   const profileUrl = `${baseUrl}${getBranchPublicPath(branch)}`;
+  const ogImageMetadata = buildOgImageMetadata(
+    profileUrl,
+    `${branch.name} reviews on RepWell`
+  );
 
   const metadata: Metadata = {
     title,
@@ -250,9 +261,10 @@ export function generateBranchProfileMetadata(
       type: "website",
       siteName,
       locale: "en_US",
+      ...ogImageMetadata.openGraph,
     },
     twitter: {
-      card: "summary_large_image",
+      ...ogImageMetadata.twitter,
       title,
       description,
     },
@@ -261,26 +273,6 @@ export function generateBranchProfileMetadata(
       follow: true,
     },
   };
-
-  // Add image if photo exists (prefer cover image)
-  const imageUrl = branch.cover_image_url || branch.photo_url;
-  if (imageUrl) {
-    metadata.openGraph = {
-      ...metadata.openGraph,
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: `${branch.name} branch location`,
-        },
-      ],
-    };
-    metadata.twitter = {
-      ...metadata.twitter,
-      images: [imageUrl],
-    };
-  }
 
   return metadata;
 }
@@ -322,6 +314,10 @@ export function generateOrganizationProfileMetadata(
     `Explore ${organization.name} with ${branchCount} locations and ${loCount} professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}. Find your local branch and team member.`;
 
   const profileUrl = `${baseUrl}/org/${organization.slug}`;
+  const ogImageMetadata = buildOgImageMetadata(
+    profileUrl,
+    `${organization.name} reviews on RepWell`
+  );
 
   const metadata: Metadata = {
     title,
@@ -336,9 +332,10 @@ export function generateOrganizationProfileMetadata(
       type: "website",
       siteName,
       locale: "en_US",
+      ...ogImageMetadata.openGraph,
     },
     twitter: {
-      card: "summary_large_image",
+      ...ogImageMetadata.twitter,
       title,
       description,
     },
@@ -347,25 +344,6 @@ export function generateOrganizationProfileMetadata(
       follow: true,
     },
   };
-
-  // Add image if logo exists
-  if (organization.logo_url) {
-    metadata.openGraph = {
-      ...metadata.openGraph,
-      images: [
-        {
-          url: organization.logo_url,
-          width: 800,
-          height: 800,
-          alt: `${organization.name} logo`,
-        },
-      ],
-    };
-    metadata.twitter = {
-      ...metadata.twitter,
-      images: [organization.logo_url],
-    };
-  }
 
   return metadata;
 }

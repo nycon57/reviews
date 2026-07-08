@@ -6,6 +6,7 @@ import {
 } from "@/config/industry-pages";
 import { getBaseUrl } from "@/lib/seo";
 import { buildIndustryBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
+import { StructuredData } from "@/components/seo/structured-data";
 import { IndustryLandingPage } from "./industry-landing-page";
 
 interface PageProps {
@@ -59,8 +60,7 @@ export default async function IndustryPage({ params }: PageProps) {
 
   return (
     <>
-      {/* BreadcrumbList JSON-LD is sourced from static build-time industry config. */}
-      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+      <StructuredData data={schema} />
       <IndustryLandingPage config={config} />
     </>
   );

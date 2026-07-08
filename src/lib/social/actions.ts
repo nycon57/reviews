@@ -132,8 +132,6 @@ async function requireManagerRole(): Promise<{
 function getAppBaseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.SITE_URL ||
     'https://repwell.ai'
   ).replace(/\/$/, '');
 }

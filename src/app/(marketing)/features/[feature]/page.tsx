@@ -7,6 +7,7 @@ import {
 import { getBaseUrl } from "@/lib/seo";
 import { buildFeatureBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
 import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
+import { StructuredData } from "@/components/seo/structured-data";
 import { FeatureLandingPage } from "./feature-landing-page";
 
 interface PageProps {
@@ -60,11 +61,7 @@ export default async function FeaturePage({ params }: PageProps) {
 
   return (
     <>
-      {/* BreadcrumbList JSON-LD — safe: sourced from static build-time feature config */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-      />
+      <StructuredData data={schema} />
       <MarketingBreadcrumbs items={items} />
       <FeatureLandingPage config={config} />
     </>

@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getProofLinkBySlug } from "@/lib/share-studio/service";
 import { formatReviewSource } from "@/lib/reviews/source-labels";
+import { loadOgFonts } from "@/lib/seo/og/fonts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,33 +10,6 @@ export const size = {
   height: 630,
 };
 export const contentType = "image/png";
-
-async function loadFonts() {
-  const fontUrls = [
-    { url: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2", weight: 400 as const },
-    { url: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYAZ9hiA.woff2", weight: 700 as const },
-  ];
-
-  const results = await Promise.all(
-    fontUrls.map(async ({ url, weight }) => {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) {
-          console.error(`Failed to load Inter font (weight ${weight}, url ${url}): HTTP ${res.status}`);
-          return null;
-        }
-        const data = await res.arrayBuffer();
-        return { name: "Inter", data, weight, style: "normal" as const };
-      } catch (err) {
-        console.error(`Failed to load Inter font (weight ${weight}, url ${url}):`, err);
-        return null;
-      }
-    })
-  );
-
-  const fonts = results.filter((f): f is NonNullable<typeof f> => f !== null);
-  return fonts.length > 0 ? fonts : [];
-}
 
 export default async function OpenGraphImage(
   { params }: { params: Promise<{ slug: string }> }
@@ -177,7 +151,7 @@ export default async function OpenGraphImage(
       ),
       {
         ...size,
-        fonts: await loadFonts(),
+        fonts: await loadOgFonts(),
       }
     );
   }
@@ -274,7 +248,7 @@ export default async function OpenGraphImage(
     ),
     {
       ...size,
-      fonts: await loadFonts(),
+      fonts: await loadOgFonts(),
     }
   );
 }

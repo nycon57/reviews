@@ -22,6 +22,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  getReviewStatusDescription,
+  getReviewStatusLabel,
+} from "@/components/reviews/review-status-badge";
 
 export type PublishingStatus =
   | "pending"
@@ -36,8 +40,8 @@ const STATUS_COPY: Record<
   { label: string; description: string; icon: typeof Clock }
 > = {
   pending: {
-    label: "Quarantined",
-    description: "Held by automated screening. Publish to make it live, or remove it from review surfaces.",
+    label: getReviewStatusLabel("pending"),
+    description: getReviewStatusDescription("pending"),
     icon: Clock,
   },
   changes_requested: {
@@ -46,23 +50,23 @@ const STATUS_COPY: Record<
     icon: Chats,
   },
   approved: {
-    label: "Ready to publish",
-    description: "Screening has cleared it. Publish to make it publicly visible.",
+    label: getReviewStatusLabel("approved"),
+    description: getReviewStatusDescription("approved"),
     icon: CheckCircle,
   },
   published: {
-    label: "Published",
-    description: "Live and publicly visible.",
+    label: getReviewStatusLabel("approved"),
+    description: getReviewStatusDescription("approved"),
     icon: ShareNetwork,
   },
   rejected: {
-    label: "Removed",
-    description: "Removed from public publishing surfaces.",
+    label: getReviewStatusLabel("rejected"),
+    description: getReviewStatusDescription("rejected"),
     icon: XCircle,
   },
   archived: {
-    label: "Archived",
-    description: "No longer active.",
+    label: getReviewStatusLabel("archived"),
+    description: getReviewStatusDescription("archived"),
     icon: Archive,
   },
 };

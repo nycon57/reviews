@@ -1,10 +1,12 @@
-import { after } from "next/server";
 import {
   createUntypedAdminClient,
   type UntypedSupabaseClient,
 } from "@/lib/supabase/admin";
 import { checkAllMilestonesForReview } from "@/lib/milestones/actions";
-import { queueQuoteCardKitForReviews } from "@/lib/share-studio/service";
+import {
+  getCelebrationThreshold,
+  queueQuoteCardKitAfterPublish,
+} from "@/lib/reviews/asset-kit";
 import {
   screenReviewText,
   type ModerationResult,
@@ -77,51 +79,8 @@ async function getModeration(
   return screenReviewText(screening.text, screening.customerName);
 }
 
-async function readCelebrationThreshold(
-  supabase: UntypedSupabaseClient,
-  organizationId: string
-): Promise<number> {
-  const { data, error } = await supabase
-    .from("organizations")
-    .select("settings")
-    .eq("id", organizationId)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Error reading celebration threshold, using default:", error);
-    return 4;
-  }
-
-  const settings = (data as { settings?: unknown } | null)?.settings as {
-    videoCelebrationThreshold?: unknown;
-  } | null;
-  const raw = settings?.videoCelebrationThreshold;
-  const value = typeof raw === "number" ? raw : Number(raw);
-  return Number.isInteger(value) && value >= 1 && value <= 5 ? value : 4;
-}
-
-function queueQuoteCardKitAfterPublish(params: {
-  organizationId: string;
-  reviewId: string;
-  actorUserId: string;
-  minRating: number;
-}) {
-  after(async () => {
-    try {
-      await queueQuoteCardKitForReviews({
-        organizationId: params.organizationId,
-        reviewIds: [params.reviewId],
-        actorUserId: params.actorUserId,
-        minRating: params.minRating,
-      });
-    } catch (error) {
-      console.error("Asset kit: quote card queue failed after publish", {
-        organizationId: params.organizationId,
-        reviewIds: [params.reviewId],
-        error,
-      });
-    }
-  });
+export function isReviewLive(review: { is_published: boolean | null }): boolean {
+  return review.is_published === true;
 }
 
 function moderationUpdate(moderation: ModerationResult, now: string) {
@@ -308,53 +267,59 @@ export async function publishReviewIfClean(
     };
   }
 
-  const threshold = await readCelebrationThreshold(supabase, params.organizationId);
+  const threshold = await getCelebrationThreshold(params.organizationId, supabase);
   const belowThreshold = params.rating < threshold;
 
-  queueQuoteCardKitAfterPublish({
-    organizationId: params.organizationId,
-    reviewId: params.reviewId,
-    actorUserId: params.actorUserId ?? params.ownerUserId,
-    minRating: threshold,
-  });
+  queueQuoteCardKitAfterPublish(
+    params.organizationId,
+    [params.reviewId],
+    params.actorUserId ?? params.ownerUserId,
+    threshold
+  );
 
-  await notifyReviewPublished({
-    reviewId: params.reviewId,
-    organizationId: params.organizationId,
-    ownerUserId: params.ownerUserId,
-    customerName: params.customerName ?? null,
-    rating: params.rating,
-    reviewText: params.reviewText ?? null,
-    belowThreshold,
-  });
-
-  if (belowThreshold) {
-    await notifyReviewNeedsResponse({
+  const [, , , draftResponseSurfaced] = await Promise.all([
+    notifyReviewPublished({
       reviewId: params.reviewId,
       organizationId: params.organizationId,
       ownerUserId: params.ownerUserId,
       customerName: params.customerName ?? null,
       rating: params.rating,
-    });
-  }
-
-  await checkAllMilestonesForReview(
-    params.ownerUserId,
-    params.organizationId,
-    params.ownerUserId,
-    params.rating
-  ).catch((error) => {
-    console.error("Error checking review milestones:", error);
-  });
-
-  const draftResponseSurfaced = await surfaceDraftResponse({
-    supabase,
-    reviewId: params.reviewId,
-    organizationId: params.organizationId,
-    responseText: publishedRow.response_text,
-    responseStatus: publishedRow.response_status,
-    now,
-  });
+      reviewText: params.reviewText ?? null,
+      belowThreshold,
+    }).catch((error) => {
+      console.error("Error sending review-published notification:", error);
+    }),
+    belowThreshold
+      ? notifyReviewNeedsResponse({
+          reviewId: params.reviewId,
+          organizationId: params.organizationId,
+          ownerUserId: params.ownerUserId,
+          customerName: params.customerName ?? null,
+          rating: params.rating,
+        }).catch((error) => {
+          console.error("Error sending needs-response notification:", error);
+        })
+      : Promise.resolve(),
+    checkAllMilestonesForReview(
+      params.ownerUserId,
+      params.organizationId,
+      params.ownerUserId,
+      params.rating
+    ).catch((error) => {
+      console.error("Error checking review milestones:", error);
+    }),
+    surfaceDraftResponse({
+      supabase,
+      reviewId: params.reviewId,
+      organizationId: params.organizationId,
+      responseText: publishedRow.response_text,
+      responseStatus: publishedRow.response_status,
+      now,
+    }).catch((error) => {
+      console.error("Error surfacing draft response after publish:", error);
+      return false;
+    }),
+  ]);
 
   return {
     outcome: "published",

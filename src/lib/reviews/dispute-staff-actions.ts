@@ -1,15 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requirePlatformAdmin, unifiedGetUser } from "@/lib/auth/actions";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import {
   FLAG_REASON_LABELS,
   type ActionResult,
   type ReviewFlagReason,
 } from "./types";
-import { resolveReviewFlag } from "./dispute-resolution";
+import {
+  createDisputeAuditLog,
+  getOpenFlagForAdjudication,
+  removeReviewForUpheldDispute,
+  resolveDisputeSchema,
+  resolveReviewFlag,
+} from "./dispute-resolution";
 
 const REVIEW_EXCERPT_LENGTH = 200;
 
@@ -62,21 +69,29 @@ interface StaffDisputeRow {
   } | null;
 }
 
-interface OpenFlagForStaff {
-  id: string;
-  review_id: string;
-  organization_id: string;
-  reason: ReviewFlagReason;
-  status: string;
-  organization: {
-    account_type: string | null;
-  } | null;
-}
-
-async function requirePlatformAdminUserId(): Promise<string | null> {
-  await requirePlatformAdmin();
+async function requirePlatformAdminUserId(): Promise<string> {
   const user = await unifiedGetUser();
-  return user?.id ?? null;
+  if (!user) {
+    redirect("/dashboard");
+  }
+
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("is_platform_admin")
+    .eq("id", user.id)
+    .limit(1);
+
+  if (error) {
+    console.error("Platform admin lookup failed:", error.message);
+    redirect("/dashboard");
+  }
+
+  if (data?.[0]?.is_platform_admin !== true) {
+    redirect("/dashboard");
+  }
+
+  return user.id;
 }
 
 function asReviewFlagReason(reason: string): ReviewFlagReason {
@@ -114,80 +129,6 @@ function mapStaffDispute(row: StaffDisputeRow): StaffDispute {
         }
       : null,
   };
-}
-
-async function getOpenFlagForStaffAdjudication(
-  flagId: string
-): Promise<{ flag: OpenFlagForStaff } | { error: string }> {
-  const supabase = createUntypedAdminClient();
-  const { data, error } = await supabase
-    .from("review_flags")
-    .select(
-      `
-      id,
-      review_id,
-      organization_id,
-      reason,
-      status,
-      organization:organizations!organization_id (
-        account_type
-      )
-    `
-    )
-    .eq("id", flagId)
-    .single();
-
-  if (error || !data) {
-    if (error) console.error("Error fetching staff dispute:", error);
-    return { error: "Dispute not found" };
-  }
-
-  const flag = data as unknown as OpenFlagForStaff;
-  if (flag.status !== "pending") {
-    return { error: "This dispute has already been resolved" };
-  }
-
-  if (flag.organization?.account_type === "enterprise") {
-    return { error: "Enterprise disputes must be resolved in the organization dashboard" };
-  }
-
-  return { flag };
-}
-
-async function createStaffDisputeAuditLog(params: {
-  organizationId: string;
-  staffUserId: string;
-  flagId: string;
-  reviewId: string;
-  action: "review_flag_staff_upheld" | "review_flag_staff_dismissed";
-  verdict: "upheld" | "dismissed";
-  note: string;
-  reason: ReviewFlagReason;
-}) {
-  try {
-    const supabase = createUntypedAdminClient();
-    const { error } = await supabase.from("organization_audit_logs").insert({
-      organization_id: params.organizationId,
-      user_id: params.staffUserId,
-      action: params.action,
-      entity_type: "review_flag",
-      entity_id: params.flagId,
-      new_values: {
-        flag_id: params.flagId,
-        review_id: params.reviewId,
-        verdict: params.verdict,
-        resolution_note: params.note,
-        reason: params.reason,
-        resolved_by_platform_staff: true,
-      },
-    });
-
-    if (error) {
-      console.error("Failed to create staff dispute audit log:", error);
-    }
-  } catch (error) {
-    console.error("Failed to create staff dispute audit log:", error);
-  }
 }
 
 export async function getOpenIndividualDisputes(): Promise<
@@ -244,19 +185,10 @@ export async function getOpenIndividualDisputes(): Promise<
   return { success: true, data: { disputes } };
 }
 
-const resolveStaffDisputeSchema = z.object({
-  flagId: z.string().uuid(),
-  resolutionNote: z
-    .string()
-    .trim()
-    .min(10, "Please add a resolution note of at least 10 characters")
-    .max(2000),
-});
-
 export async function upholdStaffDispute(
-  input: z.infer<typeof resolveStaffDisputeSchema>
+  input: z.infer<typeof resolveDisputeSchema>
 ): Promise<ActionResult> {
-  const validated = resolveStaffDisputeSchema.safeParse(input);
+  const validated = resolveDisputeSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
   }
@@ -266,7 +198,9 @@ export async function upholdStaffDispute(
     return { success: false, error: "Unauthorized" };
   }
 
-  const result = await getOpenFlagForStaffAdjudication(validated.data.flagId);
+  const result = await getOpenFlagForAdjudication(validated.data.flagId, {
+    accountType: "individual",
+  });
   if ("error" in result) {
     return { success: false, error: result.error };
   }
@@ -276,16 +210,13 @@ export async function upholdStaffDispute(
   const now = new Date().toISOString();
   const supabase = createUntypedAdminClient();
 
-  const { error: reviewError } = await supabase
-    .from("reviews")
-    .update({
-      status: "rejected",
-      is_published: false,
-      published_at: null,
-      rejection_reason: `Dispute upheld (${FLAG_REASON_LABELS[flag.reason] ?? flag.reason}): ${resolutionNote}`,
-    })
-    .eq("id", flag.review_id)
-    .eq("organization_id", flag.organization_id);
+  const { error: reviewError } = await removeReviewForUpheldDispute({
+    supabase,
+    reviewId: flag.review_id,
+    organizationId: flag.organization_id,
+    reason: flag.reason,
+    resolutionNote,
+  });
 
   if (reviewError) {
     console.error("Error removing staff-disputed review:", reviewError);
@@ -308,15 +239,17 @@ export async function upholdStaffDispute(
     return { success: false, error: "Failed to update the dispute" };
   }
 
-  await createStaffDisputeAuditLog({
+  await createDisputeAuditLog({
+    supabase,
     organizationId: flag.organization_id,
-    staffUserId,
+    userId: staffUserId,
+    action: "review_flag_staff_upheld",
     flagId: flag.id,
     reviewId: flag.review_id,
-    action: "review_flag_staff_upheld",
     verdict: "upheld",
-    note: resolutionNote,
+    resolutionNote,
     reason: flag.reason,
+    resolvedByPlatformStaff: true,
   });
 
   revalidatePath("/staff/disputes");
@@ -325,9 +258,9 @@ export async function upholdStaffDispute(
 }
 
 export async function dismissStaffDispute(
-  input: z.infer<typeof resolveStaffDisputeSchema>
+  input: z.infer<typeof resolveDisputeSchema>
 ): Promise<ActionResult> {
-  const validated = resolveStaffDisputeSchema.safeParse(input);
+  const validated = resolveDisputeSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
   }
@@ -337,7 +270,9 @@ export async function dismissStaffDispute(
     return { success: false, error: "Unauthorized" };
   }
 
-  const result = await getOpenFlagForStaffAdjudication(validated.data.flagId);
+  const result = await getOpenFlagForAdjudication(validated.data.flagId, {
+    accountType: "individual",
+  });
   if ("error" in result) {
     return { success: false, error: result.error };
   }
@@ -361,15 +296,17 @@ export async function dismissStaffDispute(
     return { success: false, error: "Failed to dismiss the dispute" };
   }
 
-  await createStaffDisputeAuditLog({
+  await createDisputeAuditLog({
+    supabase,
     organizationId: flag.organization_id,
-    staffUserId,
+    userId: staffUserId,
+    action: "review_flag_staff_dismissed",
     flagId: flag.id,
     reviewId: flag.review_id,
-    action: "review_flag_staff_dismissed",
     verdict: "dismissed",
-    note: resolutionNote,
+    resolutionNote,
     reason: flag.reason,
+    resolvedByPlatformStaff: true,
   });
 
   revalidatePath("/staff/disputes");

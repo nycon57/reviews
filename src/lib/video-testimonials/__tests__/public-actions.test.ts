@@ -31,6 +31,7 @@ vi.mock("@/lib/reviews/moderation", () => ({
 }));
 
 vi.mock("@/lib/reviews/asset-kit", () => ({
+  getCelebrationThreshold: vi.fn().mockResolvedValue(4),
   queueQuoteCardKitAfterPublish: vi.fn(),
 }));
 

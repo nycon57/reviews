@@ -3,6 +3,7 @@ import {
   type UntypedSupabaseClient,
 } from "@/lib/supabase/admin";
 import { sendReviewResponseEmail } from "@/lib/email/send";
+import { isReviewLive } from "./publish";
 
 type ReviewResponseConfirmationRow = {
   id: string;
@@ -146,7 +147,7 @@ export async function sendReviewResponseConfirmationEmail(params: {
   }
 
   const review = data as unknown as ReviewResponseConfirmationRow;
-  if (review.is_published !== true) {
+  if (!isReviewLive(review)) {
     return { sent: false, reason: "review_not_published" };
   }
 

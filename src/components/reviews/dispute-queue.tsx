@@ -10,7 +10,6 @@ import {
   Info,
   ShieldCheck,
   SpinnerGap,
-  Star,
   XCircle,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +33,8 @@ import {
   upholdFlag,
 } from "@/lib/reviews/flag-actions";
 import { FLAG_REASON_LABELS, type ReviewFlag } from "@/lib/reviews/types";
+import { MIN_RESOLUTION_NOTE_LENGTH } from "@/lib/reviews/dispute-resolution";
+import { RatingStars } from "@/components/reviews/rating-stars";
 
 // ============================================================================
 // Helpers
@@ -45,22 +46,6 @@ function formatDate(dateString: string): string {
     day: "numeric",
     year: "numeric",
   });
-}
-
-function RatingStars({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-0.5" aria-label={`${rating} out of 5 stars`}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          weight={i < rating ? "fill" : "regular"}
-          className={`h-3.5 w-3.5 ${
-            i < rating ? "fill-yellow-400 text-yellow-400" : "text-repwell-sage-200"
-          }`}
-        />
-      ))}
-    </div>
-  );
 }
 
 // ============================================================================
@@ -364,7 +349,7 @@ export function DisputeQueue({
             />
             {dialogMode === "uphold" && (
               <p className="text-xs text-muted-foreground">
-                A note of at least 10 characters is required for the record.
+                A note of at least {MIN_RESOLUTION_NOTE_LENGTH} characters is required for the record.
               </p>
             )}
           </div>
@@ -377,7 +362,9 @@ export function DisputeQueue({
               variant={dialogMode === "uphold" ? "destructive" : "default"}
               onClick={handleConfirm}
               disabled={
-                isSubmitting || (dialogMode === "uphold" && note.trim().length < 10)
+                isSubmitting ||
+                (dialogMode === "uphold" &&
+                  note.trim().length < MIN_RESOLUTION_NOTE_LENGTH)
               }
             >
               {isSubmitting && <SpinnerGap className="mr-2 h-4 w-4 animate-spin" />}

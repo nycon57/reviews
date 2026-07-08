@@ -11,6 +11,7 @@ import {
   type ReviewContext,
 } from "@/lib/ai/response-suggestions";
 import { sendReviewResponseConfirmationEmail } from "./response-confirmation";
+import { isReviewLive } from "./publish";
 
 // Response template types
 export interface ResponseTemplate {
@@ -349,7 +350,7 @@ export async function postResponse(
     return { success: false, error: "Review not found" };
   }
 
-  if (review.is_published !== true) {
+  if (!isReviewLive(review)) {
     return {
       success: false,
       error: "Only draft responses can be saved until the review is published",

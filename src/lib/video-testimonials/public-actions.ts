@@ -30,6 +30,7 @@ import {
   sendVideoTestimonialPendingApprovalEmail,
   sendVideoTestimonialReceivedEmail,
 } from "@/lib/email";
+import { getCelebrationThreshold } from "@/lib/reviews/asset-kit";
 
 // ============================================================================
 // Validation Schemas
@@ -358,36 +359,6 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
     return { success: false, error: "Failed to load video testimonial request" };
   }
 });
-
-/**
- * Read the org's celebration threshold from organizations.settings.
- * Ratings at or above this value take the High Path. Default 4.
- * Request-scoped cache: several publish-time hooks ask for it per request.
- */
-const getCelebrationThresholdCached = cache(readCelebrationThreshold);
-
-export async function getCelebrationThreshold(organizationId: string): Promise<number> {
-  return getCelebrationThresholdCached(organizationId);
-}
-
-async function readCelebrationThreshold(organizationId: string): Promise<number> {
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("organizations")
-    .select("settings")
-    .eq("id", organizationId)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Error reading celebration threshold, using default:", error);
-    return 4;
-  }
-
-  const settings = data?.settings as { videoCelebrationThreshold?: unknown } | null;
-  const raw = settings?.videoCelebrationThreshold;
-  const value = typeof raw === "number" ? raw : Number(raw);
-  return Number.isInteger(value) && value >= 1 && value <= 5 ? value : 4;
-}
 
 /**
  * Submit customer info and consent for video testimonial

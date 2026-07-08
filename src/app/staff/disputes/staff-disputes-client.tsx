@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatDistanceToNow } from "date-fns";
 import {
   Buildings,
   CheckCircle,
@@ -9,7 +10,6 @@ import {
   Flag,
   ShieldWarning,
   SpinnerGap,
-  Star,
   UserCircle,
   WarningCircle,
   XCircle,
@@ -47,8 +47,8 @@ import {
   upholdStaffDispute,
   type StaffDispute,
 } from "@/lib/reviews/dispute-staff-actions";
-
-const MIN_NOTE_LENGTH = 10;
+import { MIN_RESOLUTION_NOTE_LENGTH } from "@/lib/reviews/dispute-resolution";
+import { RatingStars } from "@/components/reviews/rating-stars";
 
 type ResolutionKind = "uphold" | "dismiss";
 
@@ -63,17 +63,7 @@ interface StaffDisputesClientProps {
 }
 
 function formatAge(createdAt: string): string {
-  const created = new Date(createdAt);
-  const diffMs = Date.now() - created.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMinutes < 1) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return created.toLocaleDateString();
+  return formatDistanceToNow(new Date(createdAt), { addSuffix: true });
 }
 
 function formatReporter(dispute: StaffDispute): string {
@@ -82,25 +72,6 @@ function formatReporter(dispute: StaffDispute): string {
     dispute.flaggedByName ||
     dispute.reporterEmail ||
     "Unknown reporter"
-  );
-}
-
-function RatingStars({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-0.5" aria-label={`${rating} star rating`}>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <Star
-          key={index}
-          className={
-            index < rating
-              ? "h-4 w-4 fill-yellow-400 text-yellow-400"
-              : "h-4 w-4 fill-muted text-muted"
-          }
-          weight={index < rating ? "fill" : "regular"}
-          aria-hidden="true"
-        />
-      ))}
-    </div>
   );
 }
 
@@ -125,7 +96,8 @@ export function StaffDisputesClient({
     return formatAge(disputes[0].createdAt);
   }, [disputes]);
 
-  const noteIsValid = resolutionNote.trim().length >= MIN_NOTE_LENGTH;
+  const noteIsValid =
+    resolutionNote.trim().length >= MIN_RESOLUTION_NOTE_LENGTH;
   const activeDispute = pendingResolution?.dispute ?? null;
   const isUphold = pendingResolution?.kind === "uphold";
 
@@ -289,7 +261,7 @@ export function StaffDisputesClient({
                       <div className="max-w-[360px] space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           {dispute.review ? (
-                            <RatingStars rating={dispute.review.rating} />
+                            <RatingStars rating={dispute.review.rating} size="md" />
                           ) : (
                             <Badge variant="outline">Missing review</Badge>
                           )}
@@ -410,7 +382,10 @@ export function StaffDisputesClient({
               disabled={isSubmitting}
             />
             <p className="text-xs text-muted-foreground">
-              {Math.max(0, MIN_NOTE_LENGTH - resolutionNote.trim().length)} more
+              {Math.max(
+                0,
+                MIN_RESOLUTION_NOTE_LENGTH - resolutionNote.trim().length
+              )} more
               characters required.
             </p>
           </div>

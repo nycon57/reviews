@@ -24,10 +24,13 @@ import {
   type ReviewFlag,
   type ReviewFlagReason,
 } from "./types";
-import { resolveReviewFlag } from "./dispute-resolution";
-
-const INDIVIDUAL_DISPUTE_ERROR =
-  "Disputes for individual accounts are reviewed by RepWell.";
+import {
+  createDisputeAuditLog,
+  getOpenFlagForAdjudication,
+  removeReviewForUpheldDispute,
+  resolveDisputeSchema,
+  resolveReviewFlag,
+} from "./dispute-resolution";
 
 const REVIEW_EXCERPT_LENGTH = 200;
 
@@ -59,49 +62,6 @@ async function requireManagerRole(): Promise<{
     return null;
   }
   return { userId: context.id, organizationId: context.organization_id! };
-}
-
-async function getOrganizationAccountType(
-  organizationId: string
-): Promise<"individual" | "enterprise" | null> {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from("organizations")
-    .select("account_type, name")
-    .eq("id", organizationId)
-    .single();
-
-  if (!data) return null;
-  return data.account_type === "enterprise" ? "enterprise" : "individual";
-}
-
-// ============================================================================
-// Audit log (mirrors createAuditLogEntry in video-testimonials/actions.ts)
-// ============================================================================
-
-async function createAuditLogEntry(params: {
-  organizationId: string;
-  userId: string;
-  action: string;
-  resourceType: string;
-  resourceId: string;
-  metadata?: Record<string, unknown>;
-}): Promise<void> {
-  try {
-    const supabase = createUntypedAdminClient();
-    await supabase.from("organization_audit_logs").insert({
-      organization_id: params.organizationId,
-      user_id: params.userId,
-      action: params.action,
-      resource_type: params.resourceType,
-      resource_id: params.resourceId,
-      metadata: params.metadata ?? null,
-      created_at: new Date().toISOString(),
-    });
-  } catch (error) {
-    // Log but don't fail the main operation
-    console.error("Failed to create audit log entry:", error);
-  }
 }
 
 // ============================================================================
@@ -258,49 +218,10 @@ export async function getReviewFlagStats(): Promise<
 // Adjudication
 // ============================================================================
 
-async function getOpenFlagForAdjudication(
-  flagId: string,
-  organizationId: string
-): Promise<
-  | { flag: { id: string; review_id: string; reason: ReviewFlagReason } }
-  | { error: string }
-> {
-  const supabase = createUntypedAdminClient();
-  const { data: flag } = await supabase
-    .from("review_flags")
-    .select("id, review_id, reason, status")
-    .eq("id", flagId)
-    .eq("organization_id", organizationId)
-    .single();
-
-  if (!flag) {
-    return { error: "Dispute not found" };
-  }
-  if (flag.status !== "pending") {
-    return { error: "This dispute has already been resolved" };
-  }
-
-  const accountType = await getOrganizationAccountType(organizationId);
-  if (accountType !== "enterprise") {
-    return { error: INDIVIDUAL_DISPUTE_ERROR };
-  }
-
-  return { flag };
-}
-
-const upholdFlagSchema = z.object({
-  flagId: z.string().uuid(),
-  resolutionNote: z
-    .string()
-    .trim()
-    .min(10, "Please add a resolution note of at least 10 characters")
-    .max(2000),
-});
-
 export async function upholdFlag(
-  input: z.infer<typeof upholdFlagSchema>
+  input: z.infer<typeof resolveDisputeSchema>
 ): Promise<ActionResult> {
-  const validated = upholdFlagSchema.safeParse(input);
+  const validated = resolveDisputeSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
   }
@@ -310,29 +231,28 @@ export async function upholdFlag(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const result = await getOpenFlagForAdjudication(
-    validated.data.flagId,
-    context.organizationId
-  );
+  const result = await getOpenFlagForAdjudication(validated.data.flagId, {
+    accountType: "enterprise",
+  });
   if ("error" in result) {
     return { success: false, error: result.error };
   }
   const { flag } = result;
+  if (flag.organization_id !== context.organizationId) {
+    return { success: false, error: "Dispute not found" };
+  }
   const { resolutionNote } = validated.data;
 
   const supabase = createUntypedAdminClient();
   const now = new Date().toISOString();
 
-  const { error: reviewError } = await supabase
-    .from("reviews")
-    .update({
-      status: "rejected",
-      is_published: false,
-      published_at: null,
-      rejection_reason: `Dispute upheld (${FLAG_REASON_LABELS[flag.reason] ?? flag.reason}): ${resolutionNote}`,
-    })
-    .eq("id", flag.review_id)
-    .eq("organization_id", context.organizationId);
+  const { error: reviewError } = await removeReviewForUpheldDispute({
+    supabase,
+    reviewId: flag.review_id,
+    organizationId: context.organizationId,
+    reason: flag.reason,
+    resolutionNote,
+  });
 
   if (reviewError) {
     console.error("Error removing disputed review:", reviewError);
@@ -355,17 +275,16 @@ export async function upholdFlag(
     return { success: false, error: "Failed to update the dispute" };
   }
 
-  await createAuditLogEntry({
+  await createDisputeAuditLog({
+    supabase,
     organizationId: context.organizationId,
     userId: context.userId,
     action: "review_flag_upheld",
-    resourceType: "review_flag",
-    resourceId: flag.id,
-    metadata: {
-      flag_id: flag.id,
-      review_id: flag.review_id,
-      reason: flag.reason,
-    },
+    flagId: flag.id,
+    reviewId: flag.review_id,
+    reason: flag.reason,
+    verdict: "upheld",
+    resolutionNote,
   });
 
   revalidatePath("/dashboard/reviews");
@@ -390,16 +309,19 @@ export async function dismissFlag(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const result = await getOpenFlagForAdjudication(
-    validated.data.flagId,
-    context.organizationId
-  );
+  const result = await getOpenFlagForAdjudication(validated.data.flagId, {
+    accountType: "enterprise",
+  });
   if ("error" in result) {
     return { success: false, error: result.error };
   }
   const { flag } = result;
+  if (flag.organization_id !== context.organizationId) {
+    return { success: false, error: "Dispute not found" };
+  }
 
   const supabase = createUntypedAdminClient();
+  const resolutionNote = validated.data.resolutionNote?.trim() || null;
   const { error: flagError } = await resolveReviewFlag({
     supabase,
     flagId: flag.id,
@@ -407,7 +329,7 @@ export async function dismissFlag(
     status: "dismissed",
     reviewedBy: context.userId,
     reviewedAt: new Date().toISOString(),
-    resolutionNote: validated.data.resolutionNote?.trim() || null,
+    resolutionNote,
     resolutionVerdict: "dismissed",
   });
 
@@ -416,17 +338,16 @@ export async function dismissFlag(
     return { success: false, error: "Failed to dismiss the dispute" };
   }
 
-  await createAuditLogEntry({
+  await createDisputeAuditLog({
+    supabase,
     organizationId: context.organizationId,
     userId: context.userId,
     action: "review_flag_dismissed",
-    resourceType: "review_flag",
-    resourceId: flag.id,
-    metadata: {
-      flag_id: flag.id,
-      review_id: flag.review_id,
-      reason: flag.reason,
-    },
+    flagId: flag.id,
+    reviewId: flag.review_id,
+    reason: flag.reason,
+    verdict: "dismissed",
+    resolutionNote,
   });
 
   revalidatePath("/dashboard/reviews");
@@ -574,32 +495,48 @@ export async function routeNewFlag(
     }
 
     // Individual account — escalate to the RepWell team
-    await untyped
-      .from("review_flags")
-      .update({ escalated_to_platform_at: new Date().toISOString() })
-      .eq("id", flagRow.id);
-
-    const { data: review } = await supabase
-      .from("reviews")
-      .select("id, rating, customer_name, text")
-      .eq("id", flagRow.review_id)
-      .single();
-
-    let reporterName = flagRow.reporter_name as string | null;
-    if (!reporterName && flagRow.flagged_by_user_id) {
-      const { data: reporter } = await supabase
+    const [
+      escalationResult,
+      reviewResult,
+      reporterResult,
+      platformAdminsResult,
+    ] = await Promise.all([
+      untyped
+        .from("review_flags")
+        .update({ escalated_to_platform_at: new Date().toISOString() })
+        .eq("id", flagRow.id),
+      supabase
+        .from("reviews")
+        .select("id, rating, customer_name, text")
+        .eq("id", flagRow.review_id)
+        .single(),
+      !flagRow.reporter_name && flagRow.flagged_by_user_id
+        ? supabase
+            .from("users")
+            .select("full_name")
+            .eq("id", flagRow.flagged_by_user_id)
+            .single()
+        : Promise.resolve({ data: null, error: null }),
+      untyped
         .from("users")
-        .select("full_name")
-        .eq("id", flagRow.flagged_by_user_id)
-        .single();
-      reporterName = reporter?.full_name ?? null;
+        .select("id")
+        .eq("is_platform_admin", true)
+        .eq("is_active", true),
+    ]);
+
+    if (escalationResult.error) {
+      console.error("Error marking dispute escalated:", escalationResult.error);
     }
 
-    const { data: platformAdmins, error: platformAdminsError } = await untyped
-      .from("users")
-      .select("id")
-      .eq("is_platform_admin", true)
-      .eq("is_active", true);
+    const { data: review } = reviewResult;
+    const reporterName =
+      (flagRow.reporter_name as string | null) ??
+      reporterResult.data?.full_name ??
+      null;
+    const {
+      data: platformAdmins,
+      error: platformAdminsError,
+    } = platformAdminsResult;
 
     if (platformAdminsError) {
       console.error(

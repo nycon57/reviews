@@ -8,6 +8,7 @@ import { createNotification } from "@/lib/notifications/actions";
 import { sendReviewResponseConfirmationEmail } from "./response-confirmation";
 import { coerceAutoReplySettings, hasAutoReplyFeature } from "./auto-reply-config";
 import { sanitizeExternalText } from "./utils";
+import { isReviewLive } from "./publish";
 
 interface ProcessResult {
   processed: number;
@@ -135,7 +136,7 @@ async function checkSkipConditions(supabase: any, item: any): Promise<boolean> {
     .single();
 
   if (!review) return true;
-  if (review.is_published !== true) return true;
+  if (!isReviewLive(review)) return true;
   if (review.response_text || review.response_status === "posted") return true;
 
   return false;
@@ -159,7 +160,7 @@ async function processQueueItem(supabase: any, item: any): Promise<void> {
     throw new Error(`Review ${item.review_id} not found`);
   }
 
-  if (review.is_published !== true) {
+  if (!isReviewLive(review)) {
     throw new Error(`Review ${item.review_id} is not published`);
   }
 

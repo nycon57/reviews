@@ -150,7 +150,7 @@ export type ReviewFlagReason =
  * machine-quarantined awaiting human release, never "awaiting approval".
  */
 export const REVIEW_STATUS_LABELS: Record<Review["status"], string> = {
-  pending: "Needs attention",
+  pending: "Quarantined",
   approved: "Live",
   rejected: "Removed",
   archived: "Archived",

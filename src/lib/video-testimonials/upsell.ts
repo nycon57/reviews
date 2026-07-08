@@ -12,7 +12,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendReviewVideoUpsellEmail } from "@/lib/email/send";
-import { getCelebrationThreshold } from "./public-actions";
+import { getCelebrationThreshold } from "@/lib/reviews/asset-kit";
 import { findOrCreateContact } from "@/lib/contacts/actions";
 import { guardAcquisitionSend } from "@/lib/contacts/send-guard";
 import { resolveContactUnsubscribeUrl } from "@/lib/contacts/tokens";

@@ -12,7 +12,7 @@ export const REVIEW_STATUS_COPY: Record<
   { label: string; description: string; className: string }
 > = {
   pending: {
-    label: "Quarantined",
+    label: REVIEW_STATUS_LABELS.pending,
     description: "Pending automated screening before it can go live.",
     className:
       "border-amber-500/60 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",

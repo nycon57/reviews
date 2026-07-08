@@ -21,13 +21,6 @@ export interface DirectorySearchRequest {
   hasCoords: boolean;
   initialCoords: { lat: number; lng: number } | null;
   initialPlace: string;
-  cacheKey: string;
-}
-
-export interface DirectorySearchCachePayload {
-  filters: SearchFilters;
-  page: number;
-  pageSize: number;
 }
 
 const DIRECTORY_SORTS = new Set<NonNullable<SearchFilters["sortBy"]>>([
@@ -66,14 +59,6 @@ function parseSortParam(
     : "rating";
 }
 
-export function createDirectorySearchCacheKey(payload: DirectorySearchCachePayload): string {
-  return JSON.stringify(payload);
-}
-
-export function parseDirectorySearchCacheKey(cacheKey: string): DirectorySearchCachePayload {
-  return JSON.parse(cacheKey) as DirectorySearchCachePayload;
-}
-
 export function buildDirectorySearchRequest(
   params: DirectorySearchParams,
   industry?: IndustryType
@@ -105,6 +90,5 @@ export function buildDirectorySearchRequest(
     hasCoords,
     initialCoords: hasCoords ? { lat: searchLat!, lng: searchLng! } : null,
     initialPlace: getFirstParam(params.place) || "",
-    cacheKey: createDirectorySearchCacheKey({ filters, page, pageSize }),
   };
 }

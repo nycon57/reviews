@@ -11,7 +11,7 @@ import {
   generateVideoObjectSchema,
   getBaseUrl,
 } from "@/lib/seo";
-import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
+import { StructuredData } from "@/components/seo/structured-data";
 import { VideoTestimonialPlayer } from "@/app/(public)/testimonials/video/[id]/video-testimonial-player";
 import type { PublicVideoTestimonial } from "@/lib/video-testimonials/public-actions";
 import { applyPublicProfessionalFilters } from "@/lib/users/public-visibility";
@@ -445,7 +445,7 @@ export default async function SmartLinkPage({ params }: RouteParams) {
 
     return (
       <>
-        <MultiSchemaStructuredData schemas={[videoSchema]} />
+        <StructuredData data={videoSchema} />
         <VideoTestimonialPlayer
           video={videoData}
           pageUrl={pageUrl}
@@ -496,7 +496,7 @@ export default async function SmartLinkPage({ params }: RouteParams) {
 
   return (
     <main className="min-h-screen">
-      <MultiSchemaStructuredData schemas={[reviewSchema]} />
+      <StructuredData data={reviewSchema} />
       <SmartLinkContent
         quote={fullQuote}
         fallbackText={fallbackText}

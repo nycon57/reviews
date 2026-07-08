@@ -12,7 +12,11 @@ export async function DirectorySearchContent({
   searchRequest,
   industry,
 }: DirectorySearchContentProps) {
-  const searchResult = await cachedSearchProfessionals(searchRequest.cacheKey);
+  const searchResult = await cachedSearchProfessionals(
+    searchRequest.filters,
+    searchRequest.page,
+    searchRequest.pageSize
+  );
 
   const initialResults = searchResult.success ? searchResult.data?.professionals || [] : [];
   const initialCount = searchResult.success ? searchResult.data?.totalCount || 0 : 0;

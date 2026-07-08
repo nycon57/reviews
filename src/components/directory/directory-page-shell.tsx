@@ -79,6 +79,10 @@ function getDirectoryFeatures(industryContext?: DirectoryIndustryContext): Direc
   ];
 }
 
+export function getDirectoryContentSectionClassName(isIndustryPage: boolean) {
+  return isIndustryPage ? "py-8 md:py-12" : "pt-8 pb-16 md:pt-12 md:pb-24";
+}
+
 export function DirectoryPageShell({ children, industryContext }: DirectoryPageShellProps) {
   const isIndustryPage = Boolean(industryContext);
   const features = getDirectoryFeatures(industryContext);
@@ -86,7 +90,7 @@ export function DirectoryPageShell({ children, industryContext }: DirectoryPageS
   const heroSectionClassName = isIndustryPage
     ? "relative overflow-hidden bg-gradient-to-b from-repwell-sage-100/20 to-transparent pt-16 pb-12 md:pt-24 md:pb-16"
     : "relative overflow-hidden bg-gradient-to-b from-repwell-sage-100/20 to-transparent pt-16 pb-6 md:pt-24 md:pb-8";
-  const contentSectionClassName = isIndustryPage ? "py-8 md:py-12" : "pt-8 pb-16 md:pt-12 md:pb-24";
+  const contentSectionClassName = getDirectoryContentSectionClassName(isIndustryPage);
 
   const eyebrow = industryContext ? `${industryContext.label} Directory` : "Professional Directory";
   const titleLead = industryContext ? "Find" : "Find a";

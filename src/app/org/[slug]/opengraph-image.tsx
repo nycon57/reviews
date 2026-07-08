@@ -1,39 +1,21 @@
-import { getPublicOrganizationProfile } from "@/lib/seo/actions";
-import {
-  PROFILE_OG_SIZE,
-  buildProfileOpenGraphImage,
-} from "@/lib/seo/og";
+import { getPublicOrganizationOgCardData } from "@/lib/seo/actions";
+import { PROFILE_OG_SIZE, createProfileOgRoute } from "@/lib/seo/og";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 export const size = PROFILE_OG_SIZE;
 export const contentType = "image/png";
 
-interface RouteParams {
-  params: Promise<{ slug: string }>;
-}
-
-function genericCard() {
-  return buildProfileOpenGraphImage({
+export default createProfileOgRoute({
+  fetch: getPublicOrganizationOgCardData,
+  generic: {
     variant: "generic",
     name: "RepWell",
     affiliation: "Verified customer reviews for trusted organizations",
     descriptor: "Organization profile",
     monogramSource: "Rep Well",
-  });
-}
-
-export default async function OpenGraphImage({ params }: RouteParams) {
-  const { slug } = await params;
-  const result = await getPublicOrganizationProfile(slug);
-
-  if (!result.success || !result.data) {
-    return genericCard();
-  }
-
-  const { organization } = result.data;
-
-  return buildProfileOpenGraphImage({
+  },
+  toCard: ({ organization }) => ({
     variant: "organization",
     name: organization.name,
     affiliation: "Verified organization reviews and locations",
@@ -43,5 +25,5 @@ export default async function OpenGraphImage({ params }: RouteParams) {
     imageUrl: organization.logo_url,
     imageAlt: `${organization.name} logo`,
     monogramSource: organization.name,
-  });
-}
+  }),
+});

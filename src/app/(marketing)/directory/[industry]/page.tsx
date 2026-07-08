@@ -92,7 +92,11 @@ export default async function IndustryDirectoryPage(props: PageProps) {
   const searchRequest = buildDirectorySearchRequest(params, industry);
 
   const [searchResult, availableIndustries] = await Promise.all([
-    cachedSearchProfessionals(searchRequest.cacheKey),
+    cachedSearchProfessionals(
+      searchRequest.filters,
+      searchRequest.page,
+      searchRequest.pageSize
+    ),
     cachedGetAvailableIndustries(),
   ]);
 

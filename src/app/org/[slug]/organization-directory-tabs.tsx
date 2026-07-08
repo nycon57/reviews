@@ -1,29 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   BuildingOffice as Building2,
   CaretRight as ChevronRight,
-  MagnifyingGlass,
   MapPin,
-  SortAscending,
   Users,
 } from "@phosphor-icons/react";
 
+import {
+  DirectorySearchSortToolbar,
+  DirectoryShowMoreButton,
+  useSearchSortPaginate,
+} from "@/components/public-profile/directory-tabs-controls";
 import { RatingStars } from "@/components/reviews/rating-stars";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TierBadge } from "@/components/shared/tier-badge";
 import { getBranchPublicPath } from "@/lib/branches/utils";
@@ -55,90 +48,68 @@ function formatBranchLocation(address: BranchAddress | null): string {
   return "";
 }
 
+function sortBranches(a: PublicOrgBranch, b: PublicOrgBranch, sort: string) {
+  switch (sort) {
+    case "name-desc":
+      return b.name.localeCompare(a.name);
+    case "rating-high":
+      return (Number(b.average_rating) || 0) - (Number(a.average_rating) || 0);
+    case "rating-low":
+      return (Number(a.average_rating) || 0) - (Number(b.average_rating) || 0);
+    case "reviews":
+      return (b.total_reviews || 0) - (a.total_reviews || 0);
+    default:
+      return a.name.localeCompare(b.name);
+  }
+}
+
+function searchBranch(branch: PublicOrgBranch, query: string) {
+  const address = branch.address as BranchAddress | null;
+  return Boolean(
+    branch.name.toLowerCase().includes(query) ||
+    address?.city?.toLowerCase().includes(query) ||
+    address?.state?.toLowerCase().includes(query)
+  );
+}
+
+function sortProfessionals(
+  a: PublicOrgProfessional,
+  b: PublicOrgProfessional,
+  sort: string
+) {
+  switch (sort) {
+    case "name-desc":
+      return b.full_name.localeCompare(a.full_name);
+    case "rating-high":
+      return (Number(b.average_rating) || 0) - (Number(a.average_rating) || 0);
+    case "rating-low":
+      return (Number(a.average_rating) || 0) - (Number(b.average_rating) || 0);
+    case "reviews":
+      return (b.total_reviews || 0) - (a.total_reviews || 0);
+    default:
+      return a.full_name.localeCompare(b.full_name);
+  }
+}
+
+function searchProfessional(member: PublicOrgProfessional, query: string) {
+  return Boolean(
+    member.full_name.toLowerCase().includes(query) ||
+    member.title?.toLowerCase().includes(query)
+  );
+}
+
 export function OrganizationDirectoryTabs({
   branches,
   featuredProfessionals,
 }: OrganizationDirectoryTabsProps) {
-  const [locationSearch, setLocationSearch] = useState("");
-  const [locationSort, setLocationSort] = useState("name-asc");
-  const [teamSearch, setTeamSearch] = useState("");
-  const [teamSort, setTeamSort] = useState("name-asc");
-  const [locationPagination, setLocationPagination] = useState({
-    key: "|name-asc",
-    count: 12,
+  const locations = useSearchSortPaginate(branches, {
+    searchFn: searchBranch,
+    sortFn: sortBranches,
   });
-  const [teamPagination, setTeamPagination] = useState({
-    key: "|name-asc",
-    count: 12,
+  const team = useSearchSortPaginate(featuredProfessionals, {
+    searchFn: searchProfessional,
+    sortFn: sortProfessionals,
   });
-
-  const filteredBranches = useMemo(() => {
-    const query = locationSearch.toLowerCase().trim();
-    let filtered = branches;
-
-    if (query) {
-      filtered = branches.filter((branch) => {
-        const address = branch.address as BranchAddress | null;
-        return (
-          branch.name.toLowerCase().includes(query) ||
-          address?.city?.toLowerCase().includes(query) ||
-          address?.state?.toLowerCase().includes(query)
-        );
-      });
-    }
-
-    return [...filtered].sort((a, b) => {
-      switch (locationSort) {
-        case "name-desc":
-          return b.name.localeCompare(a.name);
-        case "rating-high":
-          return (Number(b.average_rating) || 0) - (Number(a.average_rating) || 0);
-        case "rating-low":
-          return (Number(a.average_rating) || 0) - (Number(b.average_rating) || 0);
-        case "reviews":
-          return (b.total_reviews || 0) - (a.total_reviews || 0);
-        default:
-          return a.name.localeCompare(b.name);
-      }
-    });
-  }, [branches, locationSearch, locationSort]);
-
-  const filteredProfessionals = useMemo(() => {
-    const query = teamSearch.toLowerCase().trim();
-    let filtered = featuredProfessionals;
-
-    if (query) {
-      filtered = featuredProfessionals.filter(
-        (member) =>
-          member.full_name.toLowerCase().includes(query) ||
-          member.title?.toLowerCase().includes(query)
-      );
-    }
-
-    return [...filtered].sort((a, b) => {
-      switch (teamSort) {
-        case "name-desc":
-          return b.full_name.localeCompare(a.full_name);
-        case "rating-high":
-          return (Number(b.average_rating) || 0) - (Number(a.average_rating) || 0);
-        case "rating-low":
-          return (Number(a.average_rating) || 0) - (Number(b.average_rating) || 0);
-        case "reviews":
-          return (b.total_reviews || 0) - (a.total_reviews || 0);
-        default:
-          return a.full_name.localeCompare(b.full_name);
-      }
-    });
-  }, [featuredProfessionals, teamSearch, teamSort]);
-
-  const locationFilterKey = `${locationSearch}|${locationSort}`;
-  const teamFilterKey = `${teamSearch}|${teamSort}`;
-  const locationDisplayCount =
-    locationPagination.key === locationFilterKey ? locationPagination.count : 12;
-  const teamDisplayCount =
-    teamPagination.key === teamFilterKey ? teamPagination.count : 12;
-  const displayedBranches = filteredBranches.slice(0, locationDisplayCount);
-  const displayedProfessionals = filteredProfessionals.slice(0, teamDisplayCount);
 
   return (
     <Card className="border-t-4 border-t-repwell-sage-200">
@@ -186,39 +157,22 @@ export function OrganizationDirectoryTabs({
               </p>
             ) : (
               <>
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="relative flex-1">
-                    <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Search locations..."
-                      value={locationSearch}
-                      onChange={(event) => setLocationSearch(event.target.value)}
-                      className="h-9 pl-9"
-                    />
-                  </div>
-                  <Select value={locationSort} onValueChange={setLocationSort}>
-                    <SelectTrigger className="h-9 w-full sm:w-[180px]">
-                      <SortAscending className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="name-asc">Name A-Z</SelectItem>
-                      <SelectItem value="name-desc">Name Z-A</SelectItem>
-                      <SelectItem value="rating-high">Highest Rated</SelectItem>
-                      <SelectItem value="rating-low">Lowest Rated</SelectItem>
-                      <SelectItem value="reviews">Most Reviews</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <DirectorySearchSortToolbar
+                  search={locations.search}
+                  sort={locations.sort}
+                  searchPlaceholder="Search locations..."
+                  onSearchChange={locations.setSearch}
+                  onSortChange={locations.setSort}
+                />
 
-                {filteredBranches.length === 0 ? (
+                {locations.filteredItems.length === 0 ? (
                   <p className="py-8 text-center text-repwell-teal-300">
-                    No locations match &ldquo;{locationSearch}&rdquo;
+                    No locations match &ldquo;{locations.search}&rdquo;
                   </p>
                 ) : (
                   <>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      {displayedBranches.map((branch) => (
+                      {locations.displayedItems.map((branch) => (
                         <Link
                           key={branch.id}
                           href={getBranchPublicPath(branch)}
@@ -268,20 +222,12 @@ export function OrganizationDirectoryTabs({
                         </Link>
                       ))}
                     </div>
-                    {filteredBranches.length > locationDisplayCount && (
-                      <Button
-                        variant="outline"
-                        className="mt-4 w-full"
-                        onClick={() =>
-                          setLocationPagination({
-                            key: locationFilterKey,
-                            count: locationDisplayCount + 12,
-                          })
-                        }
-                      >
-                        Show More Locations (
-                        {filteredBranches.length - locationDisplayCount} remaining)
-                      </Button>
+                    {locations.hasMore && (
+                      <DirectoryShowMoreButton
+                        label="Locations"
+                        remainingCount={locations.remainingCount}
+                        onClick={locations.showMore}
+                      />
                     )}
                   </>
                 )}
@@ -296,39 +242,22 @@ export function OrganizationDirectoryTabs({
               </p>
             ) : (
               <>
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <div className="relative flex-1">
-                    <MagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Search team members..."
-                      value={teamSearch}
-                      onChange={(event) => setTeamSearch(event.target.value)}
-                      className="h-9 pl-9"
-                    />
-                  </div>
-                  <Select value={teamSort} onValueChange={setTeamSort}>
-                    <SelectTrigger className="h-9 w-full sm:w-[180px]">
-                      <SortAscending className="mr-2 h-4 w-4 text-muted-foreground" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="name-asc">Name A-Z</SelectItem>
-                      <SelectItem value="name-desc">Name Z-A</SelectItem>
-                      <SelectItem value="rating-high">Highest Rated</SelectItem>
-                      <SelectItem value="rating-low">Lowest Rated</SelectItem>
-                      <SelectItem value="reviews">Most Reviews</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <DirectorySearchSortToolbar
+                  search={team.search}
+                  sort={team.sort}
+                  searchPlaceholder="Search team members..."
+                  onSearchChange={team.setSearch}
+                  onSortChange={team.setSort}
+                />
 
-                {filteredProfessionals.length === 0 ? (
+                {team.filteredItems.length === 0 ? (
                   <p className="py-8 text-center text-repwell-teal-300">
-                    No team members match &ldquo;{teamSearch}&rdquo;
+                    No team members match &ldquo;{team.search}&rdquo;
                   </p>
                 ) : (
                   <>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      {displayedProfessionals.map((member) => (
+                      {team.displayedItems.map((member) => (
                         <Link
                           key={member.id}
                           href={member.slug ? `/pro/${member.slug}` : "#"}
@@ -376,21 +305,12 @@ export function OrganizationDirectoryTabs({
                         </Link>
                       ))}
                     </div>
-                    {filteredProfessionals.length > teamDisplayCount && (
-                      <Button
-                        variant="outline"
-                        className="mt-4 w-full"
-                        onClick={() =>
-                          setTeamPagination({
-                            key: teamFilterKey,
-                            count: teamDisplayCount + 12,
-                          })
-                        }
-                      >
-                        Show More Team Members (
-                        {filteredProfessionals.length - teamDisplayCount}{" "}
-                        remaining)
-                      </Button>
+                    {team.hasMore && (
+                      <DirectoryShowMoreButton
+                        label="Team Members"
+                        remainingCount={team.remainingCount}
+                        onClick={team.showMore}
+                      />
                     )}
                   </>
                 )}

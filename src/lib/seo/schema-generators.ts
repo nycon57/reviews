@@ -307,6 +307,24 @@ export function generateAggregateRatingSchema(
   };
 }
 
+export function buildAggregateRatingSchema(
+  averageRating: number | null | undefined,
+  totalReviews: number | null | undefined
+) {
+  if (!averageRating || !totalReviews || totalReviews === 0) {
+    return null;
+  }
+
+  return {
+    "@type": "AggregateRating",
+    ratingValue: Number(averageRating),
+    bestRating: 5,
+    worstRating: 1,
+    ratingCount: totalReviews,
+    reviewCount: totalReviews,
+  };
+}
+
 /**
  * Generate Review schema for an individual review
  */

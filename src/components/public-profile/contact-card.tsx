@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   Buildings,
-  Envelope,
   FacebookLogo,
   GlobeSimple,
   InstagramLogo,
@@ -12,6 +11,7 @@ import {
   Phone,
 } from "@phosphor-icons/react/dist/ssr";
 
+import { XIcon } from "@/components/icons/x-icon";
 import { ZillowIcon } from "@/components/icons/zillow-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,33 +19,13 @@ import {
   formatAddressLines,
   getDisplayHostname,
   getSafeUrl,
+  type ContactAddress,
 } from "@/lib/contact-display";
 import { cn } from "@/lib/utils";
 
-function XIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
-
-interface Address {
-  street?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-}
-
 interface PublicProfileContactCardProps {
   phone?: string | null;
-  email?: string | null;
-  address?: Address | null;
+  address?: ContactAddress | null;
   organization?: {
     name: string;
     href: string | null;
@@ -73,7 +53,6 @@ interface PublicProfileContactCardProps {
 
 export function PublicProfileContactCard({
   phone,
-  email,
   address,
   organization,
   branch,
@@ -211,18 +190,6 @@ export function PublicProfileContactCard({
               className="text-sm text-repwell-teal-400 transition-colors hover:text-repwell-teal-300 hover:underline"
             >
               {phone}
-            </a>
-          </div>
-        )}
-
-        {email && (
-          <div className="flex items-center gap-3">
-            <Envelope className="h-5 w-5 shrink-0 text-repwell-teal-300" />
-            <a
-              href={`mailto:${email}`}
-              className="break-all text-sm text-repwell-teal-400 transition-colors hover:text-repwell-teal-300 hover:underline"
-            >
-              {email}
             </a>
           </div>
         )}

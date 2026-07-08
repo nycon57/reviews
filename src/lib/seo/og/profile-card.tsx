@@ -1,19 +1,10 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
 import { ImageResponse } from "next/og";
+import { getInitials } from "@/lib/utils";
+import { loadOgFonts } from "./fonts";
 
 export const PROFILE_OG_SIZE = {
   width: 1200,
   height: 630,
-};
-
-type FontWeight = 400 | 700;
-
-type OgFont = {
-  name: string;
-  data: ArrayBuffer | Buffer;
-  weight: FontWeight;
-  style: "normal";
 };
 
 export type ProfileOgVariant = "professional" | "organization" | "branch" | "generic";
@@ -40,70 +31,6 @@ const BRAND = {
   inkOnDark: "#f8faf8",
 };
 
-async function loadProfileOgFonts(): Promise<OgFont[]> {
-  const fonts: OgFont[] = [];
-
-  try {
-    const erstoria = await readFile(join(process.cwd(), "public/fonts/Erstoria.otf"));
-    fonts.push({
-      name: "Erstoria",
-      data: erstoria,
-      weight: 400,
-      style: "normal",
-    });
-  } catch (err) {
-    console.error("Failed to load Erstoria font for profile OG image:", err);
-  }
-
-  const interFonts = [
-    {
-      url: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2",
-      weight: 400 as const,
-    },
-    {
-      url: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYAZ9hiA.woff2",
-      weight: 700 as const,
-    },
-  ];
-
-  const loadedInterFonts = await Promise.all(
-    interFonts.map(async ({ url, weight }) => {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) {
-          console.error(`Failed to load Inter font for profile OG image (${weight}): HTTP ${res.status}`);
-          return null;
-        }
-
-        const data = await res.arrayBuffer();
-        if (isWoff2Font(data)) {
-          return null;
-        }
-
-        return {
-          name: "Inter",
-          data,
-          weight,
-          style: "normal" as const,
-        };
-      } catch (err) {
-        console.error(`Failed to load Inter font for profile OG image (${weight}):`, err);
-        return null;
-      }
-    })
-  );
-
-  for (const font of loadedInterFonts) {
-    if (font) fonts.push(font);
-  }
-
-  return fonts;
-}
-
-function isWoff2Font(data: ArrayBuffer): boolean {
-  return Buffer.from(data.slice(0, 4)).toString("ascii") === "wOF2";
-}
-
 async function resolveImageSource(imageUrl?: string | null): Promise<string | null> {
   if (!imageUrl) return null;
 
@@ -121,18 +48,6 @@ async function resolveImageSource(imageUrl?: string | null): Promise<string | nu
     console.error("Failed to load profile OG image asset:", err);
     return null;
   }
-}
-
-function getInitials(value: string): string {
-  const initials = value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-
-  return initials || "RW";
 }
 
 function formatReviewCount(count?: number | null): string {
@@ -182,10 +97,10 @@ function renderStars(rating?: number | null) {
 
 export async function buildProfileOpenGraphImage(input: ProfileOpenGraphCardData) {
   const imageSource = await resolveImageSource(input.imageUrl);
-  const initials = getInitials(input.monogramSource || input.name);
+  const initials = getInitials(input.monogramSource || input.name) || "RW";
   const descriptor = input.descriptor || variantLabel(input.variant);
   const affiliation = input.affiliation || "Verified customer reviews";
-  const fonts = await loadProfileOgFonts();
+  const fonts = await loadOgFonts({ includeErstoria: true, excludeWoff2: true });
   const hasInter = fonts.some((font) => font.name === "Inter");
   const hasErstoria = fonts.some((font) => font.name === "Erstoria");
   const bodyFontFamily = hasInter ? "Inter" : "Arial";

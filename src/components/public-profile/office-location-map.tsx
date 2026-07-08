@@ -5,50 +5,21 @@ import { useState } from "react";
 import { MapPin, ArrowSquareOut } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  buildDirectionsUrl,
+  formatAddressLines,
+  type ContactAddress,
+} from "@/lib/contact-display";
+import { getOsmTileUrl } from "@/lib/maps/tile-url";
 
 const LeafletMap = dynamic(() => import("./leaflet-map"), { ssr: false });
 
-interface Address {
-  street?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-}
-
 interface OfficeLocationMapProps {
-  address?: Address | null;
+  address?: ContactAddress | null;
   googleMapsUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   className?: string;
-}
-
-function formatAddress(address: Address): string {
-  const parts = [
-    address.street,
-    [address.city, address.state].filter(Boolean).join(", "),
-    address.zip,
-  ].filter(Boolean);
-  return parts.join(" ");
-}
-
-function getGoogleMapsSearchUrl(address: Address): string {
-  const query = encodeURIComponent(formatAddress(address));
-  return `https://www.google.com/maps/search/?api=1&query=${query}`;
-}
-
-function getOsmTileUrl(latitude: number, longitude: number, zoom = 15) {
-  const latRad = (latitude * Math.PI) / 180;
-  const scale = 2 ** zoom;
-  const x = Math.floor(((longitude + 180) / 360) * scale);
-  const y = Math.floor(
-    ((1 -
-      Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) /
-      2) *
-      scale
-  );
-
-  return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
 }
 
 export function OfficeLocationMap({
@@ -64,8 +35,8 @@ export function OfficeLocationMap({
     return null;
   }
 
-  const formattedAddress = formatAddress(address);
-  const mapsUrl = googleMapsUrl || getGoogleMapsSearchUrl(address);
+  const formattedAddress = formatAddressLines(address).join(" ");
+  const mapsUrl = buildDirectionsUrl(address, googleMapsUrl)!;
   const hasCoords = latitude != null && longitude != null;
 
   return (

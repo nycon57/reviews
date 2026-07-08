@@ -9,6 +9,7 @@ import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import {
   generateVideoObjectSchema,
   generateVideoTestimonialReviewSchema,
+  getBaseUrl,
 } from "@/lib/seo";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPublishedSmartLinkBySource } from "@/lib/share-studio/service";
@@ -51,7 +52,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const { title, description, customerName, thumbnailUrl, durationSeconds } = result.data;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
+  const baseUrl = getBaseUrl();
   const pageUrl = smartLink ? `${baseUrl}/s/${smartLink.slug}` : `${baseUrl}/testimonials/video/${id}`;
 
   // Format duration for schema.org (ISO 8601 duration)
@@ -133,7 +134,7 @@ export default async function PublicVideoTestimonialPage({ params }: PageProps) 
   }
 
   const video = result.data;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
+  const baseUrl = getBaseUrl();
   const pageUrl = `${baseUrl}/testimonials/video/${id}`;
 
   const videoSchema = generateVideoObjectSchema({

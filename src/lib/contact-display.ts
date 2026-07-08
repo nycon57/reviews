@@ -46,3 +46,16 @@ export function formatAddressLines(address: ContactAddress): string[] {
   if (cityStateZip) lines.push(cityStateZip);
   return lines;
 }
+
+export function buildDirectionsUrl(
+  address: ContactAddress | null | undefined,
+  googleMapsUrl?: string | null
+): string | null {
+  if (googleMapsUrl) return googleMapsUrl;
+  if (!address || (!address.street && !address.city)) return null;
+
+  const query = formatAddressLines(address).join(" ");
+  if (!query) return null;
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}

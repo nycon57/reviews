@@ -23,6 +23,24 @@ import { getAllFeaturePageSlugs } from "@/config/feature-pages";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl();
   const now = new Date().toISOString();
+  const toSitemapEntries = (
+    slugs: string[],
+    prefix: string,
+    priority: number
+  ): MetadataRoute.Sitemap =>
+    slugs.map((slug) => ({
+      url: `${baseUrl}/${prefix}/${slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority,
+    }));
+
+  const [blogSlugs, professionalSlugs, orgSlugs, branchSlugs] = await Promise.all([
+    getAllPostSlugs(),
+    getAllPublicUserSlugs(),
+    getAllOrganizationSlugs(),
+    getAllPublicBranchSlugs(),
+  ]);
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -67,40 +85,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Blog posts
-  const blogSlugs = await getAllPostSlugs();
-  const blogPages: MetadataRoute.Sitemap = blogSlugs.map((slug) => ({
-    url: `${baseUrl}/blog/${slug}`,
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: 0.65,
-  }));
+  const blogPages = toSitemapEntries(blogSlugs, "blog", 0.65);
 
   // Industry landing pages
-  const industryLandingPages: MetadataRoute.Sitemap = getAllIndustryPageSlugs().map((slug) => ({
-    url: `${baseUrl}/for/${slug}`,
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: 0.75,
-  }));
+  const industryLandingPages = toSitemapEntries(
+    getAllIndustryPageSlugs(),
+    "for",
+    0.75
+  );
 
   // Solution landing pages
-  const solutionPages: MetadataRoute.Sitemap = getAllSolutionPageSlugs().map((slug) => ({
-    url: `${baseUrl}/solutions/${slug}`,
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: 0.75,
-  }));
+  const solutionPages = toSitemapEntries(
+    getAllSolutionPageSlugs(),
+    "solutions",
+    0.75
+  );
 
   // Feature landing pages
-  const featurePages: MetadataRoute.Sitemap = getAllFeaturePageSlugs().map((slug) => ({
-    url: `${baseUrl}/features/${slug}`,
-    lastModified: now,
-    changeFrequency: "weekly" as const,
-    priority: 0.75,
-  }));
+  const featurePages = toSitemapEntries(
+    getAllFeaturePageSlugs(),
+    "features",
+    0.75
+  );
 
   // Dynamic professional profile pages (using SEO-friendly slugs)
-  const professionalSlugs = await getAllPublicUserSlugs();
   const professionalPages: MetadataRoute.Sitemap = professionalSlugs.map((slug) => ({
     url: `${baseUrl}/pro/${slug}`,
     lastModified: now,
@@ -109,7 +117,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Organization profile pages
-  const orgSlugs = await getAllOrganizationSlugs();
   const orgPages: MetadataRoute.Sitemap = orgSlugs.map((slug) => ({
     url: `${baseUrl}/org/${slug}`,
     lastModified: now,
@@ -118,7 +125,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Branch profile pages
-  const branchSlugs = await getAllPublicBranchSlugs();
   const branchPages: MetadataRoute.Sitemap = branchSlugs.map((slug) => ({
     url: `${baseUrl}/branch/${slug}`,
     lastModified: now,

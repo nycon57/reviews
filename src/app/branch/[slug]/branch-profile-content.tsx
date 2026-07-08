@@ -11,9 +11,9 @@ import {
   OfficeLocationMap,
   ProfileHeroBanner,
   ProfileMessageAction,
-} from "@/app/pro/[slug]/components";
-import { ShareProfileButton } from "@/app/pro/[slug]/components/share-profile-button";
-import { PublicProfileContactCard } from "@/components/public-profile/contact-card";
+  PublicProfileContactCard,
+  ShareProfileButton,
+} from "@/components/public-profile";
 import { RatingStars } from "@/components/reviews/rating-stars";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,10 @@ import {
   type DirectoryBreadcrumbItem,
 } from "@/components/shared/directory-breadcrumbs";
 import { getBranchPublicPath } from "@/lib/branches/utils";
+import {
+  buildDirectionsUrl,
+  type ContactAddress,
+} from "@/lib/contact-display";
 import type {
   PublicBranch,
   PublicBranchProfessional,
@@ -44,13 +48,6 @@ interface BranchProfileContentProps {
   breadcrumbs?: DirectoryBreadcrumbItem[];
   isEnterprise?: boolean;
   profileUrl?: string;
-}
-
-interface Address {
-  street?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
 }
 
 interface HoursOfOperation {
@@ -95,26 +92,6 @@ function formatHours(hours: HoursOfOperation | null): string[] {
     });
 }
 
-function getDirectionsUrl(
-  googleMapsUrl: string | null,
-  address: Address | null
-) {
-  if (googleMapsUrl) return googleMapsUrl;
-  if (!address || (!address.street && !address.city)) return null;
-
-  const query = [
-    address.street,
-    [address.city, address.state].filter(Boolean).join(", "),
-    address.zip,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    query
-  )}`;
-}
-
 export function BranchProfileContent({
   branch,
   organization,
@@ -125,25 +102,19 @@ export function BranchProfileContent({
   profileUrl,
 }: BranchProfileContentProps) {
   const resolvedProfileUrl = profileUrl || getBranchPublicPath(branch);
-  const address = branch.address as Address | null;
+  const address = branch.address as ContactAddress | null;
   const locationString = address
     ? [address.city, address.state].filter(Boolean).join(", ")
     : "";
-  const directionsUrl = getDirectionsUrl(branch.google_maps_url, address);
+  const directionsUrl = buildDirectionsUrl(address, branch.google_maps_url);
   const hours = branch.hours_of_operation as HoursOfOperation | null;
   const formattedHours = formatHours(hours);
-  const branchLocation = branch as PublicBranch & {
-    latitude?: number | null;
-    longitude?: number | null;
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <div className="relative">
         <ProfileHeroBanner
           bannerUrl={branch.cover_image_url || organization?.banner_url}
-          orgLogo={organization?.logo_url}
-          orgName={organization?.name}
         />
 
         {breadcrumbs && breadcrumbs.length > 0 && (
@@ -313,8 +284,8 @@ export function BranchProfileContent({
             <OfficeLocationMap
               address={address}
               googleMapsUrl={branch.google_maps_url || directionsUrl}
-              latitude={branchLocation.latitude ?? null}
-              longitude={branchLocation.longitude ?? null}
+              latitude={branch.latitude}
+              longitude={branch.longitude}
             />
 
             {formattedHours.length > 0 && (

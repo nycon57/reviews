@@ -53,7 +53,11 @@ export default async function DirectoryPage(props: PageProps) {
   const searchRequest = buildDirectorySearchRequest(params);
   const baseUrl = getBaseUrl();
 
-  const searchResult = await cachedSearchProfessionals(searchRequest.cacheKey);
+  const searchResult = await cachedSearchProfessionals(
+    searchRequest.filters,
+    searchRequest.page,
+    searchRequest.pageSize
+  );
   const professionals = searchResult.success ? searchResult.data?.professionals || [] : [];
   const schemas = generateDirectorySchemas({ professionals, baseUrl });
 

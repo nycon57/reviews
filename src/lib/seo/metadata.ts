@@ -46,6 +46,27 @@ interface MetadataOrganization {
   name: string;
 }
 
+function buildOgImageMetadata(profileUrl: string, alt: string) {
+  const profileImageUrl = `${profileUrl}/opengraph-image`;
+
+  return {
+    openGraph: {
+      images: [
+        {
+          url: profileImageUrl,
+          width: 1200,
+          height: 630,
+          alt,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      images: [profileImageUrl],
+    },
+  };
+}
+
 /**
  * Generate metadata for a professional profile page
  */
@@ -60,7 +81,10 @@ export function generateLOProfileMetadata(
     `Read reviews and ratings for ${professional.full_name}, ${professional.title || "Professional"}${organization ? ` at ${organization.name}` : ""}. ${professional.total_reviews || 0} reviews with ${professional.average_rating ? `${Number(professional.average_rating).toFixed(1)} average rating` : "ratings available"}.`;
   const publicSlug = professional.slug || professional.id;
   const profileUrl = `${baseUrl}/pro/${publicSlug}`;
-  const profileImageUrl = `${profileUrl}/opengraph-image`;
+  const ogImageMetadata = buildOgImageMetadata(
+    profileUrl,
+    `${professional.full_name} reviews on RepWell`
+  );
 
   const metadata: Metadata = {
     title,
@@ -75,20 +99,12 @@ export function generateLOProfileMetadata(
       type: "profile",
       siteName: organization?.name || "RepWell",
       locale: "en_US",
-      images: [
-        {
-          url: profileImageUrl,
-          width: 1200,
-          height: 630,
-          alt: `${professional.full_name} reviews on RepWell`,
-        },
-      ],
+      ...ogImageMetadata.openGraph,
     },
     twitter: {
-      card: "summary_large_image",
+      ...ogImageMetadata.twitter,
       title,
       description,
-      images: [profileImageUrl],
     },
     robots: {
       index: true,
@@ -227,7 +243,10 @@ export function generateBranchProfileMetadata(
     `Visit ${branch.name}${locationStr ? ` in ${locationStr}` : ""}. Meet our team of ${loCount} experienced professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}.`;
 
   const profileUrl = `${baseUrl}${getBranchPublicPath(branch)}`;
-  const profileImageUrl = `${profileUrl}/opengraph-image`;
+  const ogImageMetadata = buildOgImageMetadata(
+    profileUrl,
+    `${branch.name} reviews on RepWell`
+  );
 
   const metadata: Metadata = {
     title,
@@ -242,20 +261,12 @@ export function generateBranchProfileMetadata(
       type: "website",
       siteName,
       locale: "en_US",
-      images: [
-        {
-          url: profileImageUrl,
-          width: 1200,
-          height: 630,
-          alt: `${branch.name} reviews on RepWell`,
-        },
-      ],
+      ...ogImageMetadata.openGraph,
     },
     twitter: {
-      card: "summary_large_image",
+      ...ogImageMetadata.twitter,
       title,
       description,
-      images: [profileImageUrl],
     },
     robots: {
       index: true,
@@ -303,7 +314,10 @@ export function generateOrganizationProfileMetadata(
     `Explore ${organization.name} with ${branchCount} locations and ${loCount} professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}. Find your local branch and team member.`;
 
   const profileUrl = `${baseUrl}/org/${organization.slug}`;
-  const profileImageUrl = `${profileUrl}/opengraph-image`;
+  const ogImageMetadata = buildOgImageMetadata(
+    profileUrl,
+    `${organization.name} reviews on RepWell`
+  );
 
   const metadata: Metadata = {
     title,
@@ -318,20 +332,12 @@ export function generateOrganizationProfileMetadata(
       type: "website",
       siteName,
       locale: "en_US",
-      images: [
-        {
-          url: profileImageUrl,
-          width: 1200,
-          height: 630,
-          alt: `${organization.name} reviews on RepWell`,
-        },
-      ],
+      ...ogImageMetadata.openGraph,
     },
     twitter: {
-      card: "summary_large_image",
+      ...ogImageMetadata.twitter,
       title,
       description,
-      images: [profileImageUrl],
     },
     robots: {
       index: true,

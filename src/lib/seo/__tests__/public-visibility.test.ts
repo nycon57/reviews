@@ -17,7 +17,6 @@ type MockChain = {
   select: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
   neq: ReturnType<typeof vi.fn>;
-  or: ReturnType<typeof vi.fn>;
   is: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
@@ -39,7 +38,6 @@ function createMockQueryChain(finalResult: {
   chain.select = vi.fn().mockImplementation(returnChain);
   chain.eq = vi.fn().mockImplementation(returnChain);
   chain.neq = vi.fn().mockImplementation(returnChain);
-  chain.or = vi.fn().mockImplementation(returnChain);
   chain.is = vi.fn().mockImplementation(returnChain);
   chain.order = vi.fn().mockImplementation(returnChain);
   chain.limit = vi.fn().mockImplementation(returnChain);

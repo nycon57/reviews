@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReviewCard } from "./review-card";
-import { ReviewFiltersBar } from "./review-filters";
+import { ReviewFiltersBar } from "@/components/public-profile/review-filters";
 import type { PublicReview } from "@/lib/seo/actions";
 import { useReviewFilters } from "@/components/public-profile/use-review-filters";
 
@@ -14,9 +14,6 @@ interface ReviewsListProps {
   reviews: PublicReview[];
   loanOfficerName: string;
   profileUrl: string;
-  zillowUrl?: string | null;
-  linkedinUrl?: string | null;
-  googlePlaceId?: string | null;
   acceptsPublicReviews?: boolean;
   onWriteReview?: () => void;
   onReferFriend?: () => void;
@@ -30,9 +27,6 @@ export function ReviewsList({
   reviews,
   loanOfficerName,
   profileUrl,
-  zillowUrl: _zillowUrl,
-  linkedinUrl: _linkedinUrl,
-  googlePlaceId: _googlePlaceId,
   acceptsPublicReviews = true,
   onWriteReview,
   onReferFriend,

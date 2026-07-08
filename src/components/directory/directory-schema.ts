@@ -2,6 +2,10 @@ import type { DirectoryProfessional } from "@/lib/directory/actions";
 import { getIndustryLabel, getIndustrySlug } from "@/lib/directory/breadcrumb-utils";
 import { getIndustryConfig } from "@/lib/industry/configs";
 import type { IndustryType } from "@/lib/industry/types";
+import {
+  buildAggregateRatingSchema,
+  generateBreadcrumbSchema,
+} from "@/lib/seo/schema-generators";
 
 interface GenerateDirectorySchemasOptions {
   professionals: DirectoryProfessional[];
@@ -17,6 +21,12 @@ export function generateDirectorySchemas({
   const config = industry ? getIndustryConfig(industry) : null;
   const label = industry ? getIndustryLabel(industry) : null;
   const slug = industry ? getIndustrySlug(industry) : null;
+  const websiteSchema = {
+    "@type": "WebSite",
+    "@id": baseUrl,
+    name: "RepWell",
+    url: baseUrl,
+  };
 
   const itemListSchema = {
     "@context": "https://schema.org",
@@ -46,13 +56,10 @@ export function generateDirectorySchemas({
         }),
         ...(professional.average_rating &&
           professional.total_reviews && {
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: Number(professional.average_rating).toFixed(1),
-              reviewCount: professional.total_reviews,
-              bestRating: 5,
-              worstRating: 1,
-            },
+            aggregateRating: buildAggregateRatingSchema(
+              professional.average_rating,
+              professional.total_reviews
+            ),
           }),
       },
     })),
@@ -67,36 +74,17 @@ export function generateDirectorySchemas({
       description:
         "Search our directory of trusted professionals. Find experts by location, rating, and specialty.",
       url: `${baseUrl}/directory`,
-      isPartOf: {
-        "@type": "WebSite",
-        "@id": baseUrl,
-        name: "RepWell",
-        url: baseUrl,
-      },
+      isPartOf: websiteSchema,
       mainEntity: itemListSchema,
     };
 
     return [webPageSchema, itemListSchema];
   }
 
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Find a Professional",
-        item: `${baseUrl}/directory`,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: label,
-        item: `${baseUrl}/directory/${slug}`,
-      },
-    ],
-  };
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Find a Professional", url: `${baseUrl}/directory` },
+    { name: label, url: `${baseUrl}/directory/${slug}` },
+  ]);
 
   const webPageSchema = {
     "@context": "https://schema.org",
@@ -106,12 +94,7 @@ export function generateDirectorySchemas({
     description: `Search our directory of trusted ${config.labels.professionalPlural.toLowerCase()}.`,
     url: `${baseUrl}/directory/${slug}`,
     breadcrumb: breadcrumbSchema,
-    isPartOf: {
-      "@type": "WebSite",
-      "@id": baseUrl,
-      name: "RepWell",
-      url: baseUrl,
-    },
+    isPartOf: websiteSchema,
     mainEntity: itemListSchema,
   };
 

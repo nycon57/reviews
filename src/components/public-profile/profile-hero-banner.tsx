@@ -3,8 +3,6 @@ import { cn } from "@/lib/utils";
 
 interface ProfileHeroBannerProps {
   bannerUrl?: string | null;
-  orgLogo?: string | null;
-  orgName?: string;
   className?: string;
 }
 

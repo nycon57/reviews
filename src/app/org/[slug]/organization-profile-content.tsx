@@ -6,15 +6,22 @@ import {
   Users,
 } from "@phosphor-icons/react/dist/ssr";
 
-import { ProfileHeroBanner, ProfileMessageAction } from "@/app/pro/[slug]/components";
-import { ShareProfileButton } from "@/app/pro/[slug]/components/share-profile-button";
-import { PublicProfileContactCard } from "@/components/public-profile/contact-card";
+import {
+  ProfileHeroBanner,
+  ProfileMessageAction,
+  PublicProfileContactCard,
+  ShareProfileButton,
+} from "@/components/public-profile";
 import { RatingStars } from "@/components/reviews/rating-stars";
 import { Badge } from "@/components/ui/badge";
 import {
   DirectoryBreadcrumbs,
   type DirectoryBreadcrumbItem,
 } from "@/components/shared/directory-breadcrumbs";
+import {
+  buildDirectionsUrl,
+  type ContactAddress,
+} from "@/lib/contact-display";
 import type {
   PublicOrganization,
   PublicOrgBranch,
@@ -33,32 +40,6 @@ interface OrganizationProfileContentProps {
   profileUrl?: string;
 }
 
-interface BranchAddress {
-  street?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-}
-
-function getDirectionsUrl(address: BranchAddress | null) {
-  if (!address) return null;
-
-  const query = [
-    address.street,
-    address.city,
-    address.state,
-    address.zip,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  if (!query) return null;
-
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    query
-  )}`;
-}
-
 export function OrganizationProfileContent({
   organization,
   branches,
@@ -72,7 +53,7 @@ export function OrganizationProfileContent({
   const hq = organization.headquarters_branch;
   const contactPhone = organization.phone || hq?.phone || null;
   const rawAddress = (hq?.address ||
-    organization.headquarters_address) as BranchAddress | null;
+    organization.headquarters_address) as ContactAddress | null;
   const hqAddress = rawAddress
     ? {
         street: rawAddress.street,
@@ -81,15 +62,13 @@ export function OrganizationProfileContent({
         zip: rawAddress.zip,
       }
     : null;
-  const hqDirectionsUrl = getDirectionsUrl(hqAddress);
+  const hqDirectionsUrl = buildDirectionsUrl(hqAddress);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <div className="relative">
         <ProfileHeroBanner
           bannerUrl={organization.banner_url}
-          orgLogo={organization.logo_url}
-          orgName={organization.name}
         />
 
         {breadcrumbs && breadcrumbs.length > 0 && (

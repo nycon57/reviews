@@ -1,7 +1,13 @@
 import Image from "next/image";
 
 import { Badge } from "@/components/ui/badge";
-import { PublicProfileContactCard } from "@/components/public-profile/contact-card";
+import {
+  OfficeLocationMap,
+  ProfileHeroBanner,
+  ProfileMessageAction,
+  PublicProfileContactCard,
+  ShareProfileButton,
+} from "@/components/public-profile";
 import { RatingStars } from "@/components/reviews/rating-stars";
 import {
   DirectoryBreadcrumbs,
@@ -9,6 +15,10 @@ import {
 } from "@/components/shared/directory-breadcrumbs";
 import { TierBadgeSSR } from "@/components/shared/tier-badge-ssr";
 import { getInitials } from "@/lib/utils";
+import {
+  buildDirectionsUrl,
+  type ContactAddress,
+} from "@/lib/contact-display";
 import type {
   BusinessHours,
   OrgDisplay,
@@ -18,12 +28,8 @@ import type {
 import {
   BusinessHoursCard,
   FeaturedReviewsCarousel,
-  OfficeLocationMap,
-  ProfileHeroBanner,
-  ProfileMessageAction,
   ProCompactHeaderIsland,
   ProReviewsIsland,
-  ShareProfileButton,
   VideoTestimonialSlot,
 } from "./components";
 
@@ -40,33 +46,6 @@ interface ProProfileContentProps {
   profileUrl?: string;
 }
 
-interface Address {
-  street?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-}
-
-function getDirectionsUrl(
-  googleMapsUrl: string | null,
-  address: Address | null
-) {
-  if (googleMapsUrl) return googleMapsUrl;
-  if (!address || (!address.street && !address.city)) return null;
-
-  const query = [
-    address.street,
-    [address.city, address.state].filter(Boolean).join(", "),
-    address.zip,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    query
-  )}`;
-}
-
 export function ProProfileContent({
   professional,
   organization,
@@ -79,8 +58,8 @@ export function ProProfileContent({
   isPro = false,
   profileUrl,
 }: ProProfileContentProps) {
-  const address = professional.address as Address | null;
-  const directionsUrl = getDirectionsUrl(professional.google_maps_url, address);
+  const address = professional.address as ContactAddress | null;
+  const directionsUrl = buildDirectionsUrl(address, professional.google_maps_url);
   const resolvedProfileUrl =
     profileUrl || `/pro/${professional.slug || professional.id}`;
 
@@ -89,8 +68,6 @@ export function ProProfileContent({
       <div className="relative">
         <ProfileHeroBanner
           bannerUrl={professional.banner_url}
-          orgLogo={organization?.logoUrl}
-          orgName={organization?.name}
         />
 
         {breadcrumbs && breadcrumbs.length > 0 && (
@@ -265,8 +242,6 @@ export function ProProfileContent({
               professionalId={professional.id}
               professionalName={professional.full_name}
               profileUrl={resolvedProfileUrl}
-              zillowUrl={professional.zillow_profile_url}
-              linkedinUrl={professional.linkedin_url}
               acceptsPublicReviews={professional.accepts_public_reviews}
             />
           </div>

@@ -26,7 +26,7 @@ import {
 } from "@phosphor-icons/react";
 import { DirectoryCard } from "./directory-card";
 import { DirectoryMapView } from "./directory-map-view";
-import { MessageModal } from "@/app/pro/[slug]/components/message-modal";
+import { MessageModal } from "@/components/public-profile/message-modal";
 import {
   searchProfessionals,
   type DirectoryProfessional,

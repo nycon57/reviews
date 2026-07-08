@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 interface PublicProfileLoadingProps {
   variant?: "profile" | "listing";
@@ -99,7 +98,7 @@ export function PublicProfileLoading({
             {Array.from({ length: 3 }).map((_, index) => (
               <Card
                 key={index}
-                className={cn("border-t-4 border-t-repwell-sage-200")}
+                className="border-t-4 border-t-repwell-sage-200"
               >
                 <CardContent className="space-y-4 p-6">
                   <Skeleton className="h-6 w-36" />

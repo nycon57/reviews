@@ -3,8 +3,8 @@
 import { useCallback, useState } from "react";
 
 import type { PublicReview } from "@/lib/seo/actions";
+import { ReportReviewModal } from "@/components/public-profile/report-review-modal";
 import { ReferFriendModal } from "./refer-friend-modal";
-import { ReportReviewModal } from "./report-review-modal";
 import { ReviewsList } from "./reviews-list";
 import { WriteReviewModal } from "./write-review-modal";
 
@@ -13,8 +13,6 @@ interface ProReviewsIslandProps {
   professionalId: string;
   professionalName: string;
   profileUrl: string;
-  zillowUrl?: string | null;
-  linkedinUrl?: string | null;
   acceptsPublicReviews?: boolean;
 }
 
@@ -23,8 +21,6 @@ export function ProReviewsIsland({
   professionalId,
   professionalName,
   profileUrl,
-  zillowUrl,
-  linkedinUrl,
   acceptsPublicReviews = true,
 }: ProReviewsIslandProps) {
   const [isReferModalOpen, setIsReferModalOpen] = useState(false);
@@ -41,8 +37,6 @@ export function ProReviewsIsland({
         reviews={reviews}
         loanOfficerName={professionalName}
         profileUrl={profileUrl}
-        zillowUrl={zillowUrl}
-        linkedinUrl={linkedinUrl}
         acceptsPublicReviews={acceptsPublicReviews}
         onWriteReview={() => setIsReviewModalOpen(true)}
         onReferFriend={() => setIsReferModalOpen(true)}

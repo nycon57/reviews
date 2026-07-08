@@ -417,6 +417,13 @@ export function ReportsDashboard({ templates, teamMembers, branches }: ReportsDa
       </Tabs>
 
       <ScheduleReportDialog
+        key={
+          scheduleDialogMode
+            ? scheduleDialogMode.type === "edit"
+              ? `edit-${scheduleDialogMode.report.id}`
+              : "create"
+            : "closed"
+        }
         mode={scheduleDialogMode}
         templates={templates}
         selectedTemplate={selectedTemplate}
@@ -442,6 +449,7 @@ export function ReportsDashboard({ templates, teamMembers, branches }: ReportsDa
       />
 
       <ShareReportDialog
+        key={shareDialogOpen ? "open" : "closed"}
         open={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
         report={generatedReport}

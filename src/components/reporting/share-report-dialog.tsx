@@ -48,19 +48,16 @@ export function ShareReportDialog({
   onShareCreated: (share: ReportShare) => void;
 }) {
   const { toast } = useToast();
-  const [title, setTitle] = React.useState("");
+  // The parent remounts this dialog via `key` on open, so initial state is
+  // computed once per open — no prop-sync effect needed.
+  const [title, setTitle] = React.useState(() =>
+    report
+      ? `${report.templateName} - ${formatReportDateRange(report.dateRange.start, report.dateRange.end)}`
+      : ""
+  );
   const [expiresInDays, setExpiresInDays] = React.useState("30");
   const [createdShare, setCreatedShare] = React.useState<ReportShare | null>(null);
   const [isCreating, setIsCreating] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!open || !report) return;
-    setTitle(
-      `${report.templateName} - ${formatReportDateRange(report.dateRange.start, report.dateRange.end)}`
-    );
-    setExpiresInDays("30");
-    setCreatedShare(null);
-  }, [open, report]);
 
   const shareUrl = createdShare ? buildShareUrl(createdShare.shareToken) : "";
 

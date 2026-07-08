@@ -59,27 +59,20 @@ export function ScheduleReportDialog({
   onSaved: (report: ScheduledReport, mode: ScheduleDialogMode["type"]) => void;
 }) {
   const { toast } = useToast();
+  // The parent remounts this dialog via `key` whenever the mode changes, so
+  // initial state is computed once per open — no prop-sync effect needed.
   const [form, setForm] = React.useState<ScheduleFormState>(() =>
-    buildDefaultScheduleForm(templates, selectedTemplate)
+    buildDefaultScheduleForm(
+      templates,
+      selectedTemplate,
+      mode?.type === "edit" ? mode.report : undefined
+    )
   );
   const [emailInput, setEmailInput] = React.useState("");
   const [emailError, setEmailError] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const isOpen = !!mode;
   const isEdit = mode?.type === "edit";
-
-  React.useEffect(() => {
-    if (!mode) return;
-    setForm(
-      buildDefaultScheduleForm(
-        templates,
-        selectedTemplate,
-        mode.type === "edit" ? mode.report : undefined
-      )
-    );
-    setEmailInput("");
-    setEmailError(null);
-  }, [mode, selectedTemplate, templates]);
 
   const selectedTemplateName =
     templates.find((template) => template.id === form.templateId)?.name || "Select template";

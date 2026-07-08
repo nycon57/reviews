@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
-import { createClient } from "@/lib/supabase/server";
-import { getReportShareByToken, generateReport } from "@/lib/reporting";
+import { unstable_cache } from "next/cache";
+import { getReportShareByToken, generateReportForOrg } from "@/lib/reporting";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +12,7 @@ import {
   Link as Link2,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
+import type { ReportFilters, ReportShare } from "@/lib/reporting/types";
 
 // Dynamic import for heavy ReportViewer with recharts
 const ReportViewer = dynamic(
@@ -38,29 +39,39 @@ interface SharedReportPageProps {
   params: Promise<{ token: string }>;
 }
 
-export async function generateMetadata({
-  params,
-}: SharedReportPageProps): Promise<Metadata> {
-  const { token } = await params;
-  const shareResult = await getReportShareByToken(token);
-
-  if (!shareResult.success || !shareResult.data) {
-    return {
-      title: "Report Not Found | RepWell",
-    };
-  }
-
+export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: `${shareResult.data.title} | RepWell`,
+    title: "Shared Report | RepWell",
     description: "Shared performance report from RepWell",
   };
+}
+
+async function generateCachedSharedReport(share: ReportShare) {
+  return unstable_cache(
+    async () => generateReportForOrg({
+      organizationId: share.organizationId,
+      templateId: share.templateId,
+      dateRange: {
+        preset: "custom",
+        start: new Date(share.dateRangeStart),
+        end: new Date(share.dateRangeEnd),
+      },
+      filters: (share.filters || {}) as ReportFilters,
+    }),
+    [
+      "shared-report",
+      share.shareToken,
+      share.dateRangeStart.toISOString(),
+      share.dateRangeEnd.toISOString(),
+    ],
+    { revalidate: 3600 }
+  )();
 }
 
 export default async function SharedReportPage({
   params,
 }: SharedReportPageProps) {
   const { token } = await params;
-  const supabase = await createClient();
 
   // Get share details
   const shareResult = await getReportShareByToken(token);
@@ -91,25 +102,7 @@ export default async function SharedReportPage({
     );
   }
 
-  // Update access count
-  await supabase
-    .from("report_shares")
-    .update({
-      access_count: share.accessCount + 1,
-      last_accessed_at: new Date().toISOString(),
-    })
-    .eq("id", share.id);
-
-  // Generate the report
-  const reportResult = await generateReport(
-    share.templateId,
-    {
-      preset: "custom",
-      start: new Date(share.dateRangeStart),
-      end: new Date(share.dateRangeEnd),
-    },
-    share.filters || {}
-  );
+  const reportResult = await generateCachedSharedReport(share);
 
   if (!reportResult.success || !reportResult.data) {
     return (

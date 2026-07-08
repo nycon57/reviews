@@ -48,8 +48,6 @@ import {
   CursorClick as MousePointerClick,
   Warning as AlertTriangle,
   TrendUp as TrendingUp,
-  TrendDown as TrendingDown,
-  Minus,
   DownloadSimple as Download,
   ArrowsClockwise as RefreshCw,
   Info,
@@ -72,47 +70,12 @@ import type {
   TimePeriod,
 } from "@/lib/email-analytics/types";
 import { INDUSTRY_BENCHMARKS } from "@/lib/email-analytics/types";
-
-const CHART_COLORS = {
-  sent: "hsl(var(--chart-1))",
-  delivered: "hsl(var(--chart-2))",
-  opened: "hsl(var(--chart-3))",
-  clicked: "hsl(var(--chart-4))",
-  bounced: "hsl(var(--chart-5))",
-};
-
-const PIE_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
-
-function TrendIndicator({ value, suffix = "%" }: { value: number; suffix?: string }) {
-  if (value > 0) {
-    return (
-      <div className="flex items-center gap-1 text-green-600">
-        <TrendingUp className="h-3.5 w-3.5" />
-        <span className="text-xs font-medium">+{value}{suffix}</span>
-      </div>
-    );
-  }
-  if (value < 0) {
-    return (
-      <div className="flex items-center gap-1 text-red-600">
-        <TrendingDown className="h-3.5 w-3.5" />
-        <span className="text-xs font-medium">{value}{suffix}</span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-1 text-muted-foreground">
-      <Minus className="h-3.5 w-3.5" />
-      <span className="text-xs font-medium">0{suffix}</span>
-    </div>
-  );
-}
+import {
+  CHART_COLORS,
+  CHART_TOOLTIP_STYLE,
+  PIE_COLORS,
+  TrendIndicator,
+} from "@/components/analytics/chart-primitives";
 
 function BenchmarkIndicator({
   value,
@@ -207,7 +170,7 @@ function MetricCard({
               )}
             </div>
           </div>
-          {change !== undefined && <TrendIndicator value={change} />}
+          {change !== undefined && <TrendIndicator value={change} size="sm" />}
         </div>
       </CardContent>
     </Card>
@@ -435,12 +398,12 @@ export function EmailAnalyticsDashboard() {
                   <AreaChart data={trends} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorSent" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={CHART_COLORS.sent} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={CHART_COLORS.sent} stopOpacity={0} />
+                        <stop offset="5%" stopColor={CHART_COLORS[0]} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={CHART_COLORS[0]} stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorOpened" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={CHART_COLORS.opened} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={CHART_COLORS.opened} stopOpacity={0} />
+                        <stop offset="5%" stopColor={CHART_COLORS[2]} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={CHART_COLORS[2]} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -459,16 +422,14 @@ export function EmailAnalyticsDashboard() {
                     />
                     <RechartsTooltip
                       contentStyle={{
-                        backgroundColor: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
+                        ...CHART_TOOLTIP_STYLE,
                         fontSize: "12px",
                       }}
                     />
                     <Area
                       type="monotone"
                       dataKey="sent"
-                      stroke={CHART_COLORS.sent}
+                      stroke={CHART_COLORS[0]}
                       fill="url(#colorSent)"
                       strokeWidth={2}
                       name="Sent"
@@ -476,7 +437,7 @@ export function EmailAnalyticsDashboard() {
                     <Area
                       type="monotone"
                       dataKey="opened"
-                      stroke={CHART_COLORS.opened}
+                      stroke={CHART_COLORS[2]}
                       fill="url(#colorOpened)"
                       strokeWidth={2}
                       name="Opened"
@@ -528,9 +489,7 @@ export function EmailAnalyticsDashboard() {
                       </Pie>
                       <RechartsTooltip
                         contentStyle={{
-                          backgroundColor: "hsl(var(--popover))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
+                          ...CHART_TOOLTIP_STYLE,
                           fontSize: "12px",
                         }}
                         formatter={(value: number) => [value.toLocaleString(), "Emails"]}
@@ -606,9 +565,7 @@ export function EmailAnalyticsDashboard() {
                     />
                     <RechartsTooltip
                       contentStyle={{
-                        backgroundColor: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
+                        ...CHART_TOOLTIP_STYLE,
                         fontSize: "12px",
                       }}
                     />
@@ -810,9 +767,7 @@ export function EmailAnalyticsDashboard() {
                     />
                     <RechartsTooltip
                       contentStyle={{
-                        backgroundColor: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
+                        ...CHART_TOOLTIP_STYLE,
                         fontSize: "12px",
                       }}
                       formatter={(value: number) => [`${value}%`, "Completion Rate"]}
@@ -857,7 +812,7 @@ export function EmailAnalyticsDashboard() {
                     <p className="text-sm text-muted-foreground">Unsubscribe Rate</p>
                     <div className="flex items-center gap-2">
                       <p className="text-2xl font-bold">{unsubscribes.rate}%</p>
-                      <TrendIndicator value={unsubscribes.rateChange} />
+                      <TrendIndicator value={unsubscribes.rateChange} size="sm" />
                     </div>
                     <BenchmarkIndicator
                       value={unsubscribes.rate}

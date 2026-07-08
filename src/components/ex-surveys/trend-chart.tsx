@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import type { TrendDataPoint } from "@/lib/ex-surveys/actions";
 import { format } from "date-fns";
+import { CHART_TOOLTIP_STYLE } from "@/components/analytics/chart-primitives";
 
 interface EXTrendChartProps {
   data: TrendDataPoint[];
@@ -107,9 +108,7 @@ export function EXTrendChart({
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
+                  ...CHART_TOOLTIP_STYLE,
                   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                 }}
                 labelStyle={{ color: "hsl(var(--popover-foreground))" }}
@@ -228,9 +227,7 @@ export function EXMultiMetricChart({
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
+                  ...CHART_TOOLTIP_STYLE,
                   boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                 }}
                 labelStyle={{ color: "hsl(var(--popover-foreground))" }}

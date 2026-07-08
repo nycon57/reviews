@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { format, subDays, subWeeks, subMonths } from "date-fns";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateReport, createReportShare } from "@/lib/reporting";
+import {
+  createReportShareForOrg,
+  exportAndRecordReportForOrg,
+  generateReportForOrg,
+} from "@/lib/reporting";
 import { getScheduledReportEmail } from "@/lib/email/templates";
 import { getResendClient, getFromAddress, emailConfig } from "@/lib/email/client";
 import type { ScheduleFrequency, ReportFilters } from "@/lib/reporting/types";
 
 // Verify cron secret for security
 const CRON_SECRET = process.env.CRON_SECRET;
+
+export const maxDuration = 300;
 
 interface ScheduledReportRow {
   id: string;
@@ -23,6 +29,7 @@ interface ScheduledReportRow {
   is_active: boolean;
   next_run_at: string | null;
   last_run_at: string | null;
+  created_by: string | null;
   organizations: {
     name: string;
   };
@@ -33,10 +40,7 @@ export async function GET(request: NextRequest) {
     // Verify authorization
     const authHeader = request.headers.get("authorization");
     if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const supabase = createAdminClient();
@@ -45,12 +49,14 @@ export async function GET(request: NextRequest) {
     // Get all scheduled reports that are due
     const { data: scheduledReports, error: fetchError } = await supabase
       .from("scheduled_reports")
-      .select(`
+      .select(
+        `
         *,
         organizations!inner (
           name
         )
-      `)
+      `
+      )
       .eq("is_active", true)
       .lte("next_run_at", now.toISOString());
 
@@ -70,18 +76,26 @@ export async function GET(request: NextRequest) {
         // Calculate date range based on schedule
         const { dateRange, periodLabel } = getDateRangeForSchedule(scheduledReport.schedule);
 
-        // Generate the report
-        const reportResult = await generateReport(
-          scheduledReport.template_id,
-          {
-            preset: "custom",
-            start: dateRange.start,
-            end: dateRange.end,
-          },
-          scheduledReport.filters || {}
-        );
+        const reportDateRange = {
+          preset: "custom",
+          start: dateRange.start,
+          end: dateRange.end,
+        } as const;
+
+        // Generate the report for the schedule's organization.
+        const reportResult = await generateReportForOrg({
+          organizationId: scheduledReport.organization_id,
+          templateId: scheduledReport.template_id,
+          dateRange: reportDateRange,
+          filters: scheduledReport.filters || {},
+        });
 
         if (!reportResult.success || !reportResult.data) {
+          console.error("Failed to generate scheduled report", {
+            scheduleId: scheduledReport.id,
+            organizationId: scheduledReport.organization_id,
+            error: reportResult.error || "Failed to generate report",
+          });
           results.push({
             reportId: scheduledReport.id,
             success: false,
@@ -93,56 +107,127 @@ export async function GET(request: NextRequest) {
         const report = reportResult.data;
 
         // Create a shareable link for the report
-        const shareResult = await createReportShare(
-          scheduledReport.template_id,
-          `${scheduledReport.name} - ${periodLabel}`,
-          {
-            preset: "custom",
-            start: dateRange.start,
-            end: dateRange.end,
-          },
-          scheduledReport.filters || {},
-          30 // Link expires in 30 days
-        );
+        const shareResult = await createReportShareForOrg({
+          organizationId: scheduledReport.organization_id,
+          templateId: scheduledReport.template_id,
+          title: `${scheduledReport.name} - ${periodLabel}`,
+          dateRange: reportDateRange,
+          filters: scheduledReport.filters || {},
+          expiresInDays: 30,
+          sharedBy: scheduledReport.created_by,
+        });
 
-        const reportUrl = shareResult.success && shareResult.data
-          ? `${emailConfig.baseUrl}/reports/shared/${shareResult.data.shareToken}`
-          : `${emailConfig.baseUrl}/dashboard/reports`;
+        if (!shareResult.success || !shareResult.data) {
+          console.error("Failed to create scheduled report share", {
+            scheduleId: scheduledReport.id,
+            organizationId: scheduledReport.organization_id,
+            error: shareResult.error || "Failed to create share link",
+          });
+          results.push({
+            reportId: scheduledReport.id,
+            success: false,
+            error: shareResult.error || "Failed to create share link",
+          });
+          continue;
+        }
+
+        const reportUrl = `${emailConfig.baseUrl}/reports/shared/${shareResult.data.shareToken}`;
+
+        const exportResult = await exportAndRecordReportForOrg({
+          organizationId: scheduledReport.organization_id,
+          templateId: scheduledReport.template_id,
+          dateRange: reportDateRange,
+          format: "pdf",
+          filters: scheduledReport.filters || {},
+          report,
+          organizationName: scheduledReport.organizations.name,
+          createdBy: scheduledReport.created_by ?? null,
+        });
+
+        if (!exportResult.success || !exportResult.data) {
+          console.error("Failed to export scheduled report PDF", {
+            scheduleId: scheduledReport.id,
+            organizationId: scheduledReport.organization_id,
+            error: exportResult.error || "Failed to export report PDF",
+          });
+          results.push({
+            reportId: scheduledReport.id,
+            success: false,
+            error: exportResult.error || "Failed to export report PDF",
+          });
+          continue;
+        }
+
+        const pdfBuffer = Buffer.from(exportResult.data.data, "base64");
+        const pdfFilename = exportResult.data.filename;
 
         // Send email to all recipients
         const resend = getResendClient();
         const fromAddress = getFromAddress(scheduledReport.organizations.name);
+        const emailResults = await Promise.allSettled(
+          scheduledReport.recipients.map(async (recipientEmail) => {
+            const { subject, html } = getScheduledReportEmail({
+              toEmail: recipientEmail,
+              recipientName: recipientEmail.split("@")[0], // Fallback name
+              reportName: scheduledReport.name,
+              reportPeriod: periodLabel,
+              summary: {
+                totalReviews: report.executiveSummary.totalReviews,
+                averageRating: report.executiveSummary.averageRating,
+                npsScore: report.executiveSummary.npsScore,
+                csatScore: report.executiveSummary.csatScore,
+              },
+              reportUrl,
+              organizationName: scheduledReport.organizations.name,
+            });
 
-        for (const recipientEmail of scheduledReport.recipients) {
-          const { subject, html } = getScheduledReportEmail({
-            toEmail: recipientEmail,
-            recipientName: recipientEmail.split("@")[0], // Fallback name
-            reportName: scheduledReport.name,
-            reportPeriod: periodLabel,
-            summary: {
-              totalReviews: report.executiveSummary.totalReviews,
-              averageRating: report.executiveSummary.averageRating,
-              npsScore: report.executiveSummary.npsScore,
-              csatScore: report.executiveSummary.csatScore,
-            },
-            reportUrl,
-            organizationName: scheduledReport.organizations.name,
-          });
-
-          try {
             await resend.emails.send({
               from: fromAddress,
               to: recipientEmail,
               subject,
               html,
+              attachments: [
+                {
+                  filename: pdfFilename,
+                  content: pdfBuffer,
+                },
+              ],
               tags: [
                 { name: "template", value: "scheduled_report" },
                 { name: "scheduled_report_id", value: scheduledReport.id },
               ],
             });
-          } catch (emailError) {
-            console.error(`Failed to send email to ${recipientEmail}:`, emailError);
-          }
+          })
+        );
+
+        const failedRecipients = emailResults.flatMap((result, index) =>
+          result.status === "rejected"
+            ? [
+                {
+                  recipientEmail: scheduledReport.recipients[index],
+                  error: result.reason,
+                },
+              ]
+            : []
+        );
+
+        if (failedRecipients.length > 0) {
+          console.error("Failed to send scheduled report emails", {
+            scheduleId: scheduledReport.id,
+            organizationId: scheduledReport.organization_id,
+            failureCount: failedRecipients.length,
+            recipientCount: scheduledReport.recipients.length,
+            failedRecipients,
+          });
+        }
+
+        if (failedRecipients.length === scheduledReport.recipients.length) {
+          results.push({
+            reportId: scheduledReport.id,
+            success: false,
+            error: "Failed to send report email to all recipients",
+          });
+          continue;
         }
 
         // Calculate next run time
@@ -162,7 +247,11 @@ export async function GET(request: NextRequest) {
           success: true,
         });
       } catch (reportError) {
-        console.error(`Error processing scheduled report ${scheduledReport.id}:`, reportError);
+        console.error("Error processing scheduled report", {
+          scheduleId: scheduledReport.id,
+          organizationId: scheduledReport.organization_id,
+          error: reportError,
+        });
         results.push({
           reportId: scheduledReport.id,
           success: false,
@@ -178,10 +267,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error in scheduled reports cron:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -242,7 +328,9 @@ function calculateNextRunTime(scheduledReport: ScheduledReportRow): Date {
       // Next month on the scheduled day
       const targetDate = scheduledReport.schedule_day_of_month ?? 1; // Default to 1st
       next.setMonth(next.getMonth() + 1);
-      next.setDate(Math.min(targetDate, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
+      next.setDate(
+        Math.min(targetDate, new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate())
+      );
       break;
     }
   }

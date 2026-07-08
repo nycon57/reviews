@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   XAxis,
   YAxis,
@@ -19,12 +26,10 @@ import {
 import {
   SpinnerGap as Loader2,
   Star,
-  TrendUp as TrendingUp,
-  TrendDown as TrendingDown,
-  Minus,
   Users,
   ChartBar as BarChart3,
   Chats as MessageSquare,
+  CalendarDots,
   Warning as AlertTriangle,
   Trophy,
 } from "@phosphor-icons/react";
@@ -33,51 +38,57 @@ import {
   getUserComparison,
   getLeaderboard,
   getLowPerformers,
+  getReviewsBySource,
   type TeamMetrics,
   type UserComparison,
   type LeaderboardEntry,
+  type ReviewsBySourceEntry,
+  type ReviewsBySourceOptions,
 } from "@/lib/dashboard";
+import {
+  CHART_COLORS,
+  CHART_TOOLTIP_STYLE,
+  TrendIndicator,
+} from "@/components/analytics/chart-primitives";
+import { getInitials } from "@/lib/utils";
 
-const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
+type AdminDateRange = "7d" | "30d" | "90d" | "this_month" | "last_month" | "all";
 
-function TrendIndicator({ value, suffix = "%" }: { value: number; suffix?: string }) {
-  if (value > 0) {
-    return (
-      <div className="flex items-center gap-1 text-green-600">
-        <TrendingUp className="h-4 w-4" />
-        <span className="text-sm font-medium">+{value}{suffix}</span>
-      </div>
-    );
+function getDateRangeValues(range: AdminDateRange): ReviewsBySourceOptions {
+  const now = new Date();
+  let startDate: Date;
+  let endDate = now;
+
+  switch (range) {
+    case "7d":
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 7);
+      break;
+    case "30d":
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 30);
+      break;
+    case "90d":
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 90);
+      break;
+    case "this_month":
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      break;
+    case "last_month":
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+      break;
+    case "all":
+    default:
+      return {};
   }
-  if (value < 0) {
-    return (
-      <div className="flex items-center gap-1 text-red-600">
-        <TrendingDown className="h-4 w-4" />
-        <span className="text-sm font-medium">{value}{suffix}</span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-1 text-muted-foreground">
-      <Minus className="h-4 w-4" />
-      <span className="text-sm font-medium">0{suffix}</span>
-    </div>
-  );
-}
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  return {
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  };
 }
 
 function getPerformanceColor(status: string): string {
@@ -101,8 +112,10 @@ export function AdminAnalyticsDashboard() {
   const [topPerformers, setTopPerformers] = useState<LeaderboardEntry[]>([]);
   const [lowPerformers, setLowPerformers] = useState<UserComparison[]>([]);
   const [allUsers, setAllUsers] = useState<UserComparison[]>([]);
+  const [reviewsBySource, setReviewsBySource] = useState<ReviewsBySourceEntry[]>([]);
+  const [sourceDateRange, setSourceDateRange] = useState<AdminDateRange>("30d");
 
-  const loadData = () => {
+  const loadStaticData = useCallback(() => {
     startTransition(async () => {
       const [metricsResult, topResult, lowResult, allResult] = await Promise.all([
         getTeamMetrics(),
@@ -124,11 +137,24 @@ export function AdminAnalyticsDashboard() {
         setAllUsers(allResult.data);
       }
     });
-  };
+  }, []);
+
+  const loadSourceData = useCallback(() => {
+    startTransition(async () => {
+      const sourceResult = await getReviewsBySource(getDateRangeValues(sourceDateRange));
+      if (sourceResult.success && sourceResult.data) {
+        setReviewsBySource(sourceResult.data);
+      }
+    });
+  }, [sourceDateRange]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadStaticData();
+  }, [loadStaticData]);
+
+  useEffect(() => {
+    loadSourceData();
+  }, [loadSourceData]);
 
   // Calculate review distribution by performance status
   const performanceDistribution = allUsers.reduce(
@@ -146,13 +172,10 @@ export function AdminAnalyticsDashboard() {
     { name: "At Risk", value: performanceDistribution.at_risk || 0 },
   ].filter((d) => d.value > 0);
 
-  // Calculate review volume by source (mock data based on actual reviews)
-  const reviewBySource = [
-    { name: "Google", reviews: Math.floor((metrics?.totalReviews || 0) * 0.45) },
-    { name: "Internal", reviews: Math.floor((metrics?.totalReviews || 0) * 0.30) },
-    { name: "Zillow", reviews: Math.floor((metrics?.totalReviews || 0) * 0.15) },
-    { name: "Facebook", reviews: Math.floor((metrics?.totalReviews || 0) * 0.10) },
-  ];
+  const reviewBySource = reviewsBySource.map((entry) => ({
+    name: entry.label,
+    reviews: entry.count,
+  }));
 
   return (
     <div className="space-y-6">
@@ -192,9 +215,7 @@ export function AdminAnalyticsDashboard() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Avg Rating</p>
-                  <p className="text-xl font-bold">
-                    {metrics?.averageRating?.toFixed(1) || "0.0"}
-                  </p>
+                  <p className="text-xl font-bold">{metrics?.averageRating?.toFixed(1) || "0.0"}</p>
                 </div>
               </div>
               <TrendIndicator value={metrics?.averageRatingChange || 0} />
@@ -247,47 +268,81 @@ export function AdminAnalyticsDashboard() {
         <div className="lg:col-span-2">
           <Card className="shadow-soft">
             <CardHeader className="pb-2">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                  <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                    <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
+                  </div>
+                  <CardTitle className="text-lg font-semibold">
+                    Review Distribution by Source
+                  </CardTitle>
                 </div>
-                <CardTitle className="text-lg font-semibold">Review Distribution by Source</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CalendarDots className="h-4 w-4 text-muted-foreground" />
+                  <Select
+                    value={sourceDateRange}
+                    onValueChange={(value) => setSourceDateRange(value as AdminDateRange)}
+                  >
+                    <SelectTrigger
+                      className="h-9 w-[150px]"
+                      aria-label="Select review source date range"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7d">Last 7 days</SelectItem>
+                      <SelectItem value="30d">Last 30 days</SelectItem>
+                      <SelectItem value="90d">Last 90 days</SelectItem>
+                      <SelectItem value="this_month">This month</SelectItem>
+                      <SelectItem value="last_month">Last month</SelectItem>
+                      <SelectItem value="all">All time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={reviewBySource} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      dy={10}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      dx={-10}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value: number) => [value, "Reviews"]}
-                    />
-                    <Bar
-                      dataKey="reviews"
-                      fill="hsl(var(--chart-1))"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              {reviewBySource.length === 0 ? (
+                <div className="flex h-[250px] items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <BarChart3 className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                    <p className="text-sm">No source data for this range</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={reviewBySource}
+                      margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="hsl(var(--border))"
+                      />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                        dy={10}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                        dx={-10}
+                      />
+                      <Tooltip
+                        contentStyle={CHART_TOOLTIP_STYLE}
+                        formatter={(value: number) => [value, "Reviews"]}
+                      />
+                      <Bar dataKey="reviews" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -306,7 +361,7 @@ export function AdminAnalyticsDashboard() {
             {topPerformers.length === 0 ? (
               <div className="flex h-[220px] items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <Trophy className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <Trophy className="mx-auto mb-3 h-12 w-12 opacity-20" />
                   <p className="text-sm">No data available yet</p>
                 </div>
               </div>
@@ -323,10 +378,11 @@ export function AdminAnalyticsDashboard() {
                         {getInitials(performer.fullName)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{performer.fullName}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{performer.fullName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {performer.averageRating.toFixed(1)} stars / {performer.totalReviews} reviews
+                        {performer.averageRating.toFixed(1)} stars / {performer.totalReviews}{" "}
+                        reviews
                       </p>
                     </div>
                   </div>
@@ -353,7 +409,7 @@ export function AdminAnalyticsDashboard() {
             {pieData.length === 0 ? (
               <div className="flex h-[220px] items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <Users className="mx-auto mb-3 h-12 w-12 opacity-20" />
                   <p className="text-sm">No performance data available yet</p>
                 </div>
               </div>
@@ -372,15 +428,14 @@ export function AdminAnalyticsDashboard() {
                         dataKey="value"
                       >
                         {pieData.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={CHART_COLORS[index % CHART_COLORS.length]}
+                          />
                         ))}
                       </Pie>
                       <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--popover))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                        }}
+                        contentStyle={CHART_TOOLTIP_STYLE}
                         formatter={(value: number) => [value, "Team Members"]}
                       />
                     </PieChart>
@@ -417,7 +472,7 @@ export function AdminAnalyticsDashboard() {
             {lowPerformers.length === 0 ? (
               <div className="flex h-[220px] items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <AlertTriangle className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <AlertTriangle className="mx-auto mb-3 h-12 w-12 opacity-20" />
                   <p className="text-sm">All team members performing well!</p>
                 </div>
               </div>
@@ -431,8 +486,8 @@ export function AdminAnalyticsDashboard() {
                         {getInitials(member.fullName)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{member.fullName}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{member.fullName}</p>
                       <p className="text-xs text-muted-foreground">
                         {member.averageRating.toFixed(1)} stars / NPS: {member.npsScore}
                       </p>

@@ -22,6 +22,7 @@
 export type {
   PeriodType,
   DateRange,
+  AnalyticsOrgContext,
   NPSBreakdown,
   CSATMetrics,
   ResponseRateMetrics,

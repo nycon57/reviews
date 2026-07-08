@@ -41,5 +41,3 @@ export {
   computeSwitchingFromDistribution,
   generateWeeklyReportData,
 } from "./metrics";
-
-export { generateMockABEvents } from "./mock-data";

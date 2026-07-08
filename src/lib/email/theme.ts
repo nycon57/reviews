@@ -5,65 +5,35 @@
  * following the Repwell design system specifications.
  */
 
+import { brandColors } from "@/lib/brand/colors";
+
 // =============================================================================
 // COLOR PALETTE
 // =============================================================================
 
 export const colors = {
   // Brand Colors
-  repwell: {
-    sage: {
-      100: "#cad2c5", // Lightest sage - backgrounds, subtle fills
-      200: "#84a98c", // Mid sage - secondary elements, accent
-    },
-    teal: {
-      300: "#52796f", // Primary teal - buttons, links, accents
-      400: "#354f52", // Deep teal - headings
-      500: "#2f3e46", // Darkest - text, dark sections
-    },
-  },
+  repwell: brandColors.repwell,
 
   // Semantic Colors
-  primary: "#52796f",
-  primaryHover: "#354f52",
-  primaryLight: "#84a98c",
+  primary: brandColors.primary,
+  primaryHover: brandColors.primaryHover,
+  primaryLight: brandColors.primaryLight,
 
-  secondary: "#84a98c",
-  secondaryHover: "#52796f",
+  secondary: brandColors.secondary,
+  secondaryHover: brandColors.secondaryHover,
 
   // Background Colors
-  background: {
-    white: "#ffffff",
-    subtle: "#f8faf8",
-    muted: "#f0f4f0",
-    sage: "#cad2c5",
-    dark: "#2f3e46",
-  },
+  background: brandColors.background,
 
   // Text Colors
-  text: {
-    primary: "#2f3e46",
-    secondary: "#354f52",
-    muted: "#52796f",
-    subtle: "#84a98c",
-    inverse: "#ffffff",
-    inverseMuted: "#cad2c5",
-  },
+  text: brandColors.text,
 
   // Border Colors
-  border: {
-    default: "#e2e8e4",
-    subtle: "#eef2ee",
-    accent: "#84a98c",
-  },
+  border: brandColors.border,
 
   // Accent Colors (for status indicators)
-  accent: {
-    success: "#84a98c",
-    warning: "#d4a574",
-    error: "#c47c7c",
-    info: "#7c9eb8",
-  },
+  accent: brandColors.accent,
 
   // Legacy compatibility (for existing templates)
   legacy: {
@@ -90,8 +60,7 @@ export const typography = {
   // Font Families (email-safe)
   fontFamily: {
     // Display/Headlines - serif fallback for emails
-    display:
-      '"Georgia", "Times New Roman", "Libre Baskerville", Times, serif',
+    display: '"Georgia", "Times New Roman", "Libre Baskerville", Times, serif',
     // Body/UI - Source Sans 3 with fallbacks
     body: '"Source Sans 3", "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     // Monospace for code
@@ -297,10 +266,7 @@ export const buttonStyles = {
  */
 export function inlineStyles(styles: Record<string, string | number>): string {
   return Object.entries(styles)
-    .map(
-      ([key, value]) =>
-        `${key.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${value}`
-    )
+    .map(([key, value]) => `${key.replace(/([A-Z])/g, "-$1").toLowerCase()}: ${value}`)
     .join("; ");
 }
 

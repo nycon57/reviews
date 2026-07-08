@@ -16,47 +16,15 @@ import {
   Smiley,
   EnvelopeSimple,
   ArrowsLeftRight,
-  TrendUp,
   TrendDown,
-  Minus,
   Sparkle,
 } from "@phosphor-icons/react";
 import type { LOPerformanceScorecard } from "@/lib/ai";
+import { TrendIndicator } from "@/components/analytics/chart-primitives";
 import { cn } from "@/lib/utils";
 
 interface PerformanceScorecardProps {
   data: LOPerformanceScorecard;
-}
-
-function TrendIndicator({
-  direction,
-  value,
-}: {
-  direction: "up" | "down" | "stable";
-  value?: string;
-}) {
-  if (direction === "up") {
-    return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-green-600 dark:text-green-400">
-        <TrendUp className="h-3 w-3" weight="bold" />
-        {value}
-      </span>
-    );
-  }
-  if (direction === "down") {
-    return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-red-600 dark:text-red-400">
-        <TrendDown className="h-3 w-3" weight="bold" />
-        {value}
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
-      <Minus className="h-3 w-3" />
-      {value || "Stable"}
-    </span>
-  );
 }
 
 function MetricCard({

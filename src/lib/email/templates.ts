@@ -779,57 +779,60 @@ export function getScheduledReportEmail(data: ScheduledReportEmailData): {
 
   const content = `
     <tr>
-      <td style="padding: 32px; text-align: center; background-color: #6366f1; border-bottom: 1px solid #4f46e5;">
+      <td style="padding: 32px; text-align: center; background-color: #2f3e46; border-bottom: 1px solid #354f52;">
         <span style="font-size: 24px; font-weight: bold; color: #ffffff;">${data.organizationName}</span>
       </td>
     </tr>
     <tr>
       <td style="padding: 40px 32px;">
-        <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+        <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 600; color: #2f3e46; text-align: center;">
           ${data.reportName}
         </h1>
-        <p style="margin: 0 0 32px 0; font-size: 14px; color: #71717a; text-align: center;">
+        <p style="margin: 0 0 12px 0; font-size: 14px; color: #52796f; text-align: center;">
           ${data.reportPeriod}
+        </p>
+        <p style="margin: 0 0 32px 0; font-size: 14px; color: #52796f; text-align: center;">
+          Your PDF report is attached. You can also open the live share link below.
         </p>
 
         <!-- Summary Stats Grid -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
           <tr>
-            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 8px 0 0 0; text-align: center; border-right: 1px solid #e4e4e7; border-bottom: 1px solid #e4e4e7;">
-              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">Total Reviews</p>
-              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #18181b;">${data.summary.totalReviews}</p>
+            <td style="padding: 16px; background-color: #f8faf8; border-radius: 8px 0 0 0; text-align: center; border-right: 1px solid #e2e8e4; border-bottom: 1px solid #e2e8e4;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #52796f; text-transform: uppercase;">Total Reviews</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #2f3e46;">${data.summary.totalReviews}</p>
             </td>
-            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 0 8px 0 0; text-align: center; border-bottom: 1px solid #e4e4e7;">
-              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">Avg Rating</p>
-              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #18181b;">${data.summary.averageRating.toFixed(1)}</p>
+            <td style="padding: 16px; background-color: #f8faf8; border-radius: 0 8px 0 0; text-align: center; border-bottom: 1px solid #e2e8e4;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #52796f; text-transform: uppercase;">Avg Rating</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #2f3e46;">${data.summary.averageRating.toFixed(1)}</p>
             </td>
           </tr>
           <tr>
-            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 0 0 0 8px; text-align: center; border-right: 1px solid #e4e4e7;">
-              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">NPS Score</p>
+            <td style="padding: 16px; background-color: #f8faf8; border-radius: 0 0 0 8px; text-align: center; border-right: 1px solid #e2e8e4;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #52796f; text-transform: uppercase;">NPS Score</p>
               <p style="margin: 0; font-size: 24px; font-weight: 700; color: ${npsColor};">${data.summary.npsScore}</p>
             </td>
-            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 0 0 8px 0; text-align: center;">
-              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">CSAT Score</p>
-              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #18181b;">${data.summary.csatScore}%</p>
+            <td style="padding: 16px; background-color: #f8faf8; border-radius: 0 0 8px 0; text-align: center;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #52796f; text-transform: uppercase;">CSAT Score</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #2f3e46;">${data.summary.csatScore}%</p>
             </td>
           </tr>
         </table>
 
         <div style="text-align: center; margin: 24px 0;">
           ${ratingDisplay}
-          <p style="margin: 8px 0 0 0; font-size: 14px; color: #71717a;">
+          <p style="margin: 8px 0 0 0; font-size: 14px; color: #52796f;">
             Average Rating: ${data.summary.averageRating.toFixed(1)} out of 5
           </p>
         </div>
 
         <div style="text-align: center; margin-top: 32px;">
-          <a href="${data.reportUrl}" style="display: inline-block; padding: 16px 32px; background-color: #6366f1; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+          <a href="${data.reportUrl}" style="display: inline-block; padding: 16px 32px; background-color: #52796f; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
             View Full Report
           </a>
         </div>
-        <p style="margin: 24px 0 0 0; font-size: 12px; color: #71717a; text-align: center;">
-          This report was automatically generated and sent to you as part of your scheduled reports.
+        <p style="margin: 24px 0 0 0; font-size: 12px; color: #52796f; text-align: center;">
+          This report was automatically generated and sent to you as part of your scheduled reports. The share link expires after 30 days.
         </p>
       </td>
     </tr>

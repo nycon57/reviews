@@ -203,7 +203,7 @@ export async function createSurveyAndQueue(
     // send-time suppression check keys off the email regardless of linkage.
     let contactId: string | null = null;
     try {
-      const contact = await findOrCreateContact(
+      const { contact } = await findOrCreateContact(
         userData.organization_id,
         {
           email: validated.data.customerEmail,

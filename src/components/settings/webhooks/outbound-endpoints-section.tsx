@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   CaretDown,
@@ -446,12 +446,18 @@ export function OutboundEndpointsSection() {
               </TableHeader>
               <TableBody>
                 {subscriptions.map((subscription) => (
-                  <>
+                  <Fragment key={subscription.id}>
                     <TableRow key={subscription.id}>
                       <TableCell className="min-w-72 align-top">
                         <p className="break-all font-medium text-heading-accent">
                           {subscription.targetUrl}
                         </p>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          <Badge variant={subscription.isActive ? "outline" : "secondary"}>
+                            {subscription.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                          <Badge variant="secondary">{subscription.source}</Badge>
+                        </div>
                         {subscription.description && (
                           <p className="mt-1 text-xs text-muted-foreground">
                             {subscription.description}
@@ -526,7 +532,7 @@ export function OutboundEndpointsSection() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>

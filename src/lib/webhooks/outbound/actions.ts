@@ -1,13 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { unifiedGetUser } from "@/lib/auth/actions";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdminAccess } from "@/lib/webhooks/actions";
 import {
-  OUTBOUND_WEBHOOK_EVENTS,
   generateWebhookSecret,
   isOutboundWebhookEventType,
+  outboundWebhookSubscriptionInputSchema,
   type OutboundWebhookEventType,
 } from "@/lib/webhooks/outbound";
 
@@ -37,53 +36,11 @@ export interface OutboundWebhookDeliverySummary {
   status: string;
   attempt_count: number;
   response_status: number | null;
+  max_attempts: number;
   error_message: string | null;
   created_at: string;
   last_attempt_at: string | null;
   delivered_at: string | null;
-}
-
-const subscriptionInputSchema = z.object({
-  target_url: z.string().url().refine((value) => {
-    try {
-      return new URL(value).protocol === "https:";
-    } catch {
-      return false;
-    }
-  }, "Webhook target URL must use HTTPS"),
-  events: z.array(z.enum(OUTBOUND_WEBHOOK_EVENTS)).default([]),
-  description: z.string().max(500).optional(),
-});
-
-async function requireAdminAccess(): Promise<
-  | { success: true; organizationId: string; userId: string }
-  | { success: false; error: string }
-> {
-  const user = await unifiedGetUser();
-  if (!user) {
-    return { success: false, error: "Not authenticated" };
-  }
-
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("users")
-    .select("id, organization_id, role")
-    .eq("id", user.id)
-    .single();
-
-  if (error || !data?.organization_id) {
-    return { success: false, error: "Organization not found" };
-  }
-
-  if (data.role !== "admin") {
-    return { success: false, error: "Admin access required" };
-  }
-
-  return {
-    success: true,
-    organizationId: data.organization_id,
-    userId: data.id,
-  };
 }
 
 function normalizeEvents(events: string[]): OutboundWebhookEventType[] {
@@ -155,7 +112,7 @@ export async function createOutboundWebhookSubscription(input: {
     const auth = await requireAdminAccess();
     if (!auth.success) return { success: false, error: auth.error };
 
-    const parsed = subscriptionInputSchema.safeParse(input);
+    const parsed = outboundWebhookSubscriptionInputSchema.safeParse(input);
     if (!parsed.success) {
       return {
         success: false,
@@ -237,6 +194,8 @@ export async function deleteOutboundWebhookSubscription(
     if (!auth.success) return { success: false, error: auth.error };
 
     const supabase = createAdminClient();
+    // Dashboard deletes are hard deletes after an explicit confirmation; REST
+    // unsubscribe only deactivates so Zapier delivery history remains intact.
     const { error } = await supabase
       .from("webhook_subscriptions")
       .delete()
@@ -281,7 +240,7 @@ export async function getRecentWebhookDeliveries(
     const { data, error } = await supabase
       .from("webhook_deliveries")
       .select(
-        "id, event_type, event_id, status, attempt_count, response_status, error_message, created_at, last_attempt_at, delivered_at"
+        "id, event_type, event_id, status, attempt_count, max_attempts, response_status, error_message, created_at, last_attempt_at, delivered_at"
       )
       .eq("organization_id", auth.organizationId)
       .eq("subscription_id", subscriptionId)

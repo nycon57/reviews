@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const nock = require("nock");
 const zapier = require("zapier-platform-core");
 const App = require("../index");
+const sampleSnapshot = require("../utils/sample-snapshot.json");
 
 const appTester = zapier.createAppTester(App);
 const BASE_URL = "https://repwell.test";
@@ -77,6 +78,27 @@ test("new review trigger subscribes to review.published and parses hook payloads
 
   assert.deepEqual(parsed, [payload]);
   assert.equal(nock.isDone(), true);
+});
+
+test("trigger samples match the checked-in outbound webhook snapshot", () => {
+  const triggerEvents = {
+    new_review: "review.published",
+    negative_review: "review.negative",
+    review_response: "review.responded",
+    survey_completed: "survey.completed",
+    new_contact: "contact.created",
+  };
+
+  for (const [triggerKey, eventType] of Object.entries(triggerEvents)) {
+    const triggerSample = App.triggers[triggerKey].operation.sample;
+    const snapshotSample = sampleSnapshot[eventType];
+
+    assert.deepEqual(triggerSample, snapshotSample);
+    assert.deepEqual(
+      Object.keys(triggerSample.data).sort(),
+      Object.keys(snapshotSample.data).sort()
+    );
+  }
 });
 
 test("create contact action posts contact fields", async () => {

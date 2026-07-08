@@ -151,21 +151,8 @@ async function handlePost(request: NextRequest, context: ApiAuthContext) {
     }
   }
 
-  const { data: existing, error: existingError } = await supabase
-    .from("contacts")
-    .select("id")
-    .eq("organization_id", context.organizationId)
-    .eq("email", email)
-    .is("erased_at", null)
-    .maybeSingle();
-
-  if (existingError) {
-    console.error("[contacts-api] existing contact lookup failed", existingError);
-    return apiInternalError(context.requestId, "Failed to check existing contact");
-  }
-
   try {
-    const contact = await findOrCreateContact(
+    const result = await findOrCreateContact(
       context.organizationId,
       {
         email,
@@ -176,7 +163,11 @@ async function handlePost(request: NextRequest, context: ApiAuthContext) {
       input.source ?? "manual"
     );
 
-    return apiSuccess(mapContact(contact), context.requestId, existing ? 200 : 201);
+    return apiSuccess(
+      mapContact(result.contact),
+      context.requestId,
+      result.createdNew ? 201 : 200
+    );
   } catch (error) {
     console.error("[contacts-api] failed to create contact", error);
     return apiInternalError(

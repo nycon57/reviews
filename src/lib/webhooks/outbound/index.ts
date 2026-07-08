@@ -1,5 +1,6 @@
 export {
   OUTBOUND_WEBHOOK_EVENTS,
+  outboundWebhookSubscriptionInputSchema,
   type ContactCreatedWebhookData,
   type OutboundWebhookData,
   type OutboundWebhookDataByType,
@@ -12,8 +13,10 @@ export {
 
 export {
   buildWebhookEnvelope,
+  deactivateOutboundWebhookSubscription,
   emitWebhookEvent,
   generateWebhookSecret,
+  hasActiveSubscriptions,
   isOutboundWebhookEventType,
   processWebhookDeliveryQueue,
   signWebhookPayload,

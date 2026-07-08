@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { after } from "next/server";
 import { z } from "zod";
 import type {
   Question,
@@ -289,18 +290,20 @@ export async function submitSurveyResponse(
       })
       .eq("id", survey.id);
 
-    await emitWebhookEvent({
-      organizationId: survey.organization_id,
-      type: "survey.completed",
-      data: {
-        survey_id: survey.id,
-        contact_id: survey.contact_id,
-        completed_at: completedAt,
-        rating: overallRating,
-        nps: npsScore,
-      },
-    }).catch((error) => {
-      console.error("Failed to enqueue survey.completed webhook:", error);
+    after(async () => {
+      await emitWebhookEvent({
+        organizationId: survey.organization_id,
+        type: "survey.completed",
+        data: {
+          survey_id: survey.id,
+          contact_id: survey.contact_id,
+          completed_at: completedAt,
+          rating: overallRating,
+          nps: npsScore,
+        },
+      }).catch((error) => {
+        console.error("Failed to enqueue survey.completed webhook:", error);
+      });
     });
 
     // Get customer name from survey for review creation

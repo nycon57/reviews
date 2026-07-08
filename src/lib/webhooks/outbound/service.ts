@@ -45,6 +45,8 @@ interface ServiceOptions {
 }
 
 const DELIVERY_TIMEOUT_MS = 10_000;
+const DELIVERY_CHUNK_SIZE = 8;
+const ERROR_BODY_LIMIT_BYTES = 2048;
 
 export function isOutboundWebhookEventType(
   eventType: string
@@ -192,6 +194,35 @@ export async function emitWebhookEvent<T extends OutboundWebhookEventType>(
   }
 }
 
+export async function hasActiveSubscriptions(
+  organizationId: string,
+  eventTypes: OutboundWebhookEventType[],
+  options: Pick<ServiceOptions, "supabase"> = {}
+): Promise<boolean> {
+  try {
+    const supabase = options.supabase ?? createAdminClient();
+    const arrayLiteral = `{${eventTypes.map((type) => `"${type}"`).join(",")}}`;
+    const { data, error } = await supabase
+      .from("webhook_subscriptions")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .or(`events.eq.{},events.ov.${arrayLiteral}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("[outbound-webhooks] Failed to check subscriptions:", error);
+      return true;
+    }
+
+    return data != null;
+  } catch (error) {
+    console.error("[outbound-webhooks] Subscription check failed:", error);
+    return true;
+  }
+}
+
 async function getDueDeliveries(
   supabase: SupabaseAdminClient,
   batchSize: number,
@@ -221,6 +252,26 @@ async function getDueDeliveries(
   }
 
   return (data ?? []) as unknown as DeliveryWithSubscription[];
+}
+
+async function resetStuckDeliveries(
+  supabase: SupabaseAdminClient,
+  cutoff: string,
+  now: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("webhook_deliveries")
+    .update({
+      status: "failed",
+      scheduled_at: now,
+      error_message: "Delivery worker timed out before completion",
+    })
+    .eq("status", "delivering")
+    .lt("last_attempt_at", cutoff);
+
+  if (error) {
+    console.error("[outbound-webhooks] Failed to reset stuck deliveries:", error);
+  }
 }
 
 async function claimDelivery(
@@ -373,7 +424,7 @@ async function postDelivery(
 async function responseErrorMessage(response: Response): Promise<string> {
   let responseText = "";
   try {
-    responseText = await response.text();
+    responseText = await readResponseBodyPrefix(response, ERROR_BODY_LIMIT_BYTES);
   } catch {
     responseText = "";
   }
@@ -381,6 +432,118 @@ async function responseErrorMessage(response: Response): Promise<string> {
   return responseText
     ? `HTTP ${response.status}: ${responseText.slice(0, 300)}`
     : `HTTP ${response.status}`;
+}
+
+async function readResponseBodyPrefix(
+  response: Response,
+  maxBytes: number
+): Promise<string> {
+  if (!response.body) return "";
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const chunks: string[] = [];
+  let bytesRead = 0;
+
+  while (bytesRead < maxBytes) {
+    const { done, value } = await reader.read();
+    if (done || !value) break;
+
+    const remaining = maxBytes - bytesRead;
+    const chunk = value.byteLength > remaining ? value.slice(0, remaining) : value;
+    bytesRead += chunk.byteLength;
+    chunks.push(decoder.decode(chunk, { stream: bytesRead < maxBytes }));
+
+    if (value.byteLength > remaining) break;
+  }
+
+  try {
+    await reader.cancel();
+  } catch {
+    // Best effort: the error body prefix is all we need.
+  }
+
+  chunks.push(decoder.decode());
+  return chunks.join("");
+}
+
+function emptyQueueResult(): ProcessWebhookDeliveryQueueResult {
+  return {
+    processed: 0,
+    delivered: 0,
+    retried: 0,
+    dead: 0,
+    failed: 0,
+    errors: [],
+  };
+}
+
+function mergeQueueResult(
+  target: ProcessWebhookDeliveryQueueResult,
+  source: ProcessWebhookDeliveryQueueResult
+): void {
+  target.processed += source.processed;
+  target.delivered += source.delivered;
+  target.retried += source.retried;
+  target.dead += source.dead;
+  target.failed += source.failed;
+  target.errors.push(...source.errors);
+}
+
+async function processDelivery(
+  supabase: SupabaseAdminClient,
+  pendingDelivery: DeliveryWithSubscription,
+  now: string,
+  fetchImpl: typeof fetch
+): Promise<ProcessWebhookDeliveryQueueResult> {
+  const result = emptyQueueResult();
+  const subscription = asSubscription(pendingDelivery);
+  if (!subscription?.is_active) {
+    result.failed++;
+    result.errors.push(`${pendingDelivery.id}: subscription inactive or missing`);
+    return result;
+  }
+
+  const claimed = await claimDelivery(supabase, pendingDelivery, now);
+  if (!claimed) {
+    return result;
+  }
+
+  result.processed++;
+
+  try {
+    const response = await postDelivery(claimed, subscription, fetchImpl);
+    if (response.ok) {
+      await markDelivered(supabase, claimed, response.status, now);
+      result.delivered++;
+      return result;
+    }
+
+    const message = await responseErrorMessage(response);
+    const state = await markFailedOrDead(supabase, claimed, {
+      responseStatus: response.status,
+      errorMessage: message,
+      now,
+    });
+    if (state === "dead") result.dead++;
+    else result.retried++;
+  } catch (error) {
+    const message = errorMessage(error);
+    try {
+      const state = await markFailedOrDead(supabase, claimed, {
+        responseStatus: null,
+        errorMessage: message,
+        now,
+      });
+      if (state === "dead") result.dead++;
+      else result.retried++;
+    } catch (markError) {
+      result.failed++;
+      result.errors.push(`${claimed.id}: ${errorMessage(markError)}`);
+    }
+  }
+
+  return result;
 }
 
 export async function processWebhookDeliveryQueue(
@@ -391,64 +554,54 @@ export async function processWebhookDeliveryQueue(
   const nowDate = options.now?.() ?? new Date();
   const now = nowDate.toISOString();
   const fetchImpl = options.fetch ?? fetch;
+  const stuckCutoff = new Date(nowDate.getTime() - 15 * 60 * 1000).toISOString();
+  await resetStuckDeliveries(supabase, stuckCutoff, now);
   const deliveries = await getDueDeliveries(supabase, clampBatchSize(batchSize), now);
-  const result: ProcessWebhookDeliveryQueueResult = {
-    processed: 0,
-    delivered: 0,
-    retried: 0,
-    dead: 0,
-    failed: 0,
-    errors: [],
-  };
+  const result = emptyQueueResult();
 
-  for (const pendingDelivery of deliveries) {
-    const subscription = asSubscription(pendingDelivery);
-    if (!subscription?.is_active) {
-      result.failed++;
-      result.errors.push(`${pendingDelivery.id}: subscription inactive or missing`);
-      continue;
-    }
+  for (let index = 0; index < deliveries.length; index += DELIVERY_CHUNK_SIZE) {
+    const chunk = deliveries.slice(index, index + DELIVERY_CHUNK_SIZE);
+    const settled = await Promise.allSettled(
+      chunk.map((delivery) => processDelivery(supabase, delivery, now, fetchImpl))
+    );
 
-    const claimed = await claimDelivery(supabase, pendingDelivery, now);
-    if (!claimed) {
-      continue;
-    }
-
-    result.processed++;
-
-    try {
-      const response = await postDelivery(claimed, subscription, fetchImpl);
-      if (response.ok) {
-        await markDelivered(supabase, claimed, response.status, now);
-        result.delivered++;
-        continue;
-      }
-
-      const message = await responseErrorMessage(response);
-      const state = await markFailedOrDead(supabase, claimed, {
-        responseStatus: response.status,
-        errorMessage: message,
-        now,
-      });
-      if (state === "dead") result.dead++;
-      else result.retried++;
-    } catch (error) {
-      const message = errorMessage(error);
-      try {
-        const state = await markFailedOrDead(supabase, claimed, {
-          responseStatus: null,
-          errorMessage: message,
-          now,
-        });
-        if (state === "dead") result.dead++;
-        else result.retried++;
-      } catch (markError) {
+    for (const item of settled) {
+      if (item.status === "fulfilled") {
+        mergeQueueResult(result, item.value);
+      } else {
         result.failed++;
-        result.errors.push(`${claimed.id}: ${errorMessage(markError)}`);
-        continue;
+        result.errors.push(errorMessage(item.reason));
       }
     }
   }
 
   return result;
+}
+
+export async function deactivateOutboundWebhookSubscription(
+  params: {
+    subscriptionId: string;
+    organizationId: string;
+  },
+  options: Pick<ServiceOptions, "supabase" | "now"> = {}
+): Promise<{ success: true; found: boolean } | { success: false; error: string }> {
+  const supabase = options.supabase ?? createAdminClient();
+  const now = (options.now?.() ?? new Date()).toISOString();
+  const { data, error } = await supabase
+    .from("webhook_subscriptions")
+    .update({
+      is_active: false,
+      updated_at: now,
+    })
+    .eq("id", params.subscriptionId)
+    .eq("organization_id", params.organizationId)
+    .eq("is_active", true)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, found: data != null };
 }

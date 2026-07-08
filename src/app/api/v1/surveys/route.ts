@@ -209,7 +209,7 @@ async function handlePost(
   // Send-Time Snapshot. Resilient — suppression is enforced at send time.
   let contactId: string | null = null;
   try {
-    const contact = await findOrCreateContact(
+    const { contact } = await findOrCreateContact(
       context.organizationId,
       {
         email: input.customer_email,

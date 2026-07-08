@@ -298,7 +298,7 @@ export async function createVideoTestimonialRequest(
     // hiccup must not block the send — suppression is enforced at send time.
     let contactId: string | null = null;
     try {
-      const contact = await findOrCreateContact(
+      const { contact } = await findOrCreateContact(
         userData.organization_id,
         {
           email: validated.data.customerEmail,

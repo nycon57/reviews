@@ -82,8 +82,8 @@ function mapRowToWebhookLog(row: WebhookLogRow): WebhookLog {
 }
 
 // Common admin authorization check
-async function requireAdminAccess(): Promise<
-  | { success: true; organizationId: string }
+export async function requireAdminAccess(): Promise<
+  | { success: true; organizationId: string; userId: string }
   | { success: false; error: string }
 > {
   const user = await unifiedGetUser();
@@ -94,7 +94,7 @@ async function requireAdminAccess(): Promise<
   const supabase = createAdminClient();
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, role")
+    .select("id, organization_id, role")
     .eq("id", user.id)
     .single();
 
@@ -106,7 +106,11 @@ async function requireAdminAccess(): Promise<
     return { success: false, error: "Admin access required" };
   }
 
-  return { success: true, organizationId: userData.organization_id };
+  return {
+    success: true,
+    organizationId: userData.organization_id,
+    userId: userData.id,
+  };
 }
 
 // Get webhook logs with advanced filtering

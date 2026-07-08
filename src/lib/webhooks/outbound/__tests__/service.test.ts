@@ -123,6 +123,10 @@ describe("outbound webhook service", () => {
     expect(updates.webhook_deliveries).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ status: "delivering", attempt_count: 1 }),
+        expect.objectContaining({
+          status: "delivering",
+          last_attempt_at: "2026-01-01T00:00:00.000Z",
+        }),
         expect.objectContaining({ status: "delivered", response_status: 204 }),
       ])
     );
@@ -280,6 +284,7 @@ function createQueueSupabase(params: {
             const updateQuery = {
               eq: vi.fn(() => updateQuery),
               in: vi.fn(() => updateQuery),
+              lt: vi.fn(() => updateQuery),
               select: vi.fn(() => ({
                 maybeSingle: vi.fn(() => Promise.resolve({ data: claimed, error: null })),
               })),

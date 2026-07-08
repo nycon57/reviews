@@ -5,15 +5,13 @@ import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import {
   exchangeCodeForTokens,
-  refreshAccessToken,
   getUserInfo,
   getOpportunityStages,
   createTask,
-  isTokenExpired,
   getAuthorizationUrl,
 } from "./client";
 import { type SalesforceConnection, type SalesforceSyncLog, type ActionResult } from "./types";
-import { syncSalesforceConnection } from "./sync-service";
+import { getValidAccessToken, syncSalesforceConnection } from "./sync-service";
 
 // Get user's role and organization ID
 async function getUserContext() {
@@ -50,56 +48,6 @@ async function requireAdminRole(): Promise<{
   return {
     userId: context.id,
     organizationId: context.organization_id,
-  };
-}
-
-// Get valid access token (refreshing if needed)
-async function getValidAccessToken(connectionId: string): Promise<{
-  accessToken: string;
-  instanceUrl: string;
-} | null> {
-  const adminClient = createUntypedAdminClient();
-
-  const { data: connection, error } = await adminClient
-    .from("salesforce_connections")
-    .select("access_token, refresh_token, token_expires_at, instance_url")
-    .eq("id", connectionId)
-    .eq("is_active", true)
-    .single();
-
-  if (error || !connection) {
-    return null;
-  }
-
-  // Check if token is expired
-  if (isTokenExpired(new Date(connection.token_expires_at))) {
-    try {
-      const newTokens = await refreshAccessToken(connection.refresh_token, connection.instance_url);
-
-      // Update tokens in database
-      await adminClient
-        .from("salesforce_connections")
-        .update({
-          access_token: newTokens.accessToken,
-          refresh_token: newTokens.refreshToken,
-          token_expires_at: newTokens.expiresAt.toISOString(),
-          instance_url: newTokens.instanceUrl,
-        })
-        .eq("id", connectionId);
-
-      return {
-        accessToken: newTokens.accessToken,
-        instanceUrl: newTokens.instanceUrl,
-      };
-    } catch (error) {
-      console.error("Failed to refresh Salesforce token:", error);
-      return null;
-    }
-  }
-
-  return {
-    accessToken: connection.access_token,
-    instanceUrl: connection.instance_url,
   };
 }
 

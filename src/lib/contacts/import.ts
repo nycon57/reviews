@@ -11,7 +11,6 @@
  * merged / skipped accounting the import UI reports back to the user.
  */
 import { getAccessContext } from "@/lib/access";
-import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { normalizeEmail } from "@/lib/contacts/identity";
 import { findOrCreateContact, isSuppressed } from "@/lib/contacts/actions";
 
@@ -83,8 +82,6 @@ export async function bulkImportContacts(
 
   if (rows.length === 0) return summary;
 
-  const supabase = createUntypedAdminClient();
-
   for (const row of rows) {
     try {
       // Skip anyone already suppressed org-wide — importing must never silently
@@ -94,26 +91,15 @@ export async function bulkImportContacts(
         continue;
       }
 
-      // Classify created-vs-merged BEFORE the write: findOrCreateContact upserts
-      // and can't tell us which happened, so we probe for a pre-existing live
-      // Contact on the same (org, email).
-      const { data: existing } = await supabase
-        .from("contacts")
-        .select("id")
-        .eq("organization_id", ctx.organizationId)
-        .eq("email", row.email)
-        .is("erased_at", null)
-        .maybeSingle();
-
-      await findOrCreateContact(
+      const { createdNew } = await findOrCreateContact(
         ctx.organizationId,
         { email: row.email, name: row.name, phone: row.phone },
         resolvedOwner,
         "import"
       );
 
-      if (existing) summary.merged += 1;
-      else summary.created += 1;
+      if (createdNew) summary.created += 1;
+      else summary.merged += 1;
     } catch (err) {
       if (summary.errors.length < ERROR_LIMIT) {
         const message = err instanceof Error ? err.message : "unknown error";

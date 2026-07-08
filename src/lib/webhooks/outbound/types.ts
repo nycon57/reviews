@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { Json } from "@/types/database.types";
 
 export const OUTBOUND_WEBHOOK_EVENTS = [
@@ -66,3 +67,21 @@ export interface OutboundWebhookEnvelope<T extends OutboundWebhookEventType> {
 }
 
 export type OutboundWebhookJson = Json;
+
+export const outboundWebhookSubscriptionInputSchema = z
+  .object({
+    target_url: z.string().url().refine((value) => {
+      try {
+        return new URL(value).protocol === "https:";
+      } catch {
+        return false;
+      }
+    }, "Webhook target URL must use HTTPS"),
+    events: z.array(z.enum(OUTBOUND_WEBHOOK_EVENTS)).default([]),
+    description: z.string().max(500).optional(),
+  })
+  .strict();
+
+export type OutboundWebhookSubscriptionInput = z.infer<
+  typeof outboundWebhookSubscriptionInputSchema
+>;

@@ -4,6 +4,7 @@ import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { syncSalesforceConnection } from "@/lib/salesforce/sync-service";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 type SalesforceConnectionRow = {
   id: string;

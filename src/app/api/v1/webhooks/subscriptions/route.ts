@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { withApiAuth, type ApiAuthContext } from "@/lib/api-keys/validate";
 import {
@@ -9,24 +8,10 @@ import {
   handleOptionsRequest,
 } from "@/lib/api/response";
 import {
-  OUTBOUND_WEBHOOK_EVENTS,
   generateWebhookSecret,
+  outboundWebhookSubscriptionInputSchema,
   type OutboundWebhookEventType,
 } from "@/lib/webhooks/outbound";
-
-const createSubscriptionSchema = z
-  .object({
-    target_url: z.string().url().refine((value) => {
-      try {
-        return new URL(value).protocol === "https:";
-      } catch {
-        return false;
-      }
-    }, "target_url must be an HTTPS URL"),
-    events: z.array(z.enum(OUTBOUND_WEBHOOK_EVENTS)),
-    description: z.string().max(500).optional(),
-  })
-  .strict();
 
 type SubscriptionRow = {
   id: string;
@@ -91,7 +76,7 @@ async function handlePost(request: NextRequest, context: ApiAuthContext) {
     );
   }
 
-  const validation = createSubscriptionSchema.safeParse(body);
+  const validation = outboundWebhookSubscriptionInputSchema.safeParse(body);
   if (!validation.success) {
     return apiValidationError(
       validation.error.errors.map((entry) => ({

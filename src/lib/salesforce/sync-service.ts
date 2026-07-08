@@ -23,7 +23,7 @@ interface SyncSalesforceConnectionParams {
   revalidateDashboard?: boolean;
 }
 
-async function getValidAccessToken(connectionId: string): Promise<{
+export async function getValidAccessToken(connectionId: string): Promise<{
   accessToken: string;
   instanceUrl: string;
 } | null> {
@@ -177,7 +177,7 @@ async function triggerSurveyForOpportunity(
 
     let contactId: string | null = null;
     try {
-      const resolvedContact = await findOrCreateContact(
+      const { contact: resolvedContact } = await findOrCreateContact(
         organizationId,
         {
           email: contactEmail,

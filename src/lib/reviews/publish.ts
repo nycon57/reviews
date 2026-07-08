@@ -18,6 +18,8 @@ import {
 import { sendReviewResponseConfirmationEmail } from "./response-confirmation";
 import {
   emitWebhookEvent,
+  hasActiveSubscriptions,
+  type OutboundWebhookEventType,
   type ReviewWebhookData,
 } from "@/lib/webhooks/outbound";
 
@@ -329,15 +331,23 @@ export async function publishReviewIfClean(
     threshold
   );
 
-  const reviewWebhookData = buildReviewWebhookData({
-    supabase,
-    reviewId: params.reviewId,
-    organizationId: params.organizationId,
-    ownerUserId: params.ownerUserId,
-    rating: params.rating,
-    customerName: params.customerName ?? null,
-    reviewText: params.reviewText ?? null,
-  });
+  const webhookEventTypes: OutboundWebhookEventType[] = belowThreshold
+    ? ["review.published", "review.negative"]
+    : ["review.published"];
+  const reviewWebhookData = (await hasActiveSubscriptions(
+    params.organizationId,
+    webhookEventTypes
+  ))
+    ? buildReviewWebhookData({
+        supabase,
+        reviewId: params.reviewId,
+        organizationId: params.organizationId,
+        ownerUserId: params.ownerUserId,
+        rating: params.rating,
+        customerName: params.customerName ?? null,
+        reviewText: params.reviewText ?? null,
+      })
+    : null;
 
   const [, , , , , draftResponseSurfaced] = await Promise.all([
     notifyReviewPublished({
@@ -371,17 +381,19 @@ export async function publishReviewIfClean(
       console.error("Error checking review milestones:", error);
     }),
     reviewWebhookData
-      .then((data) =>
-        emitWebhookEvent({
-          organizationId: params.organizationId,
-          type: "review.published",
-          data,
-        })
-      )
-      .catch((error) => {
-        console.error("Error enqueueing review.published webhook:", error);
-      }),
-    belowThreshold
+      ? reviewWebhookData
+          .then((data) =>
+            emitWebhookEvent({
+              organizationId: params.organizationId,
+              type: "review.published",
+              data,
+            })
+          )
+          .catch((error) => {
+            console.error("Error enqueueing review.published webhook:", error);
+          })
+      : Promise.resolve(),
+    belowThreshold && reviewWebhookData
       ? reviewWebhookData
           .then((data) =>
             emitWebhookEvent({

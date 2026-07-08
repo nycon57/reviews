@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { withApiAuth, type ApiAuthContext } from "@/lib/api-keys/validate";
 import {
   apiInternalError,
   apiNotFound,
   handleOptionsRequest,
 } from "@/lib/api/response";
+import { deactivateOutboundWebhookSubscription } from "@/lib/webhooks/outbound";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -17,37 +17,20 @@ async function handleDelete(
   routeContext: RouteParams
 ) {
   const { id } = await routeContext.params;
-  const supabase = createAdminClient();
+  // REST DELETE is Zapier unsubscribe semantics: deactivate only so delivery
+  // history stays attached. Dashboard delete hard-deletes after confirmation.
+  const result = await deactivateOutboundWebhookSubscription({
+    subscriptionId: id,
+    organizationId: context.organizationId,
+  });
 
-  const { data: subscription, error: findError } = await supabase
-    .from("webhook_subscriptions")
-    .select("id")
-    .eq("id", id)
-    .eq("organization_id", context.organizationId)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (findError) {
-    console.error("[outbound-webhooks] failed to find subscription", findError);
+  if (!result.success) {
+    console.error("[outbound-webhooks] failed to delete subscription", result.error);
     return apiInternalError(context.requestId, "Failed to delete webhook subscription");
   }
 
-  if (!subscription) {
+  if (!result.found) {
     return apiNotFound("Webhook subscription", context.requestId);
-  }
-
-  const { error } = await supabase
-    .from("webhook_subscriptions")
-    .update({
-      is_active: false,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("organization_id", context.organizationId);
-
-  if (error) {
-    console.error("[outbound-webhooks] failed to delete subscription", error);
-    return apiInternalError(context.requestId, "Failed to delete webhook subscription");
   }
 
   return new NextResponse(null, {

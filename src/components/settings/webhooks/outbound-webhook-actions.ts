@@ -24,6 +24,7 @@ export interface OutboundWebhookSubscription {
   targetUrl: string;
   events: OutboundWebhookEvent[];
   description: string | null;
+  source: string;
   isActive: boolean;
   failureCount: number;
   lastDeliveryAt: string | null;
@@ -59,6 +60,7 @@ function toViewSubscription(
     targetUrl: row.target_url,
     events: row.events,
     description: row.description,
+    source: row.source,
     isActive: row.is_active,
     failureCount: row.failure_count,
     lastDeliveryAt: row.last_delivery_at,
@@ -75,7 +77,7 @@ function toViewDelivery(row: LibDelivery): OutboundWebhookDelivery {
     status: row.status,
     responseStatus: row.response_status,
     attemptCount: row.attempt_count,
-    maxAttempts: 5,
+    maxAttempts: row.max_attempts,
     errorMessage: row.error_message,
     createdAt: row.created_at,
     lastAttemptAt: row.last_attempt_at,

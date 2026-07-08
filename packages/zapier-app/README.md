@@ -2,6 +2,8 @@
 
 This package contains the RepWell Zapier Platform CLI app. It is intentionally standalone and is not part of the main RepWell Next.js build, lint, or TypeScript pipeline.
 
+Trigger samples are copied into `utils/sample-snapshot.json` from `src/lib/webhooks/outbound/samples.ts`. Regenerate that snapshot whenever the server outbound webhook catalog changes.
+
 ## Capabilities
 
 ### Triggers

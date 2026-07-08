@@ -10,17 +10,33 @@ const normalizeList = (data) => {
   return [];
 };
 
-const reviewPayload = (review, eventType) => ({
+const professionalPayload = (review) => ({
+  id: (review.professional && review.professional.id) || review.user_id || null,
+  full_name:
+    review.professional_full_name ||
+    review.user_full_name ||
+    (review.professional && review.professional.full_name) ||
+    null,
+});
+
+const reviewPayload = (review) => ({
   review_id: review.id || review.review_id,
   rating: review.rating,
   text: review.review_text || review.text || null,
-  customer_name: review.reviewer_name || review.customer_name || review.customer || null,
+  reviewer_display_name:
+    review.reviewer_display_name ||
+    review.reviewer_name ||
+    null,
   source: review.platform || review.source || null,
-  published_at: review.published_at || review.review_date || review.created_at || null,
+  review_date: review.review_date || review.created_at || null,
+  professional: professionalPayload(review),
+  public_url: review.public_url || review.source_url || null,
+});
+
+const reviewRespondedPayload = (review) => ({
+  review_id: review.id || review.review_id,
   response_text: review.response_text || null,
-  responded_at: review.response_date || review.responded_at || null,
-  status: review.status || null,
-  event_context: eventType,
+  responded_at: review.responded_at || review.response_date || review.updated_at || null,
 });
 
 const contactPayload = (contact) => ({
@@ -28,17 +44,21 @@ const contactPayload = (contact) => ({
   full_name: contact.full_name || contact.name || null,
   email: contact.email || null,
   phone: contact.phone || null,
-  external_id: contact.external_id || null,
-  created_at: contact.created_at || null,
+  source: contact.source || null,
 });
+
+const dataPayload = (eventType, resource) => {
+  if (eventType === "contact.created") return contactPayload(resource);
+  if (eventType === "review.responded") return reviewRespondedPayload(resource);
+  return reviewPayload(resource);
+};
 
 const toEnvelope = (eventType, resource) => ({
   id: `evt_${eventType.replace(".", "_")}_${resource.id || resource.contact_id || "sample"}`,
   type: eventType,
   created_at: resource.created_at || new Date().toISOString(),
   organization_id: resource.organization_id || "org_unknown",
-  data:
-    eventType === "contact.created" ? contactPayload(resource) : reviewPayload(resource, eventType),
+  data: dataPayload(eventType, resource),
 });
 
 const getSampleList = async (z, eventType) => {

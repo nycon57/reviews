@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import type { ActionResult } from "./types";
 import {
   generateResponseSuggestion,
@@ -435,16 +436,18 @@ export async function postResponse(
     console.error("Failed to send review response confirmation:", err);
   });
 
-  await emitWebhookEvent({
-    organizationId: context.organizationId,
-    type: "review.responded",
-    data: {
-      review_id: reviewId,
-      response_text: responseText,
-      responded_at: now,
-    },
-  }).catch((err) => {
-    console.error("Failed to enqueue review.responded webhook:", err);
+  after(async () => {
+    await emitWebhookEvent({
+      organizationId: context.organizationId,
+      type: "review.responded",
+      data: {
+        review_id: reviewId,
+        response_text: responseText,
+        responded_at: now,
+      },
+    }).catch((err) => {
+      console.error("Failed to enqueue review.responded webhook:", err);
+    });
   });
 
   revalidatePath("/dashboard/all-reviews");

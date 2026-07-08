@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { GoogleIntegrationCard } from "@/components/google/google-integration-card";
 import { SocialIntegrationCard } from "@/components/social";
-import { SlackIntegrationCard, TeamsIntegrationCard } from "@/components/integrations";
+import { SlackIntegrationCard } from "@/components/integrations";
 import { SalesforceIntegrationCard } from "@/components/salesforce";
 import { fadeInUp, staggerContainer } from "@/lib/motion/variants";
 import { getOrgIntegrationSettings, type OrgIntegrations } from "@/lib/organization";
@@ -114,11 +114,10 @@ export function IntegrationsTab() {
   const googleEnabled = isEnabled(integrations, "google");
   const socialEnabled = isEnabled(integrations, "social");
   const slackEnabled = isEnabled(integrations, "slack");
-  const teamsEnabled = isEnabled(integrations, "teams");
   const salesforceEnabled = isEnabled(integrations, "salesforce");
 
   const anyEnabled =
-    googleEnabled || socialEnabled || slackEnabled || teamsEnabled || salesforceEnabled;
+    googleEnabled || socialEnabled || slackEnabled || salesforceEnabled;
 
   // Show empty state only after loading confirms all are disabled
   if (loaded && !anyEnabled) {
@@ -236,14 +235,6 @@ export function IntegrationsTab() {
             <motion.div variants={fadeInUp} data-integration="salesforce">
               <Suspense fallback={<IntegrationCardSkeleton />}>
                 <SalesforceIntegrationCard />
-              </Suspense>
-            </motion.div>
-          )}
-
-          {teamsEnabled && (
-            <motion.div variants={fadeInUp}>
-              <Suspense fallback={<IntegrationCardSkeleton />}>
-                <TeamsIntegrationCard />
               </Suspense>
             </motion.div>
           )}

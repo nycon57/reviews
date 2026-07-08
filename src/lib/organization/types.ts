@@ -48,7 +48,7 @@ export const organizationFeaturesSchema = z.object({
 export type OrganizationFeatures = z.infer<typeof organizationFeaturesSchema>;
 
 // Integration management
-export const INTEGRATION_KEYS = ["google", "social", "slack", "teams", "salesforce"] as const;
+export const INTEGRATION_KEYS = ["google", "social", "slack", "salesforce"] as const;
 export type IntegrationKey = (typeof INTEGRATION_KEYS)[number];
 
 export const integrationConfigSchema = z.object({
@@ -60,7 +60,6 @@ export const orgIntegrationsSchema = z.object({
   google: integrationConfigSchema.optional(),
   social: integrationConfigSchema.optional(),
   slack: integrationConfigSchema.optional(),
-  teams: integrationConfigSchema.optional(),
   salesforce: integrationConfigSchema.optional(),
 });
 export type OrgIntegrations = z.infer<typeof orgIntegrationsSchema>;

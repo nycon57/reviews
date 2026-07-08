@@ -563,7 +563,6 @@ export const aiInsightsFeatureConfig: FeaturePageConfig = {
 
   integrations: [
     { name: "Slack", logoUrl: "/integrations/slack.svg", category: "Communication" },
-    { name: "Microsoft Teams", logoUrl: "/integrations/teams.svg", category: "Communication" },
     { name: "Zendesk", logoUrl: "/integrations/zendesk.svg", category: "Support" },
   ],
 

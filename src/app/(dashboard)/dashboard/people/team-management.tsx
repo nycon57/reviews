@@ -58,12 +58,19 @@ const ROLE_LABELS: Record<string, { label: string; variant: "default" | "seconda
 
 interface TeamManagementProps {
   userRole: string;
+  initialMembers?: OrganizationMember[];
+  initialInvitations?: Invitation[];
 }
 
-export function TeamManagement({ userRole }: TeamManagementProps) {
-  const [members, setMembers] = useState<OrganizationMember[]>([]);
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [loading, setLoading] = useState(true);
+export function TeamManagement({
+  userRole,
+  initialMembers,
+  initialInvitations,
+}: TeamManagementProps) {
+  const hasInitialData = initialMembers !== undefined && initialInvitations !== undefined;
+  const [members, setMembers] = useState<OrganizationMember[]>(initialMembers ?? []);
+  const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations ?? []);
+  const [loading, setLoading] = useState(!hasInitialData);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -89,6 +96,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
   });
 
   useEffect(() => {
+    if (hasInitialData) return;
+
     let mounted = true;
 
     async function loadData() {
@@ -113,7 +122,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [hasInitialData]);
 
   async function refreshData() {
     const [membersResult, invitationsResult] = await Promise.all([

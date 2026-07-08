@@ -18,12 +18,6 @@ import {
   Bell,
   Check,
   Checks as CheckCheck,
-  Star,
-  Warning as AlertTriangle,
-  Chats as MessageSquare,
-  EnvelopeOpen,
-  Trophy,
-  FileText,
   Archive,
   CaretLeft as ChevronLeft,
   CaretRight as ChevronRight,
@@ -31,12 +25,16 @@ import {
   Tray as Inbox,
   Funnel as Filter,
 } from "@phosphor-icons/react";
+import { ToastAction } from "@/components/ui/toast";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { NOTIFICATION_TYPE_CONFIG, getNotificationTypeConfig } from "@/lib/notifications/config";
 import type { NotificationWithDetails, NotificationType } from "@/lib/notifications/types";
 import {
   getNotifications,
   markNotificationsAsRead,
   archiveNotification,
+  unarchiveNotification,
 } from "@/lib/notifications/actions";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -46,65 +44,31 @@ interface NotificationsListProps {
   initialUnreadCount: number;
 }
 
-const notificationIcons: Record<NotificationType, React.ElementType> = {
-  new_review: Star,
-  negative_review: AlertTriangle,
-  review_approved: Check,
-  review_rejected: AlertTriangle,
-  review_needs_response: EnvelopeOpen,
-  review_dispute: AlertTriangle,
-  response_posted: MessageSquare,
-  badge_earned: Trophy,
-  milestone_reached: Trophy,
-  mention: MessageSquare,
-  report_ready: FileText,
-  digest: FileText,
-  system: Bell,
-};
-
-const notificationColors: Record<NotificationType, string> = {
-  new_review: "bg-amber-100 text-amber-600",
-  negative_review: "bg-red-100 text-red-600",
-  review_approved: "bg-green-100 text-green-600",
-  review_rejected: "bg-red-100 text-red-600",
-  review_needs_response: "bg-amber-100 text-amber-600",
-  review_dispute: "bg-red-100 text-red-600",
-  response_posted: "bg-blue-100 text-blue-600",
-  badge_earned: "bg-purple-100 text-purple-600",
-  milestone_reached: "bg-purple-100 text-purple-600",
-  mention: "bg-blue-100 text-blue-600",
-  report_ready: "bg-indigo-100 text-indigo-600",
-  digest: "bg-indigo-100 text-indigo-600",
-  system: "bg-muted text-muted-foreground",
-};
-
-const notificationTypeLabels: Record<NotificationType, string> = {
-  new_review: "New Review",
-  negative_review: "Negative Review",
-  review_approved: "Review Published",
-  review_rejected: "Review Removed",
-  review_needs_response: "Needs response",
-  review_dispute: "Review Dispute",
-  response_posted: "Response Posted",
-  badge_earned: "Badge Earned",
-  milestone_reached: "Milestone Reached",
-  mention: "Mention",
-  report_ready: "Report Ready",
-  digest: "Digest",
-  system: "System",
-};
-
 type FilterType = "all" | "unread" | NotificationType;
 
 const PAGE_SIZE = 20;
+const TYPE_FILTERS: NotificationType[] = [
+  "new_review",
+  "negative_review",
+  "review_approved",
+  "response_posted",
+  "badge_earned",
+  "mention",
+  "report_ready",
+  "system",
+];
 
 export function NotificationsList({
   initialNotifications,
   initialTotal,
   initialUnreadCount,
 }: NotificationsListProps) {
+  const { toast } = useToast();
   const [notifications, setNotifications] = React.useState<NotificationWithDetails[]>(initialNotifications);
+  const [defaultNotifications, setDefaultNotifications] =
+    React.useState<NotificationWithDetails[]>(initialNotifications);
   const [total, setTotal] = React.useState(initialTotal);
+  const [defaultTotal, setDefaultTotal] = React.useState(initialTotal);
   const [unreadCount, setUnreadCount] = React.useState(initialUnreadCount);
   const [loading, setLoading] = React.useState(false);
   const [filter, setFilter] = React.useState<FilterType>("all");
@@ -141,8 +105,8 @@ export function NotificationsList({
   if (isDefaultView !== prevIsDefaultView) {
     setPrevIsDefaultView(isDefaultView);
     if (isDefaultView) {
-      setNotifications(initialNotifications);
-      setTotal(initialTotal);
+      setNotifications(defaultNotifications);
+      setTotal(defaultTotal);
       setSelectedIds(new Set());
     }
   }
@@ -160,6 +124,9 @@ export function NotificationsList({
       setNotifications((prev) =>
         prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
       );
+      setDefaultNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
+      );
       setUnreadCount(0);
     }
     setBulkActioning(false);
@@ -172,6 +139,11 @@ export function NotificationsList({
     const result = await markNotificationsAsRead(ids);
     if (result.success) {
       setNotifications((prev) =>
+        prev.map((n) =>
+          selectedIds.has(n.id) ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
+        )
+      );
+      setDefaultNotifications((prev) =>
         prev.map((n) =>
           selectedIds.has(n.id) ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
         )
@@ -193,19 +165,104 @@ export function NotificationsList({
           n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
         )
       );
+      setDefaultNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
+        )
+      );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     }
   };
 
-  const handleArchive = async (notificationId: string) => {
-    const result = await archiveNotification(notificationId);
-    if (result.success) {
-      const notification = notifications.find((n) => n.id === notificationId);
-      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-      setTotal((prev) => prev - 1);
-      if (notification && !notification.is_read) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+  const restoreArchivedNotification = React.useCallback(
+    async (
+      notification: NotificationWithDetails,
+      archiveIndex: number,
+      defaultArchiveIndex: number
+    ) => {
+      const result = await unarchiveNotification(notification.id);
+      if (!result.success) {
+        toast({
+          title: "Could not restore notification",
+          description: result.error || "Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
+
+      setNotifications((prev) => {
+        if (prev.some((item) => item.id === notification.id)) return prev;
+        const next = [...prev];
+        next.splice(Math.min(archiveIndex, next.length), 0, {
+          ...notification,
+          is_archived: false,
+          archived_at: null,
+        });
+        return next;
+      });
+      if (defaultArchiveIndex >= 0) {
+        setDefaultNotifications((prev) => {
+          if (prev.some((item) => item.id === notification.id)) return prev;
+          const next = [...prev];
+          next.splice(Math.min(defaultArchiveIndex, next.length), 0, {
+            ...notification,
+            is_archived: false,
+            archived_at: null,
+          });
+          return next;
+        });
+      }
+      setTotal((prev) => prev + 1);
+      setDefaultTotal((prev) => prev + 1);
+      if (!notification.is_read) {
+        setUnreadCount((prev) => prev + 1);
+      }
+    },
+    [toast]
+  );
+
+  const handleArchive = async (notificationId: string) => {
+    const notification = notifications.find((n) => n.id === notificationId);
+    const archiveIndex = notifications.findIndex((n) => n.id === notificationId);
+    const defaultArchiveIndex = defaultNotifications.findIndex((n) => n.id === notificationId);
+    const result = await archiveNotification(notificationId);
+    if (!result.success) {
+      toast({
+        title: "Could not archive notification",
+        description: result.error || "Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+    setDefaultNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(notificationId);
+      return next;
+    });
+    setTotal((prev) => Math.max(0, prev - 1));
+    setDefaultTotal((prev) => Math.max(0, prev - 1));
+    if (notification && !notification.is_read) {
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+
+    if (notification) {
+      toast({
+        title: "Notification archived",
+        description: "You can undo this action.",
+        action: (
+          <ToastAction
+            altText="Undo archive"
+            onClick={() =>
+              void restoreArchivedNotification(notification, archiveIndex, defaultArchiveIndex)
+            }
+          >
+            Undo
+          </ToastAction>
+        ),
+      });
     }
   };
 
@@ -283,14 +340,11 @@ export function NotificationsList({
                 <SelectContent>
                   <SelectItem value="all">All Notifications</SelectItem>
                   <SelectItem value="unread">Unread Only</SelectItem>
-                  <SelectItem value="new_review">New Reviews</SelectItem>
-                  <SelectItem value="negative_review">Negative Reviews</SelectItem>
-                  <SelectItem value="review_approved">Review Approved</SelectItem>
-                  <SelectItem value="response_posted">Responses</SelectItem>
-                  <SelectItem value="badge_earned">Badges</SelectItem>
-                  <SelectItem value="mention">Mentions</SelectItem>
-                  <SelectItem value="report_ready">Reports</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  {TYPE_FILTERS.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {NOTIFICATION_TYPE_CONFIG[type].label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -431,9 +485,7 @@ function NotificationRow({
   onMarkAsRead,
   onArchive,
 }: NotificationRowProps) {
-  const Icon = notificationIcons[notification.type as NotificationType] || Bell;
-  const colorClass = notificationColors[notification.type as NotificationType] || notificationColors.system;
-  const typeLabel = notificationTypeLabels[notification.type as NotificationType] || notification.type;
+  const { icon: Icon, colorClass, label: typeLabel } = getNotificationTypeConfig(notification.type);
 
   const content = (
     <div

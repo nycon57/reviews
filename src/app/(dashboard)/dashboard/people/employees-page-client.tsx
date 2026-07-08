@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,15 +31,26 @@ import { CsvImportWizard } from "@/components/shared/csv-import-wizard";
 import { createEmployeeImportConfig } from "@/lib/employees/employee-import-config";
 import { useToast } from "@/hooks/use-toast";
 
-export function EmployeesPageClient() {
+interface EmployeesPageClientProps {
+  initialEmployees: Employee[];
+  initialTotal: number;
+  initialError?: string | null;
+}
+
+export function EmployeesPageClient({
+  initialEmployees,
+  initialTotal,
+  initialError = null,
+}: EmployeesPageClientProps) {
   const { toast } = useToast();
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [total, setTotal] = useState(0);
+  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [refetchCount, setRefetchCount] = useState(0);
+  const didRunInitialEffect = useRef(false);
 
   // Dialog state
   const [addOpen, setAddOpen] = useState(false);
@@ -53,6 +64,23 @@ export function EmployeesPageClient() {
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!didRunInitialEffect.current) {
+      didRunInitialEffect.current = true;
+      if (page === 1 && search === "" && refetchCount === 0) {
+        if (initialError) {
+          toast({
+            title: "Error",
+            description: initialError,
+            variant: "destructive",
+          });
+        }
+        return () => {
+          cancelled = true;
+        };
+      }
+    }
+
     async function fetchData() {
       setLoading(true);
       try {
@@ -76,7 +104,7 @@ export function EmployeesPageClient() {
     }
     fetchData();
     return () => { cancelled = true; };
-  }, [page, search, refetchCount, toast]);
+  }, [page, pageSize, search, refetchCount, toast, initialError]);
 
   // Debounced search
   const [searchInput, setSearchInput] = useState("");

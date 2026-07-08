@@ -232,7 +232,27 @@ export async function toggleOutboundWebhookSubscription(
 export async function deleteOutboundWebhookSubscription(
   subscriptionId: string
 ): Promise<ActionResult> {
-  return toggleOutboundWebhookSubscription(subscriptionId, false);
+  try {
+    const auth = await requireAdminAccess();
+    if (!auth.success) return { success: false, error: auth.error };
+
+    const supabase = createAdminClient();
+    const { error } = await supabase
+      .from("webhook_subscriptions")
+      .delete()
+      .eq("id", subscriptionId)
+      .eq("organization_id", auth.organizationId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath("/dashboard/organization");
+    return { success: true };
+  } catch (error) {
+    console.error("[outbound-webhooks] delete subscription failed:", error);
+    return { success: false, error: "Failed to delete webhook subscription" };
+  }
 }
 
 export async function getRecentWebhookDeliveries(

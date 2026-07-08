@@ -103,6 +103,7 @@ export default async function LOProfilePage({ params }: PageProps) {
         breadcrumbs={breadcrumbs}
         isEnterprise={is_enterprise}
         isPro={is_pro}
+        profileUrl={`${baseUrl}/pro/${professional.slug || professional.id}`}
       />
     </>
   );

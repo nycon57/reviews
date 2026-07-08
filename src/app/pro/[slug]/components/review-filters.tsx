@@ -26,14 +26,8 @@ import {
 } from "@/components/ui/select";
 import { SourceIcon } from "@/components/shared/review-item";
 import { formatReviewSource } from "@/lib/reviews/source-labels";
-
-export interface ReviewFilters {
-  search: string;
-  rating: number | null;
-  sources: string[];
-  dateRange: DateRange | undefined;
-  sort: "newest" | "oldest" | "highest" | "lowest";
-}
+export type { ReviewFilters } from "@/components/public-profile/use-review-filters";
+import type { ReviewFilters } from "@/components/public-profile/use-review-filters";
 
 interface ReviewFiltersProps {
   filters: ReviewFilters;

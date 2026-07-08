@@ -1,6 +1,4 @@
-"use client";
-
-import { Star } from "@phosphor-icons/react";
+import { Star } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
 
 const STAR_SIZE_CLASSES = {

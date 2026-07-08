@@ -6,28 +6,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Star,
   Users,
   MapPin,
   ArrowRight,
 } from "@phosphor-icons/react/dist/ssr";
 import { TierBadgeSSR } from "@/components/shared/tier-badge-ssr";
+import { RatingStars } from "@/components/reviews/rating-stars";
+import { getInitials } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = getBaseUrl();
   return generateLOListingMetadata(null, baseUrl);
-}
-
-function getInitials(name: string): string {
-  const trimmed = name.trim();
-  if (!trimmed) return "";
-  return trimmed
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((n) => n[0] ?? "")
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 export default async function LOListingPage() {
@@ -110,7 +99,10 @@ export default async function LOListingPage() {
                         {professional.average_rating && professional.total_reviews ? (
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <RatingStars
+                                rating={Number(professional.average_rating)}
+                                size="md"
+                              />
                               <span className="font-semibold">
                                 {Number(professional.average_rating).toFixed(1)}
                               </span>

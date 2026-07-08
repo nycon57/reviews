@@ -1,12 +1,13 @@
 "use client";
 
 import AutoScroll from "embla-carousel-auto-scroll";
-import { Star, Quotes as Quote } from "@phosphor-icons/react";
+import { Quotes as Quote } from "@phosphor-icons/react";
 import { useRef } from "react";
 import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { RatingStars } from "@/components/reviews/rating-stars";
 import {
   Carousel,
   CarouselContent,
@@ -17,23 +18,6 @@ import type { PublicReview } from "@/lib/seo/actions";
 interface FeaturedReviewsCarouselProps {
   reviews: PublicReview[];
   className?: string;
-}
-
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          weight="fill"
-          className={cn(
-            "h-5 w-5",
-            star <= rating ? "text-amber-500" : "text-gray-200"
-          )}
-        />
-      ))}
-    </div>
-  );
 }
 
 export function FeaturedReviewsCarousel({
@@ -79,7 +63,7 @@ export function FeaturedReviewsCarousel({
               >
                 <Card className="max-w-[420px] p-6 select-none border border-border bg-white hover:shadow-lg transition-all duration-300 border-t-4 border-t-repwell-sage-200">
                   <div className="flex justify-between items-start mb-4">
-                    <StarRating rating={review.rating} />
+                    <RatingStars rating={review.rating} size="lg" />
                   </div>
 
                   <div className="relative">

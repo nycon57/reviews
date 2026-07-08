@@ -1,5 +1,3 @@
-"use client";
-
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -12,8 +10,6 @@ interface ProfileHeroBannerProps {
 
 export function ProfileHeroBanner({
   bannerUrl,
-  orgLogo,
-  orgName,
   className,
 }: ProfileHeroBannerProps) {
   return (

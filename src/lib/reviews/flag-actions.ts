@@ -616,7 +616,7 @@ export async function routeNewFlag(
         platformAdmins.map(async (admin: { id: string }) => {
           const notification = await createNotification({
             userId: admin.id,
-            type: "system",
+            type: "review_dispute",
             title: "Individual dispute needs review",
             message: `${org.name} reported a review for ${reasonLabel.toLowerCase()}. Review the staff dispute queue to uphold or dismiss it.`,
             organizationId,

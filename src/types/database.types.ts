@@ -5481,6 +5481,7 @@ export type Database = {
           reporter_email: string | null
           reporter_name: string | null
           resolution_note: string | null
+          resolution_verdict: string | null
           review_id: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -5499,6 +5500,7 @@ export type Database = {
           reporter_email?: string | null
           reporter_name?: string | null
           resolution_note?: string | null
+          resolution_verdict?: string | null
           review_id: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -5517,6 +5519,7 @@ export type Database = {
           reporter_email?: string | null
           reporter_name?: string | null
           resolution_note?: string | null
+          resolution_verdict?: string | null
           review_id?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -8100,6 +8103,7 @@ export type Database = {
           instagram_url: string | null
           is_active: boolean | null
           is_owner: boolean | null
+          is_platform_admin: boolean
           last_login_at: string | null
           latitude: number | null
           linkedin_url: string | null
@@ -8157,6 +8161,7 @@ export type Database = {
           instagram_url?: string | null
           is_active?: boolean | null
           is_owner?: boolean | null
+          is_platform_admin?: boolean
           last_login_at?: string | null
           latitude?: number | null
           linkedin_url?: string | null
@@ -8214,6 +8219,7 @@ export type Database = {
           instagram_url?: string | null
           is_active?: boolean | null
           is_owner?: boolean | null
+          is_platform_admin?: boolean
           last_login_at?: string | null
           latitude?: number | null
           linkedin_url?: string | null
@@ -8880,6 +8886,312 @@ export type Database = {
           },
         ]
       }
+      website_analytics: {
+        Row: {
+          avg_session_duration_seconds: number | null
+          bounce_rate: number | null
+          created_at: string
+          date: string
+          device_breakdown: Json
+          exit_rate: number | null
+          geographic_data: Json
+          id: string
+          organization_id: string
+          page_path: string
+          page_title: string | null
+          pageviews: number
+          search_queries: Json
+          sessions: number
+          traffic_sources: Json
+          unique_visitors: number
+          updated_at: string
+        }
+        Insert: {
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          created_at?: string
+          date: string
+          device_breakdown?: Json
+          exit_rate?: number | null
+          geographic_data?: Json
+          id?: string
+          organization_id: string
+          page_path: string
+          page_title?: string | null
+          pageviews?: number
+          search_queries?: Json
+          sessions?: number
+          traffic_sources?: Json
+          unique_visitors?: number
+          updated_at?: string
+        }
+        Update: {
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          created_at?: string
+          date?: string
+          device_breakdown?: Json
+          exit_rate?: number | null
+          geographic_data?: Json
+          id?: string
+          organization_id?: string
+          page_path?: string
+          page_title?: string | null
+          pageviews?: number
+          search_queries?: Json
+          sessions?: number
+          traffic_sources?: Json
+          unique_visitors?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_analytics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_analytics_summary: {
+        Row: {
+          avg_bounce_rate: number | null
+          avg_session_duration_seconds: number | null
+          created_at: string
+          device_breakdown_total: Json
+          geographic_total: Json
+          id: string
+          organization_id: string
+          pageviews_change_percent: number | null
+          period: string
+          period_end: string
+          period_start: string
+          previous_period_pageviews: number | null
+          top_pages: Json
+          top_search_queries: Json
+          total_pageviews: number
+          total_sessions: number
+          total_unique_visitors: number
+          traffic_sources_total: Json
+          updated_at: string
+        }
+        Insert: {
+          avg_bounce_rate?: number | null
+          avg_session_duration_seconds?: number | null
+          created_at?: string
+          device_breakdown_total?: Json
+          geographic_total?: Json
+          id?: string
+          organization_id: string
+          pageviews_change_percent?: number | null
+          period: string
+          period_end: string
+          period_start: string
+          previous_period_pageviews?: number | null
+          top_pages?: Json
+          top_search_queries?: Json
+          total_pageviews?: number
+          total_sessions?: number
+          total_unique_visitors?: number
+          traffic_sources_total?: Json
+          updated_at?: string
+        }
+        Update: {
+          avg_bounce_rate?: number | null
+          avg_session_duration_seconds?: number | null
+          created_at?: string
+          device_breakdown_total?: Json
+          geographic_total?: Json
+          id?: string
+          organization_id?: string
+          pageviews_change_percent?: number | null
+          period?: string
+          period_end?: string
+          period_start?: string
+          previous_period_pageviews?: number | null
+          top_pages?: Json
+          top_search_queries?: Json
+          total_pageviews?: number
+          total_sessions?: number
+          total_unique_visitors?: number
+          traffic_sources_total?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_analytics_summary_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_seo_audits: {
+        Row: {
+          audit_type: string
+          audited_at: string
+          broken_links_count: number | null
+          content_freshness_days: number | null
+          content_score: number
+          created_at: string
+          cumulative_layout_shift: number | null
+          external_links_count: number | null
+          first_contentful_paint_ms: number | null
+          font_size_readable: boolean | null
+          h1_count: number | null
+          h2_count: number | null
+          h3_count: number | null
+          has_canonical_url: boolean | null
+          has_meta_description: boolean | null
+          has_meta_title: boolean | null
+          has_robots_meta: boolean | null
+          has_structured_data: boolean | null
+          headers_hierarchy_valid: boolean | null
+          id: string
+          images_with_alt: number | null
+          images_without_alt: number | null
+          internal_links_count: number | null
+          is_mobile_friendly: boolean | null
+          issues: Json
+          largest_contentful_paint_ms: number | null
+          meta_description_length: number | null
+          meta_title_length: number | null
+          mobile_score: number
+          organization_id: string
+          page_load_time_ms: number | null
+          page_path: string
+          page_title: string | null
+          page_url: string
+          performance_score: number | null
+          previous_score: number | null
+          reading_time_minutes: number | null
+          recommendations: Json
+          score_change: number | null
+          seo_score: number
+          structured_data_types: string[] | null
+          structured_data_valid: boolean | null
+          tap_targets_sized: boolean | null
+          technical_score: number
+          total_blocking_time_ms: number | null
+          total_images: number | null
+          updated_at: string
+          viewport_configured: boolean | null
+          word_count: number | null
+        }
+        Insert: {
+          audit_type?: string
+          audited_at?: string
+          broken_links_count?: number | null
+          content_freshness_days?: number | null
+          content_score?: number
+          created_at?: string
+          cumulative_layout_shift?: number | null
+          external_links_count?: number | null
+          first_contentful_paint_ms?: number | null
+          font_size_readable?: boolean | null
+          h1_count?: number | null
+          h2_count?: number | null
+          h3_count?: number | null
+          has_canonical_url?: boolean | null
+          has_meta_description?: boolean | null
+          has_meta_title?: boolean | null
+          has_robots_meta?: boolean | null
+          has_structured_data?: boolean | null
+          headers_hierarchy_valid?: boolean | null
+          id?: string
+          images_with_alt?: number | null
+          images_without_alt?: number | null
+          internal_links_count?: number | null
+          is_mobile_friendly?: boolean | null
+          issues?: Json
+          largest_contentful_paint_ms?: number | null
+          meta_description_length?: number | null
+          meta_title_length?: number | null
+          mobile_score?: number
+          organization_id: string
+          page_load_time_ms?: number | null
+          page_path: string
+          page_title?: string | null
+          page_url: string
+          performance_score?: number | null
+          previous_score?: number | null
+          reading_time_minutes?: number | null
+          recommendations?: Json
+          score_change?: number | null
+          seo_score: number
+          structured_data_types?: string[] | null
+          structured_data_valid?: boolean | null
+          tap_targets_sized?: boolean | null
+          technical_score?: number
+          total_blocking_time_ms?: number | null
+          total_images?: number | null
+          updated_at?: string
+          viewport_configured?: boolean | null
+          word_count?: number | null
+        }
+        Update: {
+          audit_type?: string
+          audited_at?: string
+          broken_links_count?: number | null
+          content_freshness_days?: number | null
+          content_score?: number
+          created_at?: string
+          cumulative_layout_shift?: number | null
+          external_links_count?: number | null
+          first_contentful_paint_ms?: number | null
+          font_size_readable?: boolean | null
+          h1_count?: number | null
+          h2_count?: number | null
+          h3_count?: number | null
+          has_canonical_url?: boolean | null
+          has_meta_description?: boolean | null
+          has_meta_title?: boolean | null
+          has_robots_meta?: boolean | null
+          has_structured_data?: boolean | null
+          headers_hierarchy_valid?: boolean | null
+          id?: string
+          images_with_alt?: number | null
+          images_without_alt?: number | null
+          internal_links_count?: number | null
+          is_mobile_friendly?: boolean | null
+          issues?: Json
+          largest_contentful_paint_ms?: number | null
+          meta_description_length?: number | null
+          meta_title_length?: number | null
+          mobile_score?: number
+          organization_id?: string
+          page_load_time_ms?: number | null
+          page_path?: string
+          page_title?: string | null
+          page_url?: string
+          performance_score?: number | null
+          previous_score?: number | null
+          reading_time_minutes?: number | null
+          recommendations?: Json
+          score_change?: number | null
+          seo_score?: number
+          structured_data_types?: string[] | null
+          structured_data_valid?: boolean | null
+          tap_targets_sized?: boolean | null
+          technical_score?: number
+          total_blocking_time_ms?: number | null
+          total_images?: number | null
+          updated_at?: string
+          viewport_configured?: boolean | null
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_seo_audits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       widget_config_versions: {
         Row: {
           allowed_domains: string[] | null
@@ -9199,6 +9511,13 @@ export type Database = {
         Args: { p_retention_days?: number }
         Returns: number
       }
+      count_reviews_by_source: {
+        Args: { end_date?: string; org_id: string; start_date?: string }
+        Returns: {
+          review_count: number
+          source: string
+        }[]
+      }
       decrypt_sms_token: {
         Args: { p_encrypted: string; p_key: string }
         Returns: string
@@ -9307,6 +9626,10 @@ export type Database = {
       }
       is_active_video_testimonial_upload_path: {
         Args: { p_organization_id_text: string; p_request_id_text: string }
+        Returns: boolean
+      }
+      is_public_professional: {
+        Args: { u: Database["public"]["Tables"]["users"]["Row"] }
         Returns: boolean
       }
       is_valid_video_testimonial_response_submission: {

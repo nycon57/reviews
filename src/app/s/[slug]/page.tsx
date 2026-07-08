@@ -120,7 +120,7 @@ async function fetchLandingContact(
   type ContactQuery = {
     eq(column: string, value: unknown): ContactQuery;
     neq(column: string, value: unknown): ContactQuery;
-    or(filters: string): ContactQuery;
+    is(column: string, value: boolean | null): ContactQuery;
     maybeSingle(): Promise<{ data: ContactRow | null }>;
   };
 

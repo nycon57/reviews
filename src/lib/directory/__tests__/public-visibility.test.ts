@@ -12,6 +12,7 @@ type MockChain = {
   eq: ReturnType<typeof vi.fn>;
   neq: ReturnType<typeof vi.fn>;
   or: ReturnType<typeof vi.fn>;
+  is: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
   range: ReturnType<typeof vi.fn>;
   filter: ReturnType<typeof vi.fn>;
@@ -32,6 +33,7 @@ function createMockQueryChain(finalResult: {
   chain.eq = vi.fn().mockImplementation(returnChain);
   chain.neq = vi.fn().mockImplementation(returnChain);
   chain.or = vi.fn().mockImplementation(returnChain);
+  chain.is = vi.fn().mockImplementation(returnChain);
   chain.order = vi.fn().mockImplementation(returnChain);
   chain.range = vi.fn().mockImplementation(returnChain);
   chain.filter = vi.fn().mockImplementation(returnChain);
@@ -70,7 +72,7 @@ describe("public visibility queries in directory actions", () => {
       expect(chain.neq).toHaveBeenCalledWith("role", "manager");
       expect(chain.neq).toHaveBeenCalledWith("role", "enterprise");
       expect(chain.neq).not.toHaveBeenCalledWith("role", "admin");
-      expect(chain.or).toHaveBeenCalledWith("role.neq.admin,organizations.account_type.eq.individual");
+      expect(chain.is).toHaveBeenCalledWith("is_public_professional", true);
     }
   });
 
@@ -91,6 +93,6 @@ describe("public visibility queries in directory actions", () => {
     expect(industriesChain.neq).toHaveBeenCalledWith("role", "manager");
     expect(industriesChain.neq).toHaveBeenCalledWith("role", "enterprise");
     expect(industriesChain.neq).not.toHaveBeenCalledWith("role", "admin");
-    expect(industriesChain.or).toHaveBeenCalledWith("role.neq.admin,organizations.account_type.eq.individual");
+    expect(industriesChain.is).toHaveBeenCalledWith("is_public_professional", true);
   });
 });

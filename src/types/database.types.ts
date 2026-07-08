@@ -317,6 +317,36 @@ export type Database = {
           },
         ]
       }
+      agent_traffic_logs: {
+        Row: {
+          bot_category: string
+          bot_name: string
+          created_at: string
+          id: string
+          page_path: string
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          bot_category: string
+          bot_name: string
+          created_at?: string
+          id?: string
+          page_path: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          bot_category?: string
+          bot_name?: string
+          created_at?: string
+          id?: string
+          page_path?: string
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       api_key_usage_logs: {
         Row: {
           api_key_id: string
@@ -496,6 +526,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "api_rate_limit_windows_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_usage_logs: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          endpoint: string
+          id: string
+          ip_address: unknown
+          method: string
+          query_params: Json | null
+          response_status: number | null
+          response_time_ms: number | null
+          tier: string
+          user_agent: string | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip_address?: unknown
+          method: string
+          query_params?: Json | null
+          response_status?: number | null
+          response_time_ms?: number | null
+          tier: string
+          user_agent?: string | null
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip_address?: unknown
+          method?: string
+          query_params?: Json | null
+          response_status?: number | null
+          response_time_ms?: number | null
+          tier?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_logs_api_key_id_fkey"
             columns: ["api_key_id"]
             isOneToOne: false
             referencedRelation: "api_keys"
@@ -4867,6 +4947,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limit_minute_windows: {
+        Row: {
+          bucket: string
+          request_count: number
+          window_key: string
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          request_count?: number
+          window_key: string
+          window_start: string
+        }
+        Update: {
+          bucket?: string
+          request_count?: number
+          window_key?: string
+          window_start?: string
+        }
+        Relationships: []
       }
       recognition_badges: {
         Row: {
@@ -9639,6 +9740,14 @@ export type Database = {
           badge_name: string
         }[]
       }
+      check_minute_rate_limit: {
+        Args: { p_bucket: string; p_limit: number; p_window_key: string }
+        Returns: {
+          current_count: number
+          is_allowed: boolean
+          retry_after_seconds: number
+        }[]
+      }
       check_rate_limit: {
         Args: { p_organization_id: string }
         Returns: boolean
@@ -9794,6 +9903,7 @@ export type Database = {
         Args: { retention_days?: number }
         Returns: number
       }
+      prune_rate_limit_windows: { Args: never; Returns: undefined }
       queue_admin_alert: {
         Args: {
           p_action_url?: string

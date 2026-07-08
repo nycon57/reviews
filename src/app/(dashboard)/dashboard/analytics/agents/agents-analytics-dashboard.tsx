@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Area,
   AreaChart,
@@ -98,12 +99,14 @@ function SummaryCard({
   subtitle,
   icon,
   trendPercent,
+  valueHref,
 }: {
   title: string;
   value: string;
   subtitle: string;
   icon: React.ReactNode;
   trendPercent?: number;
+  valueHref?: string;
 }) {
   return (
     <Card className="border-border/60">
@@ -111,7 +114,16 @@ function SummaryCard({
         <div className="flex min-h-[96px] items-start justify-between gap-4">
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold text-heading">{value}</p>
+            {valueHref ? (
+              <Link
+                href={valueHref}
+                className="block text-2xl font-bold text-heading transition-colors hover:text-repwell-teal-300"
+              >
+                {value}
+              </Link>
+            ) : (
+              <p className="text-2xl font-bold text-heading">{value}</p>
+            )}
             <p className="text-xs text-muted-foreground">{subtitle}</p>
           </div>
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-repwell-teal-300/10 text-repwell-teal-300">
@@ -304,6 +316,7 @@ export function AgentsAnalyticsDashboard({ data }: AgentsAnalyticsDashboardProps
               : "No professional detail traffic"
           }
           icon={<LinkSimple className="h-5 w-5" weight="duotone" />}
+          valueHref={data.apiUsage.mostQueriedProfessional?.secondary}
         />
       </div>
 

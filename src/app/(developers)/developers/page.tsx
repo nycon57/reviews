@@ -124,7 +124,7 @@ if (!response.ok) {
 
 const data = await response.json();`;
 
-const responseExample = `{
+export const responseExample = `{
   "data": [
     {
       "id": "pro_123",
@@ -138,12 +138,10 @@ const responseExample = `{
       "profile_url": "https://repwell.com/pro/jane-smith"
     }
   ],
-  "pagination": {
-    "total": 1,
-    "page": 1,
-    "per_page": 20,
-    "total_pages": 1
-  }
+  "total": 1,
+  "page": 1,
+  "per_page": 20,
+  "total_pages": 1
 }`;
 
 const structuredData = {

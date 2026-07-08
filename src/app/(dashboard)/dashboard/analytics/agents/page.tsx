@@ -10,6 +10,8 @@ export const metadata = {
   description: "Monitor agent traffic and public API usage.",
 };
 
+export const revalidate = 300;
+
 async function AgentsAnalyticsLoader() {
   const data = await getAgentAnalyticsDashboardData();
   return <AgentsAnalyticsDashboard data={data} />;

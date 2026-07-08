@@ -1,22 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Tables } from "@/types/database.types";
+import type { Json } from "@/types/database.types";
 import type { BotCategory } from "./detection";
-
-type AgentTrafficLogRow = Pick<
-  Tables<"agent_traffic_logs">,
-  "page_path" | "bot_name" | "bot_category" | "created_at"
->;
-
-type ApiUsageLogRow = Pick<
-  Tables<"api_usage_logs">,
-  | "endpoint"
-  | "method"
-  | "tier"
-  | "api_key_id"
-  | "response_status"
-  | "response_time_ms"
-  | "created_at"
->;
 
 export type AgentChartCategory = BotCategory;
 export type ApiTier = "open" | "keyed";
@@ -55,6 +39,7 @@ export interface SummaryCardMetric {
 export interface MostQueriedProfessionalMetric {
   label: string;
   count: number;
+  secondary: string;
 }
 
 export interface AgentAnalyticsDashboardData {
@@ -80,7 +65,6 @@ export interface AgentAnalyticsDashboardData {
   };
 }
 
-const PAGE_SIZE = 1000;
 const AGENT_CATEGORIES: AgentChartCategory[] = [
   "search",
   "llm",
@@ -113,10 +97,6 @@ function getLastDayKeys(days: number, now: Date): string[] {
   );
 }
 
-function isOnOrAfter(rowDate: string, boundary: Date): boolean {
-  return new Date(rowDate).getTime() >= boundary.getTime();
-}
-
 function roundPercent(value: number): number {
   return Math.round(value * 10) / 10;
 }
@@ -127,31 +107,6 @@ function calculateTrendPercent(current: number, previous: number): number {
   }
 
   return roundPercent(((current - previous) / previous) * 100);
-}
-
-function createSummaryMetric(
-  rows: Array<{ created_at: string }>,
-  now: Date
-): SummaryCardMetric {
-  const currentBoundary = new Date(now);
-  currentBoundary.setUTCDate(currentBoundary.getUTCDate() - 7);
-  const previousBoundary = new Date(now);
-  previousBoundary.setUTCDate(previousBoundary.getUTCDate() - 14);
-
-  const current = rows.filter((row) => isOnOrAfter(row.created_at, currentBoundary)).length;
-  const previous = rows.filter((row) => {
-    const createdAt = new Date(row.created_at).getTime();
-    return (
-      createdAt >= previousBoundary.getTime() &&
-      createdAt < currentBoundary.getTime()
-    );
-  }).length;
-
-  return {
-    value: current,
-    previousValue: previous,
-    trendPercent: calculateTrendPercent(current, previous),
-  };
 }
 
 function incrementMap(map: Map<string, number>, key: string, amount = 1): void {
@@ -173,23 +128,6 @@ function toRankedMetrics(
     }));
 }
 
-function getAverage(values: number[]): number | null {
-  if (values.length === 0) {
-    return null;
-  }
-
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-}
-
-function getErrorRate(rows: ApiUsageLogRow[]): number {
-  if (rows.length === 0) {
-    return 0;
-  }
-
-  const errors = rows.filter((row) => (row.response_status ?? 0) >= 400).length;
-  return roundPercent((errors / rows.length) * 100);
-}
-
 function getProfessionalIdFromEndpoint(endpoint: string): string | null {
   const match = endpoint.match(/(?:\/api)?\/v2\/professionals\/([^/?#]+)/i);
   if (!match?.[1]) {
@@ -207,71 +145,61 @@ function formatApiKeyLabel(apiKeyId: string): string {
   return `Key ${apiKeyId.slice(0, 8)}`;
 }
 
-async function fetchAgentTrafficRows(
-  supabase: ReturnType<typeof createAdminClient>,
-  sinceIso: string
-): Promise<AgentTrafficLogRow[]> {
-  const rows: AgentTrafficLogRow[] = [];
-  let offset = 0;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from("agent_traffic_logs")
-      .select("page_path, bot_name, bot_category, created_at")
-      .gte("created_at", sinceIso)
-      .order("created_at", { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1);
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    rows.push(...((data ?? []) as AgentTrafficLogRow[]));
-
-    if ((data?.length ?? 0) < PAGE_SIZE) {
-      break;
-    }
-
-    offset += PAGE_SIZE;
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
   }
 
-  return rows;
+  return value as Record<string, unknown>;
 }
 
-async function fetchApiUsageRows(
-  supabase: ReturnType<typeof createAdminClient>,
-  sinceIso: string
-): Promise<ApiUsageLogRow[]> {
-  const rows: ApiUsageLogRow[] = [];
-  let offset = 0;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from("api_usage_logs")
-      .select(
-        "endpoint, method, tier, api_key_id, response_status, response_time_ms, created_at"
-      )
-      .gte("created_at", sinceIso)
-      .order("created_at", { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1);
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    rows.push(...((data ?? []) as ApiUsageLogRow[]));
-
-    if ((data?.length ?? 0) < PAGE_SIZE) {
-      break;
-    }
-
-    offset += PAGE_SIZE;
+function asArray(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) {
+    return [];
   }
 
-  return rows;
+  return value.flatMap((item) => {
+    const record = asRecord(item);
+    return record ? [record] : [];
+  });
 }
 
-function buildAgentTimeSeries(rows: AgentTrafficLogRow[], dayKeys: string[]): AgentTrafficDay[] {
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function asNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function asNullableNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function getRpcPayload(value: Json | null): Record<string, unknown> {
+  return asRecord(value) ?? {};
+}
+
+function createSummaryMetricFromDaily(
+  valuesByDay: Map<string, number>,
+  dayKeys: string[]
+): SummaryCardMetric {
+  const currentKeys = dayKeys.slice(-7);
+  const previousKeys = dayKeys.slice(-14, -7);
+  const current = currentKeys.reduce((sum, day) => sum + (valuesByDay.get(day) ?? 0), 0);
+  const previous = previousKeys.reduce((sum, day) => sum + (valuesByDay.get(day) ?? 0), 0);
+
+  return {
+    value: current,
+    previousValue: previous,
+    trendPercent: calculateTrendPercent(current, previous),
+  };
+}
+
+function buildAgentTimeSeries(
+  dailyRows: Record<string, unknown>[],
+  dayKeys: string[]
+): AgentTrafficDay[] {
   const byDay = new Map<string, AgentTrafficDay>(
     dayKeys.map((date) => [
       date,
@@ -285,22 +213,29 @@ function buildAgentTimeSeries(rows: AgentTrafficLogRow[], dayKeys: string[]): Ag
     ])
   );
 
-  for (const row of rows) {
-    const day = byDay.get(toDateKey(row.created_at));
+  for (const row of dailyRows) {
+    const rawDay = asString(row.day);
+    if (!rawDay) continue;
+
+    const day = byDay.get(toDateKey(rawDay));
     if (!day) {
       continue;
     }
 
-    const category = AGENT_CATEGORIES.includes(row.bot_category as AgentChartCategory)
-      ? (row.bot_category as AgentChartCategory)
+    const rawCategory = asString(row.bot_category);
+    const category = AGENT_CATEGORIES.includes(rawCategory as AgentChartCategory)
+      ? (rawCategory as AgentChartCategory)
       : "unknown";
-    day[category] += 1;
+    day[category] += asNumber(row.visits);
   }
 
   return dayKeys.map((date) => byDay.get(date)!);
 }
 
-function buildApiTimeSeries(rows: ApiUsageLogRow[], dayKeys: string[]): ApiUsageDay[] {
+function buildApiTimeSeries(
+  dailyRows: Record<string, unknown>[],
+  dayKeys: string[]
+): ApiUsageDay[] {
   const byDay = new Map<string, ApiUsageDay>(
     dayKeys.map((date) => [
       date,
@@ -312,66 +247,95 @@ function buildApiTimeSeries(rows: ApiUsageLogRow[], dayKeys: string[]): ApiUsage
     ])
   );
 
-  for (const row of rows) {
-    const day = byDay.get(toDateKey(row.created_at));
+  for (const row of dailyRows) {
+    const rawDay = asString(row.day);
+    if (!rawDay) continue;
+
+    const day = byDay.get(toDateKey(rawDay));
     if (!day) {
       continue;
     }
 
-    const tier = API_TIERS.includes(row.tier as ApiTier)
-      ? (row.tier as ApiTier)
+    const rawTier = asString(row.tier);
+    const tier = API_TIERS.includes(rawTier as ApiTier)
+      ? (rawTier as ApiTier)
       : "open";
-    day[tier] += 1;
+    day[tier] += asNumber(row.requests);
   }
 
   return dayKeys.map((date) => byDay.get(date)!);
 }
 
-function buildEndpointMetrics(rows: ApiUsageLogRow[]): ApiEndpointMetric[] {
-  const byEndpoint = new Map<
-    string,
-    { count: number; responseTimes: number[]; errorCount: number; methods: Set<string> }
-  >();
-
-  for (const row of rows) {
-    const entry =
-      byEndpoint.get(row.endpoint) ??
-      { count: 0, responseTimes: [], errorCount: 0, methods: new Set<string>() };
-    entry.count += 1;
-    entry.methods.add(row.method);
-
-    if (typeof row.response_time_ms === "number") {
-      entry.responseTimes.push(row.response_time_ms);
-    }
-
-    if ((row.response_status ?? 0) >= 400) {
-      entry.errorCount += 1;
-    }
-
-    byEndpoint.set(row.endpoint, entry);
-  }
-
-  return Array.from(byEndpoint.entries())
-    .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]))
-    .slice(0, 10)
-    .map(([endpoint, entry]) => ({
-      label: endpoint,
-      value: entry.count,
-      secondary: Array.from(entry.methods).sort().join(", "),
-      averageResponseMs: getAverage(entry.responseTimes),
-      errorRate: roundPercent((entry.errorCount / entry.count) * 100),
-    }));
+function sumDaily(rows: Record<string, unknown>[], valueKey: "visits" | "requests"): number {
+  return rows.reduce((sum, row) => sum + asNumber(row[valueKey]), 0);
 }
 
-function buildMostQueriedProfessional(
-  rows: ApiUsageLogRow[]
-): MostQueriedProfessionalMetric | null {
-  const counts = new Map<string, number>();
+function totalByDay(
+  rows: Record<string, unknown>[],
+  valueKey: "visits" | "requests"
+): Map<string, number> {
+  const totals = new Map<string, number>();
 
   for (const row of rows) {
-    const professionalId = getProfessionalIdFromEndpoint(row.endpoint);
+    const day = asString(row.day);
+    if (!day) continue;
+    incrementMap(totals, toDateKey(day), asNumber(row[valueKey]));
+  }
+
+  return totals;
+}
+
+function rankedFromRows(
+  rows: Record<string, unknown>[],
+  labelKeys: string[],
+  valueKey: "visits" | "requests"
+): RankedMetric[] {
+  return rows
+    .map((row) => {
+      const label =
+        labelKeys.map((key) => asString(row[key])).find((value) => value !== null) ??
+        "Unknown";
+      return {
+        label,
+        value: asNumber(row[valueKey]),
+      };
+    })
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
+    .slice(0, 10);
+}
+
+function buildEndpointMetrics(rows: Record<string, unknown>[]): ApiEndpointMetric[] {
+  return rows
+    .map((row) => {
+      const endpoint = asString(row.endpoint) ?? "Unknown";
+      const requests = asNumber(row.requests);
+      const errorRate = asNullableNumber(row.error_rate);
+      const errorCount = asNullableNumber(row.error_count);
+
+      return {
+        label: endpoint,
+        value: requests,
+        averageResponseMs: asNullableNumber(row.avg_response_ms),
+        errorRate:
+          errorRate ??
+          (errorCount !== null && requests > 0
+            ? roundPercent((errorCount / requests) * 100)
+            : 0),
+      };
+    })
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
+    .slice(0, 10);
+}
+
+function getTopProfessionalQuery(
+  endpoints: ApiEndpointMetric[]
+): { id: string; count: number } | null {
+  const counts = new Map<string, number>();
+
+  for (const endpoint of endpoints) {
+    const professionalId = getProfessionalIdFromEndpoint(endpoint.label);
     if (professionalId) {
-      incrementMap(counts, professionalId);
+      incrementMap(counts, professionalId, endpoint.value);
     }
   }
 
@@ -382,8 +346,34 @@ function buildMostQueriedProfessional(
   }
 
   return {
-    label: top[0],
+    id: top[0],
     count: top[1],
+  };
+}
+
+async function resolveMostQueriedProfessional(
+  supabase: ReturnType<typeof createAdminClient>,
+  endpoints: ApiEndpointMetric[]
+): Promise<MostQueriedProfessionalMetric | null> {
+  const top = getTopProfessionalQuery(endpoints);
+  if (!top) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("full_name, slug")
+    .eq("id", top.id)
+    .maybeSingle();
+
+  const row = !error ? asRecord(data) : null;
+  const fullName = asString(row?.full_name);
+  const slug = asString(row?.slug);
+
+  return {
+    label: fullName ?? top.id,
+    count: top.count,
+    secondary: `/pro/${slug ?? top.id}`,
   };
 }
 
@@ -392,66 +382,73 @@ export async function getAgentAnalyticsDashboardData(
 ): Promise<AgentAnalyticsDashboardData> {
   const supabase = createAdminClient();
   const dayKeys = getLastDayKeys(30, now);
-  const sinceIso = `${dayKeys[0]}T00:00:00.000Z`;
 
-  const [agentRows, apiRows] = await Promise.all([
-    fetchAgentTrafficRows(supabase, sinceIso),
-    fetchApiUsageRows(supabase, sinceIso),
+  const [trafficResult, usageResult] = await Promise.all([
+    supabase.rpc("agent_traffic_summary", { p_days: 30 }),
+    supabase.rpc("api_usage_summary", { p_days: 30 }),
   ]);
 
-  const botCounts = new Map<string, number>();
-  const pageCounts = new Map<string, number>();
-  const categoryCounts = new Map<string, number>();
-
-  for (const row of agentRows) {
-    incrementMap(botCounts, row.bot_name);
-    incrementMap(pageCounts, row.page_path);
-    incrementMap(
-      categoryCounts,
-      AGENT_CATEGORIES.includes(row.bot_category as AgentChartCategory)
-        ? row.bot_category
-        : "unknown"
-    );
+  if (trafficResult.error) {
+    throw new Error(trafficResult.error.message);
+  }
+  if (usageResult.error) {
+    throw new Error(usageResult.error.message);
   }
 
-  const responseTimes = apiRows
-    .map((row) => row.response_time_ms)
-    .filter((value): value is number => typeof value === "number");
-  const usageByApiKeyCounts = new Map<string, number>();
-
-  for (const row of apiRows) {
-    incrementMap(usageByApiKeyCounts, row.api_key_id ?? "open-tier");
-  }
-
-  const current7dBoundary = new Date(now);
-  current7dBoundary.setUTCDate(current7dBoundary.getUTCDate() - 7);
-  const apiRows7d = apiRows.filter((row) => isOnOrAfter(row.created_at, current7dBoundary));
-  const uniqueApiKeys7d = new Set(
-    apiRows7d
-      .map((row) => row.api_key_id)
-      .filter((apiKeyId): apiKeyId is string => Boolean(apiKeyId))
-  ).size;
+  const trafficSummary = getRpcPayload(trafficResult.data);
+  const usageSummary = getRpcPayload(usageResult.data);
+  const trafficDaily = asArray(trafficSummary.daily);
+  const usageDaily = asArray(usageSummary.daily);
+  const usageTotals = asRecord(usageSummary.totals) ?? {};
+  const topEndpoints = buildEndpointMetrics(asArray(usageSummary.top_endpoints));
+  const mostQueriedProfessional = await resolveMostQueriedProfessional(
+    supabase,
+    topEndpoints
+  );
+  const trafficTotalByDay = totalByDay(trafficDaily, "visits");
+  const usageTotalByDay = totalByDay(usageDaily, "requests");
+  const totalRequests =
+    asNullableNumber(usageTotals.total_requests) ?? sumDaily(usageDaily, "requests");
+  const errorCount = asNumber(usageTotals.error_count);
 
   return {
     generatedAt: now.toISOString(),
     agentTraffic: {
-      total30d: agentRows.length,
-      total7d: createSummaryMetric(agentRows, now),
-      timeSeries: buildAgentTimeSeries(agentRows, dayKeys),
-      topBots: toRankedMetrics(botCounts, 10),
-      categoryBreakdown: toRankedMetrics(categoryCounts, 10),
-      topPages: toRankedMetrics(pageCounts, 10),
+      total30d:
+        asNullableNumber(trafficSummary.total_visits) ?? sumDaily(trafficDaily, "visits"),
+      total7d: createSummaryMetricFromDaily(trafficTotalByDay, dayKeys),
+      timeSeries: buildAgentTimeSeries(trafficDaily, dayKeys),
+      topBots: rankedFromRows(asArray(trafficSummary.top_bots), ["bot_name", "bot"], "visits"),
+      categoryBreakdown: rankedFromRows(
+        asArray(trafficSummary.category_totals),
+        ["bot_category", "category"],
+        "visits"
+      ),
+      topPages: rankedFromRows(
+        asArray(trafficSummary.top_pages),
+        ["page_path", "page", "path"],
+        "visits"
+      ),
     },
     apiUsage: {
-      total30d: apiRows.length,
-      total7d: createSummaryMetric(apiRows, now),
-      uniqueApiKeys7d,
-      timeSeries: buildApiTimeSeries(apiRows, dayKeys),
-      topEndpoints: buildEndpointMetrics(apiRows),
-      averageResponseMs: getAverage(responseTimes),
-      errorRate: getErrorRate(apiRows),
-      usageByApiKey: toRankedMetrics(usageByApiKeyCounts, 10, formatApiKeyLabel),
-      mostQueriedProfessional: buildMostQueriedProfessional(apiRows),
+      total30d: totalRequests,
+      total7d: createSummaryMetricFromDaily(usageTotalByDay, dayKeys),
+      uniqueApiKeys7d: asNumber(usageTotals.distinct_keys),
+      timeSeries: buildApiTimeSeries(usageDaily, dayKeys),
+      topEndpoints,
+      averageResponseMs: asNullableNumber(usageTotals.avg_response_ms),
+      errorRate: totalRequests > 0 ? roundPercent((errorCount / totalRequests) * 100) : 0,
+      usageByApiKey: toRankedMetrics(
+        new Map(
+          asArray(usageSummary.by_key).map((row) => [
+            asString(row.api_key_id) ?? "open-tier",
+            asNumber(row.requests),
+          ])
+        ),
+        10,
+        formatApiKeyLabel
+      ),
+      mostQueriedProfessional,
     },
   };
 }

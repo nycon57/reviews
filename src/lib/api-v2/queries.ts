@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getBaseUrl } from "@/lib/seo";
 import { applyPublicProfessionalFilters } from "@/lib/users/public-visibility";
-import type { Json, Tables } from "@/types/database.types";
+import type { Database, Json, Tables } from "@/types/database.types";
 import {
   escapeLike,
   paginateArray,
@@ -62,6 +62,13 @@ type ReviewRow = Pick<
 type UserWithOrganization = UserRow & {
   organizations?: OrganizationRow | OrganizationRow[] | null;
 };
+
+type ReviewWithProfessional = ReviewRow & {
+  professional?: UserWithOrganization | UserWithOrganization[] | null;
+};
+
+type OrganizationReviewRollupRow =
+  Database["public"]["Views"]["organization_review_rollups"]["Row"];
 
 export interface ProfessionalSummary {
   id: string;
@@ -187,6 +194,13 @@ const REVIEW_SELECT = `
   verified_at
 `;
 
+const CROSS_REVIEW_SELECT = `
+  ${REVIEW_SELECT},
+  professional:users!reviews_user_id_fkey!inner (
+    ${PROFESSIONAL_SELECT}
+  )
+`;
+
 function ok<T>(value: T): ValidationResult<T> {
   return { ok: true, value };
 }
@@ -251,26 +265,6 @@ function toProfessionalReview(row: ReviewRow): ProfessionalReview {
   };
 }
 
-function sortProfessionals(
-  rows: UserWithOrganization[],
-  sortBy: ProfessionalSearchSort
-): UserWithOrganization[] {
-  const sorted = [...rows];
-  sorted.sort((a, b) => {
-    if (sortBy === "reviews") {
-      return (b.total_reviews ?? 0) - (a.total_reviews ?? 0);
-    }
-    if (sortBy === "recent") {
-      return (
-        new Date(b.updated_at ?? 0).getTime() -
-        new Date(a.updated_at ?? 0).getTime()
-      );
-    }
-    return (b.average_rating ?? 0) - (a.average_rating ?? 0);
-  });
-  return sorted;
-}
-
 function sortReviews(rows: ReviewRow[], sortBy: ReviewSort): ReviewRow[] {
   const sorted = [...rows];
   sorted.sort((a, b) => {
@@ -283,30 +277,94 @@ function sortReviews(rows: ReviewRow[], sortBy: ReviewSort): ReviewRow[] {
   return sorted;
 }
 
-function contains(value: string | null, expected: string): boolean {
-  return value?.toLowerCase().includes(expected.toLowerCase()) ?? false;
+function getEmbeddedProfessional(row: ReviewWithProfessional): UserWithOrganization | null {
+  const professional = row.professional;
+  if (Array.isArray(professional)) return professional[0] ?? null;
+  return professional ?? null;
 }
 
-async function getApprovedReviewUserIds(userIds: string[]): Promise<Set<string>> {
-  if (userIds.length === 0) return new Set();
+type OrderableQuery<T> = T & {
+  order: (
+    column: string,
+    options?: { ascending?: boolean; nullsFirst?: boolean }
+  ) => T;
+};
 
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("reviews")
-    .select("user_id")
-    .in("user_id", userIds)
-    .eq("status", "approved")
-    .eq("is_published", true);
+function asOrderable<T>(query: T): OrderableQuery<T> {
+  return query as OrderableQuery<T>;
+}
 
-  if (error || !data) {
-    throw new Error("Failed to verify approved review visibility");
+function applyReviewSort<T>(query: T, sortBy: ReviewSort): T {
+  const ordered = asOrderable(query);
+  if (sortBy === "rating_desc") {
+    return asOrderable(ordered.order("rating", { ascending: false })).order("id", {
+      ascending: true,
+    });
   }
+  if (sortBy === "rating_asc") {
+    return asOrderable(ordered.order("rating", { ascending: true })).order("id", {
+      ascending: true,
+    });
+  }
+  return asOrderable(
+    ordered.order("review_date", { ascending: sortBy === "date_asc" })
+  ).order("id", { ascending: true });
+}
 
-  return new Set(
-    (data as Array<{ user_id: string | null }>)
-      .map((row) => row.user_id)
-      .filter((id): id is string => Boolean(id))
-  );
+function applyProfessionalSearchSort<T>(query: T, sortBy: ProfessionalSearchSort): T {
+  const ordered = asOrderable(query);
+  if (sortBy === "reviews") {
+    return asOrderable(ordered.order("total_reviews", { ascending: false })).order("id", {
+      ascending: true,
+    });
+  }
+  if (sortBy === "recent") {
+    return asOrderable(ordered.order("updated_at", { ascending: false })).order("id", {
+      ascending: true,
+    });
+  }
+  return asOrderable(ordered.order("average_rating", { ascending: false })).order("id", {
+    ascending: true,
+  });
+}
+
+function applyCompanySort<T>(query: T, sortBy: CompanySort): T {
+  const ordered = asOrderable(query);
+  if (sortBy === "size") {
+    return asOrderable(
+      ordered.order("professional_count", { ascending: false })
+    ).order("organization_id", { ascending: true });
+  }
+  if (sortBy === "reviews") {
+    return asOrderable(
+      ordered.order("published_reviews", { ascending: false })
+    ).order("organization_id", { ascending: true });
+  }
+  return asOrderable(
+    ordered.order("average_rating", { ascending: false })
+  ).order("organization_id", { ascending: true });
+}
+
+function rangeEnd(pagination: PaginationParams): number {
+  return pagination.offset + pagination.perPage - 1;
+}
+
+function toIlikePattern(value: string): string {
+  return `%${escapeLike(value)}%`;
+}
+
+function toCompanySummary(row: OrganizationReviewRollupRow): CompanySummary {
+  return {
+    id: row.organization_id ?? "",
+    name: row.name?.trim() || "Unknown",
+    slug: row.slug ?? "",
+    industry: row.industry,
+    logo_url: null,
+    website_url: null,
+    professional_count: row.professional_count ?? 0,
+    avg_team_rating: row.average_rating,
+    total_team_reviews: row.published_reviews ?? 0,
+  };
 }
 
 export function parseProfessionalSearchParams(
@@ -355,43 +413,37 @@ export async function searchProfessionalsV2(
 ): Promise<{ data: ProfessionalSummary[]; total: number }> {
   const supabase = createAdminClient();
   let query = applyPublicProfessionalFilters(
-    supabase.from("users").select(PROFESSIONAL_SELECT)
-  ).gt("total_reviews", 0);
+    supabase.from("users").select(PROFESSIONAL_SELECT, { count: "exact" })
+  ).is("has_published_review", true);
 
   if (params.name) {
-    query = query.ilike("full_name", `%${escapeLike(params.name)}%`);
+    query = query.ilike("full_name", toIlikePattern(params.name));
   }
   if (params.minRating !== undefined) {
     query = query.gte("average_rating", params.minRating);
   }
+  if (params.industry) {
+    query = query.ilike("industry", toIlikePattern(params.industry));
+  }
+  if (params.location) {
+    const pattern = toIlikePattern(params.location);
+    query = query.or(
+      `branch.ilike.${pattern},address->>city.ilike.${pattern},address->>state.ilike.${pattern}`
+    );
+  }
 
-  const { data, error } = await query.limit(1000);
+  const { data, error, count } = await applyProfessionalSearchSort(query, params.sortBy).range(
+    params.pagination.offset,
+    rangeEnd(params.pagination)
+  );
   if (error || !data) {
     throw new Error("Failed to search professionals");
   }
 
-  const rows = data as unknown as UserWithOrganization[];
-  const approvedUserIds = await getApprovedReviewUserIds(rows.map((row) => row.id));
-
-  let filtered = rows.filter((row) => approvedUserIds.has(row.id));
-
-  if (params.industry) {
-    filtered = filtered.filter((row) => {
-      const organization = getEmbeddedOrganization(row);
-      return (
-        contains(row.industry, params.industry!) ||
-        contains(organization?.industry ?? null, params.industry!)
-      );
-    });
-  }
-
-  if (params.location) {
-    filtered = filtered.filter((row) => contains(getLocation(row), params.location!));
-  }
-
-  const sorted = sortProfessionals(filtered, params.sortBy);
-  const page = paginateArray(sorted.map(toProfessionalSummary), params.pagination);
-  return page;
+  return {
+    data: (data as unknown as UserWithOrganization[]).map(toProfessionalSummary),
+    total: count ?? 0,
+  };
 }
 
 async function getVisibleProfessional(id: string): Promise<UserWithOrganization | null> {
@@ -621,87 +673,72 @@ export async function searchReviewsV2(
   const supabase = createAdminClient();
   let query = supabase
     .from("reviews")
-    .select(REVIEW_SELECT)
+    .select(CROSS_REVIEW_SELECT, { count: "exact" })
     .eq("status", "approved")
     .eq("is_published", true)
-    .not("user_id", "is", null);
+    .not("user_id", "is", null)
+    .eq("professional.is_active", true)
+    .eq("professional.accepts_public_reviews", true)
+    .neq("professional.role", "manager")
+    .neq("professional.role", "enterprise")
+    .is("professional.is_public_professional", true);
 
   if (params.keyword) {
-    query = query.ilike("text", `%${escapeLike(params.keyword)}%`);
+    query = query.ilike("text", toIlikePattern(params.keyword));
   }
   if (params.platform) query = query.eq("source", params.platform);
   if (params.minRating !== undefined) query = query.gte("rating", params.minRating);
   if (params.maxRating !== undefined) query = query.lte("rating", params.maxRating);
   if (params.dateFrom) query = query.gte("review_date", params.dateFrom);
   if (params.dateTo) query = query.lte("review_date", params.dateTo);
+  if (params.industry) {
+    query = query.ilike("professional.industry", toIlikePattern(params.industry));
+  }
+  if (params.location) {
+    const pattern = toIlikePattern(params.location);
+    query = query.or(
+      `branch.ilike.${pattern},address->>city.ilike.${pattern},address->>state.ilike.${pattern}`,
+      { referencedTable: "professional" }
+    );
+  }
 
-  const { data, error } = await query.limit(1000);
+  const { data, error, count } = await applyReviewSort(query, params.sortBy).range(
+    params.pagination.offset,
+    rangeEnd(params.pagination)
+  );
   if (error || !data) {
     throw new Error("Failed to search reviews");
   }
 
-  const reviews = data as unknown as ReviewRow[];
-  const userIds = [
-    ...new Set(reviews.map((review) => review.user_id).filter((id): id is string => Boolean(id))),
-  ];
-
-  if (userIds.length === 0) {
-    return { data: [], total: 0 };
-  }
-
-  const { data: professionals, error: professionalError } = await applyPublicProfessionalFilters(
-    supabase.from("users").select(PROFESSIONAL_SELECT)
-  ).in("id", userIds);
-
-  if (professionalError || !professionals) {
-    throw new Error("Failed to load review professionals");
-  }
-
-  let professionalRows = professionals as unknown as UserWithOrganization[];
-  if (params.industry) {
-    professionalRows = professionalRows.filter((row) => {
-      const organization = getEmbeddedOrganization(row);
-      return (
-        contains(row.industry, params.industry!) ||
-        contains(organization?.industry ?? null, params.industry!)
-      );
-    });
-  }
-  if (params.location) {
-    professionalRows = professionalRows.filter((row) =>
-      contains(getLocation(row), params.location!)
-    );
-  }
-
-  const professionalMap = new Map(professionalRows.map((row) => [row.id, row]));
-  const filteredReviews = sortReviews(
-    reviews.filter((review) => review.user_id && professionalMap.has(review.user_id)),
-    params.sortBy
-  );
-
-  const mapped = filteredReviews.map((review) => {
-    const professional = professionalMap.get(review.user_id!)!;
+  const mapped = (data as unknown as ReviewWithProfessional[]).flatMap((review) => {
+    const professional = getEmbeddedProfessional(review);
+    if (!professional) return [];
     const organization = getEmbeddedOrganization(professional);
-    return {
-      id: review.id,
-      rating: review.rating,
-      review_text: review.text,
-      reviewer_name: review.customer_name,
-      review_date: review.review_date,
-      platform: review.source,
-      sentiment_label: review.sentiment_label,
-      key_phrases: review.key_phrases,
-      professional: {
-        id: professional.id,
-        full_name: normalizeName(professional.full_name),
-        title: professional.title,
-        company_name: organization?.name ?? null,
-        profile_url: profileUrl(professional),
+    return [
+      {
+        id: review.id,
+        rating: review.rating,
+        review_text: review.text,
+        reviewer_name: review.customer_name,
+        review_date: review.review_date,
+        platform: review.source,
+        sentiment_label: review.sentiment_label,
+        key_phrases: review.key_phrases,
+        professional: {
+          id: professional.id,
+          full_name: normalizeName(professional.full_name),
+          title: professional.title,
+          company_name: organization?.name ?? null,
+          profile_url: profileUrl(professional),
+        },
       },
-    };
+    ];
   });
 
-  return paginateArray(mapped, params.pagination);
+  return {
+    data: mapped,
+    total: count ?? 0,
+  };
 }
 
 export function parseCompanyListParams(
@@ -809,17 +846,9 @@ export function buildCompanyRollup(
   };
 }
 
-function sortCompanies(rows: CompanyDetail[], sortBy: CompanySort): CompanyDetail[] {
-  const sorted = [...rows];
-  sorted.sort((a, b) => {
-    if (sortBy === "size") return b.professional_count - a.professional_count;
-    if (sortBy === "reviews") return b.total_team_reviews - a.total_team_reviews;
-    return (b.avg_team_rating ?? 0) - (a.avg_team_rating ?? 0);
-  });
-  return sorted;
-}
-
-async function loadCompanyRollups(organizations: OrganizationRow[]): Promise<CompanyDetail[]> {
+async function loadCompanyDetailRollups(
+  organizations: OrganizationRow[]
+): Promise<CompanyDetail[]> {
   const orgIds = organizations.map((org) => org.id);
   if (orgIds.length === 0) return [];
 
@@ -876,31 +905,30 @@ export async function listCompaniesV2(
 ): Promise<{ data: CompanySummary[]; total: number }> {
   const supabase = createAdminClient();
   let query = supabase
-    .from("organizations")
-    .select("id, name, slug, industry, logo_url, website_url");
+    .from("organization_review_rollups")
+    .select(
+      "organization_id, name, slug, industry, professional_count, published_reviews, average_rating",
+      { count: "exact" }
+    );
 
   if (params.industry) {
-    query = query.ilike("industry", `%${escapeLike(params.industry)}%`);
+    query = query.ilike("industry", toIlikePattern(params.industry));
+  }
+  if (params.minAvgRating !== undefined) {
+    query = query.gte("average_rating", params.minAvgRating);
   }
 
-  const { data, error } = await query.limit(1000);
+  const { data, error, count } = await applyCompanySort(query, params.sortBy).range(
+    params.pagination.offset,
+    rangeEnd(params.pagination)
+  );
   if (error || !data) {
     throw new Error("Failed to fetch companies");
   }
 
-  let rollups = await loadCompanyRollups(data as unknown as OrganizationRow[]);
-  if (params.minAvgRating !== undefined) {
-    rollups = rollups.filter(
-      (rollup) =>
-        rollup.avg_team_rating !== null &&
-        rollup.avg_team_rating >= params.minAvgRating!
-    );
-  }
-
-  const page = paginateArray(sortCompanies(rollups, params.sortBy), params.pagination);
   return {
-    data: page.data.map(({ team: _team, ...summary }) => summary),
-    total: page.total,
+    data: (data as unknown as OrganizationReviewRollupRow[]).map(toCompanySummary),
+    total: count ?? 0,
   };
 }
 
@@ -914,6 +942,6 @@ export async function getCompanyDetailV2(id: string): Promise<CompanyDetail | nu
 
   if (error || !data) return null;
 
-  const [rollup] = await loadCompanyRollups([data as unknown as OrganizationRow]);
+  const [rollup] = await loadCompanyDetailRollups([data as unknown as OrganizationRow]);
   return rollup ?? null;
 }

@@ -11,6 +11,7 @@ import {
   THEME_STORAGE_KEY,
   VALID_THEMES,
 } from "@/lib/theme-constants";
+import { getBaseUrl } from "@/lib/seo";
 
 const sourceSans = Source_Sans_3({ subsets: ["latin"] });
 
@@ -29,6 +30,7 @@ const themeScript = `(function(){try{var d=document.documentElement,t="light";if
 )};if(t==="system")t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}d.classList.remove("light","dark");d.classList.add(t);d.style.colorScheme=t;}catch(e){}})();`;
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getBaseUrl()),
   title: "RepWell - Customer Experience Management",
   description:
     "Collect customer reviews, manage your reputation, and gain AI-powered insights to improve customer experience.",

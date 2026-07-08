@@ -10,6 +10,7 @@ import { CompetitorComparisonPage } from "@/components/competitor-pages";
 import { getBaseUrl } from "@/lib/seo";
 import { buildCompareBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
 import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
+import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 
 // ---------------------------------------------------------------------------
 // Static generation — all competitor pages are pre-rendered at build time
@@ -107,21 +108,7 @@ export default async function CompareSlugPage({
       <link rel="preconnect" href="https://temwotqafrafajehuiuh.supabase.co" crossOrigin="anonymous" />
       <link rel="dns-prefetch" href="https://images.unsplash.com" />
       <link rel="dns-prefetch" href="https://temwotqafrafajehuiuh.supabase.co" />
-      {/* FAQPage JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
-      {/* BreadcrumbList JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      {/* Product + AggregateRating JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-      />
+      <MultiSchemaStructuredData schemas={[faqSchema, breadcrumbSchema, productSchema]} />
       <MarketingBreadcrumbs items={breadcrumbItems} />
       <CompetitorComparisonPage config={config} />
     </>

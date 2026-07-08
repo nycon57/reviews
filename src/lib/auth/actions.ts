@@ -62,7 +62,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
         full_name: fullName,
         organization_name: organizationName,
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
+      emailRedirectTo: `${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "")}/auth/callback`,
     },
   });
 
@@ -170,7 +170,7 @@ export async function signInWithMagicLink(formData: MagicLinkInput): Promise<Aut
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
+      emailRedirectTo: `${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "")}/auth/callback`,
     },
   });
 
@@ -195,7 +195,7 @@ export async function resetPassword(formData: ResetPasswordInput): Promise<AuthR
   const { email } = result.data;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback?type=recovery`,
+    redirectTo: `${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "")}/auth/callback?type=recovery`,
   });
 
   if (error) {
@@ -251,7 +251,7 @@ export async function resendVerificationEmail(): Promise<AuthResult> {
     type: "signup",
     email: user.email,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
+      emailRedirectTo: `${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "")}/auth/callback`,
     },
   });
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getAllIntegrations } from "@/config/integration-pages";
 import { getBaseUrl } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/json-ld";
+import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import {
   generateIntegrationListSchema,
   generateIntegrationIndexBreadcrumbs,
@@ -40,8 +40,12 @@ export default function IntegrationsPage() {
 
   return (
     <>
-      <JsonLd data={generateIntegrationListSchema(integrations, baseUrl)} />
-      <JsonLd data={generateIntegrationIndexBreadcrumbs(baseUrl)} />
+      <MultiSchemaStructuredData
+        schemas={[
+          generateIntegrationListSchema(integrations, baseUrl),
+          generateIntegrationIndexBreadcrumbs(baseUrl),
+        ]}
+      />
       <IntegrationsDirectoryClient integrations={integrations} />
     </>
   );

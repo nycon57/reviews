@@ -4,7 +4,8 @@ import { serialize } from "next-mdx-remote/serialize";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
 import { getPostBySlug, getRelatedPosts, getAllPostSlugs } from "@/lib/blog";
-import { JsonLd } from "@/components/blog/json-ld";
+import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
+import { getBaseUrl } from "@/lib/seo";
 import { buildBlogBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
 import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
 import { BlogPostClient } from "./blog-post-client";
@@ -34,7 +35,7 @@ export async function generateMetadata({
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://repwell.ai";
+  const siteUrl = getBaseUrl();
   const postUrl = `${siteUrl}/blog/${slug}`;
 
   return {
@@ -82,7 +83,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   const relatedPosts = await getRelatedPosts(slug, post.category, post.tags, 3);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://repwell.ai";
+  const siteUrl = getBaseUrl();
   const postUrl = `${siteUrl}/blog/${slug}`;
 
   // Serialize MDX content on the server
@@ -126,12 +127,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <>
-      <JsonLd data={structuredData} />
-      {/* BreadcrumbList JSON-LD — safe: sourced from controlled blog post data, serialized via JSON.stringify */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <MultiSchemaStructuredData schemas={[structuredData, breadcrumbSchema]} />
       <MarketingBreadcrumbs items={breadcrumbItems} />
       <BlogPostClient
         post={post}

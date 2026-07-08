@@ -7,6 +7,7 @@ import {
 } from "@/config/customer-pages";
 import { getBaseUrl } from "@/lib/seo";
 import { generateBreadcrumbSchema } from "@/lib/seo/schema-generators";
+import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import { CustomerDetailPage } from "@/components/customers/customer-detail-page";
 
 // ---------------------------------------------------------------------------
@@ -104,16 +105,7 @@ export default async function CustomerSlugPage({
 
   return (
     <>
-      {/* Article JSON-LD — content is from static build-time config, not user input */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
-      />
-      {/* BreadcrumbList JSON-LD — content is from static build-time config, not user input */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      <MultiSchemaStructuredData schemas={[articleSchema, breadcrumbSchema]} />
       <CustomerDetailPage config={config} />
     </>
   );

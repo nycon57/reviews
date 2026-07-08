@@ -6,6 +6,10 @@ import { competitorSlugs } from "@/lib/competitor-pages";
 import { getAllIntegrationSlugs } from "@/config/integration-pages";
 import { docSections } from "@/lib/docs/content";
 import { getAllCustomerSlugs } from "@/config/customer-pages";
+import { getAllPostSlugs } from "@/lib/blog";
+import { getAllIndustryPageSlugs } from "@/config/industry-pages";
+import { getAllSolutionPageSlugs } from "@/config/solution-pages";
+import { getAllFeaturePageSlugs } from "@/config/feature-pages";
 
 /**
  * Generate dynamic sitemap for SEO
@@ -46,6 +50,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.75,
+    },
   ];
 
   // Industry directory pages
@@ -54,6 +64,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: now,
     changeFrequency: "daily" as const,
     priority: 0.9,
+  }));
+
+  // Blog posts
+  const blogSlugs = await getAllPostSlugs();
+  const blogPages: MetadataRoute.Sitemap = blogSlugs.map((slug) => ({
+    url: `${baseUrl}/blog/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.65,
+  }));
+
+  // Industry landing pages
+  const industryLandingPages: MetadataRoute.Sitemap = getAllIndustryPageSlugs().map((slug) => ({
+    url: `${baseUrl}/for/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
+  }));
+
+  // Solution landing pages
+  const solutionPages: MetadataRoute.Sitemap = getAllSolutionPageSlugs().map((slug) => ({
+    url: `${baseUrl}/solutions/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
+  }));
+
+  // Feature landing pages
+  const featurePages: MetadataRoute.Sitemap = getAllFeaturePageSlugs().map((slug) => ({
+    url: `${baseUrl}/features/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
   }));
 
   // Dynamic professional profile pages (using SEO-friendly slugs)
@@ -160,5 +203,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  return [...staticPages, ...industryPages, ...comparisonPages, ...integrationIndexPage, ...integrationDetailPages, ...customerIndexPage, ...customerDetailPages, ...professionalPages, ...orgPages, ...branchPages, ...docsLandingPage, ...docsArticlePages, ...developerPages];
+  return [
+    ...staticPages,
+    ...industryPages,
+    ...blogPages,
+    ...industryLandingPages,
+    ...solutionPages,
+    ...featurePages,
+    ...comparisonPages,
+    ...integrationIndexPage,
+    ...integrationDetailPages,
+    ...customerIndexPage,
+    ...customerDetailPages,
+    ...professionalPages,
+    ...orgPages,
+    ...branchPages,
+    ...docsLandingPage,
+    ...docsArticlePages,
+    ...developerPages,
+  ];
 }

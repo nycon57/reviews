@@ -16,6 +16,11 @@
       "permission": "VIEW_REVIEWS"
     },
     {
+      "title": "Share Studio",
+      "route": "/dashboard/share-studio",
+      "permission": "VIEW_SHARE_STUDIO"
+    },
+    {
       "title": "Tasks",
       "route": "/dashboard/tasks",
       "permission": "VIEW_TASKS"
@@ -130,6 +135,12 @@
       ]
     },
     {
+      "route": "/dashboard/share-studio",
+      "guards": [
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
       "route": "/dashboard/ex-surveys",
       "guards": [
         "requiresEnterprise",
@@ -172,6 +183,7 @@
     "/dashboard",
     "/dashboard/reviews",
     "/dashboard/reviews?tab=contacts",
+    "/dashboard/share-studio",
     "/dashboard/tasks",
     "/dashboard/campaigns",
     "/dashboard/recognition",

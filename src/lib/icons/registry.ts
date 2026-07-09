@@ -38,6 +38,7 @@ import {
   Fire,
   ThumbsUp,
   Images,
+  ShareNetwork,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 
@@ -77,6 +78,7 @@ const ICON_REGISTRY: Record<string, Icon> = {
   Fire,
   ThumbsUp,
   Images,
+  ShareNetwork,
 };
 
 // ---------------------------------------------------------------------------

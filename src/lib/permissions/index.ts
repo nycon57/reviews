@@ -60,6 +60,7 @@ export const PERMISSIONS = {
   VIEW_TRENDS: "view:trends",
   VIEW_TESTIMONIALS: "view:testimonials",
   VIEW_VIDEO_TESTIMONIALS: "view:video_testimonials",
+  VIEW_SHARE_STUDIO: "view:share_studio",
   SEND_SURVEY: "send:survey",
   VIEW_SETTINGS: "view:settings",
   VIEW_HELP: "view:help",
@@ -134,6 +135,9 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
     case PERMISSIONS.VIEW_SETTINGS:
     case PERMISSIONS.VIEW_HELP:
       return true;
+
+    case PERMISSIONS.VIEW_SHARE_STUDIO:
+      return _isIndividual || (isEnterprise && isManagerOrAbove);
 
     default:
       return false;

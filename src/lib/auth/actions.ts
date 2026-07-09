@@ -30,6 +30,7 @@ import {
   checkAdminAccessBetterAuth,
 } from "./server-actions";
 import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 
 function slugify(text: string): string {
   return text
@@ -145,6 +146,17 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
   }
 
   // Widget seeding is intentionally skipped here; individual accounts seed on demand.
+
+  void capturePostHogEvent({
+    distinctId: authData.user.id,
+    event: "user_signed_up",
+    properties: {
+      auth_system: "supabase",
+      account_type: "individual",
+    },
+    groups: { organization: orgData.id },
+    logContext: "supabase signup",
+  });
 
   return {
     success: true,

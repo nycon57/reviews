@@ -166,22 +166,45 @@ export async function findOrCreateContact(
   let createdNew = false;
   if (insertError) {
     if (insertError.code === "23505") {
-      // Lost a race — the Contact now exists. Re-select and return it.
-      const { data: raced, error: raceError } = await supabase
+      // Unique violation — two distinct cases share this code:
+      // (a) email race: the Contact now exists → re-select by email;
+      // (b) phone collision: a DIFFERENT contact already owns this phone
+      //     (contacts_org_phone_unique) → the email re-select finds nothing,
+      //     so retry the insert without the phone (same policy the contacts
+      //     backfill used: the email identity wins, the phone is dropped).
+      const { data: raced } = await supabase
         .from("contacts")
         .select("*")
         .eq("organization_id", organizationId)
         .eq("email", email)
         .is("erased_at", null)
-        .single();
-      if (raceError || !raced) {
-        throw new Error(
-          `findOrCreateContact: insert raced but re-select failed: ${
-            raceError?.message ?? "not found"
-          }`
-        );
+        .maybeSingle();
+      if (raced) {
+        contact = raced as ContactRow;
+      } else {
+        const { data: retried, error: retryError } = await supabase
+          .from("contacts")
+          .insert({
+            organization_id: organizationId,
+            owner_user_id: ownerUserId,
+            name,
+            email,
+            phone: null,
+            source,
+            email_sha256: emailSha256,
+          })
+          .select("*")
+          .single();
+        if (retryError || !retried) {
+          throw new Error(
+            `findOrCreateContact: insert raced but recovery failed: ${
+              retryError?.message ?? "not found"
+            }`
+          );
+        }
+        contact = retried as ContactRow;
+        createdNew = true;
       }
-      contact = raced as ContactRow;
     } else {
       throw new Error(`findOrCreateContact: insert failed: ${insertError.message}`);
     }

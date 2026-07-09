@@ -3,7 +3,7 @@ import { TEST_USERS } from "../helpers/pages";
 import { loginAs } from "../helpers/golden-auth";
 import { closeGoldenDb, getOrgForUserEmail } from "../helpers/golden-data";
 
-test.setTimeout(60_000);
+test.setTimeout(120_000);
 
 test.afterAll(async () => {
   await closeGoldenDb();
@@ -35,10 +35,10 @@ test("individual billing shows current plan and upgrade path reaches Stripe hand
   await expect(proCard.getByText("AI-Powered Reputation Intelligence")).toBeVisible();
 
   const outcomePromise = Promise.race([
-    page.waitForURL(/checkout\.stripe\.com/, { timeout: 20_000 }).then(() => "redirect" as const),
+    page.waitForURL(/checkout\.stripe\.com/, { timeout: 45_000 }).then(() => "redirect" as const),
     page
       .getByText(/pricing not configured|failed to start checkout|an error occurred/i)
-      .waitFor({ state: "visible", timeout: 20_000 })
+      .waitFor({ state: "visible", timeout: 45_000 })
       .then(() => "graceful-error" as const),
   ]);
 

@@ -9,6 +9,7 @@ Regenerated for ADR 0007 from `src/proxy.ts`, `src/lib/nav/config.ts`, and the p
 | /dashboard | nav | auth | dashboard shell/auth | VIEW_DASHBOARD | Y | Y | Y | Y | By account |
 | /dashboard/reviews | nav | auth | `getAccessContext` | VIEW_REVIEWS | Y | Y | Y | Y | By account |
 | /dashboard/reviews?tab=contacts | nav | auth | `getAccessContext` (Contacts tab gated by `SEND_SURVEY`) | VIEW_REVIEWS | Y | Y | Y | Y | By account |
+| /dashboard/share-studio | nav, proxy | roles admin/manager for enterprise accounts | `checkPageAccess({ minRole: "manager" })` | VIEW_SHARE_STUDIO | Y | Y | Y | N | By account |
 | /dashboard/tasks | nav | auth | `checkPageAccess({})` | VIEW_TASKS | Y | Y | Y | Y | By account |
 | /dashboard/campaigns | nav, proxy | `requiresEnterprise`, roles admin/manager | `requireEnterpriseManager` | VIEW_CAMPAIGNS | N | Y | Y | N | By account |
 | /dashboard/recognition | nav, proxy | `requiresEnterprise` | `requireEnterprise` | VIEW_RECOGNITION | N | Y | Y | Y | By account |
@@ -39,10 +40,10 @@ Regenerated for ADR 0007 from `src/proxy.ts`, `src/lib/nav/config.ts`, and the p
 
 | Persona | Effective access |
 |---|---|
-| Individual owner | Core dashboard, Reviews, Contacts, Tasks, Analytics/Trends, Surveys, Widgets, Workspace, Media, Settings, Help. AI Insights only when Pro. No enterprise manager areas (Campaigns, People, Team overview, EX Surveys, Recognition) or staff tools. |
-| Enterprise admin | All core dashboard areas, enterprise manager areas (Campaigns, People, Team overview, EX Surveys, Approvals), Workspace, Media, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No staff tools unless separately flagged `is_platform_admin`. |
-| Enterprise manager | Core dashboard, Campaigns, People, Team overview, EX Surveys, Approvals, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No Workspace or Media (org-admin only), or staff tools. |
-| Enterprise user | Core dashboard, Reviews, Contacts, Tasks, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No enterprise manager areas, Workspace, Media, or staff tools. |
+| Individual owner | Core dashboard, Reviews, Contacts, Share Studio, Tasks, Analytics/Trends, Surveys, Widgets, Workspace, Media, Settings, Help. AI Insights only when Pro. No enterprise manager areas (Campaigns, People, Team overview, EX Surveys, Recognition) or staff tools. |
+| Enterprise admin | All core dashboard areas, enterprise manager areas (Campaigns, People, Share Studio, Team overview, EX Surveys, Approvals), Workspace, Media, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No staff tools unless separately flagged `is_platform_admin`. |
+| Enterprise manager | Core dashboard, Campaigns, People, Share Studio, Team overview, EX Surveys, Approvals, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No Workspace or Media (org-admin only), or staff tools. |
+| Enterprise user | Core dashboard, Reviews, Contacts, Tasks, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No Share Studio, enterprise manager areas, Workspace, Media, or staff tools. |
 | Platform staff | `/staff/*` only by the staff flag. Dashboard access is still determined by that user's account type, role, and tier. |
 
 ## Notes From Code
@@ -59,3 +60,4 @@ Regenerated for ADR 0007 from `src/proxy.ts`, `src/lib/nav/config.ts`, and the p
 - **Contacts** is a nav item deep-linking to the reviews hub's Contacts tab (`/dashboard/reviews?tab=contacts`); the tab itself is gated by `SEND_SURVEY`.
 - `/dashboard/surveys` and `/dashboard/widgets` use `getAccessContext`, matching their broad nav permissions.
 - `/dashboard/media` uses `requireIndividualOrEnterpriseAdmin` so direct URL access matches nav discoverability (`VIEW_ORGANIZATION`).
+- `/dashboard/share-studio` uses `checkPageAccess({ minRole: "manager" })`, which admits individual accounts and requires enterprise manager/admin role; proxy mirrors that with an `allowedRoles` row and no `requiresEnterprise` flag.

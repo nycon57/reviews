@@ -52,6 +52,13 @@ export const NAV_CONFIG: NavConfig = {
       isNew: true,
     },
     {
+      title: "Share Studio",
+      href: "/dashboard/share-studio",
+      icon: "ShareNetwork",
+      permission: PERMISSIONS.VIEW_SHARE_STUDIO,
+      isNew: true,
+    },
+    {
       title: "Tasks",
       href: "/dashboard/tasks",
       icon: "ClipboardText",

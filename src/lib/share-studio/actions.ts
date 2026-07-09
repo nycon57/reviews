@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { getAccessContext } from "@/lib/access";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import {
@@ -12,6 +14,23 @@ import {
   queueClipRender,
   kickRenderWorker,
 } from "@/lib/share-studio/service";
+import {
+  SHARE_STUDIO_HUB_PATH,
+  bulkUpdateSmartLinksForOrganization,
+  deleteShareStudioAssetForOrganization,
+  getSmartLinkAnalyticsForOrganization,
+  listShareStudioAssetsForOrganization,
+  listSmartLinksForOrganization,
+} from "@/lib/share-studio/hub-service";
+import type {
+  ActionResult,
+  ShareStudioAssetsInput,
+  ShareStudioAssetsResult,
+  SmartLinkAnalyticsResult,
+  SmartLinkBulkAction,
+  SmartLinksListInput,
+  SmartLinksListResult,
+} from "@/lib/share-studio/hub-types";
 import type { ClipRenderOptions } from "@/lib/share-studio/clip-renderer";
 import { resolveBrandTokens } from "@/lib/share-studio/template-resolver";
 import { renderStillWithSatori } from "@/lib/share-studio/satori-renderer";
@@ -64,6 +83,33 @@ async function getAuthenticatedOrganizationContext(): Promise<{
   return {
     userId: user.id,
     organizationId: profile.organization_id as string,
+  };
+}
+
+async function getShareStudioHubActionContext(): Promise<
+  | {
+      ok: true;
+      userId: string;
+      organizationId: string;
+    }
+  | {
+      ok: false;
+      error: string;
+    }
+> {
+  const ctx = await getAccessContext();
+  if (!ctx) {
+    return { ok: false, error: "Could not load user profile" };
+  }
+
+  if (!hasPermission(ctx, PERMISSIONS.VIEW_SHARE_STUDIO)) {
+    return { ok: false, error: "You do not have permission to manage Share Studio." };
+  }
+
+  return {
+    ok: true,
+    userId: ctx.userId,
+    organizationId: ctx.organizationId,
   };
 }
 
@@ -123,6 +169,119 @@ export async function ensureVideoSmartLink(
     return {
       success: false,
       error: err instanceof Error ? err.message : "Failed to create smart link",
+    };
+  }
+}
+
+export async function listSmartLinks(
+  input: SmartLinksListInput = {}
+): Promise<ActionResult<SmartLinksListResult>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await listSmartLinksForOrganization(context.organizationId, input);
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to load Smart Links",
+    };
+  }
+}
+
+export async function bulkUpdateSmartLinks(input: {
+  ids: string[];
+  action: SmartLinkBulkAction;
+}): Promise<ActionResult<{ updated: number }>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await bulkUpdateSmartLinksForOrganization({
+      organizationId: context.organizationId,
+      ids: input.ids,
+      action: input.action,
+    });
+    revalidatePath(SHARE_STUDIO_HUB_PATH);
+    revalidatePath("/dashboard/reviews");
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to update Smart Links",
+    };
+  }
+}
+
+export async function getSmartLinkAnalytics(
+  linkId: string
+): Promise<ActionResult<SmartLinkAnalyticsResult>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await getSmartLinkAnalyticsForOrganization({
+      organizationId: context.organizationId,
+      linkId,
+    });
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to load Smart Link analytics",
+    };
+  }
+}
+
+export async function listShareStudioAssets(
+  input: ShareStudioAssetsInput = {}
+): Promise<ActionResult<ShareStudioAssetsResult>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await listShareStudioAssetsForOrganization(
+      context.organizationId,
+      input
+    );
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to load Share Studio assets",
+    };
+  }
+}
+
+export async function deleteShareStudioAsset(
+  assetId: string
+): Promise<ActionResult<{ deleted: boolean }>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await deleteShareStudioAssetForOrganization({
+      organizationId: context.organizationId,
+      assetId,
+    });
+    revalidatePath(SHARE_STUDIO_HUB_PATH);
+    revalidatePath("/dashboard/reviews");
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to delete asset",
     };
   }
 }

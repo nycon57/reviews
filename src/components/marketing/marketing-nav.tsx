@@ -70,6 +70,9 @@ export function MarketingNav() {
                 <Link href="/login">Sign In</Link>
               </Button>
               <Button asChild variant="default" size="sm">
+                <Link href="/signup">Start Free Trial</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
                 <Link href="/demo">Book a Demo</Link>
               </Button>
             </>

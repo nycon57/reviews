@@ -22,6 +22,7 @@ export default function robots(): MetadataRoute.Robots {
     "/s/*",
     "/compare/",
     "/compare/*",
+    "/signup",
   ];
   const privateDisallow = [
     "/dashboard/",
@@ -29,7 +30,6 @@ export default function robots(): MetadataRoute.Robots {
     "/survey/",
     "/reports/",
     "/login",
-    "/signup",
     "/auth/",
     "/unsubscribed",
   ];

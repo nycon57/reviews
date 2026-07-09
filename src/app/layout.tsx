@@ -19,9 +19,7 @@ const sourceSans = Source_Sans_3({ subsets: ["latin"] });
 // Pre-paint theme script. Built from the shared theme constants so it can never
 // drift from ThemeProvider: same storage key, dashboard-prefix rule, default,
 // and valid values. Runs before paint to avoid a theme flash.
-const validThemeCheck = VALID_THEMES.map(
-  (value) => `s===${JSON.stringify(value)}`
-).join("||");
+const validThemeCheck = VALID_THEMES.map((value) => `s===${JSON.stringify(value)}`).join("||");
 const themeScript = `(function(){try{var d=document.documentElement,t="light";if(location.pathname.indexOf(${JSON.stringify(
   THEME_DASHBOARD_PREFIX
 )})===0){var s=localStorage.getItem(${JSON.stringify(
@@ -32,10 +30,28 @@ const themeScript = `(function(){try{var d=document.documentElement,t="light";if
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
-  title: "RepWell - Customer Experience Management",
+  title: {
+    default: "RepWell - Customer Experience Management",
+    template: "%s · RepWell",
+  },
   description:
     "Collect customer reviews, manage your reputation, and gain AI-powered insights to improve customer experience.",
   keywords: ["reviews", "customer experience", "NPS", "reputation management"],
+  openGraph: {
+    title: "RepWell - Customer Experience Management",
+    description:
+      "Collect customer reviews, manage your reputation, and gain AI-powered insights to improve customer experience.",
+    url: "/",
+    siteName: "RepWell",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RepWell - Customer Experience Management",
+    description:
+      "Collect customer reviews, manage your reputation, and gain AI-powered insights to improve customer experience.",
+  },
 };
 
 export default function RootLayout({

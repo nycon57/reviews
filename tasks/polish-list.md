@@ -56,8 +56,29 @@ Not blocking PRs (per the build-tail process). Burn down in a dedicated pass.
   `dispute-queue.tsx` area). Public survey and dispute queue use key-remount;
   `ab-tests-list-client.tsx` has fetch-on-mount state in this branch, not a prop-sync effect, so skipped to avoid behavior change.
 
+## From the refinement campaign Wave A panel (2026-07-09)
+- A/B compare-page assignment: mount-gating fixes hydration but ~50% of
+  visitors see a variant flash post-hydration (exposure bias). Deeper fix:
+  assign in middleware via `rw_ab_*` cookies (assignment.ts is already
+  deterministic + cookie-persisted) and resolve variants server-side.
+- Token family consolidation: `--background-muted` ≡ `--muted` ≡
+  `--surface-subtle` in dark mode — three names, one value. Pick one
+  neutral-surface family (likely retire `surface.*`), codemod consumers.
+- Marketing-pricing ↔ Stripe drift assertion: pricing display derives from
+  `PRICING_TIERS`, but charged amounts live in Stripe. Add a checkout-time
+  or CI assertion that displayed prices match Stripe amounts.
+- Status-color raw-class codemod: guard baseline frozen (~1157 hits incl.
+  widened hues); burn down file-by-file onto the semantic recipe, shrinking
+  the per-file baseline as you go. Consider replacing the script with an
+  eslint no-restricted-syntax rule for line-level feedback.
+
 ## Standing queued items (other)
 - [done 2026-07-09] Shared uphold/dismiss dialog extraction (reviews area, skipped in its W4).
 - `/dashboard/people/[id]` member-edit route move.
-- better-auth 1.5.6 → 1.6.x security upgrade (own validated pass; OAuth state
-  advisory GHSA-wxw3-q3m9-c3jr; module behind default-off USE_BETTER_AUTH).
+- [done 2026-07-09] better-auth 1.5.6 → 1.6.x security upgrade — shipped in the
+  Better Auth cutover (PR #26); flags and legacy path removed.
+- About page team section — waiting on real founder/team photos+bios (no
+  fabricated anything).
+- Real ~90s product demo video for the marketing "Book a Demo" surfaces.
+- G2/Capterra presence: once real profiles exist, re-add scores/quotes via
+  a substantiated social-proof constants module.

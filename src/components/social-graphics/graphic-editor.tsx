@@ -10,15 +10,17 @@ import {
   parseCanvasSize,
   type SocialProofGraphic,
 } from "@/lib/social-graphics/types";
+import {
+  SocialGraphicsEditorCanvas as EditorCanvas,
+  SocialGraphicsEditorToolbar as EditorToolbar,
+  SocialGraphicsElementPalette as ElementPalette,
+  SocialGraphicsLayerPanel as LayerPanel,
+  SocialGraphicsPropertyPanel as PropertyPanel,
+  useSocialGraphicsEditorState as useEditorState,
+} from "@/components/shared/design-editor";
 import { ExportDialog } from "./export-dialog";
 import { PublishDialog } from "./publish-dialog";
 import { PostHistory } from "./post-history";
-import { useEditorState } from "./editor/use-editor-state";
-import { EditorCanvas } from "./editor/canvas";
-import { EditorToolbar } from "./editor/toolbar";
-import { ElementPalette } from "./editor/element-palette";
-import { PropertyPanel } from "./editor/property-panel";
-import { LayerPanel } from "./editor/layer-panel";
 import {
   ArrowLeft,
   Download,

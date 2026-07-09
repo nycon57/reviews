@@ -37,6 +37,7 @@ export {
   generateOrganizationWithRatingSchema,
   generateOrganizationReviewSchema,
   generateOrganizationProfilePageSchema,
+  generateFAQPageSchema,
   serializeSchemas,
 } from "./schema-generators";
 

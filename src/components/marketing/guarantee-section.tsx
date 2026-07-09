@@ -3,10 +3,7 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import * as PhosphorIcons from "@phosphor-icons/react";
-import {
-  CheckCircle,
-  type IconProps,
-} from "@phosphor-icons/react";
+import { CheckCircle, type IconProps } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -31,6 +28,8 @@ interface GuaranteeSectionProps {
   guarantees: Guarantee[];
   /** Highlight color variant */
   variant?: "default" | "accent";
+  trustBadgeText?: string;
+  itemBadgeText?: string;
 }
 
 const containerVariants = {
@@ -71,6 +70,8 @@ export function GuaranteeSection({
   subheading = "We're confident in our platform. If you're not completely satisfied, we'll make it right.",
   guarantees,
   variant = "default",
+  trustBadgeText = "Backed by our 100% satisfaction guarantee",
+  itemBadgeText = "Guaranteed",
 }: GuaranteeSectionProps) {
   return (
     <section
@@ -80,27 +81,25 @@ export function GuaranteeSection({
         className
       )}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12 md:mb-16"
+          className="mb-12 text-center md:mb-16"
         >
           <Badge
             variant="outline"
-            className="px-4 py-1.5 text-sm border-repwell-teal-300/50 text-repwell-teal-400 mb-4"
+            className="mb-4 border-repwell-teal-300/50 px-4 py-1.5 text-sm text-repwell-teal-400"
           >
             {badge}
           </Badge>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-repwell-teal-500 mb-4">
+          <h2 className="mb-4 font-display text-3xl font-bold text-repwell-teal-500 md:text-4xl lg:text-5xl">
             {heading}
           </h2>
-          <p className="font-sans text-lg text-repwell-teal-400 max-w-2xl mx-auto">
-            {subheading}
-          </p>
+          <p className="mx-auto max-w-2xl font-sans text-lg text-repwell-teal-400">{subheading}</p>
         </motion.div>
 
         {/* Guarantees grid */}
@@ -109,7 +108,7 @@ export function GuaranteeSection({
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8"
         >
           {guarantees.map((guarantee, index) => {
             const Icon = getIconByName(guarantee.icon);
@@ -117,30 +116,30 @@ export function GuaranteeSection({
               <motion.div
                 key={index}
                 variants={itemVariants}
-                className="relative bg-white border border-border rounded-2xl p-6 lg:p-8 shadow-sm hover:shadow-md transition-shadow duration-300"
+                className="relative rounded-2xl border border-border bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md lg:p-8"
               >
                 {/* Colored accent bar */}
-                <div className="absolute top-0 left-6 right-6 h-1 bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200 rounded-full" />
+                <div className="absolute left-6 right-6 top-0 h-1 rounded-full bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200" />
 
                 {/* Icon */}
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-repwell-sage-100/50 mb-5 mt-2">
-                  <Icon className="w-7 h-7 text-repwell-teal-300" />
+                <div className="mb-5 mt-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-repwell-sage-100/50">
+                  <Icon className="h-7 w-7 text-repwell-teal-300" />
                 </div>
 
                 {/* Title */}
-                <h3 className="font-sans text-xl font-semibold text-repwell-teal-500 mb-3">
+                <h3 className="mb-3 font-sans text-xl font-semibold text-repwell-teal-500">
                   {guarantee.title}
                 </h3>
 
                 {/* Description */}
-                <p className="font-sans text-repwell-teal-400 leading-relaxed">
+                <p className="font-sans leading-relaxed text-repwell-teal-400">
                   {guarantee.description}
                 </p>
 
                 {/* Checkmark indicator */}
                 <div className="mt-6 flex items-center gap-2 text-repwell-sage-200">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="text-sm font-medium">Guaranteed</span>
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="text-sm font-medium">{itemBadgeText}</span>
                 </div>
               </motion.div>
             );
@@ -153,13 +152,11 @@ export function GuaranteeSection({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-12 md:mt-16 text-center"
+          className="mt-12 text-center md:mt-16"
         >
-          <div className="inline-flex items-center gap-3 bg-repwell-teal-500 text-white px-6 py-3 rounded-full">
-            <PhosphorIcons.Shield className="w-5 h-5" />
-            <span className="font-sans font-medium">
-              Backed by our 100% satisfaction guarantee
-            </span>
+          <div className="inline-flex items-center gap-3 rounded-full bg-repwell-teal-500 px-6 py-3 text-white">
+            <PhosphorIcons.Shield className="h-5 w-5" />
+            <span className="font-sans font-medium">{trustBadgeText}</span>
           </div>
         </motion.div>
       </div>

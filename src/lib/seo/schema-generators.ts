@@ -179,12 +179,45 @@ interface VideoTestimonialReviewSchemaInput {
   videoDurationSeconds?: number | null;
 }
 
+interface FAQPageSchemaInput {
+  question: string;
+  answer: string;
+}
+
+interface FAQPageSchema {
+  "@context": "https://schema.org";
+  "@type": "FAQPage";
+  mainEntity: Array<{
+    "@type": "Question";
+    name: string;
+    acceptedAnswer: {
+      "@type": "Answer";
+      text: string;
+    };
+  }>;
+}
+
 function durationToIso8601(durationSeconds?: number | null): string | undefined {
   if (!durationSeconds || durationSeconds <= 0) return undefined;
 
   const minutes = Math.floor(durationSeconds / 60);
   const seconds = Math.floor(durationSeconds % 60);
   return `PT${minutes}M${seconds}S`;
+}
+
+export function generateFAQPageSchema(items: readonly FAQPageSchemaInput[]): FAQPageSchema {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
 }
 
 /**
@@ -232,13 +265,14 @@ export function generatePersonSchema(
     "@type": "Person",
     name: professional.full_name,
     jobTitle: professional.title || "Professional",
-    description: professional.bio || `${professional.full_name} is a professional helping clients with their needs.`,
+    description:
+      professional.bio ||
+      `${professional.full_name} is a professional helping clients with their needs.`,
     url: profileUrl,
   };
 
   if (dateModified) {
-    (schema as PersonWithRatingSchema & { dateModified: string }).dateModified =
-      dateModified;
+    (schema as PersonWithRatingSchema & { dateModified: string }).dateModified = dateModified;
   }
 
   // Add optional fields only if they have values
@@ -296,7 +330,11 @@ export function generateAggregateRatingSchema(
   professional: SchemaProfessional,
   baseUrl: string
 ): AggregateRatingSchema | null {
-  if (!professional.average_rating || !professional.total_reviews || professional.total_reviews === 0) {
+  if (
+    !professional.average_rating ||
+    !professional.total_reviews ||
+    professional.total_reviews === 0
+  ) {
     return null;
   }
 

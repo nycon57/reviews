@@ -38,40 +38,42 @@ interface CTASectionProps {
   variant?: "default" | "gradient" | "dark" | "subtle" | "enterprise";
   /** Show decorative elements */
   withDecoration?: boolean;
+  /** Small copy below the CTA buttons */
+  microcopy?: string;
 }
 
 const enterpriseFeatures = [
   {
     icon: Lock,
-    text: "Enterprise-grade SSO integration",
+    text: "SSO/SAML & white-label",
   },
   {
     icon: Building2,
-    text: "Multi-branch management",
+    text: "Team management & leaderboards",
   },
   {
     icon: Shield,
-    text: "Workflow governance tools",
+    text: "Manager dashboard with org-wide analytics",
   },
   {
     icon: FileText,
-    text: "Custom reporting & analytics",
+    text: "Webhooks & CSV bulk import",
   },
   {
     icon: Users,
-    text: "Dedicated account manager",
+    text: "Unlimited team members",
   },
   {
     icon: Settings2,
-    text: "White-label customization",
+    text: "Unlimited surveys & API",
   },
   {
     icon: Clock,
-    text: "Priority SLA support",
+    text: "Employee experience surveys",
   },
   {
     icon: Headphones,
-    text: "24/7 phone & chat support",
+    text: "Dedicated success manager",
   },
 ];
 
@@ -102,6 +104,7 @@ export function CTASection({
   className,
   variant = "enterprise",
   withDecoration = true,
+  microcopy,
 }: CTASectionProps) {
   // Enterprise variant - the new default
   if (variant === "enterprise") {
@@ -113,32 +116,13 @@ export function CTASection({
         )}
         suppressHydrationWarning
       >
-        {/* Image Collage - positioned to section edges */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[46rem] xl:block">
-          {/* Top right small image - faded */}
-          <div className="absolute right-0 top-8 aspect-[1.15] w-[18rem] opacity-50">
-            <img
-              src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/photos/fabian-centeno-njeVb6E3XB8-unsplash.jpg"
-              alt=""
-              className="h-full w-full object-cover object-center"
-            />
-          </div>
-          {/* Middle right main image */}
-          <div className="absolute right-0 top-1/3 z-10 aspect-[0.709] w-[22rem] overflow-hidden rounded-tl-md">
-            <img
-              src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/photos/jason-goodman-ZJlfUi5rTDU-unsplash.jpg"
-              alt=""
-              className="h-full w-full object-cover object-center"
-            />
-          </div>
-          {/* Large background image - very faded */}
-          <div className="absolute bottom-0 right-0 aspect-[1.35] w-[46rem] overflow-hidden rounded-tl-2xl opacity-20">
-            <img
-              src="https://deifkwefumgah.cloudfront.net/shadcnblocks/block/photos/redd-f-5U_28ojjgms-unsplash.jpg"
-              alt=""
-              className="h-full w-full object-cover object-center"
-            />
-          </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 hidden w-[42rem] overflow-hidden xl:block"
+        >
+          <div className="absolute right-[-5rem] top-[-4rem] h-[42rem] w-56 rotate-12 bg-white/10" />
+          <div className="absolute right-44 top-[-4rem] h-[42rem] w-36 rotate-12 bg-repwell-sage-100/20" />
+          <div className="absolute right-[21rem] top-[-4rem] h-[42rem] w-24 rotate-12 bg-white/10" />
         </div>
 
         <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
@@ -165,7 +149,7 @@ export function CTASection({
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="font-sans text-lg text-white/90 md:text-xl lg:text-2xl"
               >
-                Empower every team member with AI-powered reputation tools
+                Bring team-level reputation workflows, analytics, and controls into one workspace.
               </motion.p>
 
               {/* Feature List */}
@@ -185,16 +169,29 @@ export function CTASection({
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <Button
-                  asChild
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    asChild
                     size="lg"
-                    className="group w-full bg-white text-repwell-teal-500 shadow-lg hover:bg-repwell-sage-100 md:w-fit"
+                    className="group w-full bg-white text-repwell-teal-500 shadow-lg hover:bg-repwell-sage-100 sm:w-fit"
                   >
-                  <Link href="/contact">
-                    Get in touch to learn more
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Button>
+                    <Link href={primaryCta.href}>
+                      {primaryCta.label}
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </Button>
+                  {secondaryCta && (
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="outline"
+                      className="w-full border-white/40 bg-transparent text-white hover:bg-white/10 sm:w-fit"
+                    >
+                      <Link href={secondaryCta.href}>{secondaryCta.label}</Link>
+                    </Button>
+                  )}
+                </div>
+                {microcopy && <p className="mt-4 font-sans text-sm text-white/80">{microcopy}</p>}
               </motion.div>
             </div>
           </div>
@@ -207,8 +204,7 @@ export function CTASection({
   const isDark = variant === "gradient" || variant === "dark";
   const variantStyles = {
     default: "bg-repwell-sage-100",
-    gradient:
-      "bg-gradient-to-br from-repwell-teal-400 to-repwell-teal-300 text-white",
+    gradient: "bg-gradient-to-br from-repwell-teal-400 to-repwell-teal-300 text-white",
     dark: "bg-repwell-teal-500 text-white",
     subtle: "bg-repwell-sage-100/50",
   };
@@ -274,18 +270,12 @@ export function CTASection({
           </motion.p>
         )}
 
-        <motion.div
-          variants={fadeInUp}
-          className="mt-8 flex flex-wrap justify-center gap-4"
-        >
+        <motion.div variants={fadeInUp} className="mt-8 flex flex-wrap justify-center gap-4">
           <Link href={primaryCta.href}>
             <Button
               size="lg"
               variant={isDark ? "secondary" : "default"}
-              className={cn(
-                "group",
-                isDark && "bg-white text-repwell-teal-500 hover:bg-white/90"
-              )}
+              className={cn("group", isDark && "bg-white text-repwell-teal-500 hover:bg-white/90")}
             >
               {primaryCta.label}
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -297,8 +287,7 @@ export function CTASection({
                 size="lg"
                 variant={isDark ? "ghost" : "outline"}
                 className={cn(
-                  isDark &&
-                    "border-white/30 text-white hover:border-white/50 hover:bg-white/10"
+                  isDark && "border-white/30 text-white hover:border-white/50 hover:bg-white/10"
                 )}
               >
                 {secondaryCta.label}
@@ -306,6 +295,17 @@ export function CTASection({
             </Link>
           )}
         </motion.div>
+        {microcopy && (
+          <motion.p
+            variants={fadeInUp}
+            className={cn(
+              "mt-4 font-sans text-sm",
+              isDark ? "text-white/75" : "text-repwell-teal-400/70"
+            )}
+          >
+            {microcopy}
+          </motion.p>
+        )}
       </motion.div>
     </section>
   );

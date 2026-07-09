@@ -5,3 +5,8 @@ export {
   type ProfileOgVariant,
 } from "./profile-card";
 export { createProfileOgRoute } from "./profile-route";
+export {
+  MARKETING_OG_SIZE,
+  buildMarketingOpenGraphImage,
+  type MarketingOpenGraphCardData,
+} from "./marketing-card";

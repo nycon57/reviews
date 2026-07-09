@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PricingPageClient } from "./pricing-client";
+import { StructuredData } from "@/components/seo/structured-data";
+import { PRICING_FAQS } from "@/lib/marketing/pricing-faqs";
+import { generateFAQPageSchema } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Pricing | RepWell - Simple, Transparent Plans",
@@ -8,8 +11,7 @@ export const metadata: Metadata = {
     "Choose the RepWell plan that fits your needs. From individual professionals to enterprise teams, we have a solution for you. Start your free 14-day trial today.",
   openGraph: {
     title: "Pricing | RepWell",
-    description:
-      "Simple, transparent pricing for customer experience management. Start free.",
+    description: "Simple, transparent pricing for customer experience management. Start free.",
     type: "website",
   },
 };
@@ -18,44 +20,41 @@ function PricingPageSkeleton() {
   return (
     <>
       {/* Hero Skeleton */}
-      <section className="py-20 md:py-28 lg:py-32 bg-gradient-to-b from-repwell-sage-100/50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto animate-pulse">
-            <div className="h-6 w-20 bg-repwell-sage-200 rounded-full mx-auto mb-6" />
-            <div className="h-14 w-3/4 bg-repwell-sage-200 rounded-lg mx-auto mb-6" />
-            <div className="h-6 w-2/3 bg-repwell-sage-200 rounded-lg mx-auto mb-10" />
-            <div className="h-12 w-64 bg-repwell-sage-200 rounded-full mx-auto" />
+      <section className="bg-gradient-to-b from-repwell-sage-100/50 to-white py-20 md:py-28 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl animate-pulse text-center">
+            <div className="mx-auto mb-6 h-6 w-20 rounded-full bg-repwell-sage-200" />
+            <div className="mx-auto mb-6 h-14 w-3/4 rounded-lg bg-repwell-sage-200" />
+            <div className="mx-auto mb-10 h-6 w-2/3 rounded-lg bg-repwell-sage-200" />
+            <div className="mx-auto h-12 w-64 rounded-full bg-repwell-sage-200" />
           </div>
         </div>
       </section>
 
       {/* Pricing Cards Skeleton */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-3 animate-pulse">
+      <section className="bg-white py-16 md:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid animate-pulse gap-8 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="rounded-3xl border border-repwell-sage-100 p-8"
-              >
-                <div className="text-center mb-8">
-                  <div className="w-14 h-14 bg-repwell-sage-200 rounded-2xl mx-auto mb-4" />
-                  <div className="h-8 w-32 bg-repwell-sage-200 rounded-lg mx-auto mb-2" />
-                  <div className="h-4 w-40 bg-repwell-sage-200 rounded-lg mx-auto" />
+              <div key={i} className="rounded-3xl border border-repwell-sage-100 p-8">
+                <div className="mb-8 text-center">
+                  <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-repwell-sage-200" />
+                  <div className="mx-auto mb-2 h-8 w-32 rounded-lg bg-repwell-sage-200" />
+                  <div className="mx-auto h-4 w-40 rounded-lg bg-repwell-sage-200" />
                 </div>
-                <div className="text-center mb-8">
-                  <div className="h-12 w-24 bg-repwell-sage-200 rounded-lg mx-auto mb-2" />
-                  <div className="h-4 w-20 bg-repwell-sage-200 rounded-lg mx-auto" />
+                <div className="mb-8 text-center">
+                  <div className="mx-auto mb-2 h-12 w-24 rounded-lg bg-repwell-sage-200" />
+                  <div className="mx-auto h-4 w-20 rounded-lg bg-repwell-sage-200" />
                 </div>
-                <div className="space-y-4 mb-8">
+                <div className="mb-8 space-y-4">
                   {[1, 2, 3, 4, 5, 6].map((j) => (
                     <div key={j} className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-repwell-sage-200 rounded-full" />
-                      <div className="h-4 flex-1 bg-repwell-sage-200 rounded-lg" />
+                      <div className="h-5 w-5 rounded-full bg-repwell-sage-200" />
+                      <div className="h-4 flex-1 rounded-lg bg-repwell-sage-200" />
                     </div>
                   ))}
                 </div>
-                <div className="h-12 bg-repwell-sage-200 rounded-lg" />
+                <div className="h-12 rounded-lg bg-repwell-sage-200" />
               </div>
             ))}
           </div>
@@ -67,8 +66,11 @@ function PricingPageSkeleton() {
 
 export default function PricingPage() {
   return (
-    <Suspense fallback={<PricingPageSkeleton />}>
-      <PricingPageClient />
-    </Suspense>
+    <>
+      <StructuredData data={generateFAQPageSchema(PRICING_FAQS)} />
+      <Suspense fallback={<PricingPageSkeleton />}>
+        <PricingPageClient />
+      </Suspense>
+    </>
   );
 }

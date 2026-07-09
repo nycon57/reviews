@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { fadeInUp, staggerChildrenDelayed, blobFloat, blobFloatRotate } from "@/lib/motion";
+import { fadeInUp, staggerChildrenDelayed } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,8 @@ interface FloatingAvatarsHeroProps {
   avatars?: FloatingAvatar[];
   /** Additional className */
   className?: string;
+  /** Small copy below the primary CTAs */
+  microcopy?: string;
 }
 
 // Default professional avatar placeholders with varied positions and sizes
@@ -98,14 +100,30 @@ const defaultAvatars: FloatingAvatar[] = [
 
 // Enhanced decorative shapes with more variety
 const decorativeShapes = [
-  { type: "circle", className: "w-4 h-4 bg-repwell-teal-300/60 rounded-full", position: "top-36 left-[22%]", delay: 0.2 },
-  { type: "circle", className: "w-2 h-2 bg-repwell-sage-200/80 rounded-full", position: "top-24 right-[28%]", delay: 0.4 },
-  { type: "square", className: "w-3 h-3 bg-repwell-sage-100 rounded-sm rotate-12", position: "bottom-32 left-[18%]", delay: 0.6 },
-  { type: "circle", className: "w-5 h-5 bg-repwell-sage-100/60 rounded-full", position: "bottom-36 right-[22%]", delay: 0.8 },
-  { type: "diamond", className: "w-3 h-3 bg-repwell-teal-300/40 rotate-45", position: "top-[38%] left-[26%]", delay: 1.0 },
-  { type: "circle", className: "w-2.5 h-2.5 bg-repwell-sage-200/50 rounded-full", position: "top-[35%] right-[24%]", delay: 1.2 },
-  { type: "square", className: "w-2 h-2 bg-repwell-teal-400/30 rounded-sm -rotate-6", position: "bottom-[40%] left-[28%]", delay: 1.4 },
-  { type: "circle", className: "w-1.5 h-1.5 bg-repwell-teal-300/70 rounded-full", position: "top-[60%] right-[30%]", delay: 1.6 },
+  {
+    type: "circle",
+    className: "w-4 h-4 bg-repwell-teal-300/60 rounded-full",
+    position: "top-36 left-[22%]",
+    delay: 0.2,
+  },
+  {
+    type: "square",
+    className: "w-3 h-3 bg-repwell-sage-100 rounded-sm rotate-12",
+    position: "bottom-32 left-[18%]",
+    delay: 0.6,
+  },
+  {
+    type: "circle",
+    className: "w-5 h-5 bg-repwell-sage-100/60 rounded-full",
+    position: "bottom-36 right-[22%]",
+    delay: 0.8,
+  },
+  {
+    type: "diamond",
+    className: "w-3 h-3 bg-repwell-teal-300/40 rotate-45",
+    position: "top-[38%] left-[26%]",
+    delay: 1.0,
+  },
 ];
 
 // Custom float animation variants for avatars
@@ -114,19 +132,19 @@ const avatarFloat = (delay: number = 0) => ({
   animate: {
     opacity: 1,
     scale: 1,
-    y: [0, -8, 4, 0],
-    x: [0, 4, -4, 0],
+    y: [0, -4, 2, 0],
+    x: [0, 2, -2, 0],
     transition: {
-      opacity: { duration: 0.5, delay },
-      scale: { duration: 0.5, delay },
+      opacity: { duration: 0.6, delay },
+      scale: { duration: 0.6, delay },
       y: {
-        duration: 6,
+        duration: 11,
         repeat: Infinity,
         ease: "easeInOut" as const,
         delay: delay + 0.5,
       },
       x: {
-        duration: 8,
+        duration: 13,
         repeat: Infinity,
         ease: "easeInOut" as const,
         delay: delay + 0.5,
@@ -138,11 +156,11 @@ const avatarFloat = (delay: number = 0) => ({
 const shapeFloat = (delay: number = 0) => ({
   initial: { opacity: 0 },
   animate: {
-    opacity: [0.4, 0.7, 0.4],
-    y: [0, -6, 0],
+    opacity: [0.26, 0.46, 0.26],
+    y: [0, -3, 0],
     transition: {
-      opacity: { duration: 3, repeat: Infinity, ease: "easeInOut" as const, delay },
-      y: { duration: 4, repeat: Infinity, ease: "easeInOut" as const, delay },
+      opacity: { duration: 7, repeat: Infinity, ease: "easeInOut" as const, delay },
+      y: { duration: 9, repeat: Infinity, ease: "easeInOut" as const, delay },
     },
   },
 });
@@ -167,13 +185,14 @@ export function FloatingAvatarsHero({
   cta,
   avatars = defaultAvatars,
   className,
+  microcopy,
 }: FloatingAvatarsHeroProps) {
   const ctaButtons = cta ? (Array.isArray(cta) ? cta : [cta]) : [];
 
   return (
     <section
       className={cn(
-        "relative overflow-hidden py-20 md:py-28 lg:py-36 min-h-[600px] md:min-h-[700px]",
+        "relative min-h-[600px] overflow-hidden py-20 md:min-h-[700px] md:py-28 lg:py-36",
         className
       )}
     >
@@ -182,27 +201,13 @@ export function FloatingAvatarsHero({
         className="absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage: `radial-gradient(circle at 1px 1px, var(--color-dark-slate-grey-700) 1px, transparent 0)`,
-          backgroundSize: '24px 24px',
+          backgroundSize: "24px 24px",
         }}
-      />
-
-      {/* Background gradient blobs */}
-      <motion.div
-        initial="initial"
-        animate="animate"
-        variants={blobFloat}
-        className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-gradient-to-br from-repwell-sage-100/40 to-repwell-teal-300/10 blur-3xl"
-      />
-      <motion.div
-        initial="initial"
-        animate="animate"
-        variants={blobFloatRotate}
-        className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-repwell-teal-300/10 to-repwell-sage-100/30 blur-3xl"
       />
 
       {/* Floating avatars (hidden on very small screens) */}
       <div className="hidden sm:block">
-        {avatars.map((avatar, index) => (
+        {avatars.slice(0, 4).map((avatar, index) => (
           <motion.div
             key={index}
             initial="initial"
@@ -228,8 +233,8 @@ export function FloatingAvatarsHero({
                     "absolute -bottom-1 -right-1 rounded-md",
                     avatarDecorativeSize[avatar.size || "md"],
                     index % 4 === 0
-                      ? "bg-repwell-sage-200 rotate-12"
-                      : "bg-repwell-teal-300 -rotate-12"
+                      ? "rotate-12 bg-repwell-sage-200"
+                      : "-rotate-12 bg-repwell-teal-300"
                   )}
                 />
               )}
@@ -252,19 +257,19 @@ export function FloatingAvatarsHero({
       </div>
 
       {/* Main content */}
-      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial="hidden"
           animate="visible"
           variants={staggerChildrenDelayed}
-          className="text-center max-w-4xl mx-auto"
+          className="mx-auto max-w-4xl text-center"
         >
           {/* Badge */}
           {badge && (
             <motion.div variants={fadeInUp} className="mb-6">
               <Badge
                 variant="outline"
-                className="px-4 py-1.5 text-sm border-repwell-teal-300/50 text-repwell-teal-400 bg-white/80 backdrop-blur-sm"
+                className="border-repwell-teal-300/50 bg-white/80 px-4 py-1.5 text-sm text-repwell-teal-400 backdrop-blur-sm"
               >
                 {badge}
               </Badge>
@@ -274,7 +279,7 @@ export function FloatingAvatarsHero({
           {/* Title - using serif font for that premium feel */}
           <motion.h1
             variants={fadeInUp}
-            className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-repwell-teal-500 tracking-tight mb-6"
+            className="mb-6 font-display text-4xl font-bold tracking-tight text-repwell-teal-500 sm:text-5xl md:text-6xl lg:text-7xl"
           >
             {title}
           </motion.h1>
@@ -283,7 +288,7 @@ export function FloatingAvatarsHero({
           {description && (
             <motion.p
               variants={fadeInUp}
-              className="font-sans text-lg md:text-xl text-repwell-teal-400 leading-relaxed max-w-2xl mx-auto mb-10"
+              className="mx-auto mb-10 max-w-2xl font-sans text-lg leading-relaxed text-repwell-teal-400 md:text-xl"
             >
               {description}
             </motion.p>
@@ -293,23 +298,32 @@ export function FloatingAvatarsHero({
           {ctaButtons.length > 0 && (
             <motion.div
               variants={fadeInUp}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              className="flex flex-col justify-center gap-4 sm:flex-row"
             >
               {ctaButtons.map((button, index) => (
                 <Button
                   key={button.href}
                   asChild
-                    size="lg"
-                    variant={button.variant || (index === 0 ? "default" : "outline")}
-                    className={cn(
-                      "min-w-[180px]",
-                      index === 0 && "shadow-lg shadow-repwell-teal-300/20"
-                    )}
-                  >
+                  size="lg"
+                  variant={button.variant || (index === 0 ? "default" : "outline")}
+                  className={cn(
+                    "min-w-[180px]",
+                    index === 0 && "shadow-lg shadow-repwell-teal-300/20"
+                  )}
+                >
                   <Link href={button.href}>{button.label}</Link>
                 </Button>
               ))}
             </motion.div>
+          )}
+
+          {microcopy && (
+            <motion.p
+              variants={fadeInUp}
+              className="mt-4 font-sans text-sm text-repwell-teal-400/70"
+            >
+              {microcopy}
+            </motion.p>
           )}
         </motion.div>
       </div>

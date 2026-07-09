@@ -40,6 +40,10 @@ interface FeatureTab {
     value: string;
     label: string;
   };
+  overlayBadge?: {
+    title: string;
+    subtitle: string;
+  };
 }
 
 const FEATURE_TABS: FeatureTab[] = [
@@ -54,11 +58,11 @@ const FEATURE_TABS: FeatureTab[] = [
       "Smart follow-up sequences that boost responses",
       "Customizable templates for your brand voice",
     ],
-    layoutVariant: "single",
+    layoutVariant: "wide",
     images: [
       {
-        src: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&h=1400&fit=crop&q=80",
-        alt: "Business professionals shaking hands in modern office",
+        src: "/images/product/reviews-hub.png",
+        alt: "RepWell reviews hub showing text reviews, video testimonials, requests, and review stats",
       },
     ],
     link: {
@@ -77,23 +81,11 @@ const FEATURE_TABS: FeatureTab[] = [
       "Automated weekly and monthly reports",
       "Compare performance across team members",
     ],
-    layoutVariant: "floating",
+    layoutVariant: "wide",
     images: [
       {
-        src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=700&fit=crop&q=80",
-        alt: "Team members collaborating at whiteboard",
-      },
-      {
-        src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=700&fit=crop&q=80",
-        alt: "Confident businesswoman smiling in office",
-      },
-      {
-        src: "https://images.unsplash.com/photo-1556157382-97eda2d62296?w=600&h=700&fit=crop&q=80",
-        alt: "Professional reviewing documents at desk",
-      },
-      {
-        src: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=600&h=700&fit=crop&q=80",
-        alt: "Colleagues having casual meeting",
+        src: "/images/product/dashboard-home.png",
+        alt: "RepWell dashboard with review totals, average rating, response rate, NPS score, and reputation breakdown",
       },
     ],
     link: {
@@ -115,10 +107,14 @@ const FEATURE_TABS: FeatureTab[] = [
     layoutVariant: "wide",
     images: [
       {
-        src: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1600&h=900&fit=crop&q=80",
-        alt: "Team engaged in productive brainstorming session",
+        src: "/images/product/analytics.png",
+        alt: "RepWell analytics with AI-suggested response composition, approval rate, and performance metrics",
       },
     ],
+    overlayBadge: {
+      title: "AI Analysis",
+      subtitle: "Processing insights...",
+    },
     link: {
       name: "Learn about AI",
       href: "/features#ai",
@@ -129,25 +125,17 @@ const FEATURE_TABS: FeatureTab[] = [
     title: "Reputation Amplification",
     tabName: "Amplify",
     summary:
-      "Route positive reviews to Google and Zillow. Capture video testimonials. Publish to social media with one click.",
+      "Route positive reviews to Google and other platforms. Capture video testimonials. Publish to social media with one click.",
     bulletPoints: [
       "One-click publishing to review platforms",
       "Video testimonial capture and editing",
       "Automated social media sharing",
     ],
-    layoutVariant: "grid",
+    layoutVariant: "wide",
     images: [
       {
-        src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&h=600&fit=crop&q=80",
-        alt: "Woman presenting to engaged audience",
-      },
-      {
-        src: "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&h=600&fit=crop&q=80",
-        alt: "Happy team celebrating success together",
-      },
-      {
-        src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=1200&fit=crop&q=80",
-        alt: "Confident businessman in suit",
+        src: "/images/product/share-studio.png",
+        alt: "RepWell Share Studio with smart-link performance, published links, and shareable review assets",
       },
     ],
     link: {
@@ -213,9 +201,10 @@ const imageVariants = {
 interface ImagesProps {
   images: ImageType[];
   variant: LayoutVariant;
+  overlayBadge?: FeatureTab["overlayBadge"];
 }
 
-function FeatureImages({ images, variant }: ImagesProps) {
+function FeatureImages({ images, variant, overlayBadge }: ImagesProps) {
   // Container ref for drag bounds
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -353,23 +342,25 @@ function FeatureImages({ images, variant }: ImagesProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-repwell-teal-500/30 via-transparent to-transparent" />
           </div>
 
-          {/* Floating AI badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="absolute bottom-8 right-8 bg-white/95 backdrop-blur-sm rounded-2xl px-5 py-4 shadow-xl"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300">
-                <MessageSquare className="h-5 w-5 text-white" />
+          {/* Floating badge (per-tab, optional) */}
+          {overlayBadge && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="absolute bottom-8 right-8 bg-white/95 backdrop-blur-sm rounded-2xl px-5 py-4 shadow-xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300">
+                  <MessageSquare className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-repwell-teal-500">{overlayBadge.title}</p>
+                  <p className="text-xs text-repwell-teal-400">{overlayBadge.subtitle}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-repwell-teal-500">AI Analysis</p>
-                <p className="text-xs text-repwell-teal-400">Processing insights...</p>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
         </motion.div>
       );
 
@@ -618,6 +609,7 @@ export function FeatureTabsShowcase({
                   key={`images-${activeTab}`}
                   variant={activeFeature.layoutVariant}
                   images={activeFeature.images}
+                  overlayBadge={activeFeature.overlayBadge}
                 />
               </AnimatePresence>
             </div>

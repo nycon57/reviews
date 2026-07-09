@@ -102,7 +102,7 @@ export function ReputationBreakdownCard({
             <Button variant="default" size="sm" className="mt-4" asChild>
               <a href="/dashboard/reviews?tab=requests">
                 <Send className="mr-1.5 h-3.5 w-3.5" />
-                Send Survey
+                Send review request
               </a>
             </Button>
           </div>

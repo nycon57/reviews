@@ -111,8 +111,8 @@ export default async function OnboardingLayout({ children }: OnboardingLayoutPro
           </div>
           <p>
             Need help? Contact us at{" "}
-            <a href="mailto:support@repwell.io" className="text-repwell-teal-300 hover:underline">
-              support@repwell.io
+            <a href="mailto:support@repwell.ai" className="text-repwell-teal-300 hover:underline">
+              support@repwell.ai
             </a>
           </p>
         </div>

@@ -20,7 +20,7 @@ export function ContactUnsubscribeError({ message }: { message: string }) {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">{message}</p>
           <Button variant="outline" className="mt-6" asChild>
-            <a href="mailto:support@repwell.com">Contact Support</a>
+            <a href="mailto:support@repwell.ai">Contact Support</a>
           </Button>
         </CardContent>
       </Card>

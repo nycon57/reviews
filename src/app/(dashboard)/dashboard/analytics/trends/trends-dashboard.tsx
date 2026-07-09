@@ -262,7 +262,7 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
                 <div className="text-center">
                   <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-20" />
                   <p className="text-sm">No NPS data available yet</p>
-                  <p className="text-xs mt-1">NPS scores will appear after survey responses</p>
+                  <p className="text-xs mt-1">NPS scores will appear after request responses</p>
                 </div>
               </div>
             ) : (

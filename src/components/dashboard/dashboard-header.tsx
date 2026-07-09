@@ -34,7 +34,7 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
         </div>
         <Button ref={requestButtonRef} onClick={() => setDialogOpen(true)} size="sm">
           <PaperPlaneRight className="mr-1.5 h-4 w-4" />
-          Send Review Request
+          Send review request
         </Button>
       </div>
       <SendReviewRequestDialog

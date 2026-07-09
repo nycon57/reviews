@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ContactCTACard } from "@/app/pro/[slug]/components/contact-cta-card";
 import { ReferFriendModal } from "@/app/pro/[slug]/components/refer-friend-modal";
+import { ContactCTACard } from "@/app/pro/[slug]/components/contact-cta-card";
 import { firstName } from "@/app/(public)/video-testimonial/[token]/testimonial-shell";
 
 export interface SmartLinkProfessionalContact {
@@ -43,12 +43,18 @@ export function LandingPanel({ contact, primaryColor, className }: LandingPanelP
   const referLinkStyle = primaryColor ? { color: primaryColor } : undefined;
 
   return (
-    <div className={className ?? "mx-auto mt-8 w-full max-w-md space-y-5 animate-fade-in-up"}>
+    <div
+      className={
+        className ??
+        "mx-auto mt-8 w-full max-w-md space-y-5 motion-safe:animate-fade-in-up"
+      }
+    >
       <ContactCTACard
         phone={contact.phone}
         address={contact.address}
         professionalName={contact.fullName}
-        ctaText={contact.ctaText}
+        contactLabel={`Contact ${proFirst}`}
+        ctaText={contact.ctaText ?? "Get Started"}
         ctaUrl={contact.ctaUrl}
         linkedinUrl={contact.linkedinUrl}
         facebookUrl={contact.facebookUrl}
@@ -64,7 +70,7 @@ export function LandingPanel({ contact, primaryColor, className }: LandingPanelP
           type="button"
           onClick={() => setReferOpen(true)}
           style={referLinkStyle}
-          className="font-semibold text-repwell-teal-500 underline underline-offset-2 transition-colors hover:text-repwell-teal-400"
+          className="inline-flex min-h-11 items-center rounded-lg px-1 font-semibold text-repwell-teal-500 underline underline-offset-2 transition-colors hover:text-repwell-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
         >
           Introduce them
         </button>

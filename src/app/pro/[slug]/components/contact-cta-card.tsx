@@ -124,7 +124,7 @@ export function ContactCTACard({
           >
             <Button
               asChild
-              className="w-full bg-repwell-teal-300 hover:bg-repwell-teal-400 text-white font-semibold"
+              className="min-h-12 w-full bg-repwell-teal-300 font-semibold text-white hover:bg-repwell-teal-400 focus-visible:ring-repwell-teal-300"
               size="lg"
             >
               <a href={safeCtaUrl} target="_blank" rel="noopener noreferrer">
@@ -140,13 +140,13 @@ export function ContactCTACard({
           organization.href ? (
             <Link
               href={organization.href}
-              className="flex items-center gap-3 group"
+              className="group flex min-h-11 items-center gap-3 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
             >
               <Buildings
                 weight="duotone"
                 className="h-5 w-5 shrink-0 text-repwell-teal-300"
               />
-              <span className="text-sm font-medium text-repwell-teal-400 group-hover:text-repwell-teal-300 transition-colors underline-offset-2 group-hover:underline">
+              <span className="text-sm font-medium text-repwell-teal-400 underline-offset-2 transition-colors group-hover:text-repwell-teal-300 group-hover:underline">
                 {organization.name}
               </span>
             </Link>
@@ -168,11 +168,11 @@ export function ContactCTACard({
           branch ? (
             <Link
               href={`/branch/${branch.slug}`}
-              className="flex items-start gap-3 group"
+              className="group flex min-h-11 items-start gap-3 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
             >
               <MapPin className="h-5 w-5 shrink-0 text-repwell-teal-300 mt-0.5" />
               <address className="text-sm not-italic leading-relaxed">
-                <span className="font-medium text-repwell-teal-400 group-hover:text-repwell-teal-300 group-hover:underline underline-offset-2 transition-colors">
+                <span className="font-medium text-repwell-teal-400 underline-offset-2 transition-colors group-hover:text-repwell-teal-300 group-hover:underline">
                   {branch.name}
                 </span>
                 <br />
@@ -206,7 +206,7 @@ export function ContactCTACard({
             <Phone className="h-5 w-5 shrink-0 text-repwell-teal-300" />
             <a
               href={`tel:${phone}`}
-              className="text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline transition-colors"
+              className="inline-flex min-h-11 items-center rounded-lg text-sm text-repwell-teal-400 transition-colors hover:text-repwell-teal-300 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
             >
               {phone}
             </a>
@@ -218,7 +218,7 @@ export function ContactCTACard({
             <Envelope className="h-5 w-5 shrink-0 text-repwell-teal-300" />
             <a
               href={`mailto:${email}`}
-              className="text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline transition-colors break-all"
+              className="inline-flex min-h-11 items-center rounded-lg break-all text-sm text-repwell-teal-400 transition-colors hover:text-repwell-teal-300 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
             >
               {email}
             </a>
@@ -231,7 +231,7 @@ export function ContactCTACard({
             href={safePersonalWebsiteUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline"
+            className="flex min-h-11 items-center gap-3 rounded-lg text-sm text-repwell-teal-400 transition-colors hover:text-repwell-teal-300 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
           >
             <GlobeSimple className="h-5 w-5 shrink-0" />
             <span className="truncate">{getDisplayHostname(safePersonalWebsiteUrl)}</span>
@@ -240,29 +240,29 @@ export function ContactCTACard({
 
         {/* Social icon row */}
         {hasSocialLinks && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {safeLinkedinUrl && (
-              <a href={safeLinkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-repwell-teal-300 hover:text-repwell-teal-400 transition-colors">
+              <a href={safeLinkedinUrl} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2">
                 <LinkedinLogo className="h-6 w-6" weight="fill" />
               </a>
             )}
             {safeFacebookUrl && (
-              <a href={safeFacebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-repwell-teal-300 hover:text-repwell-teal-400 transition-colors">
+              <a href={safeFacebookUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2">
                 <FacebookLogo className="h-6 w-6" weight="fill" />
               </a>
             )}
             {safeInstagramUrl && (
-              <a href={safeInstagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-repwell-teal-300 hover:text-repwell-teal-400 transition-colors">
+              <a href={safeInstagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2">
                 <InstagramLogo className="h-6 w-6" weight="fill" />
               </a>
             )}
             {safeTwitterUrl && (
-              <a href={safeTwitterUrl} target="_blank" rel="noopener noreferrer" aria-label="X" className="text-repwell-teal-300 hover:text-repwell-teal-400 transition-colors">
+              <a href={safeTwitterUrl} target="_blank" rel="noopener noreferrer" aria-label="X" className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2">
                 <XIcon className="h-5 w-5" />
               </a>
             )}
             {safeZillowUrl && (
-              <a href={safeZillowUrl} target="_blank" rel="noopener noreferrer" aria-label="Zillow" className="text-repwell-teal-300 hover:text-repwell-teal-400 transition-colors">
+              <a href={safeZillowUrl} target="_blank" rel="noopener noreferrer" aria-label="Zillow" className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2">
                 <ZillowIcon className="h-6 w-6" />
               </a>
             )}
@@ -276,7 +276,7 @@ export function ContactCTACard({
               asChild
               variant="outline"
               size="sm"
-              className="w-full border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100"
+              className="min-h-11 w-full border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100 focus-visible:ring-repwell-teal-300"
             >
               <a href={`tel:${phone}`}>
                 <Phone className="h-4 w-4" />
@@ -288,7 +288,7 @@ export function ContactCTACard({
             <Button
               variant="outline"
               size="sm"
-              className="w-full border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100"
+              className="min-h-11 w-full border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100 focus-visible:ring-repwell-teal-300"
               onClick={onMessage}
             >
               <ChatCircle className="h-4 w-4" />
@@ -300,7 +300,7 @@ export function ContactCTACard({
               asChild
               variant="outline"
               size="sm"
-              className="w-full border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100"
+              className="min-h-11 w-full border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100 focus-visible:ring-repwell-teal-300"
             >
               <a href={safeDirectionsUrl} target="_blank" rel="noopener noreferrer">
                 <MapPin className="h-4 w-4" />

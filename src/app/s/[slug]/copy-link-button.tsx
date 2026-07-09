@@ -34,7 +34,7 @@ export function CopyLinkButton({ url }: CopyLinkButtonProps) {
   return (
     <button
       onClick={handleClick}
-      className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500"
+      className="inline-flex min-h-11 items-center justify-center gap-1 rounded-lg px-3.5 py-2 text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
       aria-label="Copy link"
       title={url}
       type="button"

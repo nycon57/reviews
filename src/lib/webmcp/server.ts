@@ -89,9 +89,11 @@ export function webMcpOptions(request: NextRequest): NextResponse {
 }
 
 export function webMcpOriginWindowKey(request: NextRequest): string {
-  const origin = request.headers.get("origin")?.trim();
-  const fallbackIp = getClientIp(request) ?? "unknown";
-  return hashRateLimitKey(origin || fallbackIp);
+  // Rate identity = client IP, nothing else. Origin is caller-supplied — a
+  // scripted caller can mint a fresh bucket per request by varying it (and
+  // the real WebMCP client's same-origin simple GETs send no Origin header
+  // at all), so letting it into the key in ANY position reopens the bypass.
+  return hashRateLimitKey(getClientIp(request) ?? "unknown");
 }
 
 export async function checkWebMcpOriginRateLimit(

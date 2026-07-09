@@ -3,6 +3,7 @@ import vercelConfig from "../../../../../vercel.json";
 import { verifyCronSecret } from "@/lib/cron/verify-secret";
 import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 import {
+  cronNameFromPath,
   getDueCronMonitorDecisions,
   parseCronExpectedInterval,
   queueCronMonitorAlert,
@@ -18,6 +19,10 @@ type VercelConfig = {
 };
 
 const CRON_NAME = "monitor-crons";
+// Dedupe state lives in its OWN row, written verbatim — the wrapper's
+// last_summary compaction (MAX_SUMMARY_KEYS) would silently truncate the
+// alert map past 12 crons and break the 24h dedupe.
+const STATE_ROW = "monitor-crons:state";
 
 export async function POST(request: NextRequest) {
   if (!verifyCronSecret(request)) {
@@ -29,7 +34,7 @@ export async function POST(request: NextRequest) {
     const crons = ((vercelConfig as VercelConfig).crons ?? []).filter((cron) =>
       cron.path.startsWith("/api/cron/")
     );
-    const cronNames = crons.map((cron) => cron.path.split("/").filter(Boolean).at(-1) ?? cron.path);
+    const cronNames = crons.map((cron) => cronNameFromPath(cron.path));
     const supabase = createAdminClient();
 
     const { data: heartbeatRows, error: heartbeatError } = await supabase
@@ -49,7 +54,12 @@ export async function POST(request: NextRequest) {
     }
 
     const monitorRow = (heartbeatRows ?? []).find((row) => row.cron_name === CRON_NAME);
-    const monitorState = readCronMonitorState(monitorRow?.last_summary);
+    const { data: stateRow } = await supabase
+      .from("cron_heartbeats")
+      .select("last_summary")
+      .eq("cron_name", STATE_ROW)
+      .maybeSingle();
+    const monitorState = readCronMonitorState(stateRow?.last_summary);
     const monitorStartedAt =
       monitorState.monitorStartedAt ??
       monitorRow?.last_success_at ??
@@ -78,6 +88,19 @@ export async function POST(request: NextRequest) {
           error: error instanceof Error ? error.message : "Unknown error",
         });
       }
+    }
+
+    // Persist dedupe state verbatim (never through the summary compactor).
+    const { error: stateError } = await supabase.from("cron_heartbeats").upsert({
+      cron_name: STATE_ROW,
+      last_summary: {
+        monitor_started_at: monitorStartedAt ?? now.toISOString(),
+        alert_sent_at_by_cron: alertSentAtByCron,
+      },
+      updated_at: now.toISOString(),
+    });
+    if (stateError) {
+      console.error("[monitor-crons] failed to persist dedupe state:", stateError.message);
     }
 
     const scheduleMappings = Object.fromEntries(

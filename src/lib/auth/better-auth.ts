@@ -68,22 +68,29 @@ const LOCAL_AUTH_ORIGINS = [
 // localhost entries there is behaviour-neutral while closing the prod hole.
 const ALLOW_LOCAL_AUTH_ORIGINS = process.env.NODE_ENV !== "production";
 
-function getRequiredBetterAuthEnv(name: "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL") {
-  const value = process.env[name];
-
-  // CUTOVER REQUIREMENT: Better Auth is the only auth system now. Production
-  // must explicitly set both BETTER_AUTH_SECRET and BETTER_AUTH_URL in Vercel.
+// CUTOVER REQUIREMENT: Better Auth is the only auth system now. The signing
+// secret has no safe fallback, so production must set it explicitly.
+const CONFIGURED_BETTER_AUTH_SECRET = (() => {
+  const value = process.env.BETTER_AUTH_SECRET;
   if (process.env.NODE_ENV === "production" && !value) {
-    throw new Error(`${name} is required in production for Better Auth`);
+    throw new Error("BETTER_AUTH_SECRET is required in production for Better Auth");
   }
-
   return value;
-}
+})();
 
-const CONFIGURED_BETTER_AUTH_SECRET = getRequiredBetterAuthEnv("BETTER_AUTH_SECRET");
-
+// The auth base URL follows the app's canonical URL: prefer an explicit
+// BETTER_AUTH_URL, else the app-wide NEXT_PUBLIC_APP_URL (already required for
+// canonicals/OG). Only fall back to localhost outside production — a prod
+// build with neither configured is a misconfiguration we fail loudly on.
 function getConfiguredAppUrl() {
-  return getRequiredBetterAuthEnv("BETTER_AUTH_URL") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const configured = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "BETTER_AUTH_URL or NEXT_PUBLIC_APP_URL is required in production for Better Auth"
+    );
+  }
+  return "http://localhost:3000";
 }
 
 function getConfiguredAppOrigin() {

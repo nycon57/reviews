@@ -73,6 +73,7 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: mock-service-role-key
       DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
       BETTER_AUTH_SECRET: mock-ci-secret-not-used-at-runtime
+      BETTER_AUTH_URL: http://localhost:3000
     needs: [bundle-size, unit-tests]
     steps:
       - name: Checkout
@@ -120,6 +121,7 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: mock-service-role-key
       DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
       BETTER_AUTH_SECRET: mock-ci-secret-not-used-at-runtime
+      BETTER_AUTH_URL: http://localhost:3000
     needs: [bundle-size, unit-tests]
     # Non-blocking until golden-flows replacement (see e2e-tests note).
     continue-on-error: true

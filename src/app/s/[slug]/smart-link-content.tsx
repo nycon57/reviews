@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion, useReducedMotion, type Variants } from "framer-motion";
 import posthog from "posthog-js";
 import {
   LinkedinLogo,
@@ -62,45 +61,6 @@ export interface SmartLinkContentProps {
   contact?: SmartLinkProfessionalContact | null;
 }
 
-// ---- Animation Variants ----
-
-const orchestrator: Variants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] },
-  },
-};
-
-const scaleIn: Variants = {
-  hidden: { opacity: 0, scale: 0.85 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { type: "spring", stiffness: 200, damping: 18 },
-  },
-};
-
-const barGrow: Variants = {
-  hidden: { scaleX: 0, opacity: 0 },
-  visible: {
-    scaleX: 1,
-    opacity: 1,
-    transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
-  },
-};
-
 // ---- Helpers ----
 
 function StarRating({ rating, size = "md" }: { rating: number; size?: "sm" | "md" }) {
@@ -118,13 +78,78 @@ function StarRating({ rating, size = "md" }: { rating: number; size?: "sm" | "md
 }
 
 const shareBtnClass =
-  "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500";
+  "inline-flex min-h-11 items-center justify-center gap-1 rounded-lg px-3.5 py-2 text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2";
 
 // Tiered quote treatment: short quotes get the big display serif, mid-length
 // quotes step down a size, and full-length reviews drop the serif entirely so
 // the column never becomes a wall of italic.
 const SHORT_QUOTE_CHARS = 180;
 const MID_QUOTE_CHARS = 420;
+const REPWELL_DEEP_TEAL = "#2f3e46";
+
+function parseHexColor(color: string): [number, number, number] | null {
+  const normalized = color.trim().replace(/^#/, "");
+  const hex =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((char) => char + char)
+          .join("")
+      : normalized;
+
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
+
+  return [
+    Number.parseInt(hex.slice(0, 2), 16),
+    Number.parseInt(hex.slice(2, 4), 16),
+    Number.parseInt(hex.slice(4, 6), 16),
+  ];
+}
+
+function relativeLuminance([r, g, b]: [number, number, number]) {
+  const [rs, gs, bs] = [r, g, b].map((channel) => {
+    const value = channel / 255;
+    return value <= 0.03928
+      ? value / 12.92
+      : Math.pow((value + 0.055) / 1.055, 2.4);
+  });
+
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+}
+
+function contrastRatio(colorA: string, colorB: string) {
+  const rgbA = parseHexColor(colorA);
+  const rgbB = parseHexColor(colorB);
+  if (!rgbA || !rgbB) return 21;
+
+  const lumA = relativeLuminance(rgbA);
+  const lumB = relativeLuminance(rgbB);
+  const lighter = Math.max(lumA, lumB);
+  const darker = Math.min(lumA, lumB);
+
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function getAccessibleBrandFillStyle(primaryColor: string): React.CSSProperties {
+  if (contrastRatio(primaryColor, "#ffffff") >= 4.5) {
+    return { background: primaryColor, color: "#ffffff" };
+  }
+
+  if (contrastRatio(primaryColor, REPWELL_DEEP_TEAL) >= 4.5) {
+    return { background: primaryColor, color: REPWELL_DEEP_TEAL };
+  }
+
+  return {
+    background: `linear-gradient(rgba(47, 62, 70, 0.4), rgba(47, 62, 70, 0.4)), ${primaryColor}`,
+    color: "#ffffff",
+  };
+}
+
+function getAccessibleAccentColor(primaryColor: string) {
+  return contrastRatio(primaryColor, "#f7faf7") >= 4.5
+    ? primaryColor
+    : REPWELL_DEEP_TEAL;
+}
 
 // ---- Sub-sections ----
 
@@ -145,9 +170,9 @@ function IdentityBlock({
         {logoUrl ? (
           <img src={logoUrl} alt={organizationName} className="h-10 w-auto object-contain" />
         ) : null}
-        <span className="text-sm font-semibold uppercase tracking-wider text-repwell-teal-400">
+        <h1 className="text-sm font-semibold uppercase tracking-wider text-repwell-teal-400">
           {organizationName}
-        </span>
+        </h1>
       </div>
     );
   }
@@ -160,7 +185,7 @@ function IdentityBlock({
 
   return (
     <div className="flex items-start gap-4">
-      <motion.div variants={scaleIn} className="shrink-0">
+      <div className="shrink-0">
         {professional.photoUrl ? (
           <img
             src={professional.photoUrl}
@@ -176,7 +201,7 @@ function IdentityBlock({
             {profInitials}
           </div>
         )}
-      </motion.div>
+      </div>
 
       <div className="min-w-0 pt-0.5">
         <h1 className="font-display text-xl leading-tight text-repwell-teal-500 lg:text-2xl">
@@ -231,15 +256,15 @@ function ActionPanel({
   secondaryAction,
   contact,
   primaryColor,
-  reduceMotion,
 }: {
   primaryAction: { label: string; href: string; external: boolean } | null;
   secondaryAction: { label: string; href: string } | null;
   contact: SmartLinkProfessionalContact | null;
   primaryColor: string;
-  reduceMotion: boolean;
 }) {
   const [referOpen, setReferOpen] = useState(false);
+  const accessibleBrandFillStyle = getAccessibleBrandFillStyle(primaryColor);
+  const accessibleAccentColor = getAccessibleAccentColor(primaryColor);
 
   const addressLines = contact?.address ? formatAddressLines(contact.address) : [];
   const websiteUrl = getSafeUrl(contact?.personalWebsiteUrl);
@@ -268,33 +293,12 @@ function ActionPanel({
         )}
 
         {primaryAction && (
-          <motion.a
+          <a
             href={primaryAction.href}
             target={primaryAction.external ? "_blank" : undefined}
             rel={primaryAction.external ? "noopener noreferrer" : undefined}
-            className="block w-full rounded-xl py-3.5 text-center text-base font-semibold text-white"
-            style={{ background: primaryColor }}
-            animate={
-              reduceMotion
-                ? undefined
-                : {
-                    boxShadow: [
-                      `0 4px 14px -4px ${primaryColor}30`,
-                      `0 4px 24px -4px ${primaryColor}55`,
-                      `0 4px 14px -4px ${primaryColor}30`,
-                    ],
-                  }
-            }
-            transition={{
-              boxShadow: {
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1.2,
-              },
-            }}
-            whileHover={reduceMotion ? undefined : { scale: 1.02, transition: { duration: 0.15 } }}
-            whileTap={{ scale: 0.98 }}
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3.5 text-center text-base font-semibold transition-shadow hover:shadow-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
+            style={accessibleBrandFillStyle}
             onClick={() =>
               posthog.capture("smart_link_cta_clicked", {
                 cta_label: primaryAction.label,
@@ -305,7 +309,7 @@ function ActionPanel({
           >
             {primaryAction.label}{" "}
             <ArrowRight className="ml-0.5 inline h-4 w-4" weight="bold" />
-          </motion.a>
+          </a>
         )}
 
         {secondaryAction && (
@@ -313,7 +317,7 @@ function ActionPanel({
             href={secondaryAction.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full rounded-xl border border-repwell-teal-300 py-2.5 text-center text-sm font-semibold text-repwell-teal-400 transition-colors hover:bg-repwell-sage-100/40"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-repwell-teal-300 px-4 py-2.5 text-center text-sm font-semibold text-repwell-teal-400 transition-colors hover:bg-repwell-sage-100/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
           >
             {secondaryAction.label}
           </a>
@@ -327,7 +331,7 @@ function ActionPanel({
           <ContactRow icon={<Phone className="h-[18px] w-[18px]" />}>
             <a
               href={`tel:${contact.phone}`}
-              className="text-sm text-repwell-teal-400 transition-colors hover:text-repwell-teal-300 hover:underline"
+              className="inline-flex min-h-11 items-center rounded-lg text-sm text-repwell-teal-400 transition-colors hover:text-repwell-teal-300 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
             >
               {contact.phone}
             </a>
@@ -353,15 +357,15 @@ function ActionPanel({
               href={websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="truncate text-sm text-repwell-teal-400 transition-colors hover:text-repwell-teal-300 hover:underline"
+              className="inline-flex min-h-11 max-w-full items-center rounded-lg text-sm text-repwell-teal-400 transition-colors hover:text-repwell-teal-300 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
             >
-              {getDisplayHostname(websiteUrl)}
+              <span className="truncate">{getDisplayHostname(websiteUrl)}</span>
             </a>
           </ContactRow>
         )}
 
         {socials.length > 0 && (
-          <div className="flex items-center gap-3 pt-0.5">
+          <div className="flex flex-wrap items-center gap-2 pt-0.5">
             {socials.map(({ url, label, icon }) => (
               <a
                 key={label}
@@ -369,7 +373,7 @@ function ActionPanel({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={label}
-                className="text-repwell-teal-300 transition-colors hover:text-repwell-teal-400"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-repwell-teal-300 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
               >
                 {icon}
               </a>
@@ -390,8 +394,8 @@ function ActionPanel({
                 });
                 setReferOpen(true);
               }}
-              className="font-semibold underline underline-offset-2 transition-opacity hover:opacity-80"
-              style={{ color: primaryColor }}
+              className="inline-flex min-h-11 items-center rounded-lg px-1 font-semibold underline underline-offset-2 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
+              style={{ color: accessibleAccentColor }}
             >
               Introduce them
             </button>
@@ -434,8 +438,6 @@ export function SmartLinkContent({
   emailUrl,
   contact,
 }: SmartLinkContentProps) {
-  const reduceMotion = useReducedMotion();
-
   const shortQuote = quote.length > 0 && quote.length <= SHORT_QUOTE_CHARS;
   const midQuote = quote.length > SHORT_QUOTE_CHARS && quote.length <= MID_QUOTE_CHARS;
 
@@ -477,23 +479,19 @@ export function SmartLinkContent({
         <div className="absolute -right-20 bottom-10 h-72 w-72 rounded-full bg-repwell-teal-300/10 blur-3xl" />
       </div>
 
-      <motion.div
+      <div
         className="relative mx-auto flex min-h-svh w-full max-w-6xl flex-col justify-center px-5 py-10 sm:px-8 lg:px-12 lg:py-14"
-        variants={orchestrator}
-        initial={reduceMotion ? false : "hidden"}
-        animate="visible"
       >
         {/* Mobile stacks identity → quote → actions; desktop pins the quote as
             the left-hand hero with the identity + action rail alongside. */}
         <div className="grid grid-cols-1 gap-8 [grid-template-areas:'identity'_'quote'_'action'] lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-x-16 lg:gap-y-7 lg:[grid-template-areas:'quote_identity'_'quote_action']">
           {/* ── Quote (hero) ── */}
-          <motion.figure className="min-w-0 [grid-area:quote] lg:self-center" variants={fadeUp}>
+          <figure className="min-w-0 [grid-area:quote] lg:self-center">
             <div className="flex items-center gap-3">
-              <motion.span
+              <span
                 aria-hidden
                 className="h-0.5 w-8 rounded-full"
                 style={{ backgroundColor: primaryColor, transformOrigin: "left" }}
-                variants={barGrow}
               />
               <span className="text-xs font-semibold uppercase tracking-[0.18em] text-repwell-teal-300">
                 Customer review
@@ -579,33 +577,32 @@ export function SmartLinkContent({
               </a>
               <CopyLinkButton url={pageUrl} />
             </div>
-          </motion.figure>
+          </figure>
 
           {/* ── Identity rail ── */}
-          <motion.div className="min-w-0 [grid-area:identity] lg:self-end" variants={fadeUp}>
+          <div className="min-w-0 [grid-area:identity] lg:self-end">
             <IdentityBlock
               professional={professional}
               organizationName={organizationName}
               logoUrl={logoUrl}
               primaryColor={primaryColor}
             />
-          </motion.div>
+          </div>
 
           {/* ── Action rail ── */}
-          <motion.div className="min-w-0 [grid-area:action] lg:self-start" variants={fadeUp}>
+          <div className="min-w-0 [grid-area:action] lg:self-start">
             <ActionPanel
               primaryAction={primaryAction}
               secondaryAction={secondaryAction}
               contact={contact ?? null}
               primaryColor={primaryColor}
-              reduceMotion={Boolean(reduceMotion)}
             />
             {professional && logoUrl && (
               <div className="mt-5 flex justify-center lg:justify-start">
                 {orgProfileUrl ? (
                   <a
                     href={orgProfileUrl}
-                    className="inline-flex rounded-lg transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/40"
+                    className="inline-flex min-h-11 rounded-lg transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/40 focus-visible:ring-offset-2"
                     aria-label={`View ${organizationName} on RepWell`}
                   >
                     <img
@@ -623,17 +620,17 @@ export function SmartLinkContent({
                 )}
               </div>
             )}
-          </motion.div>
+          </div>
         </div>
 
         {/* ── RepWell footer ── */}
-        <motion.div className="mt-12 lg:mt-14" variants={fadeUp}>
+        <div className="mt-12 lg:mt-14">
           <div className="mx-auto mb-5 h-px w-12 bg-border" />
           <a
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="group mx-auto flex w-fit flex-col items-center gap-1.5 text-center"
+            className="group mx-auto flex min-h-11 w-fit flex-col items-center justify-center gap-1.5 rounded-lg px-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
           >
             <img
               src="/branding/RepWell-Logo-Full-Color.png"
@@ -645,8 +642,8 @@ export function SmartLinkContent({
               <ArrowRight className="h-3 w-3" weight="bold" />
             </span>
           </a>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

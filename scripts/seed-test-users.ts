@@ -20,15 +20,18 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { Pool } from "pg";
+import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
 
 const TEST_PASSWORD = "TestPassword123!";
 
-// Load .env.local manually since we're running outside Next.js
+// Load env files manually since we're running outside Next.js
 function loadEnv() {
-  const envPath = path.resolve(process.cwd(), ".env.local");
-  if (fs.existsSync(envPath)) {
+  for (const file of [".env.local", ".env"]) {
+    const envPath = path.resolve(process.cwd(), file);
+    if (!fs.existsSync(envPath)) continue;
+
     const envContent = fs.readFileSync(envPath, "utf-8");
     for (const line of envContent.split("\n")) {
       const trimmed = line.trim();
@@ -165,6 +168,75 @@ async function createPool(): Promise<Pool> {
   });
 }
 
+async function syncSupabaseAuthUsers() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.log("  ⚠️  Skipping Supabase Auth user sync (missing service-role env)");
+    return;
+  }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  const { data: existingUsers, error: listError } =
+    await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+
+  if (listError) {
+    throw new Error(`Failed to list Supabase Auth users: ${listError.message}`);
+  }
+
+  const existingByEmail = new Map(
+    existingUsers.users.map((user) => [user.email?.toLowerCase(), user])
+  );
+
+  for (const user of testUsers) {
+    const org = testOrgs.find((candidate) => candidate.id === user.organizationId)!;
+    const metadata = {
+      full_name: user.fullName,
+      organization_name: org.name,
+    };
+    const existing = existingByEmail.get(user.email.toLowerCase());
+
+    if (existing && existing.id !== user.id) {
+      const { error } = await supabase.auth.admin.deleteUser(existing.id);
+      if (error) {
+        throw new Error(`Failed to delete mismatched auth user ${user.email}: ${error.message}`);
+      }
+    }
+
+    if (existing?.id === user.id) {
+      const { error } = await supabase.auth.admin.updateUserById(user.id, {
+        email: user.email,
+        password: TEST_PASSWORD,
+        email_confirm: true,
+        user_metadata: metadata,
+      });
+      if (error) {
+        throw new Error(`Failed to update auth user ${user.email}: ${error.message}`);
+      }
+      continue;
+    }
+
+    const { error } = await supabase.auth.admin.createUser({
+      id: user.id,
+      email: user.email,
+      password: TEST_PASSWORD,
+      email_confirm: true,
+      user_metadata: metadata,
+    } as Parameters<typeof supabase.auth.admin.createUser>[0] & { id: string });
+
+    if (error) {
+      throw new Error(`Failed to create auth user ${user.email}: ${error.message}`);
+    }
+  }
+}
+
 async function seedTestUsers() {
   console.log("🌱 Seeding test users for role/permission testing...\n");
 
@@ -176,27 +248,23 @@ async function seedTestUsers() {
     const passwordHash = await bcrypt.hash(TEST_PASSWORD, 10);
     console.log(`📝 Password for all test users: ${TEST_PASSWORD}\n`);
 
+    console.log("🔐 Syncing Supabase Auth users...");
+    await syncSupabaseAuthUsers();
+
     // Start transaction
     await pool.query("BEGIN");
 
-    // Clean up existing test data (in reverse order of dependencies)
-    console.log("🧹 Cleaning up existing test data...");
+    // Refresh auth rows without deleting fixed users/orgs referenced by seed data.
+    console.log("🧹 Refreshing existing test auth data...");
     for (const user of testUsers) {
-      // Delete accounts first (FK to users)
       await pool.query(
-        "DELETE FROM accounts WHERE user_id IN (SELECT id FROM users WHERE email = $1)",
-        [user.email]
+        "DELETE FROM accounts WHERE user_id = $1 OR user_id IN (SELECT id FROM users WHERE email = $2)",
+        [user.id, user.email]
       );
-      // Delete sessions (FK to users)
       await pool.query(
-        "DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE email = $1)",
-        [user.email]
+        "DELETE FROM sessions WHERE user_id = $1 OR user_id IN (SELECT id FROM users WHERE email = $2)",
+        [user.id, user.email]
       );
-      // Delete users
-      await pool.query("DELETE FROM users WHERE email = $1", [user.email]);
-    }
-    for (const org of testOrgs) {
-      await pool.query("DELETE FROM organizations WHERE slug = $1", [org.slug]);
     }
 
     // Create test organizations
@@ -204,7 +272,15 @@ async function seedTestUsers() {
     for (const org of testOrgs) {
       await pool.query(
         `INSERT INTO organizations (id, name, slug, account_type, subscription_tier, subscription_status, onboarding_status, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, 'active', 'completed', NOW(), NOW())`,
+         VALUES ($1, $2, $3, $4, $5, 'active', 'completed', NOW(), NOW())
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           slug = EXCLUDED.slug,
+           account_type = EXCLUDED.account_type,
+           subscription_tier = EXCLUDED.subscription_tier,
+           subscription_status = 'active',
+           onboarding_status = 'completed',
+           updated_at = NOW()`,
         [org.id, org.name, org.slug, org.accountType, org.subscriptionTier]
       );
       console.log(
@@ -221,7 +297,18 @@ async function seedTestUsers() {
           id, organization_id, email, full_name, role, is_owner, is_active,
           title, industry, email_verified_at, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, NOW(), NOW(), NOW())`,
+        VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, NOW(), NOW(), NOW())
+        ON CONFLICT (id) DO UPDATE SET
+          organization_id = EXCLUDED.organization_id,
+          email = EXCLUDED.email,
+          full_name = EXCLUDED.full_name,
+          role = EXCLUDED.role,
+          is_owner = EXCLUDED.is_owner,
+          is_active = true,
+          title = EXCLUDED.title,
+          industry = EXCLUDED.industry,
+          email_verified_at = COALESCE(users.email_verified_at, NOW()),
+          updated_at = NOW()`,
         [
           user.id,
           user.organizationId,

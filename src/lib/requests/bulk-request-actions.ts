@@ -11,6 +11,7 @@ import {
   MAX_REQUEST_IMPORT_ROWS,
 } from "./bulk-request-types";
 import type { BulkSendResult, ParsedRequestRow } from "./bulk-request-types";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 
 type ActionResult<T = void> =
   | { success: true; data?: T }
@@ -46,7 +47,11 @@ async function getAuthContext() {
 
 async function processBulkRows(
   rows: ParsedRequestRow[],
-  processRow: (row: ParsedRequestRow, index: number, userId: string) => Promise<{ success: boolean; error?: string }>
+  processRow: (row: ParsedRequestRow, index: number, userId: string) => Promise<{ success: boolean; error?: string }>,
+  onComplete?: (
+    auth: { userId: string; organizationId: string },
+    result: BulkSendResult
+  ) => void
 ): Promise<ActionResult<BulkSendResult>> {
   const auth = await getAuthContext();
   if (!auth) return { success: false, error: "Not authenticated" };
@@ -70,7 +75,9 @@ async function processBulkRows(
   }
 
   revalidatePath(REVALIDATE_PATH);
-  return { success: true, data: { totalSent, totalFailed, errors } };
+  const result = { totalSent, totalFailed, errors };
+  onComplete?.(auth, result);
+  return { success: true, data: result };
 }
 
 // ── Bulk Send: Text Review via Email ─────────────────────────────────
@@ -79,16 +86,38 @@ export async function bulkSendTextReviewsViaEmail(
   rows: ParsedRequestRow[],
   customTemplateId?: string
 ): Promise<ActionResult<BulkSendResult>> {
-  return processBulkRows(rows, async (row, _i, userId) => {
-    if (!row.email) return { success: false, error: "Missing email" };
-    return createSurveyAndQueue({
-      loanOfficerId: userId,
-      customerName: row.name,
-      customerEmail: row.email,
-      sendImmediately: true,
-      customTemplateId,
-    });
-  });
+  return processBulkRows(
+    rows,
+    async (row, _i, userId) => {
+      if (!row.email) return { success: false, error: "Missing email" };
+      return createSurveyAndQueue(
+        {
+          loanOfficerId: userId,
+          customerName: row.name,
+          customerEmail: row.email,
+          sendImmediately: true,
+          customTemplateId,
+        },
+        { suppressReviewRequestSentEvent: true }
+      );
+    },
+    (auth, result) => {
+      if (result.totalSent === 0) return;
+      void capturePostHogEvent({
+        distinctId: auth.userId,
+        event: "review_request_sent",
+        properties: {
+          channel: "email",
+          bulk: true,
+          count: result.totalSent,
+          request_type: "text_review",
+          total_failed: result.totalFailed,
+        },
+        groups: { organization: auth.organizationId },
+        logContext: "bulk text review requests",
+      });
+    }
+  );
 }
 
 // ── Bulk Send: Video Request via Email ───────────────────────────────
@@ -96,14 +125,33 @@ export async function bulkSendTextReviewsViaEmail(
 export async function bulkSendVideoRequestsViaEmail(
   rows: ParsedRequestRow[]
 ): Promise<ActionResult<BulkSendResult>> {
-  return processBulkRows(rows, async (row, _i, userId) => {
-    if (!row.email) return { success: false, error: "Missing email" };
-    return createVideoTestimonialRequest({
-      loanOfficerId: userId,
-      customerName: row.name,
-      customerEmail: row.email,
-      sendImmediately: true,
-      maxDurationSeconds: 120,
-    });
-  });
+  return processBulkRows(
+    rows,
+    async (row, _i, userId) => {
+      if (!row.email) return { success: false, error: "Missing email" };
+      return createVideoTestimonialRequest({
+        loanOfficerId: userId,
+        customerName: row.name,
+        customerEmail: row.email,
+        sendImmediately: true,
+        maxDurationSeconds: 120,
+      });
+    },
+    (auth, result) => {
+      if (result.totalSent === 0) return;
+      void capturePostHogEvent({
+        distinctId: auth.userId,
+        event: "review_request_sent",
+        properties: {
+          channel: "email",
+          bulk: true,
+          count: result.totalSent,
+          request_type: "video_testimonial",
+          total_failed: result.totalFailed,
+        },
+        groups: { organization: auth.organizationId },
+        logContext: "bulk video review requests",
+      });
+    }
+  );
 }

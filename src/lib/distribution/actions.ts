@@ -14,6 +14,7 @@ import { sendSurveyInvitationEmail } from "@/lib/email";
 import { emailConfig } from "@/lib/email/client";
 import type { SurveyInvitationEmailData } from "@/lib/email/types";
 import { findOrCreateContact } from "@/lib/contacts/actions";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 import type { Json } from "@/types/database.types";
 
 // Input validation schemas
@@ -62,7 +63,8 @@ export interface DistributionQueueItem {
 
 // Create a survey and add it to the distribution queue
 export async function createSurveyAndQueue(
-  input: CreateSurveyInput
+  input: CreateSurveyInput,
+  options?: { suppressReviewRequestSentEvent?: boolean }
 ): Promise<ActionResult<SendSurveyResult>> {
   try {
     const validated = createSurveyInputSchema.safeParse(input);
@@ -271,6 +273,21 @@ export async function createSurveyAndQueue(
 
     revalidatePath("/dashboard/surveys");
 
+    if (!options?.suppressReviewRequestSentEvent) {
+      void capturePostHogEvent({
+        distinctId: user.id,
+        event: "review_request_sent",
+        properties: {
+          channel: "email",
+          bulk: false,
+          send_immediately: validated.data.sendImmediately,
+          survey_id: survey.id,
+        },
+        groups: { organization: userData.organization_id },
+        logContext: "create survey request",
+      });
+    }
+
     // If send immediately is requested, process now
     if (validated.data.sendImmediately && queueItem) {
       const processResult = await processQueueItem({
@@ -433,6 +450,18 @@ export async function sendSurveyManually(
       await scheduleReminders(survey.id, userData.organization_id);
 
       revalidatePath("/dashboard/surveys");
+
+      void capturePostHogEvent({
+        distinctId: user.id,
+        event: "review_request_sent",
+        properties: {
+          channel: "email",
+          bulk: false,
+          survey_id: survey.id,
+        },
+        groups: { organization: userData.organization_id },
+        logContext: "manual survey send",
+      });
 
       return {
         success: true,

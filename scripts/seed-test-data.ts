@@ -406,6 +406,21 @@ async function seedTestData() {
       }
     }
 
+    const legacyExTemplateCleanup = await pool.query(
+      `DELETE FROM ex_survey_templates
+        WHERE organization_id = $1
+          AND name = ANY($2)`,
+      [
+        ORG_ENT,
+        ["Employee Pulse Survey", "Employee Engagement Survey"],
+      ]
+    );
+    if (legacyExTemplateCleanup.rowCount) {
+      console.log(
+        `  Deleted ${legacyExTemplateCleanup.rowCount} legacy EX survey templates`
+      );
+    }
+
     // Tables keyed by user_id (no organization_id)
     const userTables = [
       "reputation_history",

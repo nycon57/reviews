@@ -10,6 +10,11 @@ import {
   handleOptionsRequest,
 } from '@/lib/api/response';
 import { inviteUserSchema, validateBody } from '@/lib/api/validation';
+import {
+  deleteBetterAuthIdentity,
+  generateTemporaryPassword,
+  upsertBetterAuthCredentialAccount,
+} from '@/lib/auth/provisioning';
 
 // POST /api/v1/users/invite - Invite a new user
 async function handlePost(
@@ -72,14 +77,17 @@ async function handlePost(
 
     // Build full name from first and last name
     const fullName = [input.first_name, input.last_name].filter(Boolean).join(' ') || 'Unknown';
+    const userId = randomUUID();
+    const temporaryPassword = generateTemporaryPassword();
 
-    // Create the user
+    // Create the Better Auth user row and one-time credential account.
     const { data: newUser, error: userError } = await supabase
       .from('users')
       .insert({
-        id: randomUUID(),
+        id: userId,
         organization_id: context.organizationId,
         email: input.email,
+        email_verified_at: new Date().toISOString(),
         full_name: fullName,
         role: 'user',
         is_active: true,
@@ -92,12 +100,24 @@ async function handlePost(
       return apiInternalError(context.requestId, 'Failed to create user');
     }
 
+    const credentialResult = await upsertBetterAuthCredentialAccount({
+      userId,
+      password: temporaryPassword,
+    });
+
+    if (credentialResult.error) {
+      await deleteBetterAuthIdentity(userId);
+      console.error('Error creating Better Auth credential:', credentialResult.error);
+      return apiInternalError(context.requestId, 'Failed to create user credentials');
+    }
+
     // TODO: Send invitation email via email service
 
     return apiSuccess(
       {
         id: newUser.id,
         email: newUser.email,
+        temporary_password: temporaryPassword,
         role: input.role,
         status: 'active',
         created_at: newUser.created_at,

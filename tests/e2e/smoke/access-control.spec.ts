@@ -10,11 +10,10 @@ test.describe("Enterprise user (role=user) access control", () => {
   test.use({ storageState: TEST_USERS["enterprise-user"].storageState });
 
   const restrictedPaths = [
-    "/dashboard/team",
+    "/dashboard/people",
     "/dashboard/campaigns",
     "/dashboard/approvals",
     "/dashboard/ex-surveys",
-    "/dashboard/employees",
     "/dashboard/organization",
   ];
 
@@ -53,10 +52,10 @@ test.describe("Enterprise manager access control", () => {
     expect(page.url()).not.toContain("/dashboard/organization");
   });
 
-  test("can access /dashboard/team (manager role)", async ({ page }) => {
+  test("can access team members (manager role)", async ({ page }) => {
     await page.goto("/dashboard/team", { waitUntil: "commit" });
     await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
-    expect(page.url()).toContain("/dashboard/team");
+    expect(page.url()).toContain("/dashboard/people");
   });
 });
 
@@ -71,10 +70,10 @@ test.describe("Individual Pro access control", () => {
     expect(page.url()).toContain("/dashboard/insights");
   });
 
-  test("cannot access /dashboard/team (enterprise only)", async ({ page }) => {
+  test("cannot access team members (enterprise only)", async ({ page }) => {
     await page.goto("/dashboard/team", { waitUntil: "commit" });
     await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
-    expect(page.url()).not.toContain("/dashboard/team");
+    expect(page.url()).not.toContain("/dashboard/people");
   });
 });
 

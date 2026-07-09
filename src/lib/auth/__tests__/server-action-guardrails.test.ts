@@ -60,19 +60,19 @@ const PUBLIC_ACTIONS: Record<string, string> = {
     "Token-scoped contact resubscribe.",
   "src/app/(public)/u/c/[token]/actions.ts#unsubscribeContactByToken":
     "Token-scoped contact unsubscribe.",
-  "src/lib/auth/actions.ts#resetPassword":
-    "Auth bootstrap/password reset flow; provider owns token validation.",
-  "src/lib/auth/actions.ts#signIn": "Auth bootstrap flow; provider validates credentials.",
-  "src/lib/auth/actions.ts#signInWithMagicLink":
-    "Auth bootstrap flow; provider validates email delivery/token.",
-  "src/lib/auth/actions.ts#signUp": "Auth bootstrap flow; provider validates account creation.",
   "src/lib/auth/actions.ts#unifiedResetPassword":
     "Auth bootstrap/password reset flow; provider owns token validation.",
+  "src/lib/auth/actions.ts#unifiedResendVerificationEmail":
+    "Authenticated auth-provider flow; Better Auth validates the current session before sending.",
   "src/lib/auth/actions.ts#unifiedSignIn": "Auth bootstrap flow; provider validates credentials.",
   "src/lib/auth/actions.ts#unifiedSignInWithMagicLink":
     "Auth bootstrap flow; provider validates email delivery/token.",
+  "src/lib/auth/actions.ts#unifiedSignOut":
+    "Authenticated auth-provider flow; Better Auth validates and clears the current session.",
   "src/lib/auth/actions.ts#unifiedSignUp":
     "Auth bootstrap flow; provider validates account creation.",
+  "src/lib/auth/actions.ts#unifiedUpdatePassword":
+    "Password-reset continuation; provider validates reset token/session.",
   "src/lib/auth/server-actions.ts#resetPasswordBetterAuth":
     "Auth bootstrap/password reset flow; provider owns token validation.",
   "src/lib/auth/server-actions.ts#signInWithBetterAuth":

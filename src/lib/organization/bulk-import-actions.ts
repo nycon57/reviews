@@ -15,6 +15,11 @@ import type {
 import { MAX_IMPORT_ROWS } from "./bulk-import-types";
 import { importRowSchema } from "./bulk-import-validation";
 import crypto from "crypto";
+import {
+  deleteBetterAuthIdentity,
+  generateTemporaryPassword,
+  upsertBetterAuthCredentialAccount,
+} from "@/lib/auth/provisioning";
 
 /**
  * Server-side validation: checks duplicate emails, resolves branches/managers, enforces tier limits
@@ -320,9 +325,12 @@ export async function bulkImportUsers(
 
   try {
     for (const user of toImport) {
+      let createdUserId: string | null = null;
+
       try {
         const email = user.email.toLowerCase().trim();
-        const randomPassword = crypto.randomBytes(20).toString("hex");
+        const userId = crypto.randomUUID();
+        const temporaryPassword = generateTemporaryPassword();
 
         // Check tier limit using local counter
         if (maxUsers !== -1 && localUserCount >= maxUsers) {
@@ -336,27 +344,6 @@ export async function bulkImportUsers(
           continue;
         }
 
-        // Create auth user
-        const { data: authData, error: authError } =
-          await supabase.auth.admin.createUser({
-            email,
-            password: randomPassword,
-            email_confirm: true,
-          });
-
-        if (authError || !authData.user) {
-          results.push({
-            email,
-            full_name: user.full_name,
-            success: false,
-            error: authError?.message ?? "Failed to create auth user",
-          });
-          failureCount++;
-          continue;
-        }
-
-        createdAuthIds.push(authData.user.id);
-
         // Generate unique slug
         const slug = await generateUniqueUserSlug(user.full_name);
 
@@ -368,11 +355,12 @@ export async function bulkImportUsers(
           ? managerMap.get(user.manager_email.toLowerCase()) ?? null
           : null;
 
-        // Insert into users table
+        // Insert into the Better Auth users table, then create the credential account.
         const { error: insertError } = await supabase.from("users").insert({
-          id: authData.user.id,
+          id: userId,
           organization_id: orgId,
           email,
+          email_verified_at: new Date().toISOString(),
           full_name: user.full_name.trim(),
           role: user.role as "admin" | "manager" | "user",
           is_active: false,
@@ -381,32 +369,11 @@ export async function bulkImportUsers(
           title: user.title || null,
           nmls_id: user.nmls_id || null,
           branch_id: branchId,
-          manager_id: managerId,
+          manager_user_id: managerId,
           hire_date: user.hire_date || null,
         });
 
         if (insertError) {
-          // Clean up: delete auth user if users table insert fails
-          try {
-            await supabase.auth.admin.deleteUser(authData.user.id);
-          } catch (deleteErr) {
-            const deleteMsg = deleteErr instanceof Error ? deleteErr.message : "Unknown cleanup error";
-            console.error(`Failed to clean up auth user ${authData.user.id}:`, deleteMsg);
-            results.push({
-              email,
-              full_name: user.full_name,
-              success: false,
-              error: `${insertError.message}; cleanup also failed: ${deleteMsg}`,
-            });
-            failureCount++;
-            // Remove from tracking since we already attempted cleanup
-            const idx = createdAuthIds.indexOf(authData.user.id);
-            if (idx !== -1) createdAuthIds.splice(idx, 1);
-            continue;
-          }
-          // Successfully cleaned up, remove from tracking
-          const idx = createdAuthIds.indexOf(authData.user.id);
-          if (idx !== -1) createdAuthIds.splice(idx, 1);
           results.push({
             email,
             full_name: user.full_name,
@@ -417,14 +384,41 @@ export async function bulkImportUsers(
           continue;
         }
 
+        createdUserId = userId;
+
+        const credentialResult = await upsertBetterAuthCredentialAccount({
+          userId,
+          password: temporaryPassword,
+        });
+
+        if (credentialResult.error) {
+          await deleteBetterAuthIdentity(userId);
+          createdUserId = null;
+          results.push({
+            email,
+            full_name: user.full_name,
+            success: false,
+            error: credentialResult.error,
+          });
+          failureCount++;
+          continue;
+        }
+
+        createdAuthIds.push(userId);
+
         results.push({
           email,
           full_name: user.full_name,
           success: true,
+          temporaryPassword,
         });
         successCount++;
         localUserCount++;
       } catch (err) {
+        if (createdUserId) {
+          await deleteBetterAuthIdentity(createdUserId);
+        }
+
         results.push({
           email: user.email,
           full_name: user.full_name,
@@ -435,7 +429,7 @@ export async function bulkImportUsers(
       }
     }
   } catch (outerErr) {
-    // Unexpected failure — clean up orphaned auth users that don't have a users row yet
+    // Unexpected failure - clean up orphaned auth identities that don't have a users row yet
     console.error("Bulk import unexpected failure, cleaning up orphaned auth users:", outerErr);
     for (const authId of createdAuthIds) {
       try {
@@ -446,7 +440,7 @@ export async function bulkImportUsers(
           .eq("id", authId)
           .maybeSingle();
         if (!existingRow) {
-          await supabase.auth.admin.deleteUser(authId);
+          await deleteBetterAuthIdentity(authId);
         }
       } catch (cleanupErr) {
         console.error(`Failed to clean up orphaned auth user ${authId}:`, cleanupErr);

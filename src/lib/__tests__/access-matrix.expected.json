@@ -177,6 +177,12 @@
       "guards": [
         "minTier:pro"
       ]
+    },
+    {
+      "route": "/dashboard/analytics/website",
+      "guards": [
+        "minTier:pro"
+      ]
     }
   ],
   "docRoutes": [
@@ -193,6 +199,7 @@
     "/dashboard/analytics/agents",
     "/dashboard/analytics/team",
     "/dashboard/insights",
+    "/dashboard/analytics/website",
     "/dashboard/people",
     "/dashboard/surveys",
     "/dashboard/ex-surveys",

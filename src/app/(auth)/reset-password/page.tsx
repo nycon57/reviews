@@ -107,7 +107,8 @@ export default function ResetPasswordPage() {
   const onSubmit = async (data: UpdatePasswordInput) => {
     setIsLoading(true);
     try {
-      const result = await unifiedUpdatePassword(data);
+      const token = new URLSearchParams(window.location.search).get("token") ?? undefined;
+      const result = await unifiedUpdatePassword(data, token);
       if (result.success) {
         toast({
           title: "Password updated!",

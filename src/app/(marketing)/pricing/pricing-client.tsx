@@ -27,11 +27,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { createCheckoutSession, getPricingForCheckout } from "@/lib/stripe";
-import { createClient } from "@/lib/supabase/client";
 import { getSession } from "@/lib/auth/auth-client";
-
-// Feature flag for Better Auth migration
-const USE_BETTER_AUTH = process.env.NEXT_PUBLIC_USE_BETTER_AUTH === "true";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -455,16 +451,8 @@ export function PricingPageClient() {
   // Check auth state and load pricing on mount
   React.useEffect(() => {
     async function checkAuth() {
-      if (USE_BETTER_AUTH) {
-        const session = await getSession();
-        setIsAuthenticated(!!session.data?.user);
-      } else {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setIsAuthenticated(!!user);
-      }
+      const session = await getSession();
+      setIsAuthenticated(!!session.data?.user);
     }
 
     async function loadPricing() {

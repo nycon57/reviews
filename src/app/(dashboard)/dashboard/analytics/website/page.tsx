@@ -1,13 +1,8 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireProTier } from "@/lib/access";
-
-// Dynamic import for heavy dashboard with recharts (Suspense handles loading)
-const WebsiteAnalyticsDashboard = dynamic(
-  () => import("./website-analytics-dashboard").then((mod) => mod.WebsiteAnalyticsDashboard)
-);
+import { WebsiteAnalyticsDashboard } from "./website-analytics-dashboard";
 
 export const metadata: Metadata = {
   title: "Website Analytics | RepWell",

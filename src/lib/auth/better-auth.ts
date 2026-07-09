@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { admin, magicLink } from "better-auth/plugins";
 import { Pool } from "pg";
 import { nextCookies } from "better-auth/next-js";
-import { getResendClient, emailConfig, getFromAddress } from "@/lib/email/client";
+import { getResendClient, getFromAddress } from "@/lib/email/client";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -17,7 +17,6 @@ function createPool() {
 
   // Parse the connection URL
   const url = new URL(connectionUrl);
-  const [username, projectRef] = url.username.split(".");
 
   // Log connection info only in development for debugging
   if (process.env.NODE_ENV === "development") {
@@ -69,8 +68,22 @@ const LOCAL_AUTH_ORIGINS = [
 // localhost entries there is behaviour-neutral while closing the prod hole.
 const ALLOW_LOCAL_AUTH_ORIGINS = process.env.NODE_ENV !== "production";
 
+function getRequiredBetterAuthEnv(name: "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL") {
+  const value = process.env[name];
+
+  // CUTOVER REQUIREMENT: Better Auth is the only auth system now. Production
+  // must explicitly set both BETTER_AUTH_SECRET and BETTER_AUTH_URL in Vercel.
+  if (process.env.NODE_ENV === "production" && !value) {
+    throw new Error(`${name} is required in production for Better Auth`);
+  }
+
+  return value;
+}
+
+const CONFIGURED_BETTER_AUTH_SECRET = getRequiredBetterAuthEnv("BETTER_AUTH_SECRET");
+
 function getConfiguredAppUrl() {
-  return process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return getRequiredBetterAuthEnv("BETTER_AUTH_URL") || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
 function getConfiguredAppOrigin() {
@@ -120,6 +133,8 @@ function getTrustedAuthOrigins(request?: Request) {
  * - New tables: sessions, accounts, verifications (created by migration)
  */
 export const auth = betterAuth({
+  ...(CONFIGURED_BETTER_AUTH_SECRET ? { secret: CONFIGURED_BETTER_AUTH_SECRET } : {}),
+
   baseURL: {
     allowedHosts: LOCAL_AUTH_HOSTS,
     fallback: getConfiguredAppUrl(),
@@ -128,10 +143,9 @@ export const auth = betterAuth({
 
   database: getPool(),
 
-  // Use Next.js cookies for SSR support
+  // Use Next.js cookies for SSR support. Better Auth 1.6 requires cookie
+  // integration plugins to run last so framework cookie forwarding is complete.
   plugins: [
-    nextCookies(),
-
     // Admin plugin for user management and impersonation
     admin({
       impersonationSessionDuration: 60 * 60, // 1 hour
@@ -182,6 +196,8 @@ export const auth = betterAuth({
       },
       expiresIn: 60 * 15, // 15 minutes
     }),
+
+    nextCookies(),
   ],
 
   // Email and password authentication

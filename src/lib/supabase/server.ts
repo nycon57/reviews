@@ -1,8 +1,8 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import type { DatabaseWithoutInternals } from "@/types/database.types";
-import type { User } from "@supabase/supabase-js";
+import { auth } from "@/lib/auth/better-auth";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -44,10 +44,12 @@ export async function createClient() {
  *
  * @returns The authenticated user or null if not authenticated
  */
-export const getUser = cache(async (): Promise<User | null> => {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
+export const getUser = cache(async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  return session?.user ?? null;
 });
 
 /**

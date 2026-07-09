@@ -36,6 +36,11 @@ import {
 } from "@/lib/users/profile-mutations";
 import { validateOrgSlug, generateUserSlug, generateUniqueUserSlug } from "@/lib/users/slug-utils";
 import { deriveEmailBrandingConfig } from "./email-branding";
+import {
+  deleteBetterAuthIdentity,
+  generateTemporaryPassword,
+  upsertBetterAuthCredentialAccount,
+} from "@/lib/auth/provisioning";
 import crypto from "crypto";
 
 const IMPERSONATION_SOURCE = "organization_team";
@@ -1960,7 +1965,7 @@ export async function createOrganizationUser(data: {
   email: string;
   fullName: string;
   role: "admin" | "manager" | "user";
-}): Promise<{ userId?: string; error?: string }> {
+}): Promise<{ userId?: string; temporaryPassword?: string; error?: string }> {
   const authUser = await unifiedGetUser();
   if (!authUser) return { error: "Not authenticated" };
 
@@ -1998,26 +2003,17 @@ export async function createOrganizationUser(data: {
 
   if (globalExisting) return { error: "This email is already registered in the system" };
 
-  // Create auth user with random password
-  const randomPassword = crypto.randomBytes(20).toString("hex");
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email,
-    password: randomPassword,
-    email_confirm: true,
-  });
-
-  if (authError || !authData.user) {
-    return { error: authError?.message ?? "Failed to create user account" };
-  }
-
   // Generate unique slug
   const slug = await generateUniqueUserSlug(data.fullName);
+  const userId = crypto.randomUUID();
+  const temporaryPassword = generateTemporaryPassword();
 
-  // Insert into users table
+  // Insert into the Better Auth users table, then create the credential account.
   const { error: insertError } = await supabase.from("users").insert({
-    id: authData.user.id,
+    id: userId,
     organization_id: orgId,
     email,
+    email_verified_at: new Date().toISOString(),
     full_name: data.fullName.trim(),
     role: data.role,
     is_active: false,
@@ -2025,14 +2021,22 @@ export async function createOrganizationUser(data: {
   });
 
   if (insertError) {
-    // Clean up orphaned auth user
-    await supabase.auth.admin.deleteUser(authData.user.id).catch(() => {});
     return { error: insertError.message };
+  }
+
+  const credentialResult = await upsertBetterAuthCredentialAccount({
+    userId,
+    password: temporaryPassword,
+  });
+
+  if (credentialResult.error) {
+    await deleteBetterAuthIdentity(userId);
+    return { error: credentialResult.error };
   }
 
   revalidatePath("/dashboard/organization");
 
-  return { userId: authData.user.id };
+  return { userId, temporaryPassword };
 }
 
 // ─── Integration Settings ────────────────────────────────────────────

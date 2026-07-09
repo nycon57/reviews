@@ -67,6 +67,7 @@ export interface UserImportResult {
   email: string;
   full_name: string;
   success: boolean;
+  temporaryPassword?: string;
   error?: string;
 }
 

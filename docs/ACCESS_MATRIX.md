@@ -19,6 +19,7 @@ Regenerated for ADR 0007 from `src/proxy.ts`, `src/lib/nav/config.ts`, and the p
 | /dashboard/analytics/agents | nav | auth | `requireEnterpriseManager` | VIEW_TEAM | N | Y | Y | N | By account |
 | /dashboard/analytics/team | nav, proxy | `requiresEnterprise`, roles admin/manager | `requireEnterpriseManager` | VIEW_TEAM | N | Y | Y | N | By account |
 | /dashboard/insights | nav, proxy | `minTier: pro` | `requireProTier` | VIEW_AI_INSIGHTS | Pro only | Y | Y | Y | By account |
+| /dashboard/analytics/website | proxy, page | `minTier: pro` | `requireProTier` | Not in nav | Pro only | Y | Y | Y | By account |
 | /dashboard/people | nav, proxy | `requiresEnterprise`, roles admin/manager | `requireEnterpriseManager` | VIEW_TEAM | N | Y | Y | N | By account |
 | /dashboard/surveys | nav | auth | `getAccessContext` | VIEW_SURVEYS | Y | Y | Y | Y | By account |
 | /dashboard/ex-surveys | nav, proxy | `requiresEnterprise`, roles admin/manager | `requireEnterpriseManager` | VIEW_EX_SURVEYS | N | Y | Y | N | By account |
@@ -40,7 +41,7 @@ Regenerated for ADR 0007 from `src/proxy.ts`, `src/lib/nav/config.ts`, and the p
 
 | Persona | Effective access |
 |---|---|
-| Individual owner | Core dashboard, Reviews, Contacts, Share Studio, Tasks, Analytics/Trends, Surveys, Widgets, Workspace, Media, Settings, Help. AI Insights only when Pro. No enterprise manager areas (Campaigns, People, Team overview, EX Surveys, Recognition) or staff tools. |
+| Individual owner | Core dashboard, Reviews, Contacts, Share Studio, Tasks, Analytics/Trends, Surveys, Widgets, Workspace, Media, Settings, Help. AI Insights and Website Analytics only when Pro. No enterprise manager areas (Campaigns, People, Team overview, EX Surveys, Recognition) or staff tools. |
 | Enterprise admin | All core dashboard areas, enterprise manager areas (Campaigns, People, Share Studio, Team overview, EX Surveys, Approvals), Workspace, Media, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No staff tools unless separately flagged `is_platform_admin`. |
 | Enterprise manager | Core dashboard, Campaigns, People, Share Studio, Team overview, EX Surveys, Approvals, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No Workspace or Media (org-admin only), or staff tools. |
 | Enterprise user | Core dashboard, Reviews, Contacts, Tasks, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No Share Studio, enterprise manager areas, Workspace, Media, or staff tools. |

@@ -41,29 +41,25 @@ export const DASHBOARD_COMMON_PAGES = [
   { path: "/dashboard/help", name: "Help" },
   { path: "/dashboard/notifications", name: "Notifications" },
   { path: "/dashboard/reports", name: "Reports" },
+  { path: "/dashboard/organization", name: "Workspace" },
 ] as const;
 
 // Pages requiring Pro+ tier (basic users see upgrade prompt)
 export const DASHBOARD_PRO_PAGES = [
   { path: "/dashboard/insights", name: "AI Insights" },
-  { path: "/dashboard/geo", name: "Geo Visibility" },
   { path: "/dashboard/analytics/website", name: "Website Analytics" },
 ] as const;
 
 // Pages requiring enterprise account type
 export const DASHBOARD_ENTERPRISE_PAGES = [
-  { path: "/dashboard/team", name: "Team Management" },
+  { path: "/dashboard/people?tab=members", name: "Team Management" },
+  { path: "/dashboard/analytics/team", name: "Team Analytics" },
   { path: "/dashboard/campaigns", name: "Campaigns" },
   { path: "/dashboard/approvals", name: "Approvals" },
   { path: "/dashboard/ex-surveys", name: "EX Surveys" },
-  { path: "/dashboard/employees", name: "Employees" },
+  { path: "/dashboard/people?tab=employees", name: "Employees" },
   { path: "/dashboard/recognition", name: "Recognition" },
   { path: "/dashboard/analytics/leaderboard", name: "Leaderboard" },
-] as const;
-
-// Pages requiring enterprise admin role
-export const DASHBOARD_ADMIN_PAGES = [
-  { path: "/dashboard/organization", name: "Organization" },
 ] as const;
 
 // All dashboard pages combined
@@ -71,7 +67,6 @@ export const ALL_DASHBOARD_PAGES = [
   ...DASHBOARD_COMMON_PAGES,
   ...DASHBOARD_PRO_PAGES,
   ...DASHBOARD_ENTERPRISE_PAGES,
-  ...DASHBOARD_ADMIN_PAGES,
 ] as const;
 
 // Test user roles for auth fixtures

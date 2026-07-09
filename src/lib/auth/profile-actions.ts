@@ -1,8 +1,10 @@
 "use server";
 
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { auth } from "@/lib/auth/better-auth";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { getStripe } from "@/lib/stripe/server";
 import { startReengagementSequence } from "@/lib/email/reengagement-sequence-service";
 import {
@@ -78,7 +80,7 @@ export async function changePassword(formData: ChangePasswordInput): Promise<Pro
     return { success: false, error: result.error.errors[0].message };
   }
 
-  const { newPassword } = result.data;
+  const { currentPassword, newPassword } = result.data;
 
   // Get current user
   const user = await unifiedGetUser();
@@ -86,9 +88,21 @@ export async function changePassword(formData: ChangePasswordInput): Promise<Pro
     return { success: false, error: "Not authenticated" };
   }
 
-  // For Better Auth, password change is handled differently
-  // This would need to use the Better Auth client to change password
-  // For now, return success (password change handled via Better Auth UI)
+  try {
+    const headersList = await headers();
+    await auth.api.changePassword({
+      headers: headersList,
+      body: {
+        currentPassword,
+        newPassword,
+        revokeOtherSessions: false,
+      },
+    });
+  } catch (error) {
+    console.error("Password change error:", error);
+    return { success: false, error: "Failed to change password" };
+  }
+
   return { success: true };
 }
 

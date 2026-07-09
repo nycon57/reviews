@@ -1,10 +1,6 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
-
-// Feature flag for Better Auth migration
-const USE_BETTER_AUTH = process.env.USE_BETTER_AUTH === "true";
 
 // Role-based access control configuration
 type UserRole = "admin" | "manager" | "user";
@@ -61,6 +57,7 @@ const roleProtectedRoutes: RouteConfig[] = [
 
   // Pro tier features (available to pro individuals and all enterprise users)
   { path: "/dashboard/insights", minTier: "pro" },
+  { path: "/dashboard/analytics/website", minTier: "pro" },
 ];
 
 // Paths that are part of the onboarding flow
@@ -103,106 +100,23 @@ async function getBetterAuthUser(request: NextRequest) {
   }
 }
 
-/**
- * Get user from Supabase Auth (legacy)
- */
-async function getSupabaseUser(request: NextRequest, response: NextResponse) {
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return { user, supabase };
-}
-
 async function getPlatformAdminFlag(
-  request: NextRequest,
-  response: NextResponse,
   userId: string
 ): Promise<boolean> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = USE_BETTER_AUTH
-    ? process.env.SUPABASE_SERVICE_ROLE_KEY
-    : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
     console.error(`[Middleware] Missing Supabase config for platform staff lookup`);
     return false;
   }
 
-  const supabase = USE_BETTER_AUTH
-    ? createClient(supabaseUrl, supabaseKey, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      })
-    : createServerClient(supabaseUrl, supabaseKey, {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            request.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-            response.cookies.set({
-              name,
-              value,
-              ...options,
-            });
-          },
-          remove(name: string, options: CookieOptions) {
-            request.cookies.set({
-              name,
-              value: "",
-              ...options,
-            });
-            response.cookies.set({
-              name,
-              value: "",
-              ...options,
-            });
-          },
-        },
-      });
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 
   // Untyped client: users.is_platform_admin is added by the pending staff
   // migration and is not in generated database types yet.
@@ -240,20 +154,8 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // Get authenticated user based on auth system
-  let user: { id: string; email?: string | null } | null = null;
-  // Use union type to support both createClient (service_role) and createServerClient (SSR)
-  let supabase: ReturnType<typeof createServerClient<Database>> | ReturnType<typeof createClient<Database>> | null = null;
-
-  if (USE_BETTER_AUTH) {
-    // Use Better Auth
-    user = await getBetterAuthUser(request);
-  } else {
-    // Use Supabase Auth (legacy)
-    const result = await getSupabaseUser(request, response);
-    user = result.user;
-    supabase = result.supabase;
-  }
+  const user: { id: string; email?: string | null } | null = await getBetterAuthUser(request);
+  let supabase: ReturnType<typeof createClient<Database>> | null = null;
 
   // Protected routes - require authentication
   const protectedPaths = ["/dashboard", "/staff", "/reviews", "/surveys", "/analytics", "/team", "/settings", "/profile"];
@@ -269,18 +171,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // For database queries, create a Supabase client if we haven't already
-  // Use service role key when Better Auth is enabled (bypasses RLS since session token isn't set)
+  // For database queries, use service role key with code-level org checks.
   // IMPORTANT: Use createClient (not createServerClient) for service_role to properly bypass RLS
   if (!supabase && user) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = USE_BETTER_AUTH
-      ? process.env.SUPABASE_SERVICE_ROLE_KEY
-      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       console.error(`[Middleware] Missing Supabase config: url=${!!supabaseUrl}, key=${!!supabaseKey}`);
-    } else if (USE_BETTER_AUTH) {
+    } else {
       // Use createClient directly for service_role - it properly sets both apikey and Authorization headers
       // createServerClient from @supabase/ssr doesn't correctly bypass RLS with service_role
       supabase = createClient<Database>(supabaseUrl, supabaseKey, {
@@ -289,21 +188,6 @@ export async function proxy(request: NextRequest) {
           persistSession: false,
         },
       });
-    } else {
-      // For Supabase Auth, use the SSR client with cookies
-      supabase = createServerClient<Database>(
-        supabaseUrl,
-        supabaseKey,
-        {
-          cookies: {
-            get(name: string) {
-              return request.cookies.get(name)?.value;
-            },
-            set() {},
-            remove() {},
-          },
-        }
-      );
     }
   }
 
@@ -357,7 +241,7 @@ export async function proxy(request: NextRequest) {
   if (user && supabase && isProtectedPath) {
     if (routeConfig?.allowedRoles || routeConfig?.minTier || routeConfig?.requiresEnterprise || routeConfig?.requiresEnterpriseAdmin || routeConfig?.requiresOrgAdmin || routeConfig?.requiresPlatformAdmin) {
       if (routeConfig.requiresPlatformAdmin) {
-        const isStaff = await getPlatformAdminFlag(request, response, user.id);
+        const isStaff = await getPlatformAdminFlag(user.id);
 
         if (!isStaff) {
           return NextResponse.redirect(new URL("/dashboard", request.url));
@@ -442,12 +326,6 @@ export async function proxy(request: NextRequest) {
 
   if (isAuthPath && user) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  // Reset password page requires an authenticated session (from recovery email)
-  // For Better Auth, this is handled differently - the token is in the URL
-  if (!USE_BETTER_AUTH && request.nextUrl.pathname === "/reset-password" && !user) {
-    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return response;

@@ -326,8 +326,12 @@ async function seedTestUsers() {
         `INSERT INTO accounts (
           id, user_id, account_id, provider_id, password, created_at, updated_at
         )
-        VALUES ($1, $2, $3, 'credential', $4, NOW(), NOW())`,
-        [crypto.randomUUID(), user.id, user.email, passwordHash]
+        VALUES ($1, $2, $3, 'credential', $4, NOW(), NOW())
+        ON CONFLICT (user_id, provider_id) DO UPDATE SET
+          account_id = EXCLUDED.account_id,
+          password = EXCLUDED.password,
+          updated_at = NOW()`,
+        [crypto.randomUUID(), user.id, user.id, passwordHash]
       );
 
       // Find org info for display

@@ -96,7 +96,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "USE_BETTER_AUTH=false NEXT_PUBLIC_USE_BETTER_AUTH=false npm run dev",
+    command: "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

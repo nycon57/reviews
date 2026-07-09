@@ -38,9 +38,9 @@ async function DashboardStats() {
       <EmptyState
         iconName="bar-chart"
         title="Your stats will appear here"
-        description="Once you start collecting reviews and survey responses, you'll see your performance metrics displayed here."
+        description="Once you start collecting reviews and request responses, you'll see your performance metrics displayed here."
         actions={[
-          { label: "Send Your First Survey", href: "/dashboard/reviews?tab=requests", iconName: "send" },
+          { label: "Send your first review request", href: "/dashboard/reviews?tab=requests", iconName: "send" },
           { label: "Import Reviews", href: "/dashboard/reviews", variant: "outline" },
         ]}
       />

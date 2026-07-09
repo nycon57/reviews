@@ -35,7 +35,7 @@ const chartConfig = {
   nps: {
     icon: Users,
     emptyTitle: "No NPS data yet",
-    emptyDescription: "Send surveys to start tracking your NPS score",
+    emptyDescription: "Send review requests to start tracking your NPS score",
   },
 };
 

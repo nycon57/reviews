@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getOnboardingStatus } from "@/lib/onboarding/actions";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CompletionClient } from "./completion-client";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,9 +34,25 @@ export default async function CompletionPage() {
     redirect("/onboarding");
   }
 
+  if (!status.organizationId) {
+    redirect("/login");
+  }
+
+  const supabase = createAdminClient();
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("account_type")
+    .eq("id", status.organizationId)
+    .single();
+
+  const accountType = org?.account_type === "enterprise" ? "enterprise" : "individual";
+
   return (
     <Suspense fallback={<CompletionSkeleton />}>
-      <CompletionClient isAlreadyCompleted={status.status === "completed"} />
+      <CompletionClient
+        isAlreadyCompleted={status.status === "completed"}
+        accountType={accountType}
+      />
     </Suspense>
   );
 }

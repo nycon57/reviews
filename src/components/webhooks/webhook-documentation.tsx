@@ -728,7 +728,7 @@ curl -X POST "${webhookEndpoint}" \\
           </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" asChild>
-              <a href="mailto:support@repwell.com">
+              <a href="mailto:support@repwell.ai">
                 <Envelope className="mr-2 h-4 w-4" />
                 Contact Support
               </a>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Source_Sans_3 } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -67,6 +68,7 @@ export default function RootLayout({
             <Toaster />
           </ThemeProvider>
         </MotionProvider>
+        <SpeedInsights />
       </body>
     </html>
   );

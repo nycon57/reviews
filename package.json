@@ -91,6 +91,7 @@
     "@usewaypoint/block-text": "^0.0.7",
     "@usewaypoint/document-core": "^0.0.6",
     "@usewaypoint/email-builder": "^0.0.9",
+    "@vercel/speed-insights": "^2.0.0",
     "@xyflow/react": "^12.10.1",
     "bcrypt": "^6.0.0",
     "better-auth": "^1.5.6",
@@ -147,6 +148,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.2",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.49.1",
     "@testing-library/react": "^16.1.0",
     "@types/bcrypt": "^6.0.0",

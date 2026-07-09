@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { getStripe } from "@/lib/stripe/server";
 import { PRICING_TIERS, type BillingCycle } from "@/lib/stripe/types";
@@ -583,6 +584,17 @@ export async function completeOnboarding(): Promise<ActionResult> {
 
   revalidatePath("/onboarding");
   revalidatePath("/dashboard");
+
+  void capturePostHogEvent({
+    distinctId: user.id,
+    event: "onboarding_completed",
+    properties: {
+      account_type: orgAccount?.account_type ?? "unknown",
+      role: userData.role,
+    },
+    groups: { organization: orgId },
+    logContext: "onboarding completed",
+  });
 
   return { success: true, redirectTo: "/dashboard" };
 }

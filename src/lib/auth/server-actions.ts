@@ -18,6 +18,7 @@ import {
 } from "./schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 
 /**
  * Helper to slugify organization names
@@ -134,6 +135,17 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
 
     // Widget seeding and membership are intentionally skipped for self-serve
     // individual accounts; they seed on demand.
+
+    void capturePostHogEvent({
+      distinctId: signUpResult.user.id,
+      event: "user_signed_up",
+      properties: {
+        auth_system: "better_auth",
+        account_type: "individual",
+      },
+      groups: { organization: orgData.id },
+      logContext: "better auth signup",
+    });
 
     return {
       success: true,

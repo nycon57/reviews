@@ -22,6 +22,7 @@ import {
   type OutboundWebhookEventType,
   type ReviewWebhookData,
 } from "@/lib/webhooks/outbound";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 
 export type PublishReviewScreening =
   | {
@@ -71,6 +72,7 @@ export interface PublishReviewIfCleanParams {
 
 type PublishRow = {
   id: string;
+  source: string | null;
   response_text: string | null;
   response_status: string | null;
 };
@@ -296,7 +298,7 @@ export async function publishReviewIfClean(
     .eq("id", params.reviewId)
     .eq("organization_id", params.organizationId)
     .eq("is_published", false)
-    .select("id, response_text, response_status");
+    .select("id, source, response_text, response_status");
 
   if (error) {
     throw new Error(`Failed to publish review: ${error.message}`);
@@ -349,7 +351,7 @@ export async function publishReviewIfClean(
       })
     : null;
 
-  const [, , , , , draftResponseSurfaced] = await Promise.all([
+  const [, , , , , , draftResponseSurfaced] = await Promise.all([
     notifyReviewPublished({
       reviewId: params.reviewId,
       organizationId: params.organizationId,
@@ -406,6 +408,18 @@ export async function publishReviewIfClean(
             console.error("Error enqueueing review.negative webhook:", error);
           })
       : Promise.resolve(),
+    capturePostHogEvent({
+      distinctId: params.ownerUserId,
+      event: "review_published",
+      properties: {
+        source: publishedRow.source ?? "unknown",
+        rating: params.rating,
+        publish_path: params.actorUserId ? "staff" : "auto",
+        auto_publish: !params.actorUserId,
+      },
+      groups: { organization: params.organizationId },
+      logContext: "review published",
+    }),
     surfaceDraftResponse({
       supabase,
       reviewId: params.reviewId,

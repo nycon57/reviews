@@ -148,7 +148,7 @@ export function DocsLayoutClient({ children }: DocsLayoutClientProps) {
                 Terms
               </Link>
               <Link
-                href="mailto:support@repwell.com"
+                href="mailto:support@repwell.ai"
                 className="text-body-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
               >
                 Support

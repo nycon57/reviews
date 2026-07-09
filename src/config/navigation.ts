@@ -135,10 +135,10 @@ export const solutionNavItems: SolutionNavItem[] = [
  */
 export const industryNavItems: IndustryNavItem[] = [
   {
-    slug: "mortgage",
-    title: "Mortgage",
+    slug: "client services",
+    title: "client services",
     icon: "House",
-    href: "/for/mortgage",
+    href: "/for/client services",
   },
   {
     slug: "real-estate",
@@ -284,14 +284,14 @@ export const compareNavItems: CompareNavItem[] = [
   {
     slug: "birdeye",
     title: "RepWell vs Birdeye",
-    description: "Mortgage-native, not generic",
+    description: "team-focused, not generic",
     icon: "Swap",
     href: "/compare/birdeye",
   },
   {
     slug: "trustpilot",
     title: "RepWell vs Trustpilot",
-    description: "Built for mortgage professionals",
+    description: "Built for client-facing professionals",
     icon: "Swap",
     href: "/compare/trustpilot",
   },

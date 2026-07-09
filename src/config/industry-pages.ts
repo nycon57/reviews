@@ -9,7 +9,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
   slug: "mortgage",
   industry: "mortgage",
   hero: {
-    badge: "Trusted by 500+ Mortgage Professionals",
+    badge: "Built for Mortgage Professionals",
     title: "Turn Every Closing Into a ",
     titleAccent: "5-Star Review",
     description:
@@ -23,14 +23,14 @@ export const mortgagePageConfig: IndustryPageConfig = {
       title: "Reviews Take Too Long",
       description:
         "Manually chasing borrowers for reviews after closing wastes hours each week and most never follow through.",
-      stat: { value: "12+", label: "hours/month wasted" },
+      stat: { value: "Insights", label: "hours/month wasted" },
     },
     {
       icon: "TrendingDown",
       title: "Falling Behind Competitors",
       description:
         "Other LOs in your market are building massive review profiles while you're stuck with a handful of outdated testimonials.",
-      stat: { value: "73%", label: "of borrowers check reviews" },
+      stat: { value: "Reviews", label: "of borrowers check reviews" },
     },
     {
       icon: "MessageSquareOff",
@@ -58,10 +58,10 @@ export const mortgagePageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews Collected", description: "vs. manual outreach" },
-    { value: "94%", label: "Customer Satisfaction", description: "average NPS score" },
-    { value: "42%", label: "Response Rate", description: "on automated surveys" },
-    { value: "4.9", label: "Average Rating", description: "across our users" },
+    { value: "Reviews", label: "More Reviews Collected", description: "vs. manual outreach" },
+    { value: "AI", label: "Feedback Trends", description: "from customer feedback" },
+    { value: "NPS", label: "Survey Workflows", description: "for customer feedback" },
+    { value: "Reviews", label: "Review Monitoring", description: "across review channels" },
   ],
   featureTabs: [
     {
@@ -82,7 +82,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
           alt: "Mortgage professional helping clients",
         },
       ],
-      stat: { value: "3x", label: "more reviews collected" },
+      stat: { value: "Reviews", label: "more reviews collected" },
     },
     {
       icon: "BarChart3",
@@ -102,7 +102,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1556157382-97eda2d62296?w=600&h=700&fit=crop&q=80", alt: "Professional at desk" },
         { src: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=600&h=700&fit=crop&q=80", alt: "Team meeting" },
       ],
-      stat: { value: "42%", label: "avg response rate" },
+      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "MessageSquare",
@@ -122,7 +122,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
           alt: "Team collaboration",
         },
       ],
-      stat: { value: "94%", label: "accuracy rate" },
+      stat: { value: "AI", label: "accuracy rate" },
     },
     {
       icon: "Zap",
@@ -141,7 +141,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&h=600&fit=crop&q=80", alt: "Team success" },
         { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=1200&fit=crop&q=80", alt: "Professional" },
       ],
-      stat: { value: "+300%", label: "review volume increase" },
+      stat: { value: "Reviews", label: "review volume increase" },
     },
   ],
   roleTabs: [
@@ -208,29 +208,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "RepWell helped me go from 12 Google reviews to over 80 in just 6 months. My referral partners noticed immediately.",
-      name: "Sarah Johnson",
-      title: "Senior Loan Officer",
-      company: "Cornerstone Mortgage",
-      rating: 5,
-    },
-    {
-      quote: "We rolled this out across 15 branches and saw our NPS jump 20 points in the first quarter.",
-      name: "Michael Chen",
-      title: "Regional Manager",
-      company: "First National Lending",
-      rating: 5,
-    },
-    {
-      quote: "The AI insights helped us identify a training gap we didn't know we had. Game changer.",
-      name: "Jennifer Martinez",
-      title: "VP of Production",
-      company: "Pacific Home Loans",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "Encompass", logoUrl: "/integrations/encompass.svg", category: "LOS" },
     { name: "Velocify", logoUrl: "/integrations/velocify.svg", category: "CRM" },
@@ -259,7 +237,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
   cta: {
     headline: "Ready to Build Your Reputation?",
     description:
-      "Join 500+ mortgage professionals who trust RepWell to grow their business through reviews and referrals.",
+      "Use RepWell to grow your business through reviews and referrals.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Schedule Demo",
     urgencyText: "Limited: First 50 signups get 3 months free",
@@ -267,7 +245,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
   seo: {
     title: "Reputation Management for Mortgage Professionals | RepWell",
     description:
-      "Automate review collection, track NPS, and grow your mortgage business with RepWell. Trusted by 500+ loan officers. Start your free trial today.",
+      "Automate review collection, track NPS, and grow your mortgage business with RepWell. Start your free trial today.",
     keywords: [
       "mortgage reputation management",
       "loan officer reviews",
@@ -289,7 +267,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
     title: "Win More Listings With ",
     titleAccent: "Social Proof",
     description:
-      "In a market where 87% of buyers check agent reviews before reaching out, your online reputation is your competitive edge. Build it automatically.",
+      "In a market where buyers check agent reviews before reaching out, your online reputation is your competitive edge. Build it automatically.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See How It Works",
   },
@@ -298,15 +276,15 @@ export const realEstatePageConfig: IndustryPageConfig = {
       icon: "Clock",
       title: "Clients Forget to Review",
       description:
-        "Even your happiest clients move on after closing. Without follow-up, 90% never leave a review.",
-      stat: { value: "90%", label: "never leave reviews" },
+        "Even your happiest clients move on after closing. Without follow-up, many never leave a review.",
+      stat: { value: "Reviews", label: "never leave reviews" },
     },
     {
       icon: "Search",
       title: "Competitors Outrank You",
       description:
         "Agents with more reviews dominate Zillow and Google searches. Every day without reviews is lost visibility.",
-      stat: { value: "87%", label: "check reviews first" },
+      stat: { value: "Reviews", label: "check reviews first" },
     },
     {
       icon: "Users",
@@ -334,10 +312,10 @@ export const realEstatePageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual requests" },
-    { value: "87%", label: "Buyers Research", description: "agents online first" },
-    { value: "4.9", label: "Avg Rating", description: "across our agents" },
-    { value: "2 Days", label: "Time to Value", description: "from signup to reviews" },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual requests" },
+    { value: "Trust", label: "Buyers Research", description: "agents online first" },
+    { value: "Reviews", label: "Review Monitoring", description: "across review channels" },
+    { value: "Fast", label: "Time to Value", description: "from signup to reviews" },
   ],
   featureTabs: [
     {
@@ -349,7 +327,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
       bulletPoints: [
         "Auto-send after closing date",
         "Email delivery",
-        "Route 5-star reviews to Zillow & Google",
+        "Route positive reviews to Zillow & Google",
       ],
       layoutVariant: "single",
       images: [
@@ -358,7 +336,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
           alt: "Real estate agent with happy clients",
         },
       ],
-      stat: { value: "3x", label: "more reviews" },
+      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -378,7 +356,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=700&fit=crop&q=80", alt: "Luxury home" },
         { src: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=700&fit=crop&q=80", alt: "Beautiful home" },
       ],
-      stat: { value: "48%", label: "response rate" },
+      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "MessageSquare",
@@ -398,7 +376,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
           alt: "Happy homeowners",
         },
       ],
-      stat: { value: "24%", label: "more referrals" },
+      stat: { value: "Referrals", label: "more referrals" },
     },
     {
       icon: "Trophy",
@@ -417,7 +395,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=600&fit=crop&q=80", alt: "Home exterior" },
         { src: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&h=1200&fit=crop&q=80", alt: "Real estate" },
       ],
-      stat: { value: "+200%", label: "review growth" },
+      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -483,29 +461,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "I went from 23 Zillow reviews to over 100 in my first year with RepWell. Listing appointments doubled.",
-      name: "Marcus Thompson",
-      title: "Broker Associate",
-      company: "Keller Williams Realty",
-      rating: 5,
-    },
-    {
-      quote: "Our team of 40 agents saw a 35% increase in online leads after implementing RepWell across the board.",
-      name: "Lisa Park",
-      title: "Managing Broker",
-      company: "RE/MAX Elite",
-      rating: 5,
-    },
-    {
-      quote: "The video testimonial feature alone has closed 3 listings for me. Buyers love seeing real client stories.",
-      name: "David Rodriguez",
-      title: "Luxury Home Specialist",
-      company: "Compass",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "Follow Up Boss", logoUrl: "/integrations/follow-up-boss.svg", category: "CRM" },
     { name: "kvCORE", logoUrl: "/integrations/kvcore.svg", category: "CRM" },
@@ -534,7 +490,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
   cta: {
     headline: "Ready to Dominate Your Market?",
     description:
-      "Join thousands of top agents who use RepWell to build their reputation and win more business.",
+      "Use RepWell to build your reputation and win more business.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Schedule Demo",
   },
@@ -579,7 +535,7 @@ export const insurancePageConfig: IndustryPageConfig = {
       title: "Trust Is Hard to Prove",
       description:
         "Insurance is a trust-based purchase. Without reviews, prospects rely on guesswork when choosing an agent.",
-      stat: { value: "82%", label: "research online first" },
+      stat: { value: "Trust", label: "research online first" },
     },
     {
       icon: "UserMinus",
@@ -607,10 +563,10 @@ export const insurancePageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual requests" },
-    { value: "82%", label: "Research Online", description: "before choosing" },
-    { value: "91%", label: "Retention Rate", description: "for top-reviewed agencies" },
-    { value: "4.8", label: "Avg Rating", description: "across our users" },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual requests" },
+    { value: "Trust", label: "Research Online", description: "before choosing" },
+    { value: "Feedback", label: "Retention Rate", description: "for top-reviewed agencies" },
+    { value: "Reviews", label: "Review Monitoring", description: "across review channels" },
   ],
   featureTabs: [
     {
@@ -631,7 +587,7 @@ export const insurancePageConfig: IndustryPageConfig = {
           alt: "Insurance agent meeting with clients",
         },
       ],
-      stat: { value: "3x", label: "more reviews" },
+      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -651,7 +607,7 @@ export const insurancePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=700&fit=crop&q=80", alt: "Executive" },
         { src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&h=700&fit=crop&q=80", alt: "Presentation" },
       ],
-      stat: { value: "38%", label: "response rate" },
+      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "Shield",
@@ -671,7 +627,7 @@ export const insurancePageConfig: IndustryPageConfig = {
           alt: "Insurance professional",
         },
       ],
-      stat: { value: "94%", label: "claims satisfaction" },
+      stat: { value: "AI", label: "Claims feedback" },
     },
     {
       icon: "Trophy",
@@ -690,7 +646,7 @@ export const insurancePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=600&fit=crop&q=80", alt: "Team" },
         { src: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=600&h=1200&fit=crop&q=80", alt: "Professional" },
       ],
-      stat: { value: "+180%", label: "review growth" },
+      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -757,22 +713,7 @@ export const insurancePageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "We doubled our Google reviews in 4 months. New clients tell us our reviews are why they called us first.",
-      name: "Robert Williams",
-      title: "Agency Owner",
-      company: "Williams Insurance Group",
-      rating: 5,
-    },
-    {
-      quote: "The claims follow-up surveys helped us identify and fix a service gap. Retention improved 15%.",
-      name: "Michelle Torres",
-      title: "Operations Manager",
-      company: "Secure Insurance Partners",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "AgencyZoom", logoUrl: "/integrations/agencyzoom.svg", category: "AMS" },
     { name: "HawkSoft", logoUrl: "/integrations/hawksoft.svg", category: "AMS" },
@@ -827,7 +768,7 @@ export const healthcarePageConfig: IndustryPageConfig = {
     title: "Patient Experience That ",
     titleAccent: "Builds Reputation",
     description:
-      "77% of patients check online reviews before booking. Capture feedback, improve care, and grow your practice with HIPAA-compliant reputation management.",
+      "Patients check online reviews before booking. Capture feedback, improve care, and grow your practice with HIPAA-conscious reputation management.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
   },
@@ -837,14 +778,14 @@ export const healthcarePageConfig: IndustryPageConfig = {
       title: "Patients Don't Leave Reviews",
       description:
         "Satisfied patients leave quietly. Without a system, only unhappy patients share their experience online.",
-      stat: { value: "2%", label: "leave reviews naturally" },
+      stat: { value: "Reviews", label: "leave reviews naturally" },
     },
     {
       icon: "Search",
       title: "Competitors Rank Higher",
       description:
         "Practices with more reviews dominate Healthgrades and Google. New patients find them first.",
-      stat: { value: "77%", label: "check reviews first" },
+      stat: { value: "Reviews", label: "check reviews first" },
     },
     {
       icon: "FileWarning",
@@ -872,10 +813,10 @@ export const healthcarePageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual outreach" },
-    { value: "77%", label: "Research First", description: "before booking" },
-    { value: "100%", label: "HIPAA Compliant", description: "end-to-end encryption" },
-    { value: "4.7", label: "Avg Rating", description: "across our practices" },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual outreach" },
+    { value: "Trust", label: "Research First", description: "before booking" },
+    { value: "Governed", label: "HIPAA Compliant", description: "end-to-end encryption" },
+    { value: "Reviews", label: "Review Monitoring", description: "across our practices" },
   ],
   featureTabs: [
     {
@@ -896,7 +837,7 @@ export const healthcarePageConfig: IndustryPageConfig = {
           alt: "Healthcare professional with patient",
         },
       ],
-      stat: { value: "3x", label: "more reviews" },
+      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -916,7 +857,7 @@ export const healthcarePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&h=700&fit=crop&q=80", alt: "Doctor" },
         { src: "https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=600&h=700&fit=crop&q=80", alt: "Medical team" },
       ],
-      stat: { value: "32%", label: "response rate" },
+      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "AlertTriangle",
@@ -936,7 +877,7 @@ export const healthcarePageConfig: IndustryPageConfig = {
           alt: "Medical consultation",
         },
       ],
-      stat: { value: "89%", label: "recovery rate" },
+      stat: { value: "Feedback", label: "recovery rate" },
     },
     {
       icon: "Trophy",
@@ -955,7 +896,7 @@ export const healthcarePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&h=600&fit=crop&q=80", alt: "Hospital" },
         { src: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=1200&fit=crop&q=80", alt: "Healthcare" },
       ],
-      stat: { value: "+150%", label: "review growth" },
+      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -1022,22 +963,7 @@ export const healthcarePageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "Our Healthgrades rating went from 3.8 to 4.6 in 6 months. New patient bookings increased 28%.",
-      name: "Dr. Amanda Chen",
-      title: "Internal Medicine",
-      company: "Bay Area Medical Group",
-      rating: 5,
-    },
-    {
-      quote: "The service recovery feature alone has saved dozens of patient relationships. Worth every penny.",
-      name: "Mark Patterson",
-      title: "Practice Administrator",
-      company: "Coastal Family Practice",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "athenahealth", logoUrl: "/integrations/athenahealth.svg", category: "EHR" },
     { name: "Healthgrades", logoUrl: "/integrations/healthgrades.svg", category: "Reviews" },
@@ -1117,7 +1043,7 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
       icon: "Search",
       title: "Prospects Research You",
       description: "Before trusting you with their wealth, prospects check your online reputation.",
-      stat: { value: "68%", label: "research advisors online" },
+      stat: { value: "Trust", label: "research advisors online" },
     },
     {
       icon: "BarChart",
@@ -1131,10 +1057,10 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual requests" },
-    { value: "68%", label: "Research First", description: "before choosing advisor" },
-    { value: "100%", label: "SEC Compliant", description: "testimonial management" },
-    { value: "4.9", label: "Avg Rating", description: "across our users" },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual requests" },
+    { value: "Trust", label: "Research First", description: "before choosing advisor" },
+    { value: "Governed", label: "SEC Compliant", description: "testimonial management" },
+    { value: "Reviews", label: "Review Monitoring", description: "across review channels" },
   ],
   featureTabs: [
     {
@@ -1154,7 +1080,7 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
           alt: "Financial advisor meeting",
         },
       ],
-      stat: { value: "3x", label: "more testimonials" },
+      stat: { value: "Stories", label: "more testimonials" },
     },
     {
       icon: "BarChart3",
@@ -1173,7 +1099,7 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=700&fit=crop&q=80", alt: "Professional" },
         { src: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600&h=700&fit=crop&q=80", alt: "Business" },
       ],
-      stat: { value: "35%", label: "response rate" },
+      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "MessageSquare",
@@ -1192,7 +1118,7 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
           alt: "Business presentation",
         },
       ],
-      stat: { value: "100%", label: "compliance rate" },
+      stat: { value: "Governed", label: "compliance rate" },
     },
     {
       icon: "Trophy",
@@ -1210,7 +1136,7 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop&q=80", alt: "Team" },
         { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=1200&fit=crop&q=80", alt: "Executive" },
       ],
-      stat: { value: "+120%", label: "referral increase" },
+      stat: { value: "Referrals", label: "referral increase" },
     },
   ],
   roleTabs: [
@@ -1277,15 +1203,7 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "RepWell helped us build a compliant testimonial program that's added $15M in AUM from referrals.",
-      name: "James Mitchell",
-      title: "CFP, Managing Partner",
-      company: "Mitchell Wealth Advisors",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "Wealthbox", logoUrl: "/integrations/wealthbox.svg", category: "CRM" },
     { name: "Redtail", logoUrl: "/integrations/redtail.svg", category: "CRM" },
@@ -1340,7 +1258,7 @@ export const homeServicesPageConfig: IndustryPageConfig = {
     title: "Reviews That Keep Your ",
     titleAccent: "Trucks Rolling",
     description:
-      "97% of consumers read reviews before hiring a contractor. Build the reputation that keeps your schedule full.",
+      "Consumers read reviews before hiring a contractor. Build the reputation that keeps your schedule full.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
   },
@@ -1354,7 +1272,7 @@ export const homeServicesPageConfig: IndustryPageConfig = {
       icon: "Search",
       title: "Competitors Have More Reviews",
       description: "They show up first on Google. You're losing jobs before prospects even call.",
-      stat: { value: "97%", label: "check reviews first" },
+      stat: { value: "Reviews", label: "check reviews first" },
     },
     {
       icon: "Star",
@@ -1378,10 +1296,10 @@ export const homeServicesPageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. asking manually" },
-    { value: "97%", label: "Check Reviews", description: "before hiring" },
-    { value: "4.8", label: "Avg Rating", description: "across our pros" },
-    { value: "15min", label: "Setup Time", description: "start collecting today" },
+    { value: "Reviews", label: "More Reviews", description: "vs. asking manually" },
+    { value: "Reviews", label: "Check Reviews", description: "before hiring" },
+    { value: "Reviews", label: "Review Monitoring", description: "across our pros" },
+    { value: "Fast", label: "Setup Time", description: "start collecting today" },
   ],
   featureTabs: [
     {
@@ -1400,7 +1318,7 @@ export const homeServicesPageConfig: IndustryPageConfig = {
           alt: "Home service professional",
         },
       ],
-      stat: { value: "3x", label: "more reviews" },
+      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -1419,7 +1337,7 @@ export const homeServicesPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=600&h=700&fit=crop&q=80", alt: "Team" },
         { src: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&h=700&fit=crop&q=80", alt: "Work" },
       ],
-      stat: { value: "52%", label: "response rate" },
+      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "AlertTriangle",
@@ -1438,7 +1356,7 @@ export const homeServicesPageConfig: IndustryPageConfig = {
           alt: "Customer service",
         },
       ],
-      stat: { value: "87%", label: "recovery rate" },
+      stat: { value: "Feedback", label: "recovery rate" },
     },
     {
       icon: "Trophy",
@@ -1456,7 +1374,7 @@ export const homeServicesPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=600&h=600&fit=crop&q=80", alt: "House" },
         { src: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=1200&fit=crop&q=80", alt: "Exterior" },
       ],
-      stat: { value: "+250%", label: "review growth" },
+      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -1522,15 +1440,7 @@ export const homeServicesPageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "We went from 45 Google reviews to over 300. Our phone rings constantly now.",
-      name: "Mike Johnson",
-      title: "Owner",
-      company: "Johnson Plumbing",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "ServiceTitan", logoUrl: "/integrations/servicetitan.svg", category: "FSM" },
     { name: "Housecall Pro", logoUrl: "/integrations/housecall-pro.svg", category: "FSM" },
@@ -1582,7 +1492,7 @@ export const legalPageConfig: IndustryPageConfig = {
     title: "Clients Trust Attorneys With ",
     titleAccent: "Proven Results",
     description:
-      "84% of people looking for a lawyer check online reviews first. Build the reputation that wins cases before they start.",
+      "People looking for a lawyer check online reviews first. Build the reputation that wins trust before the first consultation.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
   },
@@ -1596,7 +1506,7 @@ export const legalPageConfig: IndustryPageConfig = {
       icon: "Search",
       title: "Competitors Rank Higher",
       description: "Firms with more Avvo and Google reviews get found first.",
-      stat: { value: "84%", label: "check reviews first" },
+      stat: { value: "Reviews", label: "check reviews first" },
     },
     {
       icon: "FileText",
@@ -1620,10 +1530,10 @@ export const legalPageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual requests" },
-    { value: "84%", label: "Research First", description: "before hiring" },
-    { value: "100%", label: "Ethics Compliant", description: "bar-approved approach" },
-    { value: "4.8", label: "Avg Rating", description: "across our firms" },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual requests" },
+    { value: "Trust", label: "Research First", description: "before hiring" },
+    { value: "Governed", label: "Ethics Compliant", description: "bar-approved approach" },
+    { value: "Reviews", label: "Review Monitoring", description: "across our firms" },
   ],
   featureTabs: [
     {
@@ -1643,7 +1553,7 @@ export const legalPageConfig: IndustryPageConfig = {
           alt: "Law office",
         },
       ],
-      stat: { value: "3x", label: "more reviews" },
+      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -1662,7 +1572,7 @@ export const legalPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=700&fit=crop&q=80", alt: "Attorney" },
         { src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=700&fit=crop&q=80", alt: "Lawyer" },
       ],
-      stat: { value: "28%", label: "response rate" },
+      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "MessageSquare",
@@ -1681,7 +1591,7 @@ export const legalPageConfig: IndustryPageConfig = {
           alt: "Legal consultation",
         },
       ],
-      stat: { value: "12+", label: "testimonials/month" },
+      stat: { value: "Stories", label: "testimonials/month" },
     },
     {
       icon: "Trophy",
@@ -1699,7 +1609,7 @@ export const legalPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1521791055366-0d553872125f?w=600&h=600&fit=crop&q=80", alt: "Consultation" },
         { src: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&h=1200&fit=crop&q=80", alt: "Law" },
       ],
-      stat: { value: "+180%", label: "review growth" },
+      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -1766,15 +1676,7 @@ export const legalPageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "Our Avvo rating went from 4.2 to 4.9. We're now the top-rated personal injury firm in our market.",
-      name: "Jennifer Walsh",
-      title: "Managing Partner",
-      company: "Walsh & Associates",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "Clio", logoUrl: "/integrations/clio.svg", category: "PMS" },
     { name: "MyCase", logoUrl: "/integrations/mycase.svg", category: "PMS" },
@@ -1863,10 +1765,10 @@ export const consultingPageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Testimonials", description: "vs. manual requests" },
-    { value: "72%", label: "Research First", description: "before hiring consultants" },
-    { value: "95%", label: "Client Satisfaction", description: "across our users" },
-    { value: "4.9", label: "Avg Rating", description: "from client feedback" },
+    { value: "Stories", label: "More Testimonials", description: "vs. manual requests" },
+    { value: "Trust", label: "Research First", description: "before hiring consultants" },
+    { value: "Feedback", label: "Client Satisfaction", description: "across review channels" },
+    { value: "Reviews", label: "Review Monitoring", description: "from review workflows" },
   ],
   featureTabs: [
     {
@@ -1886,7 +1788,7 @@ export const consultingPageConfig: IndustryPageConfig = {
           alt: "Consulting meeting",
         },
       ],
-      stat: { value: "3x", label: "more testimonials" },
+      stat: { value: "Stories", label: "more testimonials" },
     },
     {
       icon: "BarChart3",
@@ -1905,7 +1807,7 @@ export const consultingPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=700&fit=crop&q=80", alt: "Meeting" },
         { src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=700&fit=crop&q=80", alt: "Professional" },
       ],
-      stat: { value: "42%", label: "response rate" },
+      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "FileText",
@@ -1924,7 +1826,7 @@ export const consultingPageConfig: IndustryPageConfig = {
           alt: "Presentation",
         },
       ],
-      stat: { value: "5x", label: "faster case studies" },
+      stat: { value: "Stories", label: "faster case studies" },
     },
     {
       icon: "Trophy",
@@ -1942,7 +1844,7 @@ export const consultingPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&h=600&fit=crop&q=80", alt: "Strategy" },
         { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=1200&fit=crop&q=80", alt: "Consultant" },
       ],
-      stat: { value: "+150%", label: "referral increase" },
+      stat: { value: "Referrals", label: "referral increase" },
     },
   ],
   roleTabs: [
@@ -2009,15 +1911,7 @@ export const consultingPageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "RepWell helped us capture 40+ client testimonials in our first year. Our proposal win rate improved 25%.",
-      name: "David Kim",
-      title: "Managing Director",
-      company: "Strategy Partners LLC",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "HubSpot", logoUrl: "/integrations/hubspot.svg", category: "CRM" },
     { name: "Salesforce", logoUrl: "/integrations/salesforce.svg", category: "CRM" },

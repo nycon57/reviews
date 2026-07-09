@@ -1,41 +1,43 @@
 import type { CompetitorPageConfig } from "../types";
+import {
+  getMarketingTierPriceLabel,
+  MARKETING_TRIAL_FACTS,
+} from "../../marketing/pricing-facts";
 
 /**
  * Complete competitor page configuration for Birdeye.
  *
  * Positioning: Birdeye = general-purpose review platform that serves restaurants,
- * healthcare, auto dealers, etc. — not built for mortgage. RepWell = mortgage-native
- * with LO profiles, NMLS compliance, LOS integrations, and post-close automation.
+ * healthcare, auto dealers, and other local businesses. RepWell = focused
+ * review management for client-facing teams.
  *
  * Competitor data last verified: 2026-02-01
- * Sources: Birdeye pricing page, G2 product page, Capterra listing, Birdeye docs.
+ * Sources: Birdeye pricing page, product docs, and public marketing pages.
  * Review cadence: Quarterly — next review due 2026-05-01.
  */
 export const birdeyeConfig: CompetitorPageConfig = {
   slug: "birdeye",
   competitorName: "Birdeye",
-  competitorLogo: "/images/competitors/birdeye-logo.svg",
 
   // ---------------------------------------------------------------------------
   // SEO
   // ---------------------------------------------------------------------------
   seo: {
-    title: "Birdeye Alternative for Mortgage | RepWell vs Birdeye",
+    title: "Birdeye Alternative for Client-Facing Teams | RepWell vs Birdeye",
     description:
-      "Looking for a Birdeye alternative built for mortgage? RepWell offers loan officer profiles, NMLS compliance, LOS integrations, and post-close automation that generic platforms can't match.",
+      "Looking for a Birdeye alternative? RepWell offers transparent pricing, review automation, AI-powered insights, and team-level reputation workflows.",
     keywords: [
       "Birdeye alternative",
       "Birdeye competitor",
       "Birdeye vs RepWell",
       "Birdeye replacement",
-      "Birdeye alternative mortgage",
-      "mortgage review management",
-      "loan officer review platform",
-      "NPS survey tool mortgage",
+      "review management platform",
+      "client feedback platform",
+      "team reputation management",
+      "NPS survey tool",
       "birdeye pricing",
       "birdeye reviews",
     ],
-    ogImage: "/images/og/birdeye-vs-repwell.png",
     twitterCard: "summary_large_image",
   },
 
@@ -43,60 +45,44 @@ export const birdeyeConfig: CompetitorPageConfig = {
   // Section 1: Hero
   // ---------------------------------------------------------------------------
   hero: {
-    badge: "#1 Birdeye Alternative for Mortgage",
+    badge: "Birdeye Alternative for Growing Teams",
     h1: "Birdeye vs RepWell",
     subhead:
-      "Birdeye works for restaurants and dentists. RepWell is built for mortgage. Get loan officer profiles, NMLS compliance, LOS integrations, and post-close automation — features a generic platform will never prioritize.",
+      "Birdeye serves a wide range of local businesses. RepWell focuses on client-facing teams that need review collection, team visibility, AI-powered insights, and straightforward pricing.",
     primaryCta: { label: "Start Free Trial", href: "/signup" },
     secondaryCta: { label: "See Pricing", href: "/pricing" },
-    stat: {
-      value: "50%",
-      label: "avg. cost savings vs. per-location pricing models",
-    },
   },
 
   // ---------------------------------------------------------------------------
   // Section 2: Logo Bar
   // ---------------------------------------------------------------------------
-  logoBar: [
-    { name: "Fairway Independent", logoUrl: "/images/logos/fairway.svg" },
-    { name: "Movement Mortgage", logoUrl: "/images/logos/movement.svg" },
-    { name: "Guild Mortgage", logoUrl: "/images/logos/guild.svg" },
-    { name: "CrossCountry Mortgage", logoUrl: "/images/logos/crosscountry.svg" },
-    { name: "Homepoint", logoUrl: "/images/logos/homepoint.svg" },
-    { name: "AmeriHome Mortgage", logoUrl: "/images/logos/amerihome.svg" },
-    { name: "Nations Lending", logoUrl: "/images/logos/nations-lending.svg" },
-    { name: "Cardinal Financial", logoUrl: "/images/logos/cardinal.svg" },
-  ],
-
-  // ---------------------------------------------------------------------------
   // Section 3: Pricing Tabs
   // ---------------------------------------------------------------------------
   pricingTabs: [
     {
-      tabLabel: "Starter",
-      headline: "Mortgage-focused features at every price point",
-      body: "Birdeye's starter plans serve every industry equally — meaning none well. RepWell includes mortgage essentials like LO profiles and post-close surveys from day one.",
+      tabLabel: "Basic",
+      headline: "Review collection without the per-location maze",
+      body: "Birdeye packages broad local-business tools. RepWell starts with the review workflows client-facing teams need every day.",
       comparisonRows: [
         {
           feature: "Monthly price per user",
-          repwell: "$29/mo",
-          competitor: "$299+/mo (per location)",
+          repwell: getMarketingTierPriceLabel("basic"),
+          competitor: "Published packages vary by location",
         },
         {
-          feature: "Loan officer profiles",
+          feature: "Individual profile pages",
           repwell: true,
           competitor: false,
         },
         {
-          feature: "NMLS number display",
+          feature: "Team-level attribution",
           repwell: true,
-          competitor: false,
+          competitor: "Limited",
         },
         { feature: "Review request automation", repwell: true, competitor: true },
         { feature: "Google review integration", repwell: true, competitor: true },
         { feature: "NPS surveys", repwell: true, competitor: "Add-on" },
-        { feature: "Post-close survey triggers", repwell: true, competitor: false },
+        { feature: "Automated survey triggers", repwell: true, competitor: true },
         {
           feature: "Support",
           repwell: "Email + chat",
@@ -106,14 +92,14 @@ export const birdeyeConfig: CompetitorPageConfig = {
       ctaLabel: "Start Free Trial",
     },
     {
-      tabLabel: "Professional",
+      tabLabel: "Pro",
       headline: "Industry-specific tools, not one-size-fits-all",
-      body: "Birdeye charges premium prices for generic features. RepWell's Professional tier includes AI sentiment analysis, testimonial management, and leaderboards — built around the mortgage workflow.",
+      body: "Birdeye charges premium prices for broad local-business workflows. RepWell's Pro tier includes AI sentiment analysis, testimonial management, and leaderboards for sales-based teams.",
       comparisonRows: [
         {
           feature: "Monthly price per user",
-          repwell: "$59/mo",
-          competitor: "$399+/mo (per location)",
+          repwell: getMarketingTierPriceLabel("pro"),
+          competitor: "Published packages vary by location",
         },
         { feature: "AI sentiment analysis", repwell: true, competitor: "Add-on" },
         {
@@ -121,16 +107,16 @@ export const birdeyeConfig: CompetitorPageConfig = {
           repwell: true,
           competitor: "Limited",
         },
-        { feature: "Loan officer leaderboards", repwell: true, competitor: false },
+        { feature: "Team leaderboards", repwell: true, competitor: false },
         {
           feature: "Social media publishing",
           repwell: true,
           competitor: true,
         },
         {
-          feature: "LOS integration (Encompass, Byte)",
+          feature: "CRM integration",
           repwell: true,
-          competitor: false,
+          competitor: true,
         },
         { feature: "Custom survey builder", repwell: true, competitor: true },
         {
@@ -143,13 +129,13 @@ export const birdeyeConfig: CompetitorPageConfig = {
     },
     {
       tabLabel: "Enterprise",
-      headline: "Enterprise mortgage tools at a fair price",
-      body: "Birdeye charges per location, which adds up fast for multi-branch lenders. RepWell delivers enterprise mortgage features — multi-branch management, compliance tools, and regional benchmarking — without the per-location markup.",
+      headline: "Enterprise reputation management without extra complexity",
+      body: "Birdeye often centers pricing around locations. RepWell gives growing teams multi-branch management, team reporting, and governance without hiding the core plan structure.",
       comparisonRows: [
         {
           feature: "Monthly price per user",
-          repwell: "$99/mo",
-          competitor: "Custom quote (per location)",
+          repwell: getMarketingTierPriceLabel("enterprise"),
+          competitor: "Custom quote",
         },
         {
           feature: "Multi-branch management",
@@ -184,12 +170,12 @@ export const birdeyeConfig: CompetitorPageConfig = {
   // ---------------------------------------------------------------------------
   transitionSection: {
     headline: "Moving from Birdeye is straightforward",
-    body: "Birdeye makes it easy to export your data. We make it even easier to get running on a platform purpose-built for mortgage.",
+    body: "Birdeye makes it possible to export your data. RepWell helps client-facing teams get running with clean profile, request, and reporting workflows.",
     bullets: [
       { text: "Google and Zillow reviews stay on your Business Profile" },
       { text: "Birdeye CSV exports import directly into RepWell" },
-      { text: "Loan officer profiles created with full review history" },
-      { text: "CRM and LOS integrations set up in hours" },
+      { text: "Team profiles created with review history" },
+      { text: "CRM integrations configured for your workflow" },
       { text: "Dedicated migration specialist handles the transition" },
     ],
     variant: "gradient",
@@ -198,251 +184,45 @@ export const birdeyeConfig: CompetitorPageConfig = {
   // ---------------------------------------------------------------------------
   // Section 5: Testimonials
   // ---------------------------------------------------------------------------
-  testimonials: [
-    {
-      quote:
-        "We used Birdeye for two years and it was fine for collecting Google reviews. But it had **zero mortgage features** — no LO profiles, no NMLS compliance, no post-close triggers. RepWell gave us everything we were missing.",
-      author: "Chris Bergman",
-      role: "VP of Marketing",
-      company: "Ridgeline Home Loans",
-      rating: 5,
-      competitorMention: "Birdeye",
-    },
-    {
-      quote:
-        "Birdeye treated us the same as the pizza shop down the street. RepWell understands mortgage — the compliance requirements, the loan officer workflows, the LOS integrations. It's a **night-and-day difference**.",
-      author: "Natalie Park",
-      role: "Branch Manager",
-      company: "Cornerstone Lending Group",
-      rating: 5,
-      competitorMention: "Birdeye",
-    },
-    {
-      quote:
-        "Switching from Birdeye to RepWell cut our monthly cost and gave us features we didn't even know we needed. The **leaderboard alone** increased our review volume by 200%.",
-      author: "Jason Torres",
-      role: "Director of Sales",
-      company: "Beacon Mortgage Partners",
-      rating: 5,
-      competitorMention: "Birdeye",
-    },
-  ],
-
-  // ---------------------------------------------------------------------------
   // Section 6: Differentiators
   // ---------------------------------------------------------------------------
   differentiators: [
     {
       icon: "Home",
-      title: "Mortgage-native, not mortgage-adapted",
+      title: "Focused workflows, not one-size-fits-all",
       description:
-        "Birdeye serves 50+ industries with the same toolset. RepWell is built from the ground up for mortgage and financial services — every feature fits how your team actually works.",
+        "Birdeye serves many local-business categories with a broad platform. RepWell is focused on review workflows for client-facing teams.",
       repwellValue:
-        "Purpose-built for mortgage: LO profiles, NMLS compliance, post-close automation",
+        "Team profiles, review requests, NPS surveys, and AI-powered insights",
       competitorValue:
-        "Generic platform: same features for dentists, restaurants, and auto dealers",
+        "Broad local-business platform for many industries",
     },
     {
       icon: "Link",
-      title: "Deep LOS and CRM integrations",
+      title: "CRM and workflow integrations",
       description:
-        "RepWell connects directly to Encompass, Byte, Calyx, and your CRM to trigger reviews and surveys at the right moment in the loan lifecycle.",
+        "RepWell connects review requests, survey workflows, and reporting to the systems your team already uses.",
       repwellValue:
-        "Native integrations with Encompass, Byte, Calyx, LendingPad, Salesforce, HubSpot",
-      competitorValue: "Generic integrations via Zapier or API — no LOS-specific connectors",
+        "CRM, Google Business Profile, Zapier, and API workflows",
+      competitorValue: "Broad integrations across local-business tools",
     },
     {
       icon: "ShieldCheck",
-      title: "Compliance built in, not bolted on",
+      title: "Governance for growing teams",
       description:
-        "NMLS numbers on every profile, mortgage-compliant AI response suggestions, and advertising guideline checks — all standard, no custom configuration needed.",
-      repwellValue: "NMLS display, compliant AI responses, mortgage ad guideline checks included",
-      competitorValue: "No mortgage compliance features — manual compliance review required",
+        "Role-based access, approval workflows, and account-level controls help teams manage feedback consistently.",
+      repwellValue: "Built-in team permissions, approval flows, and review controls",
+      competitorValue: "Governance depends on package and configuration",
     },
   ],
 
   // ---------------------------------------------------------------------------
   // Section 7: Feature Cards
   // ---------------------------------------------------------------------------
-  featureCards: [
-    {
-      screenshot: "/images/features/lo-profiles.webp",
-      title: "Loan officer profile pages",
-      description:
-        "Every LO gets a branded, NMLS-compliant profile with reviews, ratings, and a contact form — something Birdeye's generic business listings can't replicate.",
-    },
-    {
-      screenshot: "/images/features/review-dashboard.webp",
-      title: "Mortgage review dashboard",
-      description:
-        "See Google, Zillow, and internal reviews in one place. Filter by loan officer, branch, or loan type — not just by location like Birdeye.",
-    },
-    {
-      screenshot: "/images/features/survey-builder.webp",
-      title: "Post-close survey automation",
-      description:
-        "Trigger NPS and CSAT surveys automatically when a loan closes. Integrated with your LOS so timing is precise — no manual list uploads.",
-      badge: "Mortgage-Native",
-    },
-    {
-      screenshot: "/images/features/ai-sentiment.webp",
-      title: "AI sentiment analysis",
-      description:
-        "Go beyond star ratings. Detect themes, sentiment shifts, and at-risk accounts across all feedback channels with mortgage-tuned AI.",
-      badge: "AI-Powered",
-    },
-    {
-      screenshot: "/images/features/leaderboard.webp",
-      title: "Loan officer leaderboards",
-      description:
-        "Motivate your team with real-time leaderboards, achievement badges, and review collection contests. Birdeye has no equivalent for individual performers.",
-    },
-    {
-      screenshot: "/images/features/testimonial-manager.webp",
-      title: "Testimonial collection and publishing",
-      description:
-        "Collect written and video testimonials from borrowers, get approval, and publish to your site and social channels — all from one workflow.",
-    },
-    {
-      screenshot: "/images/features/social-publishing.webp",
-      title: "Branded social publishing",
-      description:
-        "Turn reviews into branded social posts and push to LinkedIn, Facebook, and Instagram. Birdeye offers social but without mortgage-specific branding.",
-    },
-    {
-      screenshot: "/images/features/gbp-optimization.webp",
-      title: "Google Business Profile management",
-      description:
-        "Monitor your GBP listings, respond to reviews, and track local search signals. Manage all branch locations from a single dashboard.",
-    },
-  ],
-
-  // ---------------------------------------------------------------------------
   // Section 8: AI Capabilities
-  // ---------------------------------------------------------------------------
-  aiCapabilities: [
-    {
-      tabLabel: "Mortgage Sentiment",
-      headline: "AI trained on mortgage feedback patterns",
-      description:
-        "Generic sentiment tools miss industry context. RepWell's AI understands mortgage-specific language — rate lock complaints, closing delay frustrations, LO praise — and categorizes feedback accurately.",
-      features: [
-        "Mortgage-specific sentiment scoring on every response",
-        "Theme detection for loan process pain points",
-        "Per-LO and per-branch sentiment breakdowns",
-        "Trend alerts when borrower satisfaction dips",
-      ],
-      illustration: "/images/ai/sentiment-analysis.webp",
-    },
-    {
-      tabLabel: "Compliant Responses",
-      headline: "AI responses that follow mortgage ad guidelines",
-      description:
-        "Generic AI tools lack mortgage compliance context. RepWell generates response suggestions that follow TILA, RESPA, and mortgage advertising regulations — no compliance review bottleneck.",
-      features: [
-        "Mortgage-compliant response drafts for every review",
-        "Automatic flagging of risky language before publishing",
-        "Customizable tone presets (professional, warm, apologetic)",
-        "One-click approve and post to Google or Zillow",
-      ],
-      illustration: "/images/ai/smart-responses.webp",
-    },
-    {
-      tabLabel: "Production Insights",
-      headline: "Tie reviews to loan production metrics",
-      description:
-        "RepWell connects review data to production outcomes — see how review volume and sentiment correlate with LO performance, referral rates, and branch growth.",
-      features: [
-        "LO performance scoring combining reviews + production data",
-        "Branch benchmarking against regional and national averages",
-        "Early warning system for declining borrower satisfaction",
-        "Monthly AI-generated executive summary reports",
-      ],
-      illustration: "/images/ai/predictive-insights.webp",
-    },
-  ],
-
   // ---------------------------------------------------------------------------
   // Section 9: Integrations
   // ---------------------------------------------------------------------------
-  integrations: [
-    { name: "Encompass", logoUrl: "/images/integrations/encompass.svg", category: "LOS" },
-    { name: "Byte", logoUrl: "/images/integrations/byte.svg", category: "LOS" },
-    { name: "Calyx", logoUrl: "/images/integrations/calyx.svg", category: "LOS" },
-    { name: "LendingPad", logoUrl: "/images/integrations/lendingpad.svg", category: "LOS" },
-    { name: "Salesforce", logoUrl: "/images/integrations/salesforce.svg", category: "CRM" },
-    { name: "HubSpot", logoUrl: "/images/integrations/hubspot.svg", category: "CRM" },
-    { name: "Velocify", logoUrl: "/images/integrations/velocify.svg", category: "CRM" },
-    { name: "BNTouch", logoUrl: "/images/integrations/bntouch.svg", category: "CRM" },
-    {
-      name: "Google Business",
-      logoUrl: "/images/integrations/google-business.svg",
-      category: "Reviews",
-    },
-    { name: "Zillow", logoUrl: "/images/integrations/zillow.svg", category: "Reviews" },
-    { name: "Facebook", logoUrl: "/images/integrations/facebook.svg", category: "Social" },
-    { name: "LinkedIn", logoUrl: "/images/integrations/linkedin.svg", category: "Social" },
-    { name: "Slack", logoUrl: "/images/integrations/slack.svg", category: "Communication" },
-    {
-      name: "Microsoft Teams",
-      logoUrl: "/images/integrations/teams.svg",
-      category: "Communication",
-    },
-    { name: "Zapier", logoUrl: "/images/integrations/zapier.svg", category: "Automation" },
-  ],
-
-  // ---------------------------------------------------------------------------
-  // Section 10: Industry-Specific Features
-  // ---------------------------------------------------------------------------
-  industryFeatures: [
-    {
-      icon: "UserCircle",
-      title: "Loan officer profiles with NMLS display",
-      description:
-        "Each LO gets a compliant profile page with their NMLS number, reviews, credentials, and contact form. Birdeye only offers generic business listings.",
-      repwellExclusive: true,
-    },
-    {
-      icon: "ChartBar",
-      title: "Post-close survey automation",
-      description:
-        "Surveys trigger automatically from your LOS when a loan closes. No manual list uploads, no missed follow-ups.",
-      repwellExclusive: true,
-    },
-    {
-      icon: "ShieldCheck",
-      title: "Compliance-ready review responses",
-      description:
-        "AI-generated responses follow mortgage advertising guidelines and flag risky language before publishing.",
-    },
-    {
-      icon: "TrendUp",
-      title: "Branch and regional benchmarking",
-      description:
-        "Compare NPS, review volume, and sentiment across branches. Birdeye benchmarks by location — not by the metrics mortgage leaders care about.",
-    },
-    {
-      icon: "Buildings",
-      title: "Multi-branch management",
-      description:
-        "Manage hundreds of branches from a single dashboard with roll-up reporting for regional managers and executives.",
-    },
-    {
-      icon: "Medal",
-      title: "LO gamification and contests",
-      description:
-        "Run review collection contests with real-time leaderboards. Birdeye has no individual performer tracking — only location-level metrics.",
-      repwellExclusive: true,
-    },
-  ],
-  industrySectionConfig: {
-    headline: "Built for your industry — not adapted from a generic platform",
-    description:
-      "Birdeye serves dozens of industries with the same tools. RepWell is purpose-built for sales-based industries, so nothing is bolted on and nothing is missing.",
-    cta: { label: "See Industry Features", href: "/features" },
-    stat: { value: "500+", label: "companies use RepWell" },
-  },
-
   // ---------------------------------------------------------------------------
   // Section 11: Migration
   // ---------------------------------------------------------------------------
@@ -458,168 +238,36 @@ export const birdeyeConfig: CompetitorPageConfig = {
         number: 2,
         title: "We import and map your data",
         description:
-          "Our migration team imports your reviews, contacts, and templates into RepWell — then creates loan officer profiles with full review history.",
+          "Our migration team imports your reviews, contacts, and templates into RepWell, then creates team profiles with review history.",
       },
       {
         number: 3,
-        title: "Connect your LOS and CRM",
+        title: "Connect your CRM and review channels",
         description:
-          "Integrate Encompass, Byte, Salesforce, or your CRM. Most connections go live same-day with our guided setup.",
+          "Connect Google Business Profile, your CRM, Zapier, or API workflows with guided setup.",
       },
       {
         number: 4,
         title: "Train your team",
         description:
-          "Live training for admins, managers, and loan officers. Plus on-demand video tutorials and a searchable knowledge base.",
+          "Live training for admins, managers, and team members, plus on-demand video tutorials and a searchable knowledge base.",
       },
       {
         number: 5,
-        title: "Go live with mortgage-native tools",
+        title: "Go live with RepWell workflows",
         description:
-          "Your migration specialist stays on for 30 days post-launch to handle any issues and optimize your setup.",
+          "Your migration specialist stays available after launch to handle issues and optimize your setup.",
       },
     ],
     contractBuyoutNote:
       "In a Birdeye contract? Ask about our contract buyout program for qualifying teams.",
-    timeline: "Under 2 weeks",
+    timeline: "Guided migration",
   },
 
   // ---------------------------------------------------------------------------
   // Section 12: Rating Comparison
   // ---------------------------------------------------------------------------
-  ratingComparison: {
-    repwell: {
-      g2Score: 4.8,
-      g2ReviewCount: 127,
-      capterra: 4.9,
-      trustpilot: 4.7,
-    },
-    competitor: {
-      g2Score: 4.7,
-      g2ReviewCount: 720,
-      capterra: 4.5,
-      trustpilot: 4.1,
-    },
-  },
-
-  // ---------------------------------------------------------------------------
   // Section 13: Case Studies
-  // ---------------------------------------------------------------------------
-  caseStudies: [
-    {
-      companyName: "Ridgeline Home Loans",
-      industry: "Residential Mortgage",
-      logo: "/images/case-studies/ridgeline-logo.svg",
-      metrics: [
-        {
-          label: "Monthly review volume",
-          before: "22",
-          after: "87",
-          percentageChange: "+295%",
-        },
-        {
-          label: "LO adoption rate",
-          before: "28%",
-          after: "91%",
-          percentageChange: "+225%",
-        },
-        {
-          label: "Monthly platform cost",
-          before: "$3,600",
-          after: "$1,770",
-          percentageChange: "-51%",
-        },
-      ],
-      quote:
-        "Birdeye was a decent review tool, but it had nothing for our loan officers. RepWell gave every LO their own profile and reviews — adoption went through the roof.",
-      ctaHref: "/case-studies/ridgeline-home-loans",
-    },
-    {
-      companyName: "Cornerstone Lending Group",
-      industry: "Residential Mortgage",
-      logo: "/images/case-studies/cornerstone-logo.svg",
-      metrics: [
-        {
-          label: "Post-close survey response rate",
-          before: "12%",
-          after: "44%",
-          percentageChange: "+267%",
-        },
-        {
-          label: "Average NPS score",
-          before: "38",
-          after: "72",
-          percentageChange: "+89%",
-        },
-        {
-          label: "Time to set up surveys",
-          before: "2+ hours/batch",
-          after: "Automatic",
-          percentageChange: "-100%",
-        },
-      ],
-      quote:
-        "With Birdeye, we were manually uploading CSV lists for every survey batch. RepWell's LOS integration triggers surveys automatically when loans close — we never miss one now.",
-      ctaHref: "/case-studies/cornerstone-lending",
-    },
-    {
-      companyName: "Beacon Mortgage Partners",
-      industry: "Residential Mortgage",
-      logo: "/images/case-studies/beacon-logo.svg",
-      metrics: [
-        {
-          label: "Google review rating",
-          before: "4.1 stars",
-          after: "4.8 stars",
-          percentageChange: "+0.7 stars",
-        },
-        {
-          label: "Review response rate",
-          before: "30%",
-          after: "96%",
-          percentageChange: "+220%",
-        },
-        {
-          label: "Testimonials collected per quarter",
-          before: "5",
-          after: "32",
-          percentageChange: "+540%",
-        },
-      ],
-      quote:
-        "The AI response suggestions are compliant out of the box. With Birdeye, our compliance team had to review every response manually — it was a bottleneck that killed our response rate.",
-      ctaHref: "/case-studies/beacon-mortgage",
-    },
-    {
-      companyName: "Summit Point Financial",
-      industry: "Mortgage & Wealth Management",
-      logo: "/images/case-studies/summit-point-logo.svg",
-      metrics: [
-        {
-          label: "Branches managed",
-          before: "12 (separate logins)",
-          after: "12 (single dashboard)",
-          percentageChange: "Unified",
-        },
-        {
-          label: "Social media posts from reviews",
-          before: "2/month",
-          after: "18/month",
-          percentageChange: "+800%",
-        },
-        {
-          label: "Annual platform savings",
-          before: "$58,000/yr",
-          after: "$24,000/yr",
-          percentageChange: "-59%",
-        },
-      ],
-      quote:
-        "Birdeye charged us per location, which got expensive fast with 12 branches. RepWell's per-user pricing and unified dashboard saved us over $30K a year.",
-      ctaHref: "/case-studies/summit-point-financial",
-    },
-  ],
-
   // ---------------------------------------------------------------------------
   // Section 14: FAQ
   // ---------------------------------------------------------------------------
@@ -628,12 +276,12 @@ export const birdeyeConfig: CompetitorPageConfig = {
       {
         question: "How much does RepWell cost?",
         answer:
-          "RepWell starts at $29 per user per month with no setup fees and no annual contract required. All plans include core review management, NPS surveys, and Google integration. See our [pricing page](/pricing) for full details.",
+          `RepWell Basic is ${getMarketingTierPriceLabel("basic")}, Pro is ${getMarketingTierPriceLabel("pro")}, and Enterprise is ${getMarketingTierPriceLabel("enterprise")}. All plans include core review management, NPS surveys, and Google integration. See our [pricing page](/pricing) for full details.`,
       },
       {
         question: "Is there a free trial?",
         answer:
-          "Yes. Every plan includes a 14-day free trial with full access to all features. No credit card required to start.",
+          `Yes. Every plan includes a ${MARKETING_TRIAL_FACTS.shortCopy}. A credit card is required to activate the trial.`,
       },
       {
         question: "How long does it take to get set up?",
@@ -641,9 +289,9 @@ export const birdeyeConfig: CompetitorPageConfig = {
           "Most teams are fully operational within 3-5 business days. This includes data migration, integration setup, and team training.",
       },
       {
-        question: "Do you integrate with my LOS?",
+        question: "Do you integrate with my CRM?",
         answer:
-          "RepWell integrates with all major loan origination systems including Encompass, Byte, Calyx, and LendingPad. We also connect with CRMs like Salesforce, HubSpot, and BNTouch.",
+          "RepWell connects with common CRM, Google Business Profile, Zapier, and API workflows so your review requests and reporting fit your existing process.",
       },
       {
         question: "Can I cancel anytime?",
@@ -655,22 +303,22 @@ export const birdeyeConfig: CompetitorPageConfig = {
       {
         question: "How is RepWell different from Birdeye?",
         answer:
-          "Birdeye is a general-purpose review platform that serves restaurants, healthcare, auto dealers, and dozens of other industries. RepWell is purpose-built for mortgage and financial services. Key differences: loan officer profiles with NMLS compliance (vs. generic business listings), LOS integrations like Encompass (vs. no mortgage integrations), post-close survey automation (vs. manual CSV uploads), and per-user pricing (vs. per-location pricing that scales poorly for multi-branch mortgage companies).",
+          "Birdeye is a broad local-business review platform. RepWell focuses on review management for client-facing teams: individual profiles, NPS surveys, team reporting, AI-powered insights, and transparent Basic/Pro/Enterprise pricing.",
       },
       {
         question: "Can I migrate my data from Birdeye?",
         answer:
-          "Yes. Birdeye supports CSV data exports. Our migration team imports your reviews, contacts, survey templates, and historical data into RepWell. We also create loan officer profiles — something Birdeye doesn't offer — and populate them with existing review history. Most migrations complete within 1-2 weeks.",
+          "Yes. Birdeye supports CSV data exports. Our migration team imports your reviews, contacts, survey templates, and historical data into RepWell, then helps map profiles and reporting to your team structure.",
       },
       {
-        question: "Why would a mortgage company switch from Birdeye?",
+        question: "Why would a client-facing team switch from Birdeye?",
         answer:
-          "Birdeye lacks mortgage-specific features: no LO profiles, no NMLS compliance, no LOS integrations, no post-close survey triggers, and no loan officer leaderboards. Mortgage companies using Birdeye are paying for a generic tool and building workarounds for industry-specific needs. RepWell eliminates those workarounds with purpose-built features.",
+          "Teams switch when they want profile-level review workflows, NPS surveys, AI-powered insights, and simpler pricing without buying a broader local-business platform.",
       },
       {
-        question: "Is Birdeye's per-location pricing expensive for mortgage companies?",
+        question: "How does RepWell pricing compare with Birdeye?",
         answer:
-          "It can be. Birdeye charges per location, which adds up fast for multi-branch mortgage companies. A 15-branch operation could easily spend $4,500+/month. RepWell uses per-user pricing starting at $29/user/month, which typically costs 40-60% less for mortgage teams of the same size.",
+          `RepWell publishes Basic at ${getMarketingTierPriceLabel("basic")} and Pro at ${getMarketingTierPriceLabel("pro")}, with custom Enterprise pricing. Birdeye pricing varies by package and location, so teams should compare the exact workflows they need before switching.`,
       },
       {
         question: "Will I lose my Google reviews if I switch from Birdeye?",
@@ -678,19 +326,19 @@ export const birdeyeConfig: CompetitorPageConfig = {
           "No. Your Google reviews belong to your Google Business Profile, not to Birdeye. They stay exactly where they are. RepWell connects to your existing GBP listing and picks up right where you left off.",
       },
       {
-        question: "Does Birdeye have loan officer profiles?",
+        question: "Does Birdeye have individual profile pages?",
         answer:
-          "No. Birdeye is built around business locations, not individual professionals. RepWell gives every loan officer a branded, NMLS-compliant profile page with their reviews, ratings, credentials, and a direct contact form — one of the most-requested features among mortgage teams we talk to.",
+          "Birdeye is primarily organized around business locations. RepWell supports individual profile pages, team-level attribution, review history, and contact workflows.",
       },
       {
-        question: "Can Birdeye connect to Encompass or other LOS platforms?",
+        question: "Can Birdeye connect to my operating systems?",
         answer:
-          "Birdeye does not offer native LOS integrations. You would need to build a custom integration via their API or use Zapier. RepWell integrates natively with Encompass, Byte, Calyx, and LendingPad to trigger surveys and review requests automatically when loans close.",
+          "Birdeye offers integrations for many local-business workflows. RepWell supports CRM, Zapier, Google Business Profile, and API-based connections for review request automation.",
       },
       {
-        question: "How does RepWell handle compliance for mortgage companies?",
+        question: "How does RepWell help teams govern review workflows?",
         answer:
-          "Every feature is built with mortgage compliance in mind. LO profiles display NMLS numbers, AI response suggestions follow mortgage advertising guidelines, and survey tools include compliant question templates. Birdeye has no mortgage-specific compliance features — your team would need to manually review everything.",
+          "RepWell includes role-based permissions, approval workflows, profile controls, and reporting so managers can keep review requests and responses consistent across the team.",
       },
     ],
   },
@@ -698,182 +346,18 @@ export const birdeyeConfig: CompetitorPageConfig = {
   // ---------------------------------------------------------------------------
   // Section 15: Social Proof
   // ---------------------------------------------------------------------------
-  socialProof: [
-    {
-      quote:
-        "RepWell is the review platform we always wanted. Mortgage-specific from top to bottom.",
-      author: "James T.",
-      role: "VP of Production",
-      company: "Meridian Home Loans",
-      rating: 5,
-      platform: "G2",
-      date: "2025-11-14",
-    },
-    {
-      quote:
-        "We switched from Birdeye and immediately saw the difference. LO profiles, post-close triggers, compliance tools — it's all built in.",
-      author: "Andrea M.",
-      role: "Marketing Director",
-      company: "Ridgeline Home Loans",
-      rating: 5,
-      platform: "G2",
-      date: "2025-10-22",
-    },
-    {
-      quote:
-        "The AI sentiment analysis catches issues before they become patterns. Worth every penny for a mortgage operation our size.",
-      author: "Robert K.",
-      role: "Regional Manager",
-      company: "Evergreen Lending",
-      rating: 5,
-      platform: "Capterra",
-      date: "2025-12-03",
-    },
-    {
-      quote:
-        "Birdeye had us lumped in with dentists and restaurants. RepWell actually understands our industry.",
-      author: "Amanda S.",
-      role: "Operations Manager",
-      company: "Liberty Home Funding",
-      rating: 4,
-      platform: "G2",
-      date: "2025-09-18",
-    },
-    {
-      quote:
-        "Our loan officers have their own profile pages now. That alone was worth the switch from Birdeye.",
-      author: "Michael D.",
-      role: "Branch Manager",
-      company: "Coastal Mortgage Services",
-      rating: 5,
-      platform: "Capterra",
-      date: "2025-11-29",
-    },
-    {
-      quote:
-        "Per-user pricing saved us a fortune. Birdeye's per-location model was bleeding us dry with 8 branches.",
-      author: "Jennifer W.",
-      role: "CTO",
-      company: "Apex Lending Group",
-      rating: 5,
-      platform: "G2",
-      date: "2025-08-15",
-    },
-    {
-      quote:
-        "The leaderboard feature turned review collection into a friendly competition. Our LOs actually care about reviews now.",
-      author: "Carlos M.",
-      role: "Sales Manager",
-      company: "Premier Mortgage Partners",
-      rating: 4,
-      platform: "Capterra",
-      date: "2025-10-05",
-    },
-    {
-      quote:
-        "Post-close surveys run automatically. No more spreadsheet uploads like we had with Birdeye.",
-      author: "Stephanie L.",
-      role: "Marketing Coordinator",
-      company: "Horizon Home Loans",
-      rating: 4,
-      platform: "G2",
-      date: "2025-12-11",
-    },
-    {
-      quote:
-        "Best customer support I've experienced with any SaaS tool. They actually pick up the phone.",
-      author: "Tom B.",
-      role: "IT Director",
-      company: "National Mortgage Alliance",
-      rating: 5,
-      platform: "Trustpilot",
-      date: "2025-07-28",
-    },
-    {
-      quote:
-        "We were spending $4k/month on Birdeye for 10 locations. RepWell costs half that and does twice as much for mortgage.",
-      author: "Patricia H.",
-      role: "CFO",
-      company: "Mountain West Financial",
-      rating: 5,
-      platform: "G2",
-      date: "2025-11-01",
-    },
-    {
-      quote:
-        "The NMLS-compliant LO profiles are exactly what our compliance team wanted. Birdeye couldn't do this.",
-      author: "Kevin O.",
-      role: "Compliance Manager",
-      company: "First Choice Lending",
-      rating: 4,
-      platform: "Capterra",
-      date: "2025-09-22",
-    },
-    {
-      quote:
-        "RepWell's NPS tracking helped us spot a training gap. Our company-wide score jumped 15 points in one quarter.",
-      author: "Diana F.",
-      role: "Training Director",
-      company: "Vanguard Home Loans",
-      rating: 5,
-      platform: "G2",
-      date: "2025-10-30",
-    },
-    {
-      quote:
-        "Migration from Birdeye was painless. The RepWell team handled the CSV import and had us running in days.",
-      author: "Brian N.",
-      role: "Operations Lead",
-      company: "Gateway Mortgage Group",
-      rating: 5,
-      platform: "Capterra",
-      date: "2025-08-09",
-    },
-    {
-      quote:
-        "The AI-generated review responses save our team 10+ hours per week. And they're mortgage-compliant out of the box.",
-      author: "Rachel G.",
-      role: "Customer Experience Manager",
-      company: "Sunbelt Lending",
-      rating: 5,
-      platform: "G2",
-      date: "2025-12-19",
-    },
-    {
-      quote:
-        "I evaluated Birdeye, Podium, and three others before choosing RepWell. Nothing else comes close for mortgage.",
-      author: "Mark J.",
-      role: "CEO",
-      company: "Trident Financial Group",
-      rating: 5,
-      platform: "Trustpilot",
-      date: "2025-11-07",
-    },
-    {
-      quote:
-        "RepWell made compliance easy. NMLS numbers on every profile, compliant review responses — it's all built in.",
-      author: "Angela C.",
-      role: "Compliance Officer",
-      company: "Patriot Home Lending",
-      rating: 5,
-      platform: "G2",
-      date: "2025-09-14",
-    },
-  ],
-
-  // ---------------------------------------------------------------------------
   // Section 16: Footer CTA
   // ---------------------------------------------------------------------------
   footerCta: {
-    headline: "Ready to upgrade from generic to mortgage-native?",
+    headline: "Ready to move from broad reviews to focused workflows?",
     subhead:
-      "Join hundreds of mortgage companies that switched from general review platforms to RepWell — for mortgage features generic tools don't offer.",
+      "Use RepWell for team profiles, review requests, NPS surveys, AI-powered insights, and straightforward pricing.",
     primaryCta: { label: "Start Your Free Trial", href: "/signup" },
     secondaryCta: { label: "Book a Demo", href: "/demo" },
     trustBadges: [
-      { icon: "ShieldCheck", label: "SOC 2 Compliant" },
-      { icon: "CreditCard", label: "No Credit Card Required" },
-      { icon: "Clock", label: "14-Day Free Trial" },
+      { icon: "ShieldCheck", label: "SOC 2 (in progress)" },
+      { icon: "CreditCard", label: MARKETING_TRIAL_FACTS.shortCopy },
+      { icon: "Clock", label: "Cancel anytime" },
       { icon: "Lock", label: "Bank-Level Encryption" },
     ],
   },
@@ -936,8 +420,8 @@ export const birdeyeConfig: CompetitorPageConfig = {
     {
       category: "Team & Engagement",
       features: [
-        { name: "Loan officer profiles", repwell: true, competitor: false },
-        { name: "NMLS number display", repwell: true, competitor: false },
+        { name: "Individual profile pages", repwell: true, competitor: false },
+        { name: "Team-level attribution", repwell: true, competitor: false },
         {
           name: "Team leaderboards",
           repwell: true,

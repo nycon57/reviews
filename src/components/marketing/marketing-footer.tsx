@@ -3,17 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import {
-  LinkedinLogo as Linkedin,
-  TwitterLogo as Twitter,
-} from "@phosphor-icons/react";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
-import { footerNavigation, type FooterLink } from "@/config/navigation";
-
-const socialLinks: FooterLink[] = [
-  { label: "LinkedIn", href: "https://linkedin.com", external: true },
-  { label: "Twitter", href: "https://twitter.com", external: true },
-];
+import { footerNavigation } from "@/config/navigation";
 
 export function MarketingFooter() {
   const currentYear = new Date().getFullYear();
@@ -45,22 +36,6 @@ export function MarketingFooter() {
               Collect customer reviews, manage your reputation, and gain
               AI-powered insights to improve customer experience.
             </p>
-            {/* Social Links */}
-            <div className="flex items-center gap-3 mb-8">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100 text-repwell-teal-400 hover:bg-repwell-teal-300 hover:text-white transition-all duration-200"
-                  aria-label={link.label}
-                >
-                  {link.label === "LinkedIn" && <Linkedin className="h-5 w-5" />}
-                  {link.label === "Twitter" && <Twitter className="h-5 w-5" />}
-                </a>
-              ))}
-            </div>
           </motion.div>
 
           {/* Link Columns */}

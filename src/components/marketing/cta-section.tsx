@@ -51,7 +51,7 @@ const enterpriseFeatures = [
   },
   {
     icon: Shield,
-    text: "NMLS compliance tools",
+    text: "Workflow governance tools",
   },
   {
     icon: FileText,
@@ -90,7 +90,7 @@ function FeatureList() {
 
 export function CTASection({
   title = "Ready to Transform Your Customer Experience?",
-  description = "Join thousands of mortgage professionals who use RepWell to build trust, collect reviews, and grow their business.",
+  description = "Use RepWell to build trust, collect reviews, and manage customer experience workflows.",
   primaryCta = {
     label: "Start Free Trial",
     href: "/signup",

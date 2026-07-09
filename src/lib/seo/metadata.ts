@@ -20,7 +20,6 @@ interface MetadataProfessional {
   bio: string | null;
   photo_url: string | null;
   branch?: string | null;
-  nmls_id?: string | null;
   address?: Json | null;
   average_rating: number | null;
   total_reviews: number | null;
@@ -199,7 +198,7 @@ export function truncateForSEO(text: string, maxLength: number): string {
 }
 
 /**
- * Generate keywords from LO profile data
+ * Generate keywords from professional profile data.
  */
 export function generateLOKeywords(
   professional: MetadataProfessional,
@@ -207,8 +206,8 @@ export function generateLOKeywords(
 ): string[] {
   const keywords: string[] = [
     professional.full_name,
-    "loan officer",
-    "mortgage",
+    "professional profile",
+    "customer feedback",
     "reviews",
     "ratings",
   ];
@@ -216,8 +215,6 @@ export function generateLOKeywords(
   if (professional.title) keywords.push(professional.title);
   if (organization?.name) keywords.push(organization.name);
   if (professional.branch) keywords.push(professional.branch);
-  if (professional.nmls_id) keywords.push(`NMLS ${professional.nmls_id}`);
-
   // Parse address for location keywords
   const address = professional.address as { city?: string; state?: string } | null;
   if (address?.city) keywords.push(address.city);

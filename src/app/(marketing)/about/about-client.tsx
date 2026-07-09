@@ -55,7 +55,7 @@ const timeline = [
   {
     year: "2023",
     title: "The Beginning",
-    description: "RepWell was founded with a simple mission: help mortgage professionals build trust through authentic customer feedback.",
+    description: "RepWell was founded with a simple mission: help client-facing professionals build trust through authentic customer feedback.",
   },
   {
     year: "2024",
@@ -70,7 +70,7 @@ const timeline = [
   {
     year: "2025",
     title: "Mobile & Integrations",
-    description: "Released mobile apps and expanded integrations with Google Business, Zapier, and popular LOS platforms.",
+    description: "Released mobile apps and expanded integrations with Google Business, Zapier, and popular workflow platforms.",
   },
   {
     year: "Future",
@@ -125,7 +125,7 @@ function AboutHero() {
             variants={fadeInUp}
             className="font-sans text-lg md:text-xl text-repwell-teal-400 leading-relaxed"
           >
-            We're on a mission to help mortgage professionals collect, manage, and leverage customer reviews to grow their business and build lasting relationships.
+            We're on a mission to help client-facing professionals collect, manage, and leverage customer reviews to grow their business and build lasting relationships.
           </motion.p>
         </motion.div>
       </div>
@@ -214,7 +214,7 @@ function MissionSection() {
               variants={fadeInUp}
               className="font-display text-3xl md:text-4xl font-bold text-repwell-teal-500 mb-6"
             >
-              Trust Is Everything in the Mortgage Industry
+              Trust Is Everything in Client Relationships
             </motion.h2>
 
             <motion.p

@@ -4,7 +4,6 @@ import {
   competitorConfigs,
   competitorSlugs,
   generateFAQPageSchema,
-  generateProductSchema,
 } from "@/lib/competitor-pages";
 import { CompetitorComparisonPage } from "@/components/competitor-pages";
 import { getBaseUrl } from "@/lib/seo";
@@ -45,7 +44,8 @@ export async function generateMetadata({
   const baseUrl = getBaseUrl();
   const canonicalUrl = config.seo.canonicalUrl ?? `${baseUrl}/compare/${slug}`;
   const ogImage =
-    config.seo.ogImage ?? `${baseUrl}/images/og/compare-default.png`;
+    config.seo.ogImage ??
+    "https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png";
 
   return {
     title: config.seo.title,
@@ -90,7 +90,6 @@ export default async function CompareSlugPage({
 
   const baseUrl = getBaseUrl();
   const { items: breadcrumbItems, schema: breadcrumbSchema } = buildCompareBreadcrumbs(config, baseUrl);
-  const productSchema = generateProductSchema(config);
   const faqSchema = generateFAQPageSchema(config.faq);
 
   return (
@@ -108,7 +107,7 @@ export default async function CompareSlugPage({
       <link rel="preconnect" href="https://temwotqafrafajehuiuh.supabase.co" crossOrigin="anonymous" />
       <link rel="dns-prefetch" href="https://images.unsplash.com" />
       <link rel="dns-prefetch" href="https://temwotqafrafajehuiuh.supabase.co" />
-      <MultiSchemaStructuredData schemas={[faqSchema, breadcrumbSchema, productSchema]} />
+      <MultiSchemaStructuredData schemas={[faqSchema, breadcrumbSchema]} />
       <MarketingBreadcrumbs items={breadcrumbItems} />
       <CompetitorComparisonPage config={config} />
     </>

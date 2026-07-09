@@ -7,7 +7,7 @@ import { AnimatedCounter } from "./animated-counter";
 import { cn } from "@/lib/utils";
 
 interface Stat {
-  value: number;
+  value: number | string;
   suffix?: string;
   prefix?: string;
   label: string;
@@ -26,28 +26,20 @@ interface StatsSectionDarkProps {
 // Default stats for RepWell
 const defaultStats: Stat[] = [
   {
-    value: 150000,
-    suffix: "+",
-    label: "Surveys Sent Monthly",
-    decimals: 0,
+    value: "AI",
+    label: "Powered Insights",
   },
   {
-    value: 42,
-    suffix: "%",
-    label: "Average Response Rate",
-    decimals: 0,
+    value: "NPS",
+    label: "Survey Workflows",
   },
   {
-    value: 4.8,
-    suffix: "/5",
-    label: "Customer Satisfaction",
-    decimals: 1,
+    value: "GBP",
+    label: "Review Monitoring",
   },
   {
-    value: 99.9,
-    suffix: "%",
-    label: "Platform Uptime",
-    decimals: 1,
+    value: "Teams",
+    label: "Profile Management",
   },
 ];
 
@@ -62,13 +54,17 @@ function DarkStat({ stat, index }: { stat: Stat; index: number }) {
       className="text-center"
     >
       <div className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2">
-        <AnimatedCounter
-          value={stat.value}
-          prefix={stat.prefix || ""}
-          suffix={stat.suffix || ""}
-          decimals={stat.decimals || 0}
-          duration={2.5}
-        />
+        {typeof stat.value === "number" ? (
+          <AnimatedCounter
+            value={stat.value}
+            prefix={stat.prefix || ""}
+            suffix={stat.suffix || ""}
+            decimals={stat.decimals || 0}
+            duration={2.5}
+          />
+        ) : (
+          stat.value
+        )}
       </div>
       <div className="font-sans text-sm md:text-base text-repwell-sage-100/80">
         {stat.label}

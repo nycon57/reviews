@@ -64,7 +64,7 @@ const defaultAvatars: FloatingAvatar[] = [
   },
   {
     src: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-    alt: "Mortgage professional",
+    alt: "Client-facing professional",
     ringColor: "ring-repwell-teal-400",
     position: "top-[45%] -translate-y-1/2 left-[3%] md:left-[6%]",
     delay: 0.3,

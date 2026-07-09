@@ -323,7 +323,11 @@ export function ReviewShareAssets({
                             className="gap-1"
                             asChild
                           >
-                            <a href={assetUrl} download>
+                            <a
+                              href={assetUrl}
+                              download
+                              aria-label={`Download ${label} asset from ${formatDate(asset.created_at)}`}
+                            >
                               <DownloadSimple className="h-3.5 w-3.5" />
                             </a>
                           </Button>
@@ -362,7 +366,7 @@ export function ReviewShareAssets({
                 />
               )}
               <Button asChild variant="outline" className="gap-1.5">
-                <a href={previewAsset.url} download>
+                <a href={previewAsset.url} download aria-label={`Download ${previewAsset.label} asset`}>
                   <DownloadSimple className="h-4 w-4" />
                   Download
                 </a>

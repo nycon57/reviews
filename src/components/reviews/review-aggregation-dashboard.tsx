@@ -326,7 +326,7 @@ export function ReviewAggregationDashboard({
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-700">
               {stats.withResponse}
             </div>
             <p className="text-sm text-muted-foreground">With Response</p>
@@ -351,6 +351,7 @@ export function ReviewAggregationDashboard({
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
+                  aria-label="Search reviews"
                   placeholder="Search reviews by text, customer name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -369,7 +370,7 @@ export function ReviewAggregationDashboard({
                 Filters:
               </div>
               <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); handleFilterChange(); }}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px]" aria-label="Filter reviews by status">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -382,7 +383,7 @@ export function ReviewAggregationDashboard({
               </Select>
 
               <Select value={sourceFilter} onValueChange={(v) => { setSourceFilter(v); handleFilterChange(); }}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-[130px]" aria-label="Filter reviews by source">
                   <SelectValue placeholder="Source" />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,7 +397,7 @@ export function ReviewAggregationDashboard({
               </Select>
 
               <Select value={memberFilter} onValueChange={(v) => { setMemberFilter(v); handleFilterChange(); }}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label="Filter reviews by professional">
                   <SelectValue placeholder="Professional" />
                 </SelectTrigger>
                 <SelectContent>
@@ -425,7 +426,7 @@ export function ReviewAggregationDashboard({
               )}
 
               <div className="ml-auto flex items-center gap-2">
-                <Button variant="outline" size="icon" onClick={refreshReviews} disabled={isPending}>
+                <Button variant="outline" size="icon" onClick={refreshReviews} disabled={isPending} aria-label="Refresh reviews">
                   <RefreshCcw className={cn("h-4 w-4", isPending && "animate-spin")} />
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleExport} disabled={isPending}>
@@ -518,6 +519,7 @@ export function ReviewAggregationDashboard({
                   id="select-all"
                   checked={selectedIds.size === reviews.length && reviews.length > 0}
                   onCheckedChange={toggleSelectAll}
+                  aria-label="Select all reviews"
                 />
                 <Label htmlFor="select-all" className="text-sm cursor-pointer">
                   Select all
@@ -540,8 +542,7 @@ export function ReviewAggregationDashboard({
               {reviews.map((review) => (
                 <AnimatedItem
                   key={review.id}
-                  className="flex gap-4 p-4 transition-colors hover:bg-muted/50 cursor-pointer"
-                  onClick={() => router.push(`/dashboard/reviews/${review.id}`)}
+                  className="flex gap-4 p-4 transition-colors hover:bg-muted/50"
                 >
                   <div
                     className="flex items-start pt-1"
@@ -550,9 +551,10 @@ export function ReviewAggregationDashboard({
                     <Checkbox
                       checked={selectedIds.has(review.id)}
                       onCheckedChange={() => toggleSelection(review.id)}
+                      aria-label={`Select review from ${review.customerName || "Anonymous"}`}
                     />
                   </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-repwell-teal-500 shrink-0">
                     {review.customerName
                       ? review.customerName
                           .split(" ")
@@ -607,7 +609,7 @@ export function ReviewAggregationDashboard({
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span>{formatDate(review.reviewDate)}</span>
                         {review.responseText && (
-                          <span className="flex items-center gap-1 text-green-600">
+                          <span className="flex items-center gap-1 text-green-700">
                             <MessageSquare className="h-3 w-3" />
                             Responded
                           </span>
@@ -626,6 +628,7 @@ export function ReviewAggregationDashboard({
                           size="sm"
                           variant="ghost"
                           onClick={() => router.push(`/dashboard/reviews/${review.id}`)}
+                          aria-label={`View details for review from ${review.customerName || "Anonymous"}`}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -639,6 +642,7 @@ export function ReviewAggregationDashboard({
                               href={review.sourceUrl}
                               target="_blank"
                               rel="noopener noreferrer"
+                              aria-label={`Open source review from ${review.customerName || "Anonymous"}`}
                             >
                               <ExternalLink className="h-4 w-4" />
                             </a>
@@ -646,7 +650,7 @@ export function ReviewAggregationDashboard({
                         )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button size="sm" variant="ghost">
+                            <Button size="sm" variant="ghost" aria-label={`Actions for review from ${review.customerName || "Anonymous"}`}>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>

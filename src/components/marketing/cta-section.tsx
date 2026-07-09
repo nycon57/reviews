@@ -185,15 +185,16 @@ export function CTASection({
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <Link href="/contact">
-                  <Button
+                <Button
+                  asChild
                     size="lg"
                     className="group w-full bg-white text-repwell-teal-500 shadow-lg hover:bg-repwell-sage-100 md:w-fit"
                   >
+                  <Link href="/contact">
                     Get in touch to learn more
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </motion.div>
             </div>
           </div>

@@ -84,7 +84,7 @@ export function MobileNav({ className }: MobileNavProps) {
             {sections.map((section) => (
               <React.Fragment key={section.label}>
                 <Separator className="my-3" />
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/70 dark:text-repwell-sage-100/50 px-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-repwell-teal-400 dark:text-repwell-sage-100 px-3">
                   {section.label}
                 </p>
                 {section.items.map((item) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRef } from "react";
 import { House, PaperPlaneRight } from "@phosphor-icons/react";
 import { IconContainer } from "@/components/shared";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ userName }: DashboardHeaderProps) {
   const firstName = userName?.split(" ")[0] || "there";
   const [dialogOpen, setDialogOpen] = useState(false);
+  const requestButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
     <>
@@ -30,7 +32,7 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
             </p>
           </div>
         </div>
-        <Button onClick={() => setDialogOpen(true)} size="sm">
+        <Button ref={requestButtonRef} onClick={() => setDialogOpen(true)} size="sm">
           <PaperPlaneRight className="mr-1.5 h-4 w-4" />
           Send Review Request
         </Button>
@@ -39,6 +41,7 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSuccess={() => setDialogOpen(false)}
+        restoreFocusRef={requestButtonRef}
       />
     </>
   );

@@ -163,6 +163,7 @@ export function HelpCenter() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              aria-label="Search help articles"
               placeholder="Search for help..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -307,7 +308,7 @@ export function HelpCenter() {
       <div className="text-center text-sm text-muted-foreground py-4">
         <p>
           Can't find what you're looking for?{" "}
-          <a href="mailto:support@repwell.com" className="text-primary hover:underline">
+          <a href="mailto:support@repwell.com" className="font-medium text-repwell-teal-400 underline">
             Contact support
           </a>{" "}
           and we'll help you out.

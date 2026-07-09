@@ -267,6 +267,7 @@ export function SurveyTemplatesList() {
             <div className="relative flex-1 min-w-[200px]">
               <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
+                aria-label="Search survey templates"
                 placeholder="Search templates..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -277,7 +278,7 @@ export function SurveyTemplatesList() {
               value={statusFilter}
               onValueChange={(v) => setStatusFilter(v as "all" | "active" | "inactive")}
             >
-              <SelectTrigger className="h-9 w-[140px]">
+              <SelectTrigger className="h-9 w-[140px]" aria-label="Filter survey templates by status">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -346,7 +347,7 @@ export function SurveyTemplatesList() {
                             variant="outline"
                             className={
                               template.isActive
-                                ? "border-green-500 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30"
+                                ? "border-green-700 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30"
                                 : "border-border text-muted-foreground"
                             }
                           >

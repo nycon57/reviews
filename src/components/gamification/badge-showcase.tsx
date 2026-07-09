@@ -134,7 +134,7 @@ export function BadgeShowcase({
         {/* In Progress */}
         {showProgress && inProgress.length > 0 && (
           <div className="pt-3 border-t border-border/50 space-y-3">
-            <h4 className="text-xs font-medium uppercase tracking-wider text-repwell-teal-300">
+              <h4 className="text-xs font-medium uppercase tracking-wider text-repwell-teal-400">
               In Progress
             </h4>
             {inProgress.map((bp) => (
@@ -154,7 +154,12 @@ export function BadgeShowcase({
                       {bp.percentComplete}%
                     </span>
                   </div>
-                  <Progress value={bp.percentComplete} className="h-1.5" />
+                  <Progress
+                    value={bp.percentComplete}
+                    className="h-1.5"
+                    aria-label={`${bp.badge.name} badge progress`}
+                    aria-valuetext={`${bp.percentComplete}% complete`}
+                  />
                 </div>
               </div>
             ))}

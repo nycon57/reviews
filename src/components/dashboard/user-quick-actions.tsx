@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import {
   Star,
@@ -41,6 +42,7 @@ interface UserQuickActionsProps {
 
 export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProps) {
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const requestButtonRef = useRef<HTMLButtonElement>(null);
   const [copied, setCopied] = useState(false);
   const origin = useOrigin();
   const profileUrl = origin && profileSlug ? `${origin}/pro/${profileSlug}` : null;
@@ -203,6 +205,7 @@ export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProp
             return (
               <button
                 key={action.title}
+                ref={action.title === "Send Review Request" ? requestButtonRef : undefined}
                 type="button"
                 onClick={action.onClick}
                 className={`${cardClassName} w-full text-left`}
@@ -228,6 +231,7 @@ export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProp
         open={requestDialogOpen}
         onOpenChange={setRequestDialogOpen}
         onSuccess={() => setRequestDialogOpen(false)}
+        restoreFocusRef={requestButtonRef}
       />
     </>
   );

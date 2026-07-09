@@ -159,7 +159,7 @@ export function UserRecentReviews({
         </CardTitle>
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={handleFilterChange}>
-            <SelectTrigger className="h-8 w-[132px]">
+            <SelectTrigger className="h-8 w-[132px]" aria-label="Filter recent reviews by status">
               <Filter className="mr-1 h-3 w-3" />
               <SelectValue placeholder="All" />
             </SelectTrigger>

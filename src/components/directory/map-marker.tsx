@@ -74,6 +74,8 @@ export function MapMarker({
     <Marker
       position={[professional.latitude, professional.longitude]}
       icon={icon}
+      title={professional.full_name}
+      alt={`${professional.full_name} location`}
       eventHandlers={{
         mouseover: () => setIsHovered(true),
         mouseout: () => setIsHovered(false),

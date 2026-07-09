@@ -20,7 +20,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Form,
@@ -47,7 +46,7 @@ function LoginPageFallback() {
   return (
     <Card>
       <CardHeader variant="plain" className="text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <h1 className="text-2xl font-semibold leading-none tracking-tight text-heading-accent">Welcome back</h1>
         <CardDescription>
           Sign in to your account to continue
         </CardDescription>
@@ -173,7 +172,7 @@ function LoginContent() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Mail className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Check your email</CardTitle>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight text-heading-accent">Check your email</h1>
           <CardDescription>
             We&apos;ve sent a magic link to{" "}
             <span className="font-medium text-foreground">
@@ -199,7 +198,7 @@ function LoginContent() {
             Didn&apos;t receive the email?{" "}
             <button
               onClick={() => onMagicLinkSubmit(magicLinkForm.getValues())}
-              className="text-primary hover:underline disabled:opacity-60 disabled:no-underline"
+              className="font-medium text-repwell-teal-400 underline disabled:opacity-60 disabled:no-underline"
               disabled={isLoading || resendCooldown > 0}
             >
               {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend"}
@@ -213,7 +212,7 @@ function LoginContent() {
   return (
     <Card>
       <CardHeader variant="plain" className="text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <h1 className="text-2xl font-semibold leading-none tracking-tight text-heading-accent">Welcome back</h1>
         <CardDescription>
           Sign in to your account to continue
         </CardDescription>
@@ -264,17 +263,17 @@ function LoginContent() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
                         <Input
                           type="email"
                           placeholder="you@example.com"
                           className="pl-10"
                           {...field}
                         />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -293,17 +292,17 @@ function LoginContent() {
                         Forgot password?
                       </Link>
                     </div>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
                         <Input
                           type="password"
                           placeholder="Enter your password"
                           className="pl-10"
                           {...field}
                         />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -332,17 +331,17 @@ function LoginContent() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
                         <Input
                           type="email"
                           placeholder="you@example.com"
                           className="pl-10"
                           {...field}
                         />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -367,7 +366,7 @@ function LoginContent() {
       <CardFooter>
         <p className="w-full text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-primary hover:underline">
+          <Link href="/signup" className="font-medium text-repwell-teal-400 underline">
             Sign up
           </Link>
         </p>

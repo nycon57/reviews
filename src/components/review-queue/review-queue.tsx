@@ -119,6 +119,7 @@ export function ReviewQueueContent() {
                   id="select-all"
                   checked={state.selectedIds.size === state.reviews.length && state.reviews.length > 0}
                   onCheckedChange={actions.toggleSelectAll}
+                  aria-label="Select all reviews"
                 />
                 <Label htmlFor="select-all" className="text-sm cursor-pointer">Select all</Label>
               </div>

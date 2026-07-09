@@ -461,9 +461,9 @@ export function ReviewDetailView({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 className="font-semibold text-xl text-heading truncate">
+                    <h1 className="font-semibold text-xl text-heading truncate">
                       {review.customerName || "Anonymous"}
-                    </h2>
+                    </h1>
                     <div className="flex items-center gap-2 shrink-0">
                       <ReviewStatusBadge status={review.status} />
                       {hasOpenDispute && (

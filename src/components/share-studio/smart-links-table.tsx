@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
+import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Archive,
@@ -201,22 +201,13 @@ export function SmartLinksTable({ initialData, basePath }: SmartLinksTableProps)
     }
   };
 
-  const handleRowKeyDown = (
-    event: KeyboardEvent<HTMLTableRowElement>,
-    link: SmartLinkRow
-  ) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      setAnalyticsLink(link);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-soft lg:flex-row lg:items-center lg:justify-between">
         <form className="flex flex-1 flex-col gap-2 sm:flex-row" onSubmit={handleSearch}>
           <Input
             name="search"
+            aria-label="Search share assets"
             defaultValue={initialData.search}
             placeholder="Search title or slug"
             className="sm:max-w-sm"
@@ -235,7 +226,7 @@ export function SmartLinksTable({ initialData, basePath }: SmartLinksTableProps)
               })
             }
           >
-            <SelectTrigger className="w-[170px]">
+            <SelectTrigger className="w-[170px]" aria-label="Filter Smart Links by status">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -284,12 +275,7 @@ export function SmartLinksTable({ initialData, basePath }: SmartLinksTableProps)
               initialData.items.map((link) => (
                 <TableRow
                   key={link.id}
-                  role="button"
-                  tabIndex={0}
-                  className="cursor-pointer"
                   data-state={selectedIds.has(link.id) ? "selected" : undefined}
-                  onClick={() => setAnalyticsLink(link)}
-                  onKeyDown={(event) => handleRowKeyDown(event, link)}
                 >
                   <TableCell onClick={(event) => event.stopPropagation()}>
                     <Checkbox
@@ -310,7 +296,7 @@ export function SmartLinksTable({ initialData, basePath }: SmartLinksTableProps)
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          aria-label="Copy Smart Link"
+                          aria-label={`Copy Smart Link ${link.title}`}
                           onClick={(event) => {
                             event.stopPropagation();
                             void copyUrl(link.urlPath);
@@ -323,7 +309,7 @@ export function SmartLinksTable({ initialData, basePath }: SmartLinksTableProps)
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          aria-label="Open Smart Link"
+                          aria-label={`Open Smart Link ${link.title}`}
                           onClick={(event) => event.stopPropagation()}
                         >
                           <a href={link.urlPath} target="_blank" rel="noreferrer">
@@ -355,6 +341,16 @@ export function SmartLinksTable({ initialData, basePath }: SmartLinksTableProps)
                         <CursorClick className="h-3.5 w-3.5 text-muted-foreground" />
                         {link.stats7d.clicks.toLocaleString()}
                       </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2"
+                        onClick={() => setAnalyticsLink(link)}
+                        aria-label={`View analytics for ${link.title}`}
+                      >
+                        Analytics
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

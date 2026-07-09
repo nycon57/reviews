@@ -67,11 +67,12 @@ export default async function DashboardPage() {
   const userResult = await getCurrentUser();
   const user = userResult.success ? userResult.data : null;
   const userName = user?.fullName ?? null;
+  const userId = user?.id ?? null;
 
   return (
     <DashboardEntrance className="flex-1 space-y-8">
       {/* Page header with Send Review Request CTA */}
-      <DashboardHeader userName={userName} />
+      <DashboardHeader userName={userName} userId={userId} />
 
       {/* Stats cards */}
       <Suspense fallback={<StatsRowSkeleton />}>
@@ -79,7 +80,7 @@ export default async function DashboardPage() {
       </Suspense>
 
       {/* Quick Actions */}
-      <UserQuickActions profileSlug={user?.slug ?? null} userName={userName} />
+      <UserQuickActions profileSlug={user?.slug ?? null} userName={userName} userId={userId} />
 
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">

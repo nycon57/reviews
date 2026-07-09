@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import {
   Sparkle as Sparkles,
 } from "@phosphor-icons/react/dist/ssr";
-import { ChartSkeleton, CardSkeleton } from "@/components/shared";
+import { ChartSkeleton, CardSkeleton, ErrorState } from "@/components/shared";
 import {
   SentimentTrendChart,
   ThemeCloud,
@@ -67,9 +67,11 @@ async function InsightsSections({ userId }: { userId?: string }) {
 
   if (!result.success || !result.data) {
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-        Failed to load AI insights data.
-      </div>
+      <ErrorState
+        title="AI insights couldn't load"
+        description="We couldn't refresh your insights. Try again, or contact support if it keeps happening."
+        compact
+      />
     );
   }
 

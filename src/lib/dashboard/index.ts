@@ -13,6 +13,7 @@ export type {
   UserProfile,
   DashboardMetrics,
   RecentReview,
+  RecentReviewStatusFilter,
   TrendDataPoint,
   ProfileCompletionItem,
 } from "./user-actions";

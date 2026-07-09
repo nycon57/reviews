@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { processWelcomeSequenceQueue } from "@/lib/email/welcome-sequence-service";
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 
 // Zod schema for query parameters
 const cronParamsSchema = z.object({
@@ -47,50 +48,52 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    // Validate and parse query params with Zod
-    const url = new URL(request.url);
-    const parseResult = cronParamsSchema.safeParse({
-      batch_size: url.searchParams.get("batch_size") ?? undefined,
-    });
+  return withCronHeartbeat("process-welcome-sequence", async () => {
+    try {
+      // Validate and parse query params with Zod
+      const url = new URL(request.url);
+      const parseResult = cronParamsSchema.safeParse({
+        batch_size: url.searchParams.get("batch_size") ?? undefined,
+      });
 
-    if (!parseResult.success) {
+      if (!parseResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parseResult.error.errors[0]?.message || "Invalid parameters",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const { batch_size: batchSize } = parseResult.data;
+
+      // Process the welcome sequence queue
+      const result = await processWelcomeSequenceQueue(batchSize);
+
+      return NextResponse.json({
+        success: true,
+        processed: result.processed,
+        failed: result.failed,
+        skipped: result.skipped,
+        exited: result.exited,
+        errors: result.errors.slice(0, 10), // Limit error details returned
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Welcome sequence queue cron job error:", error);
+
       return NextResponse.json(
         {
           success: false,
-          error: parseResult.error.errors[0]?.message || "Invalid parameters",
+          error: error instanceof Error ? error.message : "Unknown error",
           timestamp: new Date().toISOString(),
         },
-        { status: 400 }
+        { status: 500 }
       );
     }
-
-    const { batch_size: batchSize } = parseResult.data;
-
-    // Process the welcome sequence queue
-    const result = await processWelcomeSequenceQueue(batchSize);
-
-    return NextResponse.json({
-      success: true,
-      processed: result.processed,
-      failed: result.failed,
-      skipped: result.skipped,
-      exited: result.exited,
-      errors: result.errors.slice(0, 10), // Limit error details returned
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Welcome sequence queue cron job error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+  });
 }
 
 // Vercel Cron triggers this endpoint with a GET request (carrying the

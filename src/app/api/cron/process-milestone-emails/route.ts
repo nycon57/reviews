@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { z } from "zod";
 import { processPendingMilestoneEmails } from "@/lib/milestones/actions";
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 
 export const maxDuration = 300;
 
@@ -36,10 +37,7 @@ function verifyCronSecret(request: NextRequest): boolean {
   }
 
   try {
-    return timingSafeEqual(
-      Buffer.from(authHeader, "utf8"),
-      Buffer.from(expectedHeader, "utf8")
-    );
+    return timingSafeEqual(Buffer.from(authHeader, "utf8"), Buffer.from(expectedHeader, "utf8"));
   } catch {
     return false;
   }
@@ -58,52 +56,54 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const url = new URL(request.url);
-    const parseResult = cronParamsSchema.safeParse({
-      batch_size: url.searchParams.get("batch_size") ?? undefined,
-    });
+  return withCronHeartbeat("process-milestone-emails", async () => {
+    try {
+      const url = new URL(request.url);
+      const parseResult = cronParamsSchema.safeParse({
+        batch_size: url.searchParams.get("batch_size") ?? undefined,
+      });
 
-    if (!parseResult.success) {
+      if (!parseResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parseResult.error.errors[0]?.message || "Invalid parameters",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const result = await processPendingMilestoneEmails(parseResult.data.batch_size);
+
+      if (!result.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: result.error,
+            timestamp: new Date().toISOString(),
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        ...result.data,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Milestone email queue cron job error:", error);
       return NextResponse.json(
         {
           success: false,
-          error: parseResult.error.errors[0]?.message || "Invalid parameters",
-          timestamp: new Date().toISOString(),
-        },
-        { status: 400 }
-      );
-    }
-
-    const result = await processPendingMilestoneEmails(parseResult.data.batch_size);
-
-    if (!result.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.error,
+          error: error instanceof Error ? error.message : "Unknown error",
           timestamp: new Date().toISOString(),
         },
         { status: 500 }
       );
     }
-
-    return NextResponse.json({
-      success: true,
-      ...result.data,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Milestone email queue cron job error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+  });
 }
 
 // Vercel Cron triggers this endpoint with a GET request (carrying the

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { z } from "zod";
 import { processPendingGoogleReplies } from "@/lib/google";
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 
 const cronParamsSchema = z.object({
   batch_size: z.coerce
@@ -34,10 +35,7 @@ function verifyCronSecret(request: NextRequest): boolean {
   }
 
   try {
-    return timingSafeEqual(
-      Buffer.from(authHeader, "utf8"),
-      Buffer.from(expectedHeader, "utf8")
-    );
+    return timingSafeEqual(Buffer.from(authHeader, "utf8"), Buffer.from(expectedHeader, "utf8"));
   } catch {
     return false;
   }
@@ -57,44 +55,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const url = new URL(request.url);
-    const parseResult = cronParamsSchema.safeParse({
-      batch_size: url.searchParams.get("batch_size") ?? undefined,
-    });
+  return withCronHeartbeat("process-google-replies", async () => {
+    try {
+      const url = new URL(request.url);
+      const parseResult = cronParamsSchema.safeParse({
+        batch_size: url.searchParams.get("batch_size") ?? undefined,
+      });
 
-    if (!parseResult.success) {
+      if (!parseResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parseResult.error.errors[0]?.message || "Invalid parameters",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const result = await processPendingGoogleReplies(parseResult.data.batch_size);
+
+      return NextResponse.json({
+        success: true,
+        processed: result.processed,
+        posted: result.posted,
+        failed: result.failed,
+        errors: result.errors.slice(0, 10),
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Google reply queue cron job error:", error);
       return NextResponse.json(
         {
           success: false,
-          error: parseResult.error.errors[0]?.message || "Invalid parameters",
+          error: error instanceof Error ? error.message : "Unknown error",
           timestamp: new Date().toISOString(),
         },
-        { status: 400 }
+        { status: 500 }
       );
     }
-
-    const result = await processPendingGoogleReplies(parseResult.data.batch_size);
-
-    return NextResponse.json({
-      success: true,
-      processed: result.processed,
-      posted: result.posted,
-      failed: result.failed,
-      errors: result.errors.slice(0, 10),
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Google reply queue cron job error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+  });
 }
 
 // Vercel Cron triggers this endpoint with a GET request (carrying the

@@ -36,9 +36,9 @@ function getCronRouteNames(): string[] {
 }
 
 function getScheduledPaths(): string[] {
-  const vercelConfig = JSON.parse(
-    readFileSync(path.join(REPO_ROOT, "vercel.json"), "utf8")
-  ) as { crons?: Array<{ path: string; schedule: string }> };
+  const vercelConfig = JSON.parse(readFileSync(path.join(REPO_ROOT, "vercel.json"), "utf8")) as {
+    crons?: Array<{ path: string; schedule: string }>;
+  };
   return (vercelConfig.crons ?? []).map((c) => c.path);
 }
 
@@ -54,9 +54,7 @@ describe("cron registration guard", () => {
 
   it("schedules every cron route (or exempts it with a reason)", () => {
     const unregistered = routeNames.filter(
-      (name) =>
-        !scheduledPaths.has(routeNameToPath(name)) &&
-        !(name in EXEMPT)
+      (name) => !scheduledPaths.has(routeNameToPath(name)) && !(name in EXEMPT)
     );
 
     expect(
@@ -73,9 +71,7 @@ describe("cron registration guard", () => {
 
     expect(
       stale,
-      `vercel.json schedules paths with no matching route directory: ${stale.join(
-        ", "
-      )}.`
+      `vercel.json schedules paths with no matching route directory: ${stale.join(", ")}.`
     ).toEqual([]);
   });
 
@@ -95,13 +91,8 @@ describe("cron registration guard", () => {
     for (const name of routeNames) {
       if (!scheduledPaths.has(routeNameToPath(name))) continue;
 
-      const source = readFileSync(
-        path.join(CRON_DIR, name, "route.ts"),
-        "utf8"
-      );
-      const getMatch = source.match(
-        /export async function GET[\s\S]*?\n}\n/
-      );
+      const source = readFileSync(path.join(CRON_DIR, name, "route.ts"), "utf8");
+      const getMatch = source.match(/export async function GET[\s\S]*?\n}\n/);
       const getBody = getMatch?.[0] ?? "";
       const delegatesToPost = /return\s+POST\s*\(/.test(getBody);
       const doesWork = /\bawait\b/.test(getBody);
@@ -118,17 +109,30 @@ describe("cron registration guard", () => {
     ).toEqual([]);
   });
 
+  it("every scheduled route records a cron heartbeat", () => {
+    const missingHeartbeat = routeNames.filter((name) => {
+      if (!scheduledPaths.has(routeNameToPath(name))) return false;
+
+      const source = readFileSync(path.join(CRON_DIR, name, "route.ts"), "utf8");
+      return !/\bwithCronHeartbeat\s*\(/.test(source);
+    });
+
+    expect(
+      missingHeartbeat,
+      `These scheduled routes do not call withCronHeartbeat: ${missingHeartbeat.join(", ")}.`
+    ).toEqual([]);
+  });
+
   it("every scheduled cron uses a well-formed 5-field cron expression", () => {
-    const vercelConfig = JSON.parse(
-      readFileSync(path.join(REPO_ROOT, "vercel.json"), "utf8")
-    ) as { crons?: Array<{ path: string; schedule: string }> };
+    const vercelConfig = JSON.parse(readFileSync(path.join(REPO_ROOT, "vercel.json"), "utf8")) as {
+      crons?: Array<{ path: string; schedule: string }>;
+    };
 
     for (const cron of vercelConfig.crons ?? []) {
       const fields = cron.schedule.trim().split(/\s+/);
-      expect(
-        fields.length,
-        `${cron.path} has an invalid cron schedule: "${cron.schedule}"`
-      ).toBe(5);
+      expect(fields.length, `${cron.path} has an invalid cron schedule: "${cron.schedule}"`).toBe(
+        5
+      );
     }
   });
 });

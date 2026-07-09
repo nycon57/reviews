@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { processVideoTestimonialAIQueue } from "@/lib/video-testimonials/public-actions";
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 
 // Zod schema for query parameters
 const cronParamsSchema = z.object({
@@ -42,54 +43,53 @@ function verifyCronSecret(request: NextRequest): boolean {
 export async function POST(request: NextRequest) {
   // Verify the request is authorized
   if (!verifyCronSecret(request)) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    // Validate and parse query params with Zod
-    const url = new URL(request.url);
-    const parseResult = cronParamsSchema.safeParse({
-      batch_size: url.searchParams.get("batch_size") ?? undefined,
-    });
+  return withCronHeartbeat("process-video-ai", async () => {
+    try {
+      // Validate and parse query params with Zod
+      const url = new URL(request.url);
+      const parseResult = cronParamsSchema.safeParse({
+        batch_size: url.searchParams.get("batch_size") ?? undefined,
+      });
 
-    if (!parseResult.success) {
+      if (!parseResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parseResult.error.errors[0]?.message || "Invalid parameters",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const { batch_size: batchSize } = parseResult.data;
+
+      // Process the video testimonial AI queue
+      const result = await processVideoTestimonialAIQueue(batchSize);
+
+      return NextResponse.json({
+        success: true,
+        processed: result.processed,
+        failed: result.failed,
+        errors: result.errors.slice(0, 10), // Limit error details returned
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Video testimonial AI queue cron job error:", error);
+
       return NextResponse.json(
         {
           success: false,
-          error: parseResult.error.errors[0]?.message || "Invalid parameters",
+          error: error instanceof Error ? error.message : "Unknown error",
           timestamp: new Date().toISOString(),
         },
-        { status: 400 }
+        { status: 500 }
       );
     }
-
-    const { batch_size: batchSize } = parseResult.data;
-
-    // Process the video testimonial AI queue
-    const result = await processVideoTestimonialAIQueue(batchSize);
-
-    return NextResponse.json({
-      success: true,
-      processed: result.processed,
-      failed: result.failed,
-      errors: result.errors.slice(0, 10), // Limit error details returned
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Video testimonial AI queue cron job error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+  });
 }
 
 /**

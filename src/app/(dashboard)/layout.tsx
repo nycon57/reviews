@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { DashboardLayout } from "@/components/dashboard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedSignOut, unifiedGetSession, unifiedGetUser } from "@/lib/auth/actions";
@@ -21,6 +22,7 @@ export default async function DashboardRootLayout({
 }) {
   const authUser = await unifiedGetUser();
   const authSession = await unifiedGetSession();
+  const cookieStore = await cookies();
 
   if (!authUser) {
     redirect("/login");
@@ -131,6 +133,9 @@ export default async function DashboardRootLayout({
       userContext={userContext}
       impersonation={impersonation}
       onSignOut={unifiedSignOut}
+      initialSidebarCollapsed={
+        cookieStore.get("repwell_sidebar_collapsed")?.value === "true"
+      }
     >
       {children}
     </DashboardLayout>

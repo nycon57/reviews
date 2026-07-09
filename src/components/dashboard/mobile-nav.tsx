@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -21,6 +21,7 @@ import {
   ICON_MAP,
   type FilteredNavItem,
 } from "@/lib/nav";
+import { isNavHrefActive } from "@/lib/nav/active";
 import { TaskBadge } from "@/components/dashboard/task-badge";
 
 interface MobileNavProps {
@@ -30,14 +31,22 @@ interface MobileNavProps {
 export function MobileNav({ className }: MobileNavProps) {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { coreItems, sections, bottomItems } = useFilteredNav();
 
-  const isActive = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === "/dashboard";
-    }
-    return pathname.startsWith(href);
-  };
+  const allHrefs = React.useMemo(
+    () => [
+      ...coreItems.map((item) => item.href),
+      ...sections.flatMap((section) => section.items.map((item) => item.href)),
+      ...bottomItems.map((item) => item.href),
+    ],
+    [coreItems, sections, bottomItems]
+  );
+
+  const isActive = React.useCallback(
+    (href: string) => isNavHrefActive(href, pathname, searchParams, allHrefs),
+    [pathname, searchParams, allHrefs]
+  );
 
   const handleNavClick = () => {
     setOpen(false);

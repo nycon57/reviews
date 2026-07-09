@@ -1,6 +1,12 @@
 import { Suspense } from "react";
 import { DashboardEntrance } from "@/components/dashboard/dashboard-entrance";
-import { StatsRowSkeleton, ReviewListSkeleton, CardSkeleton, EmptyState } from "@/components/shared";
+import {
+  StatsRowSkeleton,
+  ReviewListSkeleton,
+  CardSkeleton,
+  EmptyState,
+  WelcomeBanner,
+} from "@/components/shared";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import {
   UserStatsCards,
@@ -16,7 +22,9 @@ import {
   getUserMetrics,
   getUserRecentReviews,
 } from "@/lib/dashboard";
+import { getActivationChecklistState } from "@/lib/dashboard/activation-checklist";
 import { getCurrentUser } from "@/lib/users/actions";
+import type { User } from "@/lib/users/types";
 
 export const metadata = {
   title: "Dashboard | RepWell",
@@ -62,6 +70,22 @@ function FullProfileCompletionCard() {
   return <ProfileCompletionCard showMilestones showTips />;
 }
 
+async function ActivationChecklist({ user }: { user: User }) {
+  const checklist = await getActivationChecklistState(user);
+
+  if (checklist.isComplete) {
+    return null;
+  }
+
+  return (
+    <WelcomeBanner
+      userId={user.id}
+      userName={user.fullName ?? undefined}
+      completionPercent={checklist.completionPercent}
+      steps={checklist.steps}
+    />
+  );
+}
 
 export default async function DashboardPage() {
   const userResult = await getCurrentUser();
@@ -72,6 +96,12 @@ export default async function DashboardPage() {
     <DashboardEntrance className="flex-1 space-y-8">
       {/* Page header with Send Review Request CTA */}
       <DashboardHeader userName={userName} />
+
+      {user && (
+        <Suspense fallback={null}>
+          <ActivationChecklist user={user} />
+        </Suspense>
+      )}
 
       {/* Stats cards */}
       <Suspense fallback={<StatsRowSkeleton />}>

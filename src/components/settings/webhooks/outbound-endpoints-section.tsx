@@ -1,7 +1,6 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
-import { formatDistanceToNow } from "date-fns";
 import {
   CaretDown,
   CheckCircle,
@@ -49,7 +48,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import {
   createOutboundEndpoint,
   deleteOutboundEndpoint,
@@ -59,7 +58,7 @@ import {
   type OutboundWebhookDelivery,
   type OutboundWebhookEvent,
   type OutboundWebhookSubscription,
-} from "./outbound-webhook-actions";
+} from "@/lib/webhooks/outbound/actions";
 
 const eventOptions: Array<{ value: OutboundWebhookEvent; label: string }> = [
   { value: "review.published", label: "Review published" },
@@ -75,7 +74,7 @@ const eventLabels = Object.fromEntries(
 
 function formatDate(value: string | null): string {
   if (!value) return "Never";
-  return formatDistanceToNow(new Date(value), { addSuffix: true });
+  return formatRelativeTime(value);
 }
 
 function statusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {

@@ -22,8 +22,8 @@ import {
   listShareStudioAssetsForOrganization,
   listSmartLinksForOrganization,
 } from "@/lib/share-studio/hub-service";
+import type { ActionResult } from "@/lib/types/action-result";
 import type {
-  ActionResult,
   ShareStudioAssetsInput,
   ShareStudioAssetsResult,
   SmartLinkAnalyticsResult,

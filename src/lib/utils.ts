@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import { formatDistanceToNow, type FormatDistanceToNowOptions } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -27,6 +28,16 @@ export function formatDateTime(date: Date | string | null | undefined, fallback 
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
+  });
+}
+
+export function formatRelativeTime(
+  date: Date | string | number,
+  options?: FormatDistanceToNowOptions
+): string {
+  return formatDistanceToNow(date instanceof Date ? date : new Date(date), {
+    addSuffix: true,
+    ...options,
   });
 }
 

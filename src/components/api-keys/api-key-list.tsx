@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { formatDistanceToNow } from 'date-fns';
 import {
   Key,
   Copy,
@@ -40,6 +39,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { deleteApiKey, rotateApiKey } from '@/lib/api-keys/actions';
 import type { ApiKey, CreateApiKeyResult } from '@/lib/api-keys/types';
+import { formatRelativeTime } from '@/lib/utils';
 
 interface ApiKeyListProps {
   apiKeys: ApiKey[];
@@ -229,18 +229,14 @@ export function ApiKeyList({
                   {apiKey.lastUsedAt && (
                     <span>
                       Last used{' '}
-                      {formatDistanceToNow(new Date(apiKey.lastUsedAt), {
-                        addSuffix: true,
-                      })}
+                      {formatRelativeTime(apiKey.lastUsedAt)}
                     </span>
                   )}
                   <span>{apiKey.requestCount.toLocaleString()} requests</span>
                   {apiKey.expiresAt && (
                     <span>
                       Expires{' '}
-                      {formatDistanceToNow(new Date(apiKey.expiresAt), {
-                        addSuffix: true,
-                      })}
+                      {formatRelativeTime(apiKey.expiresAt)}
                     </span>
                   )}
                 </div>

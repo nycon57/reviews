@@ -1,29 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
 import {
   Buildings,
   CheckCircle,
   Clock,
   Flag,
   ShieldWarning,
-  SpinnerGap,
   UserCircle,
   WarningCircle,
   XCircle,
 } from "@phosphor-icons/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import {
   dismissStaffDispute,
   upholdStaffDispute,
@@ -49,6 +37,8 @@ import {
 } from "@/lib/reviews/dispute-staff-actions";
 import { MIN_RESOLUTION_NOTE_LENGTH } from "@/lib/reviews/dispute-resolution";
 import { RatingStars } from "@/components/reviews/rating-stars";
+import { DisputeResolutionDialog } from "@/components/reviews/dispute-resolution-dialog";
+import { formatRelativeTime } from "@/lib/utils";
 
 type ResolutionKind = "uphold" | "dismiss";
 
@@ -63,7 +53,7 @@ interface StaffDisputesClientProps {
 }
 
 function formatAge(createdAt: string): string {
-  return formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+  return formatRelativeTime(createdAt);
 }
 
 function formatReporter(dispute: StaffDispute): string {
@@ -86,10 +76,6 @@ export function StaffDisputesClient({
   const [resolutionNote, setResolutionNote] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    setDisputes(initialDisputes);
-  }, [initialDisputes]);
 
   const oldestAge = useMemo(() => {
     if (!disputes.length) return "None";
@@ -337,86 +323,42 @@ export function StaffDisputesClient({
         </CardContent>
       </Card>
 
-      <AlertDialog
+      <DisputeResolutionDialog
+        primitive="alert"
         open={Boolean(pendingResolution)}
         onOpenChange={(open) => {
           if (!open) closeResolution();
         }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isUphold ? "Uphold dispute" : "Dismiss dispute"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {isUphold
-                ? "This will remove the live review and close the dispute."
-                : "This will keep the review live and close the dispute."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {activeDispute ? (
-            <div className="rounded-lg border border-border bg-muted/30 p-3">
-              <p className="text-sm font-medium text-heading">
-                {activeDispute.organizationName}
-              </p>
-              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                {activeDispute.review?.textExcerpt || "No written review provided"}
-              </p>
-            </div>
-          ) : null}
-
-          <div className="space-y-2">
-            <label
-              htmlFor="resolution-note"
-              className="text-sm font-medium text-heading"
-            >
-              Resolution note
-            </label>
-            <Textarea
-              id="resolution-note"
-              value={resolutionNote}
-              onChange={(event) => setResolutionNote(event.target.value)}
-              placeholder="Briefly explain the decision."
-              className="min-h-28"
-              disabled={isSubmitting}
-            />
-            <p className="text-xs text-muted-foreground">
-              {Math.max(
-                0,
-                MIN_RESOLUTION_NOTE_LENGTH - resolutionNote.trim().length
-              )} more
-              characters required.
-            </p>
-          </div>
-
-          {actionError ? (
-            <Alert variant="destructive">
-              <WarningCircle className="h-4 w-4" aria-hidden="true" />
-              <AlertTitle>Could not resolve dispute</AlertTitle>
-              <AlertDescription>{actionError}</AlertDescription>
-            </Alert>
-          ) : null}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-            <Button
-              variant={isUphold ? "destructive" : "default"}
-              onClick={submitResolution}
-              disabled={!noteIsValid || isSubmitting}
-            >
-              {isSubmitting ? (
-                <SpinnerGap className="h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : isUphold ? (
-                <XCircle className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <CheckCircle className="h-4 w-4" aria-hidden="true" />
-              )}
-              {isUphold ? "Remove review" : "Keep review"}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        mode={pendingResolution?.kind ?? null}
+        title={isUphold ? "Uphold dispute" : "Dismiss dispute"}
+        description={
+          isUphold
+            ? "This will remove the live review and close the dispute."
+            : "This will keep the review live and close the dispute."
+        }
+        summary={
+          activeDispute
+            ? {
+                title: activeDispute.organizationName,
+                description:
+                  activeDispute.review?.textExcerpt || "No written review provided",
+              }
+            : null
+        }
+        note={resolutionNote}
+        onNoteChange={setResolutionNote}
+        noteLabel="Resolution note"
+        notePlaceholder="Briefly explain the decision."
+        noteHelper={`${Math.max(
+          0,
+          MIN_RESOLUTION_NOTE_LENGTH - resolutionNote.trim().length
+        )} more characters required.`}
+        error={actionError}
+        isSubmitting={isSubmitting}
+        confirmDisabled={!noteIsValid}
+        confirmLabel={isUphold ? "Remove review" : "Keep review"}
+        onConfirm={submitResolution}
+      />
     </div>
   );
 }

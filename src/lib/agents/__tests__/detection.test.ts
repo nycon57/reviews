@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { classifyAgentUserAgent } from "@/lib/agents/detection";
+import {
+  AI_CRAWLER_BOT_NAMES,
+  classifyAgentUserAgent,
+} from "@/lib/agents/detection";
 
 describe("classifyAgentUserAgent", () => {
   it.each([
@@ -34,6 +37,8 @@ describe("classifyAgentUserAgent", () => {
     "FriendlyCrawler/1.0",
     "Some Spider (+https://example.com)",
     "ExampleBot/2.1",
+    "facebookexternalhit/1.1",
+    "WhatsApp/2.0",
   ])("classifies generic bot traffic as unknown: %s", (userAgent) => {
     expect(classifyAgentUserAgent(userAgent)).toEqual({
       botName: "UnknownBot",
@@ -54,5 +59,22 @@ describe("classifyAgentUserAgent", () => {
       botName: "Applebot-Extended",
       category: "llm",
     });
+  });
+
+  it("exports the AI crawler allow-list from the detection registry", () => {
+    expect(AI_CRAWLER_BOT_NAMES).toEqual(
+      expect.arrayContaining([
+        "GPTBot",
+        "OAI-SearchBot",
+        "ChatGPT-User",
+        "ClaudeBot",
+        "Claude-Web",
+        "anthropic-ai",
+        "PerplexityBot",
+        "Google-Extended",
+        "CCBot",
+      ])
+    );
+    expect(AI_CRAWLER_BOT_NAMES).not.toContain("Googlebot");
   });
 });

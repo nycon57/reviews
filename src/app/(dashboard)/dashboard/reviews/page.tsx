@@ -295,6 +295,9 @@ export default async function ReviewsPage({
           disputesContent={
             canManageDisputes ? (
               <DisputeQueue
+                key={`${openFlags.map((flag) => flag.id).join(":")}|${resolvedFlags
+                  .map((flag) => flag.id)
+                  .join(":")}`}
                 initialOpenFlags={openFlags}
                 initialResolvedFlags={resolvedFlags}
                 accountType={accountType}

@@ -340,6 +340,8 @@ function HowItWorksSection({ config }: { config: IndustryPageConfig }) {
  * Testimonials Section
  */
 function TestimonialsSection({ config }: { config: IndustryPageConfig }) {
+  if (config.testimonials.length === 0) return null;
+
   return (
     <section className="py-16 md:py-24 lg:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

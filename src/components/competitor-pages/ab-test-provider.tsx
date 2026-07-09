@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useState,
   type ReactNode,
 } from "react";
 import type { ABTestConfig, ABTestEvent, ABVariant, PageABTestConfig } from "@/lib/ab-testing";
@@ -70,9 +71,14 @@ const EMPTY_CONTEXT: ABTestContextValue = {
  */
 export function ABTestProvider({ children, config, slug }: ABTestProviderProps) {
   const { competitor } = useSwitchingFromContext();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const value = useMemo<ABTestContextValue>(() => {
-    if (!config) return EMPTY_CONTEXT;
+    if (!config || !isMounted) return EMPTY_CONTEXT;
 
     const assignments: Record<string, ABVariant> = {};
     const h1 = resolveTest(config.h1Test, assignments);
@@ -95,11 +101,11 @@ export function ABTestProvider({ children, config, slug }: ABTestProviderProps) 
       trackDemoBooked: () => trackEvents("demo_booked"),
       assignments,
     };
-  }, [config, slug, competitor]);
+  }, [config, slug, competitor, isMounted]);
 
   // Track page_view on mount for all active tests
   useEffect(() => {
-    if (!config) return;
+    if (!config || !isMounted) return;
     for (const [testId, variant] of Object.entries(value.assignments)) {
       trackABEvent(testId, variant, "page_view", slug, {
         switchingFrom: competitor ?? undefined,
@@ -107,7 +113,7 @@ export function ABTestProvider({ children, config, slug }: ABTestProviderProps) 
     }
     // Only fire on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isMounted]);
 
   return (
     <ABTestContext.Provider value={value}>{children}</ABTestContext.Provider>

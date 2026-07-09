@@ -6,11 +6,11 @@ import { CustomersGrid } from "@/components/customers/customers-grid";
 export const metadata: Metadata = {
   title: "Customer Stories | RepWell",
   description:
-    "See how companies across industries use RepWell to grow review volume, improve NPS scores, and build trust. Real results from real customers.",
+    "Explore RepWell customer stories as they become available.",
   openGraph: {
     title: "Customer Stories | RepWell",
     description:
-      "Real results from real customers. See how companies use RepWell to transform their reputation management.",
+      "Explore RepWell customer stories as they become available.",
     type: "website",
   },
 };
@@ -28,11 +28,10 @@ export default function CustomersPage() {
             Customer Stories
           </span>
           <h1 className="mt-4 font-display text-3xl font-bold text-repwell-teal-500 md:text-4xl lg:text-5xl">
-            Real Results from Real Companies
+            Customer Stories
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-repwell-teal-400">
-            See how teams across industries use RepWell to grow review volume,
-            improve customer satisfaction, and take control of their reputation.
+            We will publish verified customer stories here when they are ready.
           </p>
         </div>
       </section>
@@ -48,11 +47,11 @@ export default function CustomersPage() {
       <section className="bg-gradient-to-b from-repwell-teal-500 to-repwell-teal-400 py-16 text-white md:py-24">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
           <h2 className="mb-4 font-display text-2xl font-bold md:text-3xl">
-            Get Similar Results
+            Build Your Review Program
           </h2>
           <p className="mx-auto mb-8 max-w-lg text-repwell-sage-100">
-            Join hundreds of companies that trust RepWell to manage their
-            reputation and grow their business.
+            See how RepWell helps teams collect reviews, understand feedback,
+            and manage reputation workflows.
           </p>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link

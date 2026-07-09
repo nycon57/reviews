@@ -15,10 +15,10 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
     title: "Automated Review Collection That ",
     titleAccent: "Actually Works",
     description:
-      "Turn every happy customer into a 5-star review with perfectly-timed automated surveys and intelligent routing to Google, Zillow, and beyond.",
+      "Turn happy customer feedback into public reviews with timely automated surveys and intelligent routing to the right channels.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
-    stat: { value: "3x", label: "More reviews collected" },
+    stat: { value: "Reviews", label: "More reviews collected" },
   },
 
   problems: [
@@ -27,14 +27,14 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
       title: "Manual Follow-Up Takes Forever",
       description:
         "You're spending hours each week chasing customers for reviews. Most never respond, and your time is wasted.",
-      stat: { value: "12+", label: "hours/month wasted" },
+      stat: { value: "Insights", label: "hours/month wasted" },
     },
     {
       icon: "TrendingDown",
       title: "Low Response Rates",
       description:
-        "Email requests get ignored. Phone calls feel pushy. Without the right timing and channel, response rates stay below 5%.",
-      stat: { value: "<5%", label: "typical response rate" },
+        "Email requests get ignored. Phone calls feel pushy. Without the right timing and channel, feedback is easy to miss.",
+      stat: { value: "NPS", label: "typical response rate" },
     },
     {
       icon: "MessageSquareOff",
@@ -149,7 +149,7 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
       description: "Scale review collection across your organization",
       benefits: [
         "Multi-branch rollup dashboards",
-        "CRM and LOS integrations",
+        "CRM and workflow integrations",
         "Custom branding per branch",
         "Enterprise SSO and security",
       ],
@@ -163,26 +163,7 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
     { name: "Zillow", logoUrl: "/integrations/zillow.svg", category: "Reviews" },
   ],
 
-  testimonials: [
-    {
-      quote:
-        "RepWell helped me go from 15 Google reviews to over 100 in just 8 months. The automated follow-ups make all the difference.",
-      name: "Sarah Mitchell",
-      title: "Senior Loan Officer",
-      company: "Premier Mortgage",
-      rating: 5,
-      result: "6x more reviews",
-    },
-    {
-      quote:
-        "We rolled this out to 50 loan officers and saw our total review volume increase 280% in the first quarter.",
-      name: "Mark Chen",
-      title: "VP of Production",
-      company: "National Home Lending",
-      rating: 5,
-      result: "280% increase",
-    },
-  ],
+  testimonials: [],
 
   relatedFeatures: ["analytics", "amplification", "surveys"],
   relatedSolutions: ["review-growth", "reputation-management"],
@@ -190,7 +171,7 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
   cta: {
     headline: "Start Collecting Reviews Automatically",
     description:
-      "Join thousands of professionals who use RepWell to turn happy customers into 5-star reviews.",
+      "Use RepWell to turn happy customer feedback into public reviews.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
   },
@@ -198,7 +179,7 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
   seo: {
     title: "Automated Review Collection Software | RepWell",
     description:
-      "Collect more reviews with automated surveys and intelligent routing. 3x your Google reviews with RepWell. Free trial available.",
+      "Collect more reviews with automated surveys and intelligent routing. Free trial available.",
     keywords: [
       "review collection software",
       "automated reviews",
@@ -226,7 +207,7 @@ export const analyticsFeatureConfig: FeaturePageConfig = {
       "Track NPS, satisfaction trends, and team performance with live dashboards. Know exactly how customers feel and where to improve.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Demo",
-    stat: { value: "94%", label: "Customer satisfaction visibility" },
+    stat: { value: "AI", label: "Feedback visibility" },
   },
 
   problems: [
@@ -241,7 +222,7 @@ export const analyticsFeatureConfig: FeaturePageConfig = {
       title: "Delayed Insights",
       description:
         "Monthly reports are stale by the time you see them. You need real-time visibility to act fast.",
-      stat: { value: "30+", label: "days delayed" },
+      stat: { value: "Insights", label: "days delayed" },
     },
     {
       icon: "Users",
@@ -370,17 +351,7 @@ export const analyticsFeatureConfig: FeaturePageConfig = {
     { name: "Power BI", logoUrl: "/integrations/powerbi.svg", category: "BI" },
   ],
 
-  testimonials: [
-    {
-      quote:
-        "The real-time NPS dashboard changed how we run our branch. We can see issues and fix them before they become complaints.",
-      name: "Jennifer Park",
-      title: "Branch Manager",
-      company: "Summit Lending",
-      rating: 5,
-      result: "+22 NPS points",
-    },
-  ],
+  testimonials: [],
 
   relatedFeatures: ["reviews", "ai-insights", "surveys"],
   relatedSolutions: ["customer-intelligence", "team-performance"],
@@ -424,7 +395,7 @@ export const aiInsightsFeatureConfig: FeaturePageConfig = {
       "Automatic sentiment analysis, key phrase extraction, and response suggestions. Turn raw feedback into actionable insights instantly.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See AI in Action",
-    stat: { value: "94%", label: "Sentiment accuracy" },
+    stat: { value: "AI", label: "Sentiment insights" },
   },
 
   problems: [
@@ -451,7 +422,7 @@ export const aiInsightsFeatureConfig: FeaturePageConfig = {
       icon: "TrendingDown",
       title: "Hidden Patterns",
       description:
-        "Common themes and recurring issues hide in plain sight across hundreds of responses.",
+        "Common themes and recurring issues hide in plain sight across customer responses.",
     },
   ],
 
@@ -566,17 +537,7 @@ export const aiInsightsFeatureConfig: FeaturePageConfig = {
     { name: "Zendesk", logoUrl: "/integrations/zendesk.svg", category: "Support" },
   ],
 
-  testimonials: [
-    {
-      quote:
-        "The AI insights helped us discover a communication gap we didn't know existed. Fixed it and saw our NPS jump 15 points.",
-      name: "Michael Rodriguez",
-      title: "VP of Operations",
-      company: "Pacific Home Loans",
-      rating: 5,
-      result: "+15 NPS",
-    },
-  ],
+  testimonials: [],
 
   relatedFeatures: ["analytics", "reviews", "surveys"],
   relatedSolutions: ["customer-intelligence"],
@@ -620,7 +581,7 @@ export const amplificationFeatureConfig: FeaturePageConfig = {
       "Route positive reviews to Google and industry platforms. Share testimonials on social media. Turn happy customers into your marketing engine.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See How It Works",
-    stat: { value: "+300%", label: "Review visibility" },
+    stat: { value: "Reviews", label: "Review visibility" },
   },
 
   problems: [
@@ -763,17 +724,7 @@ export const amplificationFeatureConfig: FeaturePageConfig = {
     { name: "LinkedIn", logoUrl: "/integrations/linkedin.svg", category: "Social" },
   ],
 
-  testimonials: [
-    {
-      quote:
-        "The social sharing feature alone has saved me hours each week. My LinkedIn presence has never been stronger.",
-      name: "David Thompson",
-      title: "Senior Loan Officer",
-      company: "Homestead Mortgage",
-      rating: 5,
-      result: "5x social engagement",
-    },
-  ],
+  testimonials: [],
 
   relatedFeatures: ["reviews", "testimonials", "analytics"],
   relatedSolutions: ["reputation-management", "review-growth"],
@@ -817,7 +768,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       "Custom survey templates, automated distribution, and smart follow-ups. Capture the feedback you need with surveys customers actually complete.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Templates",
-    stat: { value: "42%", label: "Average response rate" },
+    stat: { value: "NPS", label: "Survey workflows" },
   },
 
   problems: [
@@ -826,7 +777,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       title: "Low Completion Rates",
       description:
         "Long surveys with too many questions frustrate customers. They abandon halfway through or don't start at all.",
-      stat: { value: "<10%", label: "typical completion" },
+      stat: { value: "Insights", label: "typical completion" },
     },
     {
       icon: "FileX",
@@ -853,7 +804,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       icon: "FileText",
       title: "Industry-Specific Templates",
       description:
-        "Pre-built templates for mortgage, real estate, insurance, and more. Proven questions that get actionable responses.",
+        "Pre-built templates for client services, real estate, insurance, and more. Proven questions that get actionable responses.",
     },
     {
       icon: "Settings",
@@ -924,7 +875,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       label: "Professionals",
       description: "Personal survey distribution and feedback",
       benefits: [
-        "Pre-built mortgage survey templates",
+        "Pre-built client services survey templates",
         "Automatic sending after closings",
         "Personal branding on surveys",
         "Mobile-friendly completion",
@@ -960,17 +911,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
     { name: "SendGrid", logoUrl: "/integrations/sendgrid.svg", category: "Email" },
   ],
 
-  testimonials: [
-    {
-      quote:
-        "Our response rate went from 8% to 45% after switching to RepWell. The automated timing made all the difference.",
-      name: "Amanda Foster",
-      title: "Operations Manager",
-      company: "First Choice Lending",
-      rating: 5,
-      result: "5x response rate",
-    },
-  ],
+  testimonials: [],
 
   relatedFeatures: ["reviews", "analytics", "ai-insights"],
   relatedSolutions: ["customer-intelligence"],
@@ -986,7 +927,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
   seo: {
     title: "Customer Survey Software & Templates | RepWell",
     description:
-      "Industry-specific survey templates with automated email distribution. 42% average response rate. Free trial available.",
+      "Industry-specific survey templates with automated email distribution. Free trial available.",
     keywords: [
       "customer survey software",
       "survey templates",
@@ -1013,7 +954,7 @@ export const testimonialsFeatureConfig: FeaturePageConfig = {
       "Request, collect, and publish video and written testimonials with ease. Turn happy customers into your best salespeople.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Examples",
-    stat: { value: "2x", label: "Higher conversion with video" },
+    stat: { value: "Convert", label: "Higher conversion with video" },
   },
 
   problems: [
@@ -1156,17 +1097,7 @@ export const testimonialsFeatureConfig: FeaturePageConfig = {
     { name: "Facebook", logoUrl: "/integrations/facebook.svg", category: "Social" },
   ],
 
-  testimonials: [
-    {
-      quote:
-        "I've collected more video testimonials in 3 months with RepWell than in my entire career before. The simple link makes customers actually do it.",
-      name: "Robert Kim",
-      title: "Loan Officer",
-      company: "Unity Mortgage",
-      rating: 5,
-      result: "15 videos in 3 months",
-    },
-  ],
+  testimonials: [],
 
   relatedFeatures: ["reviews", "amplification", "surveys"],
   relatedSolutions: ["review-growth"],

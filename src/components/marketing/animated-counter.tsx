@@ -67,7 +67,7 @@ interface AnimatedStatProps {
 
 /**
  * Parse a stat value and determine how to animate it
- * Handles formats like: "10,000+", "95%", "4.9/5", "$1,000"
+ * Handles numeric formats with optional prefixes, suffixes, and decimals.
  */
 function parseStatValue(value: string): {
   number: number;
@@ -81,7 +81,7 @@ function parseStatValue(value: string): {
     return { number: num, prefix: "", suffix: "%", decimals: 0 };
   }
 
-  // Handle fractions like "4.9/5"
+  // Handle fractional display values.
   if (value.includes("/")) {
     const [numPart] = value.split("/");
     const num = parseFloat(numPart.replace(/[^0-9.]/g, ""));

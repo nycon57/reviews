@@ -80,8 +80,8 @@ const contactMethods = [
     icon: Mail,
     title: "Email Us",
     description: "Send us an email and we'll respond within 24 hours",
-    value: "hello@repwell.com",
-    href: "mailto:hello@repwell.com",
+    value: "hello@repwell.ai",
+    href: "mailto:hello@repwell.ai",
     cta: "Send Email",
   },
   {
@@ -121,7 +121,7 @@ const faqs = [
   {
     question: "What integrations do you support?",
     answer:
-      "RepWell integrates with Google Business Profile, Zillow, Facebook, LinkedIn, and all major LOS platforms including Encompass, BytePro, and Calyx. We also offer Zapier integration for custom workflows.",
+      "RepWell integrates with Google Business Profile, Facebook, LinkedIn, CRM workflows, and Zapier for custom automations.",
   },
   {
     question: "Is there a contract or can I cancel anytime?",
@@ -326,11 +326,11 @@ function ContactFormSection() {
               </div>
               <div className="space-y-3">
                 <a
-                  href="mailto:hello@repwell.com"
+                  href="mailto:hello@repwell.ai"
                   className="flex items-center gap-2 text-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
                 >
                   <Mail className="h-4 w-4" />
-                  hello@repwell.com
+                  hello@repwell.ai
                 </a>
                 <a
                   href="tel:+15551234567"
@@ -440,7 +440,7 @@ function ContactFormSection() {
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Acme Mortgage"
+                                  placeholder="Acme Inc."
                                   className="border-repwell-sage-200 focus:border-repwell-teal-300 focus:ring-repwell-teal-300"
                                   {...field}
                                 />
@@ -624,7 +624,7 @@ function FAQSection() {
           <p className="text-repwell-teal-400 mb-4">
             Still have questions? We're happy to help.
           </p>
-          <Link href="mailto:hello@repwell.com">
+          <Link href="mailto:hello@repwell.ai">
             <Button
               variant="outline"
               className="border-repwell-sage-200 text-repwell-teal-400 hover:bg-repwell-sage-100/50"
@@ -655,7 +655,7 @@ export function ContactPageClient() {
       <CTASection
         variant="subtle"
         title="Ready to Get Started?"
-        description="Join hundreds of mortgage professionals who trust RepWell to manage their customer experience."
+        description="Use RepWell to manage reviews, understand feedback, and improve customer experience workflows."
         primaryCta={{ label: "Start Free Trial", href: "/signup" }}
         secondaryCta={{ label: "View Pricing", href: "/pricing" }}
       />

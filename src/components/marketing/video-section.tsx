@@ -37,7 +37,7 @@ interface VideoSectionProps {
 export function VideoSection({
   badge = "Product Demo",
   heading = "See RepWell in Action",
-  subheading = "Watch how leading mortgage companies use RepWell to transform their review collection and reputation management.",
+  subheading = "Watch how client-facing teams use RepWell to transform review collection and reputation management.",
   thumbnailSrc,
   thumbnailAlt = "RepWell product demo",
   videoHref = "/demo",

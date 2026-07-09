@@ -28,68 +28,7 @@ interface Testimonial {
   rating?: number;
 }
 
-const defaultTestimonials: Testimonial[] = [
-  {
-    name: "Sarah Johnson",
-    role: "Branch Manager",
-    company: "First National Mortgage",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
-    content:
-      "RepWell has transformed how we collect and manage customer feedback. Our review volume is up 300% and our team is more engaged than ever.",
-    rating: 5,
-  },
-  {
-    name: "Michael Chen",
-    role: "VP of Operations",
-    company: "Premier Lending Group",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-    content:
-      "The AI insights help us understand exactly what customers love and where we can improve. Invaluable for our growth strategy.",
-    rating: 5,
-  },
-  {
-    name: "Emily Rodriguez",
-    role: "Senior Professional",
-    company: "Hometown Home Loans",
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
-    content:
-      "Finally, a platform that understands the mortgage industry. The automation saves us hours every week on review management.",
-    rating: 5,
-  },
-  {
-    name: "David Thompson",
-    role: "CEO",
-    company: "Pacific Coast Lending",
-    avatar:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-    content:
-      "We've seen a 40% increase in our Google reviews since switching to RepWell. The automated follow-ups are game-changing.",
-    rating: 5,
-  },
-  {
-    name: "Jessica Martinez",
-    role: "Marketing Director",
-    company: "Summit Mortgage Co.",
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face",
-    content:
-      "The testimonial collection feature has given us incredible marketing content. Our social proof has never been stronger.",
-    rating: 5,
-  },
-  {
-    name: "Robert Wilson",
-    role: "Regional Manager",
-    company: "Liberty Home Loans",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
-    content:
-      "RepWell's leaderboard feature has created healthy competition among our team members. Everyone wants to be at the top.",
-    rating: 5,
-  },
-];
+const defaultTestimonials: Testimonial[] = [];
 
 interface TestimonialCarouselProps {
   /** Custom testimonials (uses defaults if not provided) */
@@ -108,9 +47,9 @@ interface TestimonialCarouselProps {
 
 export function TestimonialCarousel({
   testimonials = defaultTestimonials,
-  badge = "Trusted by 500+ mortgage professionals",
+  badge = "Customer voices",
   heading = "Meet our happy clients",
-  subheading = "Join a global network of mortgage professionals who trust RepWell.",
+  subheading = "Verified customer testimonials will appear here when available.",
   viewAllHref = "/testimonials",
   className,
 }: TestimonialCarouselProps) {
@@ -122,6 +61,8 @@ export function TestimonialCarousel({
       stopOnMouseEnter: false,
     })
   );
+
+  if (testimonials.length === 0) return null;
 
   return (
     <section className={cn("py-16 md:py-24 lg:py-32 bg-white", className)}>

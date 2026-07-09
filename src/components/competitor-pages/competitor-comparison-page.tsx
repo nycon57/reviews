@@ -188,9 +188,11 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 2: Logo Bar */}
-      <SectionWrapper id="logo-bar" background="subtle" flush>
-        <LogoBarSection logos={config.logoBar} />
-      </SectionWrapper>
+      {config.logoBar && config.logoBar.length > 0 && (
+        <SectionWrapper id="logo-bar" background="subtle" flush>
+          <LogoBarSection logos={config.logoBar} />
+        </SectionWrapper>
+      )}
 
       {/* Section 3: Pricing Tabs */}
       <SectionWrapper id="pricing" background="white">
@@ -206,9 +208,11 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 5: Testimonials */}
-      <SectionWrapper id="testimonials" background="white">
-        <TestimonialsSection testimonials={config.testimonials} />
-      </SectionWrapper>
+      {config.testimonials && config.testimonials.length > 0 && (
+        <SectionWrapper id="testimonials" background="white">
+          <TestimonialsSection testimonials={config.testimonials} />
+        </SectionWrapper>
+      )}
 
       {/* Section 6: Differentiators */}
       <SectionWrapper id="differentiators" background="subtle" lazyRender estimatedHeight="800px">
@@ -219,30 +223,38 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 7: Feature Showcase */}
-      <SectionWrapper id="features" background="white" lazyRender estimatedHeight="900px">
-        <FeatureShowcaseSection features={config.featureCards} />
-      </SectionWrapper>
+      {config.featureCards && config.featureCards.length > 0 && (
+        <SectionWrapper id="features" background="white" lazyRender estimatedHeight="900px">
+          <FeatureShowcaseSection features={config.featureCards} />
+        </SectionWrapper>
+      )}
 
       {/* Section 8: AI Feature Tabs */}
-      <SectionWrapper id="ai-capabilities" background="subtle" lazyRender estimatedHeight="700px">
-        <AIFeatureTabsSection capabilities={config.aiCapabilities} />
-      </SectionWrapper>
+      {config.aiCapabilities && config.aiCapabilities.length > 0 && (
+        <SectionWrapper id="ai-capabilities" background="subtle" lazyRender estimatedHeight="700px">
+          <AIFeatureTabsSection capabilities={config.aiCapabilities} />
+        </SectionWrapper>
+      )}
 
       {/* Section 9: Integration Logos */}
-      <SectionWrapper id="integrations" background="white" lazyRender estimatedHeight="400px">
-        <IntegrationLogosSection integrations={config.integrations} />
-      </SectionWrapper>
+      {config.integrations && config.integrations.length > 0 && (
+        <SectionWrapper id="integrations" background="white" lazyRender estimatedHeight="400px">
+          <IntegrationLogosSection integrations={config.integrations} />
+        </SectionWrapper>
+      )}
 
       {/* Section 10: Industry-Specific Features */}
-      <SectionWrapper id="industry-features" background="subtle" lazyRender estimatedHeight="900px">
-        <IndustrySpecificSection
-          features={config.industryFeatures}
-          headline={config.industrySectionConfig?.headline}
-          description={config.industrySectionConfig?.description}
-          cta={config.industrySectionConfig?.cta}
-          stat={config.industrySectionConfig?.stat}
-        />
-      </SectionWrapper>
+      {config.industryFeatures && config.industryFeatures.length > 0 && (
+        <SectionWrapper id="industry-features" background="subtle" lazyRender estimatedHeight="900px">
+          <IndustrySpecificSection
+            features={config.industryFeatures}
+            headline={config.industrySectionConfig?.headline}
+            description={config.industrySectionConfig?.description}
+            cta={config.industrySectionConfig?.cta}
+            stat={config.industrySectionConfig?.stat}
+          />
+        </SectionWrapper>
+      )}
 
       {/* Section 11: Migration Steps */}
       <SectionWrapper id="migration" background="white" lazyRender estimatedHeight="600px">
@@ -250,17 +262,21 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 12: Rating Comparison */}
-      <SectionWrapper id="ratings" background="subtle" lazyRender estimatedHeight="500px">
-        <RatingComparisonSection
-          config={config.ratingComparison}
-          competitorName={config.competitorName}
-        />
-      </SectionWrapper>
+      {config.ratingComparison && (
+        <SectionWrapper id="ratings" background="subtle" lazyRender estimatedHeight="500px">
+          <RatingComparisonSection
+            config={config.ratingComparison}
+            competitorName={config.competitorName}
+          />
+        </SectionWrapper>
+      )}
 
       {/* Section 13: Case Studies */}
-      <SectionWrapper id="case-studies" background="white" lazyRender estimatedHeight="800px">
-        <CaseStudiesSection caseStudies={config.caseStudies} />
-      </SectionWrapper>
+      {config.caseStudies && config.caseStudies.length > 0 && (
+        <SectionWrapper id="case-studies" background="white" lazyRender estimatedHeight="800px">
+          <CaseStudiesSection caseStudies={config.caseStudies} />
+        </SectionWrapper>
+      )}
 
       {/* Section 14: FAQ */}
       <SectionWrapper id="faq" background="subtle" lazyRender estimatedHeight="600px">
@@ -271,9 +287,11 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 15: Social Proof Wall */}
-      <SectionWrapper id="social-proof" background="white" lazyRender estimatedHeight="1200px">
-        <SocialProofSection cards={config.socialProof} />
-      </SectionWrapper>
+      {config.socialProof && config.socialProof.length > 0 && (
+        <SectionWrapper id="social-proof" background="white" lazyRender estimatedHeight="1200px">
+          <SocialProofSection cards={config.socialProof} />
+        </SectionWrapper>
+      )}
 
       {/* Section 17: Cross-Links to Other Comparisons */}
       <SectionWrapper id="cross-links" background="subtle" lazyRender estimatedHeight="250px">

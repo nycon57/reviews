@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import {
   signUpSchema,
@@ -82,10 +82,14 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
     return { success: false, error: "Failed to create user" };
   }
 
-  // Create the organization for self-serve signup (ADR 0006: one organizations
-  // table; account_type discriminates). Self-serve accounts are 'individual' and
-  // skip plan + payment, so onboarding starts at the profile step.
-  const { data: orgData, error: orgError } = await supabase
+  // Provision the org + app user rows with the ADMIN client: at this point the
+  // signer-up has no session (email confirmation pending), so user-scoped
+  // inserts are RLS-blocked — provisioning is a system operation. Failures are
+  // fatal: a "successful" signup without these rows is a ghost account that
+  // loops in onboarding forever. (Mirrors the Better Auth path.)
+  const supabaseAdmin = createAdminClient();
+
+  const { data: orgData, error: orgError } = await supabaseAdmin
     .from("organizations")
     .insert({
       name: organizationName,
@@ -97,40 +101,50 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
     .select()
     .single();
 
-  if (orgError) {
+  if (orgError || !orgData) {
     console.error("Organization creation error:", orgError);
+    await supabaseAdmin.auth.admin
+      .deleteUser(authData.user.id)
+      .catch((cleanupError) =>
+        console.error("Auth user cleanup failed after org error:", cleanupError)
+      );
+    return { success: false, error: "Failed to set up your account. Please try again." };
   }
 
-  // Create the user record in our users table
-  if (orgData) {
-    // Generate SEO-friendly slug for the user
-    let userSlug: string;
-    try {
-      userSlug = await generateUniqueUserSlug(fullName);
-    } catch (slugError) {
-      console.error("Slug generation failed, using fallback:", slugError);
-      userSlug = slugify(fullName) + "-" + Date.now();
-    }
-
-    const { error: userError } = await supabase
-      .from("users")
-      .insert({
-        id: authData.user.id,
-        organization_id: orgData.id,
-        email: email,
-        full_name: fullName,
-        slug: userSlug,
-        role: "admin", // First user is admin
-        is_active: true,
-        is_owner: true, // Self-serve signup = owner of their org
-      });
-
-    if (userError) {
-      console.error("User record creation error:", userError);
-    }
-
-    // Widget seeding is intentionally skipped here; individual accounts seed on demand.
+  // Generate SEO-friendly slug for the user
+  let userSlug: string;
+  try {
+    userSlug = await generateUniqueUserSlug(fullName);
+  } catch (slugError) {
+    console.error("Slug generation failed, using fallback:", slugError);
+    userSlug = slugify(fullName) + "-" + Date.now();
   }
+
+  const { error: userError } = await supabaseAdmin
+    .from("users")
+    .insert({
+      id: authData.user.id,
+      organization_id: orgData.id,
+      email: email,
+      full_name: fullName,
+      slug: userSlug,
+      role: "admin", // First user is admin
+      is_active: true,
+      is_owner: true, // Self-serve signup = owner of their org
+    });
+
+  if (userError) {
+    console.error("User record creation error:", userError);
+    await supabaseAdmin.from("organizations").delete().eq("id", orgData.id);
+    await supabaseAdmin.auth.admin
+      .deleteUser(authData.user.id)
+      .catch((cleanupError) =>
+        console.error("Auth user cleanup failed after user error:", cleanupError)
+      );
+    return { success: false, error: "Failed to set up your account. Please try again." };
+  }
+
+  // Widget seeding is intentionally skipped here; individual accounts seed on demand.
 
   return {
     success: true,

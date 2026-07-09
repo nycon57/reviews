@@ -11,6 +11,7 @@ import { defineConfig, devices } from "@playwright/test";
  * - access-control: Role-based redirect verification
  * - widgets: Existing widget embed tests (mocked APIs)
  * - interactions: Per-feature interaction tests
+ * - golden-flows: Real UI money-path coverage with only external boundary mocks
  */
 export default defineConfig({
   testDir: "./tests",
@@ -79,6 +80,13 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
 
+    // ── Golden Flow Tests ──────────────────────────────────
+    {
+      name: "golden-flows",
+      testMatch: /golden-flows\/.*\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+
     // ── Performance Tests ──────────────────────────────────
     {
       name: "performance",
@@ -88,7 +96,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "npm run dev",
+    command: "USE_BETTER_AUTH=false NEXT_PUBLIC_USE_BETTER_AUTH=false npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

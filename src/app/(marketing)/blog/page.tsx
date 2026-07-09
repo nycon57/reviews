@@ -9,11 +9,11 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Blog | RepWell",
   description:
-    "Insights on customer experience, review management, and AI-powered analytics for mortgage professionals. Tips, best practices, and industry news.",
+    "Insights on customer experience, review management, and AI-powered analytics for client-facing professionals. Tips, best practices, and industry news.",
   openGraph: {
     title: "RepWell Blog",
     description:
-      "Insights on customer experience, review management, and AI-powered analytics for mortgage professionals.",
+      "Insights on customer experience, review management, and AI-powered analytics for client-facing professionals.",
     type: "website",
     url: "/blog",
   },
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "RepWell Blog",
     description:
-      "Insights on customer experience, review management, and AI-powered analytics for mortgage professionals.",
+      "Insights on customer experience, review management, and AI-powered analytics for client-facing professionals.",
   },
 };
 

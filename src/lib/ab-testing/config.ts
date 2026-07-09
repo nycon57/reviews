@@ -14,8 +14,8 @@ export const abTestConfigs: Record<string, PageABTestConfig> = {
       id: "experience-com-h1",
       name: "Experience.com H1 Headline",
       type: "h1",
-      variantA: "The #1 Experience.com Alternative for Mortgage Lenders",
-      variantB: "Switch from Experience.com — Better Reviews, Lower Cost",
+      variantA: "Experience.com vs RepWell",
+      variantB: "Switch from Experience.com to RepWell",
       enabled: true,
     },
     ctaCopyTest: {
@@ -23,7 +23,7 @@ export const abTestConfigs: Record<string, PageABTestConfig> = {
       name: "Experience.com CTA Copy",
       type: "cta_copy",
       variantA: "Start Free Trial",
-      variantB: "Get Started Free",
+      variantB: "Start 14-Day Trial",
       enabled: true,
     },
     ctaColorTest: {
@@ -42,8 +42,8 @@ export const abTestConfigs: Record<string, PageABTestConfig> = {
       id: "birdeye-h1",
       name: "Birdeye H1 Headline",
       type: "h1",
-      variantA: "The Mortgage-First Birdeye Alternative",
-      variantB: "Why Mortgage Lenders Are Switching from Birdeye",
+      variantA: "Birdeye vs RepWell",
+      variantB: "Switch from Birdeye to RepWell",
       enabled: true,
     },
     ctaCopyTest: {
@@ -51,7 +51,7 @@ export const abTestConfigs: Record<string, PageABTestConfig> = {
       name: "Birdeye CTA Copy",
       type: "cta_copy",
       variantA: "Start Free Trial",
-      variantB: "See How It Works",
+      variantB: "Start 14-Day Trial",
       enabled: true,
     },
     ctaColorTest: {
@@ -70,8 +70,8 @@ export const abTestConfigs: Record<string, PageABTestConfig> = {
       id: "trustpilot-h1",
       name: "Trustpilot H1 Headline",
       type: "h1",
-      variantA: "The Mortgage-Native Trustpilot Alternative",
-      variantB: "Trustpilot Is Generic — RepWell Is Built for Mortgage",
+      variantA: "Trustpilot vs RepWell",
+      variantB: "Switch from Trustpilot to RepWell",
       enabled: true,
     },
     ctaCopyTest: {
@@ -79,7 +79,7 @@ export const abTestConfigs: Record<string, PageABTestConfig> = {
       name: "Trustpilot CTA Copy",
       type: "cta_copy",
       variantA: "Start Free Trial",
-      variantB: "Switch to RepWell",
+      variantB: "Start 14-Day Trial",
       enabled: true,
     },
     ctaColorTest: {

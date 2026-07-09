@@ -10,6 +10,7 @@ import { fadeIn } from "@/lib/motion";
 import { useAuth } from "@/hooks/use-auth";
 import { MobileMenu } from "./mobile-menu";
 import { MegaMenu } from "./mega-menu";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 export function MarketingNav() {
   const [isScrolled, setIsScrolled] = React.useState(false);
@@ -30,8 +31,8 @@ export function MarketingNav() {
       animate="visible"
       variants={fadeIn}
       className={cn(
-        "sticky top-0 z-50 w-full border-b border-border/50 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 transition-all duration-200",
-        isScrolled && "shadow-elevation-2"
+        "sticky top-0 z-50 w-full border-b border-border/50 bg-white/95 backdrop-blur-md transition-all duration-200 supports-[backdrop-filter]:bg-white/80",
+        isScrolled && "shadow-md"
       )}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -42,7 +43,7 @@ export function MarketingNav() {
           aria-label="RepWell home"
         >
           <Image
-            src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+            src={BRAND_LOGO_URL}
             alt="RepWell"
             width={140}
             height={32}
@@ -53,10 +54,7 @@ export function MarketingNav() {
         </Link>
 
         {/* Desktop Navigation - Mega Menu */}
-        <nav
-          className="hidden items-center lg:flex"
-          aria-label="Main navigation"
-        >
+        <nav className="hidden items-center lg:flex" aria-label="Main navigation">
           <MegaMenu />
         </nav>
 

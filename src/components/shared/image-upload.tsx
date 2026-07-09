@@ -90,8 +90,7 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     cropShape: "round",
     minZoom: 0.5,
     cropDialogTitle: "Crop your photo",
-    cropDialogDescription:
-      "Drag to reposition and use the slider to zoom.",
+    cropDialogDescription: "Drag to reposition and use the slider to zoom.",
     saveLabel: "Save photo",
     successMessage: "Photo has been saved.",
     removeMessage: "Photo has been removed.",
@@ -110,8 +109,7 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     cropShape: "round",
     minZoom: 0.5,
     cropDialogTitle: "Crop your profile photo",
-    cropDialogDescription:
-      "Drag to reposition and use the slider to zoom.",
+    cropDialogDescription: "Drag to reposition and use the slider to zoom.",
     saveLabel: "Save photo",
     successMessage: "Profile photo has been saved.",
     removeMessage: "Profile photo has been removed.",
@@ -211,9 +209,10 @@ export function ImageUpload({
       if (config.minZoom >= 1) return;
       // Calculate zoom so the full image fits inside the crop area
       const imgAspect = mediaSize.naturalWidth / mediaSize.naturalHeight;
-      const fitZoom = imgAspect > config.aspect
-        ? 1 // image is wider than frame, default contain already fits
-        : imgAspect / config.aspect; // image is taller, need to shrink
+      const fitZoom =
+        imgAspect > config.aspect
+          ? 1 // image is wider than frame, default contain already fits
+          : imgAspect / config.aspect; // image is taller, need to shrink
       const clamped = Math.max(config.minZoom, Math.min(fitZoom, 1));
       fitZoomRef.current = clamped;
       setZoom(clamped);
@@ -463,9 +462,7 @@ export function ImageUpload({
   return (
     <>
       <div className={cn("space-y-2", className)}>
-        {label && (
-          <label className="text-sm font-medium text-foreground">{label}</label>
-        )}
+        {label && <label className="text-sm font-medium text-foreground">{label}</label>}
 
         {imageUrl ? (
           <div className="space-y-4">
@@ -473,21 +470,17 @@ export function ImageUpload({
             {isAvatarLike ? (
               <Avatar className="h-24 w-24 border-2 border-border">
                 <AvatarImage src={imageUrl} alt={label || "Photo"} />
-                <AvatarFallback className="text-xl bg-surface-soft text-repwell-teal-300 font-semibold">
+                <AvatarFallback className="bg-surface-soft text-xl font-semibold text-repwell-teal-300">
                   {fallbackInitials}
                 </AvatarFallback>
               </Avatar>
             ) : (
               <div
                 className={cn(
-                  "relative flex items-center justify-center border border-border overflow-hidden",
+                  "relative flex items-center justify-center overflow-hidden border border-border",
                   config.previewClass
                 )}
-                style={
-                  primaryColor
-                    ? { backgroundColor: primaryColor + "10" }
-                    : undefined
-                }
+                style={primaryColor ? { backgroundColor: primaryColor + "10" } : undefined}
               >
                 <img
                   src={imageUrl}
@@ -505,16 +498,11 @@ export function ImageUpload({
               <div className="flex items-center gap-3">
                 <div {...getRootProps()}>
                   <input {...getInputProps()} />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={busy}
-                  >
+                  <Button type="button" variant="outline" size="sm" disabled={busy}>
                     {isUploading ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Upload className="mr-2 h-4 w-4" />
                     )}
                     Replace
                   </Button>
@@ -526,12 +514,12 @@ export function ImageUpload({
                     size="sm"
                     onClick={handleRemove}
                     disabled={busy}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
                     {isRemoving ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <Trash className="h-4 w-4 mr-2" />
+                      <Trash className="mr-2 h-4 w-4" />
                     )}
                     Remove
                   </Button>
@@ -544,24 +532,24 @@ export function ImageUpload({
           <div
             {...getRootProps()}
             className={cn(
-              "relative flex w-full items-center justify-center rounded-lg border-2 border-dashed transition-all cursor-pointer",
+              "relative flex w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed transition-all",
               config.dropzoneClass,
               isDragActive
                 ? "border-repwell-teal-300 bg-surface-soft"
                 : "border-border hover:border-repwell-teal-300 hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10",
-              busy && "opacity-50 cursor-not-allowed"
+              busy && "cursor-not-allowed opacity-50"
             )}
           >
             <input {...getInputProps()} />
-            <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/20 via-transparent to-repwell-teal-400/5 rounded-lg pointer-events-none" />
+            <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-br from-repwell-sage-100/20 via-transparent to-repwell-teal-400/5" />
 
             <div className="relative flex flex-col items-center gap-2">
               {isUploading ? (
-                <Loader2 className="h-8 w-8 text-label animate-spin" />
+                <Loader2 className="h-8 w-8 animate-spin text-label" />
               ) : isDragActive ? (
                 <>
                   <Upload className="h-8 w-8 text-repwell-teal-300" />
-                  <p className="text-sm text-repwell-teal-300 font-medium">
+                  <p className="text-sm font-medium text-repwell-teal-300">
                     Drop your image here...
                   </p>
                 </>
@@ -569,10 +557,8 @@ export function ImageUpload({
                 <>
                   <User className="h-8 w-8 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    <span className="font-medium text-heading">
-                      Click to upload
-                    </span>{" "}
-                    or drag and drop
+                    <span className="font-medium text-heading">Click to upload</span> or drag and
+                    drop
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {config.sizeHint} &middot; {config.dropHint}
@@ -589,13 +575,11 @@ export function ImageUpload({
         <DialogContent className={config.dialogWidth}>
           <DialogHeader>
             <DialogTitle>{config.cropDialogTitle}</DialogTitle>
-            <DialogDescription>
-              {config.cropDialogDescription}
-            </DialogDescription>
+            <DialogDescription>{config.cropDialogDescription}</DialogDescription>
           </DialogHeader>
 
           <div
-            className="relative w-full rounded-lg overflow-hidden bg-[length:16px_16px] bg-[position:0_0,8px_8px]"
+            className="relative w-full overflow-hidden rounded-lg bg-[length:16px_16px] bg-[position:0_0,8px_8px]"
             style={{
               height: config.aspect >= 4 ? "14rem" : config.aspect >= 2 ? "16rem" : "20rem",
               backgroundImage:
@@ -619,7 +603,7 @@ export function ImageUpload({
                 restrictPosition={variant === "banner"}
                 style={{
                   cropAreaStyle: {
-                    border: "2px solid hsl(var(--repwell-teal-300))",
+                    border: "2px solid hsl(var(--primary))",
                   },
                 }}
               />
@@ -627,7 +611,7 @@ export function ImageUpload({
           </div>
 
           <div className="flex items-center gap-3 px-2">
-            <ZoomOut className="h-4 w-4 text-label flex-shrink-0" />
+            <ZoomOut className="h-4 w-4 flex-shrink-0 text-label" />
             <Slider
               value={[zoom]}
               onValueChange={([value]) => setZoom(value)}
@@ -636,8 +620,8 @@ export function ImageUpload({
               step={0.05}
               className="flex-1"
             />
-            <ZoomIn className="h-4 w-4 text-label flex-shrink-0" />
-            <span className="text-xs text-label w-10 text-right tabular-nums">
+            <ZoomIn className="h-4 w-4 flex-shrink-0 text-label" />
+            <span className="w-10 text-right text-xs tabular-nums text-label">
               {zoom.toFixed(1)}x
             </span>
             {config.minZoom < 1 && (
@@ -648,7 +632,7 @@ export function ImageUpload({
                 className="h-7 px-2 text-xs"
                 onClick={handleFitToFrame}
               >
-                <ArrowsIn className="h-3.5 w-3.5 mr-1" />
+                <ArrowsIn className="mr-1 h-3.5 w-3.5" />
                 Fit
               </Button>
             )}
@@ -664,7 +648,7 @@ export function ImageUpload({
               }}
               disabled={isUploading}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
             <Button
@@ -675,7 +659,7 @@ export function ImageUpload({
             >
               {isUploading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Uploading...
                 </>
               ) : (

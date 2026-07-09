@@ -29,7 +29,7 @@ const routeLabels: Record<string, string> = {
   leaderboard: "Leaderboard",
   insights: "AI Insights",
   campaigns: "Campaigns",
-  send: "Send Survey",
+  send: "Send review request",
   people: "People",
   members: "Members",
   employees: "Employees",

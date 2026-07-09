@@ -30,137 +30,42 @@ import { createCheckoutSession, getPricingForCheckout } from "@/lib/stripe";
 import { getSession } from "@/lib/auth/auth-client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import {
+  MARKETING_PRICING_TIERS,
+  MARKETING_TRIAL_FACTS,
+  type BillingCadence,
+} from "@/lib/marketing/pricing-facts";
 
-const pricingPlans = {
-  monthly: [
-    {
-      tier: "Basic",
-      price: 49,
-      period: "month",
-      description: "Build Your Reputation",
-      icon: Users,
-      features: [
-        "1 user profile",
-        "200 surveys/month",
-        "Email distribution",
-        "Review monitoring & management",
-        "Basic analytics (rating trends, NPS)",
-        "Testimonial collection (text + video)",
-        "Google Business integration",
-        "Email support",
-      ],
-      cta: { label: "Start Free Trial", href: "/signup?plan=basic" },
-      highlighted: false,
-    },
-    {
-      tier: "Pro",
-      price: 99,
-      period: "month",
-      description: "AI-Powered Reputation Intelligence",
-      icon: Sparkles,
-      features: [
-        "Everything in Basic, plus:",
-        "AI sentiment analysis",
-        "AI response suggestions",
-        "AI visibility / GEO reports",
-        "AI performance scorecards",
-        "1,000 surveys/month",
-        "Advanced analytics & reporting",
-        "API access (1,000 calls/day)",
-        "Custom branding",
-        "Priority support",
-      ],
-      cta: { label: "Start Free Trial", href: "/signup?plan=pro" },
-      highlighted: true,
-      badge: "Most Popular",
-    },
-    {
-      tier: "Enterprise",
-      price: "Custom",
-      description: "Reputation at Scale",
-      icon: Building2,
-      features: [
-        "Everything in Pro, plus:",
-        "Unlimited team members & surveys",
-        "Team management & leaderboards",
-        "Manager dashboard with org-wide analytics",
-        "Employee experience surveys",
-        "SSO/SAML & white-label",
-        "Webhooks & CSV bulk import",
-        "Dedicated success manager",
-      ],
-      cta: { label: "Contact Sales", href: "/contact?plan=enterprise" },
-      highlighted: false,
-    },
-  ],
-  yearly: [
-    {
-      tier: "Basic",
-      price: 39,
-      period: "month",
-      description: "Build Your Reputation",
-      icon: Users,
-      features: [
-        "1 user profile",
-        "200 surveys/month",
-        "Email distribution",
-        "Review monitoring & management",
-        "Basic analytics (rating trends, NPS)",
-        "Testimonial collection (text + video)",
-        "Google Business integration",
-        "Email support",
-      ],
-      cta: { label: "Start Free Trial", href: "/signup?plan=basic&billing=yearly" },
-      highlighted: false,
-    },
-    {
-      tier: "Pro",
-      price: 79,
-      period: "month",
-      description: "AI-Powered Reputation Intelligence",
-      icon: Sparkles,
-      features: [
-        "Everything in Basic, plus:",
-        "AI sentiment analysis",
-        "AI response suggestions",
-        "AI visibility / GEO reports",
-        "AI performance scorecards",
-        "1,000 surveys/month",
-        "Advanced analytics & reporting",
-        "API access (1,000 calls/day)",
-        "Custom branding",
-        "Priority support",
-      ],
-      cta: { label: "Start Free Trial", href: "/signup?plan=pro&billing=yearly" },
-      highlighted: true,
-      badge: "Most Popular",
-    },
-    {
-      tier: "Enterprise",
-      price: "Custom",
-      description: "Reputation at Scale",
-      icon: Building2,
-      features: [
-        "Everything in Pro, plus:",
-        "Unlimited team members & surveys",
-        "Team management & leaderboards",
-        "Manager dashboard with org-wide analytics",
-        "Employee experience surveys",
-        "SSO/SAML & white-label",
-        "Webhooks & CSV bulk import",
-        "Dedicated success manager",
-      ],
-      cta: { label: "Contact Sales", href: "/contact?plan=enterprise" },
-      highlighted: false,
-    },
-  ],
+const planIcons = {
+  basic: Users,
+  pro: Sparkles,
+  enterprise: Building2,
 };
+
+function buildPricingPlans(cadence: BillingCadence) {
+  const isAnnual = cadence === "annual";
+
+  return MARKETING_PRICING_TIERS.map((plan) => ({
+    tier: plan.name,
+    price: isAnnual ? plan.annualMonthlyPrice : plan.monthlyPrice,
+    period: "month",
+    description: plan.description,
+    icon: planIcons[plan.id],
+    features: [...plan.features],
+    cta: {
+      label: plan.cta.label,
+      href: isAnnual && plan.cta.annualHref ? plan.cta.annualHref : plan.cta.href,
+    },
+    highlighted: plan.highlighted ?? false,
+    badge: plan.badge,
+  }));
+}
 
 const faqs = [
   {
     question: "How does the free trial work?",
     answer:
-      "Start your 14-day free trial with full access to all features in your selected plan. A credit card is required to activate the trial, but you won't be charged until the trial ends. Cancel anytime before then.",
+      `Start your ${MARKETING_TRIAL_FACTS.shortCopy} with full access to all features in your selected plan. ${MARKETING_TRIAL_FACTS.creditCardCopy} You won't be charged until the trial ends.`,
   },
   {
     question: "Can I change plans later?",
@@ -195,7 +100,7 @@ const faqs = [
   {
     question: "What kind of support is included?",
     answer:
-      "All plans include email support with response within 24 hours. Professional plans include priority support with faster response times. Enterprise plans include a dedicated account manager and phone support.",
+      "All plans include email support with response within 24 hours. Pro plans include priority support with faster response times. Enterprise plans include a dedicated account manager and phone support.",
   },
 ];
 
@@ -446,7 +351,7 @@ export function PricingPageClient() {
   const [loadingTier, setLoadingTier] = React.useState<string | null>(null);
   const [stripePricing, setStripePricing] = React.useState<StripePricing[]>([]);
 
-  const plans = isYearly ? pricingPlans.yearly : pricingPlans.monthly;
+  const plans = buildPricingPlans(isYearly ? "annual" : "monthly");
 
   // Check auth state and load pricing on mount
   React.useEffect(() => {
@@ -573,8 +478,8 @@ export function PricingPageClient() {
               variants={fadeInUp}
               className="text-lg md:text-xl text-repwell-teal-400 mb-10"
             >
-              Choose the plan that fits your needs. All plans include a 14-day
-              free trial. Cancel anytime.
+              Choose the plan that fits your needs. All plans include a{" "}
+              {MARKETING_TRIAL_FACTS.shortCopy}.
             </motion.p>
 
             {/* Billing Toggle */}

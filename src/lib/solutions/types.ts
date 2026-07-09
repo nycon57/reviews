@@ -163,7 +163,7 @@ export interface SolutionPageConfig {
     /** Secondary CTA */
     secondaryCta: string;
     /** Key stat highlight */
-    stat: {
+    stat?: {
       value: string;
       label: string;
     };

@@ -1,8 +1,6 @@
 import { revalidatePath } from "next/cache";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowLeft,
   ClipboardText,
   ClockClockwise,
 } from "@phosphor-icons/react/dist/ssr";
@@ -19,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { requireEnterpriseManager } from "@/lib/access";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { SUPPORT_EMAIL } from "@/lib/brand";
+import { EmptyState } from "@/components/shared/empty-state";
 import {
   applyProofApprovalAction,
   isShareStudioSchemaReady,
@@ -201,20 +201,19 @@ export default async function ApprovalsPage() {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Share Studio Setup Required</CardTitle>
-            <CardDescription>
-              The `proof_*` tables are not available in your current database yet.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <p>Run the latest Supabase migration, then refresh this page.</p>
-            <div className="rounded-md border bg-muted/30 p-3 font-mono text-xs">
-              npm run db:push
-            </div>
-            <p className="text-muted-foreground">
-              Required migration: `supabase/migrations/20260216000001_share_studio_schema.sql`
-            </p>
+          <CardContent className="p-0">
+            <EmptyState
+              iconName="ClipboardText"
+              title="This feature isn't available yet"
+              description="Approval workflows are not enabled for this workspace. Contact support and we'll help you get set up."
+              actions={[
+                {
+                  label: "Contact support",
+                  href: `mailto:${SUPPORT_EMAIL}`,
+                  iconName: "Envelope",
+                },
+              ]}
+            />
           </CardContent>
         </Card>
       </div>
@@ -235,12 +234,6 @@ export default async function ApprovalsPage() {
             </p>
           </div>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/dashboard" className="inline-flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
-        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -287,15 +280,12 @@ export default async function ApprovalsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {data.pending.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-8 text-center">
-              <p className="text-sm font-medium">No items awaiting approval.</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                All pending edits are resolved. New material edits will appear here.
-              </p>
-              <Button asChild variant="outline" className="mt-4">
-                <Link href="/dashboard">Return to Dashboard</Link>
-              </Button>
-            </div>
+            <EmptyState
+              iconName="ClipboardText"
+              title="No items awaiting approval"
+              description="All pending edits are resolved. New material edits will appear here."
+              compact
+            />
           ) : (
             data.pending.map((item) => {
               const latestEdit = data.latestEditByItem.get(String(item.id));
@@ -308,7 +298,7 @@ export default async function ApprovalsPage() {
                     <div>
                       <p className="font-medium">{String(item.title || "Untitled proof item")}</p>
                       <p className="text-xs text-muted-foreground">
-                        {String(item.id)} · Updated {formatShortDate(item.updated_at || item.created_at)}
+                        Updated {formatShortDate(item.updated_at || item.created_at)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

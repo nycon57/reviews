@@ -65,10 +65,6 @@ const FEATURE_TABS: FeatureTab[] = [
       name: "See how it works",
       href: "/features#reviews",
     },
-    stat: {
-      value: "3x",
-      label: "more reviews collected",
-    },
   },
   {
     icon: BarChart3,
@@ -104,10 +100,6 @@ const FEATURE_TABS: FeatureTab[] = [
       name: "Explore analytics",
       href: "/features#analytics",
     },
-    stat: {
-      value: "42%",
-      label: "avg response rate",
-    },
   },
   {
     icon: MessageSquare,
@@ -130,10 +122,6 @@ const FEATURE_TABS: FeatureTab[] = [
     link: {
       name: "Learn about AI",
       href: "/features#ai",
-    },
-    stat: {
-      value: "94%",
-      label: "accuracy rate",
     },
   },
   {
@@ -165,10 +153,6 @@ const FEATURE_TABS: FeatureTab[] = [
     link: {
       name: "Start amplifying",
       href: "/features#amplify",
-    },
-    stat: {
-      value: "+300%",
-      label: "review volume increase",
     },
   },
 ];
@@ -327,7 +311,7 @@ function FeatureImages({ images, variant }: ImagesProps) {
                     touchAction: "none",
                   }}
                   className={cn(
-                    "absolute aspect-[3/4] w-[42%] lg:w-[38%] overflow-hidden rounded-lg bg-white p-2 shadow-2xl",
+                    "absolute aspect-[3/4] w-[44%] lg:w-[38%] overflow-hidden rounded-lg bg-white p-2 shadow-2xl",
                     "transition-shadow duration-200",
                     isDragging && "ring-2 ring-repwell-teal-300/30"
                   )}

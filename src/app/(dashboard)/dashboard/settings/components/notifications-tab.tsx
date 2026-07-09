@@ -132,7 +132,7 @@ export function NotificationsTab() {
                 </div>
 
                 <p className="mt-6 text-white/90 text-sm">
-                  Stay informed about new reviews, survey responses, and team activity through your preferred channels.
+                  Stay informed about new reviews, request responses, and team activity through your preferred channels.
                 </p>
               </div>
             </Card>

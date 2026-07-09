@@ -13,7 +13,7 @@ export interface CtaLink {
   href: string;
 }
 
-/** Stat with value and label (e.g. "4.9 / 5" + "on G2") */
+/** Stat with value and label */
 export interface StatItem {
   value: string;
   label: string;
@@ -241,7 +241,7 @@ export interface IndustrySectionConfig {
   description?: string;
   /** CTA linking to industry landing page or demo */
   cta?: CtaLink;
-  /** Visual stat callout (e.g. "500+" companies) */
+  /** Visual stat callout */
   stat?: StatItem;
 }
 
@@ -275,11 +275,11 @@ export interface MigrationSection {
 
 /** Rating scores for a single platform set */
 export interface PlatformRatings {
-  /** G2 score (e.g. 4.9) */
+  /** Third-party rating score */
   g2Score: number;
-  /** Number of G2 reviews */
+  /** Third-party review count */
   g2ReviewCount: number;
-  /** Capterra score */
+  /** Secondary review-site score */
   capterra?: number;
   /** Trustpilot score */
   trustpilot?: number;
@@ -361,7 +361,7 @@ export interface SocialProofCard {
   company: string;
   /** Star rating (1-5) */
   rating: number;
-  /** Source platform (e.g. "G2", "Capterra") */
+  /** Source platform */
   platform: string;
   /** Review date (ISO string) */
   date: string;
@@ -423,7 +423,7 @@ export interface CompetitorPageConfig {
   /** Competitor display name */
   competitorName: string;
   /** Competitor logo URL */
-  competitorLogo: string;
+  competitorLogo?: string;
 
   // -- Page sections (rendered in order) --
 
@@ -432,35 +432,35 @@ export interface CompetitorPageConfig {
   /** Section 1: Hero */
   hero: CompetitorHero;
   /** Section 2: Scrolling logo bar */
-  logoBar: LogoBarItem[];
+  logoBar?: LogoBarItem[];
   /** Section 3: Pricing comparison tabs */
   pricingTabs: PricingTab[];
   /** Section 4: Transition / divider */
   transitionSection: TransitionSection;
   /** Section 5: Customer testimonials */
-  testimonials: TestimonialCard[];
+  testimonials?: TestimonialCard[];
   /** Section 6: Key differentiators */
   differentiators: DifferentiatorCard[];
   /** Section 7: Feature showcase cards */
-  featureCards: FeatureCard[];
+  featureCards?: FeatureCard[];
   /** Section 8: AI capability tabs */
-  aiCapabilities: AICapabilityTab[];
+  aiCapabilities?: AICapabilityTab[];
   /** Section 9: Integration logos */
-  integrations: IntegrationItem[];
+  integrations?: IntegrationItem[];
   /** Section 10: Industry-specific features */
-  industryFeatures: IndustryFeature[];
+  industryFeatures?: IndustryFeature[];
   /** Section 10: Industry section-level configuration (headline, CTA, stat) */
   industrySectionConfig?: IndustrySectionConfig;
   /** Section 11: Migration steps */
   migration: MigrationSection;
   /** Section 12: Rating comparison */
-  ratingComparison: RatingComparison;
+  ratingComparison?: RatingComparison;
   /** Section 13: Case studies */
-  caseStudies: CaseStudy[];
+  caseStudies?: CaseStudy[];
   /** Section 14: FAQ */
   faq: FAQSection;
   /** Section 15: Social proof wall */
-  socialProof: SocialProofCard[];
+  socialProof?: SocialProofCard[];
   /** Section 16: Footer CTA */
   footerCta: FooterCta;
   /** Full feature comparison table */

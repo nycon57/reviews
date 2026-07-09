@@ -188,7 +188,7 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
                   id="organizationName"
                   value={formData.organizationName}
                   onChange={(e) => handleChange("organizationName", e.target.value)}
-                  placeholder="Acme Mortgage"
+                  placeholder="Acme Inc."
                   required
                   className="h-11"
                 />

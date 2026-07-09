@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   title: "RepWell - Customer Experience Management",
   description:
     "Collect customer reviews, manage your reputation, and gain AI-powered insights to improve customer experience.",
-  keywords: ["reviews", "customer experience", "NPS", "reputation management", "mortgage"],
+  keywords: ["reviews", "customer experience", "NPS", "reputation management"],
 };
 
 export default function RootLayout({

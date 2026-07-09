@@ -155,7 +155,7 @@ export interface ReviewItemProps {
   review: ReviewItemData;
   respondentName?: string;
   attribution?: ReviewItemAttribution;
-  /** Label before the loan officer name in attribution (default: "Review for") */
+  /** Label before the professional name in attribution (default: "Review for") */
   attributionLabel?: string;
   shareConfig?: { profileUrl: string; subjectName: string; reviewUrl?: string | null };
   onFlag?: (reviewId: string) => void;

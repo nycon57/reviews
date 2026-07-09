@@ -450,7 +450,7 @@ function UnifiedRequestTable({
                               disabled={isActioning}
                             >
                               <Send className="mr-2 h-4 w-4" />
-                              {request.type === "video" ? "Resend Invitation" : "Resend Survey"}
+                              {request.type === "video" ? "Resend invitation" : "Resend review request"}
                             </DropdownMenuItem>
                             {request.type === "video" && (
                               <DropdownMenuItem

@@ -213,7 +213,7 @@ export function UserRecentReviews({
                 <Button variant="default" size="sm" asChild>
                   <a href="/dashboard/reviews?tab=requests">
                     <Send className="mr-1.5 h-3.5 w-3.5" />
-                    Send Survey
+                    Send review request
                   </a>
                 </Button>
                 <Button variant="outline" size="sm" asChild>

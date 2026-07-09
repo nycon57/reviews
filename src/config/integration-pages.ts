@@ -555,23 +555,23 @@ const encompassConfig: IntegrationPageConfig = {
   slug: "encompass",
   name: "Encompass",
   shortDescription:
-    "Trigger post-closing surveys automatically when loans fund in Encompass. Purpose-built for mortgage.",
+    "Trigger post-closing surveys automatically when loans fund in Encompass. Purpose-built for lending teams.",
   category: "los",
   icon: "FileText",
 
   hero: {
     headline: "Connect RepWell with Encompass",
     description:
-      "Purpose-built for mortgage professionals. Automatically trigger review requests when loans close in Encompass. No manual work, no missed opportunities.",
+      "Purpose-built for client-facing professionals. Automatically trigger review requests when loans close in Encompass. No manual work, no missed opportunities.",
     badge: "Loan Origination",
   },
 
   overview: {
     whatItDoes:
-      "The Encompass integration listens for loan milestone events via webhooks and automatically triggers RepWell surveys. When a loan funds or closes, the borrower receives a perfectly-timed review request with the right loan officer attributed.",
+      "The Encompass integration listens for loan milestone events via webhooks and automatically triggers RepWell surveys. When a loan funds or closes, the borrower receives a perfectly-timed review request with the right team member attributed.",
     dataFlow: [
       { direction: "in", label: "Loan milestone events from Encompass" },
-      { direction: "in", label: "Borrower and loan officer data" },
+      { direction: "in", label: "Borrower and team member data" },
       { direction: "out", label: "Survey delivery confirmations" },
     ],
   },
@@ -587,7 +587,7 @@ const encompassConfig: IntegrationPageConfig = {
       icon: "UserCircle",
       title: "Automatic Attribution",
       description:
-        "Reviews are automatically attributed to the correct loan officer based on Encompass loan data.",
+        "Reviews are automatically attributed to the correct team member based on Encompass loan data.",
     },
     {
       icon: "Clock",
@@ -599,13 +599,13 @@ const encompassConfig: IntegrationPageConfig = {
       icon: "ShieldCheck",
       title: "Compliance-Safe",
       description:
-        "Survey content and timing can be configured to comply with mortgage industry regulations.",
+        "Survey content and timing can be configured to stay compliant with your industry's regulations.",
     },
     {
       icon: "Buildings",
       title: "Multi-Branch Support",
       description:
-        "Handle loans from multiple branches with automatic routing to the correct branch and loan officer.",
+        "Handle loans from multiple branches with automatic routing to the correct branch and team member.",
     },
     {
       icon: "Gear",
@@ -627,7 +627,7 @@ const encompassConfig: IntegrationPageConfig = {
       step: 2,
       title: "Map Loan Fields",
       description:
-        "Map Encompass loan fields to RepWell: borrower name, email, loan officer, branch, and custom fields.",
+        "Map Encompass loan fields to RepWell: borrower name, email, team member, branch, and custom fields.",
       icon: "Table",
     },
     {
@@ -653,9 +653,9 @@ const encompassConfig: IntegrationPageConfig = {
         "Capture feedback when the experience is fresh. Automatic triggers mean no borrower falls through the cracks.",
     },
     {
-      title: "Loan Officer Leaderboards",
+      title: "team member Leaderboards",
       description:
-        "Compare review performance across loan officers with automatic attribution from Encompass data.",
+        "Compare review performance across team members with automatic attribution from Encompass data.",
     },
     {
       title: "Branch Performance",
@@ -667,14 +667,14 @@ const encompassConfig: IntegrationPageConfig = {
   relatedIntegrations: ["salesforce", "google-business-profile", "slack"],
 
   seo: {
-    title: "Encompass LOS Integration | RepWell",
+    title: "Encompass workflow Integration | RepWell",
     description:
-      "Connect Encompass with RepWell for automatic post-closing review collection. Purpose-built for mortgage professionals and lenders.",
+      "Connect Encompass with RepWell for automatic post-closing review collection. Purpose-built for client-facing professionals and lenders.",
     keywords: [
       "encompass integration",
-      "mortgage review automation",
+      "client review automation",
       "encompass review collection",
-      "los integration",
+      "workflow integration",
       "post closing surveys",
     ],
   },

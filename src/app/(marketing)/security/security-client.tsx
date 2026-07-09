@@ -611,10 +611,10 @@ function SecurityContactSection() {
                   Security Team
                 </p>
                 <a
-                  href="mailto:security@repwell.com"
+                  href="mailto:security@repwell.ai"
                   className="font-sans text-lg text-repwell-teal-300 hover:text-repwell-teal-400 transition-colors underline underline-offset-4"
                 >
-                  security@repwell.com
+                  security@repwell.ai
                 </a>
               </div>
               <div className="flex items-start gap-2 mt-2 text-left max-w-md">

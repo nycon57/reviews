@@ -58,7 +58,7 @@ export function TermsPageClient() {
       title="Terms of Service"
       lastUpdated="January 1, 2025"
       sections={sections}
-      contactEmail="legal@repwell.com"
+      contactEmail="legal@repwell.ai"
     >
       <LegalSection id="agreement-to-terms" title="Agreement to Terms">
         <p>
@@ -326,7 +326,7 @@ export function TermsPageClient() {
         </p>
         <ContactCard
           contact={{
-            email: "legal@repwell.com",
+            email: "legal@repwell.ai",
             address: "RepWell, Austin, TX",
           }}
         />

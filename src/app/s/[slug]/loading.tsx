@@ -6,7 +6,7 @@ function SkeletonBlock({ className = "" }: { className?: string }) {
 
 export default function SmartLinkLoading() {
   return (
-    <main className="relative min-h-svh overflow-hidden bg-[#f7faf7]" aria-busy="true">
+    <main className="relative min-h-svh overflow-hidden bg-background-subtle" aria-busy="true">
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-repwell-sage-100/35 via-repwell-sage-100/10 to-transparent" />
         <div
@@ -68,7 +68,7 @@ export default function SmartLinkLoading() {
           </section>
 
           <section className="min-w-0 [grid-area:action] lg:self-start">
-            <div className="overflow-hidden rounded-2xl border border-[#e2e8e4] bg-white shadow-soft">
+            <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft">
               <div className="space-y-4 p-5 lg:p-6">
                 <SkeletonBlock className="h-7 w-40" />
                 <SkeletonBlock className="h-12 w-full rounded-xl" />

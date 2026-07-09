@@ -4,13 +4,13 @@ import {
   competitorConfigs,
   competitorSlugs,
   generateFAQPageSchema,
-  generateProductSchema,
 } from "@/lib/competitor-pages";
 import { CompetitorComparisonPage } from "@/components/competitor-pages";
 import { getBaseUrl } from "@/lib/seo";
 import { buildCompareBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
 import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 // ---------------------------------------------------------------------------
 // Static generation — all competitor pages are pre-rendered at build time
@@ -44,8 +44,7 @@ export async function generateMetadata({
 
   const baseUrl = getBaseUrl();
   const canonicalUrl = config.seo.canonicalUrl ?? `${baseUrl}/compare/${slug}`;
-  const ogImage =
-    config.seo.ogImage ?? `${baseUrl}/images/og/compare-default.png`;
+  const ogImage = config.seo.ogImage ?? BRAND_LOGO_URL;
 
   return {
     title: config.seo.title,
@@ -90,7 +89,6 @@ export default async function CompareSlugPage({
 
   const baseUrl = getBaseUrl();
   const { items: breadcrumbItems, schema: breadcrumbSchema } = buildCompareBreadcrumbs(config, baseUrl);
-  const productSchema = generateProductSchema(config);
   const faqSchema = generateFAQPageSchema(config.faq);
 
   return (
@@ -108,7 +106,7 @@ export default async function CompareSlugPage({
       <link rel="preconnect" href="https://temwotqafrafajehuiuh.supabase.co" crossOrigin="anonymous" />
       <link rel="dns-prefetch" href="https://images.unsplash.com" />
       <link rel="dns-prefetch" href="https://temwotqafrafajehuiuh.supabase.co" />
-      <MultiSchemaStructuredData schemas={[faqSchema, breadcrumbSchema, productSchema]} />
+      <MultiSchemaStructuredData schemas={[faqSchema, breadcrumbSchema]} />
       <MarketingBreadcrumbs items={breadcrumbItems} />
       <CompetitorComparisonPage config={config} />
     </>

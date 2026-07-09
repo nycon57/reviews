@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Confetti as PartyPopper,
+  PaperPlaneRight as Send,
   Rocket,
   Users,
   Star,
@@ -14,40 +15,51 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { completeOnboarding } from "@/lib/onboarding/actions";
 import { fadeInUp, staggerContainer, scaleIn } from "@/lib/motion";
+import { SUPPORT_EMAIL } from "@/lib/brand";
 import Confetti from "react-confetti";
 
 interface CompletionClientProps {
   isAlreadyCompleted: boolean;
+  accountType: "individual" | "enterprise";
 }
 
-const nextSteps = [
-  {
-    icon: Users,
-    title: "Add your team",
-    description: "Invite professionals and team members to your organization",
-    href: "/dashboard/people",
-    recommended: true,
-  },
-  {
-    icon: Star,
-    title: "Create a survey",
-    description: "Build your first customer feedback survey",
-    href: "/dashboard/surveys",
-  },
-  {
-    icon: Rocket,
-    title: "Connect integrations",
-    description: "Link Google Business Profile and other platforms",
-    href: "/dashboard/organization?tab=integrations",
-  },
-];
-
-export function CompletionClient({ isAlreadyCompleted }: CompletionClientProps) {
+export function CompletionClient({ isAlreadyCompleted, accountType }: CompletionClientProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const [showConfetti, setShowConfetti] = React.useState(!isAlreadyCompleted);
   const [windowSize, setWindowSize] = React.useState({ width: 0, height: 0 });
   const hasCompleted = React.useRef(isAlreadyCompleted);
+  const nextSteps = [
+    {
+      icon: Send,
+      title: "Send your first review request",
+      description: "Ask a recent customer for feedback and track the request from Reviews.",
+      href: "/dashboard/reviews?tab=requests",
+      recommended: true,
+    },
+    {
+      icon: Star,
+      title: "Create a survey",
+      description: "Build your first customer feedback survey",
+      href: "/dashboard/surveys",
+    },
+    {
+      icon: Rocket,
+      title: "Connect integrations",
+      description: "Link Google Business Profile and other platforms",
+      href: "/dashboard/organization?tab=integrations",
+    },
+    ...(accountType === "enterprise"
+      ? [
+          {
+            icon: Users,
+            title: "Invite your team",
+            description: "Add workspace members and employees for team workflows",
+            href: "/dashboard/people",
+          },
+        ]
+      : []),
+  ];
 
   React.useEffect(() => {
     const updateWindowSize = () => {
@@ -212,7 +224,7 @@ export function CompletionClient({ isAlreadyCompleted }: CompletionClientProps) 
             Check out our guides
           </a>{" "}
           or{" "}
-          <a href="mailto:support@repwell.io" className="text-repwell-teal-300 hover:underline">
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="text-repwell-teal-300 hover:underline">
             contact support
           </a>
           .

@@ -207,7 +207,7 @@ export function BlogArchiveClient({
             </>
           )
         }
-        description="Insights on customer experience, review management, and AI-powered analytics for mortgage professionals."
+        description="Insights on customer experience, review management, and AI-powered analytics for client-facing professionals."
       />
 
       {/* Category Filter */}

@@ -11,7 +11,7 @@ import {
 } from "@phosphor-icons/react";
 
 interface CaseStudiesSectionProps {
-  caseStudies: CaseStudy[];
+  caseStudies?: CaseStudy[];
 }
 
 interface MetricDeltaProps {
@@ -142,7 +142,7 @@ export function CaseStudiesSection({
 }: CaseStudiesSectionProps) {
   const { ref: sectionRef, isVisible } = useScrollReveal();
 
-  if (caseStudies.length === 0) return null;
+  if (!caseStudies || caseStudies.length === 0) return null;
 
   return (
     <div ref={sectionRef}>

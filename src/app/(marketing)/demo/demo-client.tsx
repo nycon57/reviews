@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { submitDemoRequest } from "@/lib/marketing/actions";
+import { MARKETING_TRIAL_FACTS } from "@/lib/marketing/pricing-facts";
 
 const demoFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -396,7 +397,7 @@ export function DemoPageClient() {
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Acme Mortgage"
+                                  placeholder="Acme Inc."
                                   className="h-11 border-repwell-sage-100 focus:border-repwell-teal-300 focus:ring-repwell-teal-300/20"
                                   {...field}
                                 />
@@ -569,8 +570,8 @@ export function DemoPageClient() {
               variants={fadeInUp}
               className="text-lg text-repwell-sage-100 mb-8 max-w-xl mx-auto"
             >
-              Start your free 14-day trial and experience RepWell firsthand. No
-              credit card required.
+              Start your {MARKETING_TRIAL_FACTS.shortCopy} and experience
+              RepWell firsthand. {MARKETING_TRIAL_FACTS.creditCardCopy}
             </motion.p>
             <motion.div
               variants={fadeInUp}

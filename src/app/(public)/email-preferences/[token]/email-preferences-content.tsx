@@ -155,7 +155,7 @@ export function EmailPreferencesContent({
             <h2 className="mt-4 text-lg font-semibold">Unable to Load Preferences</h2>
             <p className="mt-2 text-muted-foreground">{error}</p>
             <Button variant="outline" className="mt-6" asChild>
-              <a href="mailto:support@repwell.com">Contact Support</a>
+              <a href="mailto:support@repwell.ai">Contact Support</a>
             </Button>
           </CardContent>
         </Card>
@@ -494,7 +494,7 @@ export function EmailPreferencesContent({
           </p>
           <p className="text-xs text-muted-foreground">
             Having trouble?{" "}
-            <a href="mailto:support@repwell.com" className="underline hover:text-foreground">
+            <a href="mailto:support@repwell.ai" className="underline hover:text-foreground">
               Contact Support
             </a>
           </p>

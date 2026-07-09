@@ -284,14 +284,14 @@ export const compareNavItems: CompareNavItem[] = [
   {
     slug: "birdeye",
     title: "RepWell vs Birdeye",
-    description: "Mortgage-native, not generic",
+    description: "team-focused, not generic",
     icon: "Swap",
     href: "/compare/birdeye",
   },
   {
     slug: "trustpilot",
     title: "RepWell vs Trustpilot",
-    description: "Built for mortgage professionals",
+    description: "Built for client-facing professionals",
     icon: "Swap",
     href: "/compare/trustpilot",
   },

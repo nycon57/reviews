@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { getResendClient, emailConfig } from "@/lib/email/client";
+import { SALES_EMAIL } from "@/lib/brand";
 
 // Contact form schema
 const contactFormSchema = z.object({
@@ -41,7 +42,7 @@ export async function submitContactForm(
     const validated = contactFormSchema.parse(data);
     const resend = getResendClient();
 
-    const contactEmail = process.env.CONTACT_EMAIL || "contact@repwell.com";
+    const contactEmail = process.env.CONTACT_EMAIL || "contact@repwell.ai";
 
     await resend.emails.send({
       from: `RepWell Contact <${emailConfig.defaultFromEmail}>`,
@@ -98,7 +99,7 @@ export async function submitDemoRequest(
     const validated = demoRequestSchema.parse(data);
     const resend = getResendClient();
 
-    const salesEmail = process.env.SALES_EMAIL || "sales@repwell.com";
+    const salesEmail = process.env.SALES_EMAIL || SALES_EMAIL;
 
     await resend.emails.send({
       from: `RepWell Demo Request <${emailConfig.defaultFromEmail}>`,

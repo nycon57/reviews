@@ -1,4 +1,5 @@
 // Documentation content structure
+import { SUPPORT_EMAIL } from "@/lib/brand";
 export interface DocSection {
   id: string;
   title: string;
@@ -70,7 +71,7 @@ RepWell helps you:
 If you need assistance:
 - Browse the documentation sections in the sidebar
 - Search for specific topics using the search bar
-- Contact support at support@repwell.com
+- Contact support at ${SUPPORT_EMAIL}
         `,
       },
       {
@@ -1288,7 +1289,7 @@ Use API keys for authentication:
 
 ### Base URL
 \`\`\`
-https://api.repwell.com/v1
+https://api.repwell.ai/v1
 \`\`\`
 
 ## Authentication
@@ -1377,8 +1378,8 @@ Official SDKs available:
 ## Support
 
 For API support:
-- Documentation: docs.repwell.com/api
-- Email: api-support@repwell.com
+- Documentation: docs.repwell.ai/api
+- Email: api-support@repwell.ai
         `,
       },
       {
@@ -1493,7 +1494,7 @@ Create an API key from your dashboard:
 Test your API key by listing your surveys:
 
 \`\`\`bash
-curl -X GET "https://api.repwell.com/v1/surveys" \\
+curl -X GET "https://api.repwell.ai/v1/surveys" \\
   -H "Authorization: Bearer rw_live_xxxxx" \\
   -H "Content-Type: application/json"
 \`\`\`
@@ -1503,7 +1504,7 @@ curl -X GET "https://api.repwell.com/v1/surveys" \\
 Send a survey to a customer:
 
 \`\`\`bash
-curl -X POST "https://api.repwell.com/v1/surveys" \\
+curl -X POST "https://api.repwell.ai/v1/surveys" \\
   -H "Authorization: Bearer rw_live_xxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1519,7 +1520,7 @@ curl -X POST "https://api.repwell.com/v1/surveys" \\
 Fetch reviews for your organization:
 
 \`\`\`bash
-curl -X GET "https://api.repwell.com/v1/reviews?status=published" \\
+curl -X GET "https://api.repwell.ai/v1/reviews?status=published" \\
   -H "Authorization: Bearer rw_live_xxxxx"
 \`\`\`
 
@@ -1583,7 +1584,7 @@ RepWell public API v2 is designed for developer integrations and AI agent workfl
 
 ## Base URLs
 
-- Production app base: \`https://repwell.com/api/v2\`
+- Production app base: \`https://repwell.ai/api/v2\`
 - OpenAPI JSON: [/api/openapi-v2.json](/api/openapi-v2.json)
 - OpenAPI schema alias: [/api/v2/schema](/api/v2/schema)
 - Agent discovery file: [/llms.txt](/llms.txt)
@@ -1637,7 +1638,7 @@ Security notes:
 ## curl example
 
 \`\`\`bash
-curl "https://repwell.com/api/v2/professionals?name=jane+smith&industry=mortgage" \\
+curl "https://repwell.ai/api/v2/professionals?name=jane+smith&industry=mortgage" \\
   -H "Accept: application/json"
 \`\`\`
 
@@ -1647,7 +1648,7 @@ curl "https://repwell.com/api/v2/professionals?name=jane+smith&industry=mortgage
 import requests
 
 response = requests.get(
-    "https://repwell.com/api/v2/professionals/pro_123/reviews",
+    "https://repwell.ai/api/v2/professionals/pro_123/reviews",
     headers={"Authorization": "Bearer rw_live_xxxxx"},
     params={"per_page": 25, "sort_by": "date_desc"},
     timeout=10,
@@ -1660,7 +1661,7 @@ print(response.json())
 
 \`\`\`js
 const response = await fetch(
-  "https://repwell.com/api/v2/reviews?keyword=responsive&min_rating=4",
+  "https://repwell.ai/api/v2/reviews?keyword=responsive&min_rating=4",
   {
     headers: {
       Authorization: \`Bearer \${process.env.REPWELL_API_KEY}\`,
@@ -1690,7 +1691,7 @@ const data = await response.json();
       "location": "Chicago, IL",
       "average_rating": 4.9,
       "total_reviews": 47,
-      "profile_url": "https://repwell.com/pro/jane-smith"
+      "profile_url": "https://repwell.ai/pro/jane-smith"
     }
   ],
   "pagination": {
@@ -1735,7 +1736,7 @@ RepWell uses prefixed API keys to distinguish environments:
 Include your API key in the \`Authorization\` header:
 
 \`\`\`bash
-curl -X GET "https://api.repwell.com/v1/surveys" \\
+curl -X GET "https://api.repwell.ai/v1/surveys" \\
   -H "Authorization: Bearer rw_live_xxxxx" \\
   -H "Content-Type: application/json"
 \`\`\`
@@ -1801,7 +1802,7 @@ Use webhooks to trigger surveys from your CRM or business system. When a transac
 Send POST requests to trigger surveys:
 
 \`\`\`
-POST https://api.repwell.com/api/webhooks/survey-trigger
+POST https://api.repwell.ai/api/webhooks/survey-trigger
 \`\`\`
 
 Include your API key in the \`Authorization\` header or as a \`secret_key\` parameter in the request body.
@@ -1811,7 +1812,7 @@ Include your API key in the \`Authorization\` header or as a \`secret_key\` para
 Authenticate webhook requests using your API key:
 
 \`\`\`bash
-curl -X POST "https://api.repwell.com/api/webhooks/survey-trigger" \\
+curl -X POST "https://api.repwell.ai/api/webhooks/survey-trigger" \\
   -H "Authorization: Bearer rw_live_xxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1980,7 +1981,7 @@ Answers to frequently asked questions about RepWell.
 Yes, go to **Settings** > **Profile** > **Email** to update your email address. You'll need to verify the new email.
 
 ### How do I delete my account?
-Contact support at support@repwell.com to request account deletion. Note that this action is permanent.
+Contact support at ${SUPPORT_EMAIL} to request account deletion. Note that this action is permanent.
 
 ## Surveys
 
@@ -2126,7 +2127,7 @@ Each survey link is single-use. If the customer needs to retake:
 ## Contact Support
 
 If you can't resolve your issue:
-- Email: support@repwell.com
+- Email: ${SUPPORT_EMAIL}
 - Live chat: Available in-app
 - Phone: See contact page
         `,

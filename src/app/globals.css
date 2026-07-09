@@ -4,9 +4,10 @@
 
 /* Custom Fonts */
 @font-face {
-  font-family: 'Erstoria';
-  src: url('/fonts/Erstoria.woff2') format('woff2'),
-       url('/fonts/Erstoria.otf') format('opentype');
+  font-family: "Erstoria";
+  src:
+    url("/fonts/Erstoria.woff2") format("woff2"),
+    url("/fonts/Erstoria.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -15,12 +16,14 @@
 @layer base {
   :root {
     /* ========================================
-       RepWell Design System - HSL Format
-       Light-only theme (no dark mode)
-       ======================================== */
+	       RepWell Design System - HSL Format
+	       Light and dark themes
+	       ======================================== */
 
     /* Core semantic tokens mapped to design system */
     --background: 97 14% 96%;
+    --background-subtle: 120 17% 98%;
+    --background-muted: 120 15% 95%;
     --foreground: 201 20% 23%;
 
     --card: 0 0% 100%;
@@ -45,24 +48,25 @@
     --accent: 133 17% 59%;
     --accent-foreground: 0 0% 100%;
 
-    /* Destructive */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    /* Destructive: muted coral (#c47c7c) */
+    --destructive: 0 38% 63%;
+    --destructive-foreground: 201 20% 14%;
 
     /* Border: light sage */
-    --border: 97 14% 85%;
-    --input: 97 14% 85%;
+    --border: 140 12% 90%;
+    --border-subtle: 120 13% 94%;
+    --input: 140 12% 90%;
     --ring: 165 19% 40%;
 
     --radius: 0.5rem;
 
     /* Status Colors */
-    --success: 165 19% 40%;
-    --success-foreground: 0 0% 100%;
-    --warning: 45 93% 47%;
-    --warning-foreground: 0 0% 10%;
-    --info: 201 20% 40%;
-    --info-foreground: 0 0% 100%;
+    --success: 133 18% 59%;
+    --success-foreground: 201 20% 14%;
+    --warning: 31 53% 64%;
+    --warning-foreground: 201 20% 14%;
+    --info: 206 30% 60%;
+    --info-foreground: 201 20% 14%;
 
     /* Chart Colors */
     --chart-1: 165 19% 40%;
@@ -91,6 +95,8 @@
   .dark {
     /* Surfaces — teal-tinted layers, not generic gray */
     --background: 195 21% 11%;
+    --background-subtle: 195 18% 14%;
+    --background-muted: 195 15% 18%;
     --foreground: 97 8% 92%;
 
     --card: 195 18% 14%;
@@ -117,15 +123,18 @@
 
     /* Borders & inputs — visible teal-tinted dividers */
     --border: 195 12% 26%;
+    --border-subtle: 195 12% 20%;
     --input: 195 12% 26%;
     --ring: 165 22% 48%;
 
-    --success: 165 22% 48%;
-    --success-foreground: 0 0% 100%;
-    --warning: 45 93% 47%;
-    --warning-foreground: 0 0% 10%;
-    --info: 201 25% 52%;
-    --info-foreground: 0 0% 100%;
+    --destructive: 0 42% 70%;
+    --destructive-foreground: 201 20% 14%;
+    --success: 133 22% 66%;
+    --success-foreground: 201 20% 14%;
+    --warning: 31 55% 68%;
+    --warning-foreground: 201 20% 14%;
+    --info: 206 34% 68%;
+    --info-foreground: 201 20% 14%;
 
     /* Charts — lifted for dark readability */
     --chart-1: 165 22% 52%;
@@ -233,7 +242,9 @@
 .repwell-popup .leaflet-popup-content-wrapper {
   background: white;
   border-radius: 0.75rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   padding: 0;
   border: 1px solid hsl(97 14% 85%);
   overflow: hidden;
@@ -339,7 +350,8 @@
     page-break-after: avoid;
   }
 
-  p, li {
+  p,
+  li {
     font-size: 11pt !important;
     orphans: 3;
     widows: 3;
@@ -396,18 +408,29 @@
     black 90%,
     transparent 100%
   );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    black 10%,
-    black 90%,
-    transparent 100%
-  );
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .logo-bar-scroll {
-    animation: none;
+    animation: none !important;
+  }
+
+  :where([class*="animate-"]:not(.animate-spin)) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 
@@ -418,7 +441,9 @@
 .pac-container {
   border: 1px solid hsl(97 14% 85%);
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
   font-family: inherit;
   margin-top: 4px;
   z-index: 1100;

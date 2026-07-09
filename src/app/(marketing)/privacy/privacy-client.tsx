@@ -36,7 +36,7 @@ export function PrivacyPageClient() {
       title="Privacy Policy"
       lastUpdated="January 1, 2025"
       sections={sections}
-      contactEmail="privacy@repwell.com"
+      contactEmail="privacy@repwell.ai"
     >
       <LegalSection id="introduction" title="Introduction">
         <p>
@@ -228,7 +228,7 @@ export function PrivacyPageClient() {
         />
         <p>
           To exercise these rights, please contact us at{" "}
-          <a href="mailto:privacy@repwell.com">privacy@repwell.com</a>.
+          <a href="mailto:privacy@repwell.ai">privacy@repwell.ai</a>.
         </p>
       </LegalSection>
 
@@ -286,7 +286,7 @@ export function PrivacyPageClient() {
         </p>
         <ContactCard
           contact={{
-            email: "privacy@repwell.com",
+            email: "privacy@repwell.ai",
             address: "RepWell, Austin, TX",
           }}
         />

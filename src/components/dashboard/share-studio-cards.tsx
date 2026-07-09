@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { isShareStudioSchemaReady } from "@/lib/share-studio/service";
+import type { ShareStudioCardsData } from "@/lib/share-studio/hub-types";
 
 /* ------------------------------------------------------------------ */
 /*  Data fetching                                                      */
@@ -63,7 +64,21 @@ async function getShareStudioData(organizationId: string) {
   const publishedLinks = publishedLinksResult.error ? 0 : (publishedLinksResult.count || 0);
   const totalLinks = totalLinksResult.error ? 0 : (totalLinksResult.count || 0);
 
-  return { activeJobs, views, clicks, publishedLinks, totalLinks };
+  return {
+    activeJobs: activeJobs.map((job) => ({
+      id: String(job.id ?? ""),
+      assetType: String(job.asset_type ?? "asset"),
+      status: String(job.status ?? "queued"),
+      proofItemId:
+        typeof job.proof_item_id === "string" ? job.proof_item_id : null,
+      createdAt: String(job.created_at ?? ""),
+    })),
+    views,
+    clicks,
+    publishedLinks,
+    totalLinks,
+    periodLabel: "All time",
+  } satisfies ShareStudioCardsData;
 }
 
 /* ------------------------------------------------------------------ */
@@ -77,11 +92,19 @@ function jobStatusBadge(status: string) {
   return <Badge variant="secondary" className="text-xs">{status}</Badge>;
 }
 
-export async function ShareStudioCards({ organizationId }: { organizationId: string }) {
-  const data = await getShareStudioData(organizationId);
+export async function ShareStudioCards({
+  organizationId,
+  data: preloadedData,
+}: {
+  organizationId?: string;
+  data?: ShareStudioCardsData | null;
+}) {
+  const data =
+    preloadedData ??
+    (organizationId ? await getShareStudioData(organizationId) : null);
   if (!data) return null;
 
-  const { activeJobs, views, clicks, publishedLinks, totalLinks } = data;
+  const { activeJobs, views, clicks, publishedLinks, totalLinks, periodLabel } = data;
   const ctr = views > 0 ? Math.round((clicks / views) * 1000) / 10 : 0;
 
   return (
@@ -97,7 +120,7 @@ export async function ShareStudioCards({ organizationId }: { organizationId: str
           </CardHeader>
           <CardContent className="space-y-2">
             {activeJobs.map((job) => {
-              const proofItemId = String(job.proof_item_id ?? "");
+              const proofItemId = job.proofItemId ?? "";
               return (
                 <div
                   key={String(job.id)}
@@ -105,7 +128,7 @@ export async function ShareStudioCards({ organizationId }: { organizationId: str
                 >
                   <div className="space-y-0.5">
                     <p className="text-sm font-medium capitalize">
-                      {String(job.asset_type)} render
+                      {job.assetType} render
                     </p>
                     {proofItemId && (
                       <Link
@@ -116,7 +139,7 @@ export async function ShareStudioCards({ organizationId }: { organizationId: str
                       </Link>
                     )}
                   </div>
-                  {jobStatusBadge(String(job.status || "queued"))}
+                  {jobStatusBadge(job.status || "queued")}
                 </div>
               );
             })}
@@ -129,7 +152,7 @@ export async function ShareStudioCards({ organizationId }: { organizationId: str
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Smart Link Performance</CardTitle>
           <CardDescription>
-            Aggregate engagement across published smart links
+            Aggregate engagement across published smart links · {periodLabel}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

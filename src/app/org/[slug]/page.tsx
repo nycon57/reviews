@@ -8,6 +8,7 @@ import {
   generateOrganizationProfilePageSchema,
 } from "@/lib/seo";
 import { logAgentVisit } from "@/lib/agents/detection";
+import { WebMcpClientRegistration } from "@/lib/webmcp/client-registration";
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import { OrganizationProfileContent } from "./organization-profile-content";
 import { buildCompanyBreadcrumbs } from "@/lib/directory/breadcrumb-utils";
@@ -97,6 +98,7 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
   return (
     <>
       <MultiSchemaStructuredData schemas={schemas} />
+      <WebMcpClientRegistration />
       <OrganizationProfileContent
         organization={organization}
         branches={branches}

@@ -31,16 +31,5 @@ export function getAllIndustries(): IndustryTag[] {
   return Array.from(industries);
 }
 
-/** Industry display labels */
-const homeFinancingIndustry = ["mort", "gage"].join("") as IndustryTag;
-
-export const industryLabels = {
-  [homeFinancingIndustry]: "Home Financing",
-  "real-estate": "Real Estate",
-  insurance: "Insurance",
-  healthcare: "Healthcare",
-  "financial-advisory": "Financial Advisory",
-  "home-services": "Home Services",
-  legal: "Legal",
-  consulting: "Consulting",
-} as Record<IndustryTag, string>;
+/** Industry display labels for published customer stories */
+export const industryLabels: Partial<Record<IndustryTag, string>> = {};

@@ -4,7 +4,6 @@ export { MarketingFooter } from "./marketing-footer";
 export { HeroSection } from "./hero-section";
 export { FeatureCard } from "./feature-card";
 export { PricingCard } from "./pricing-card";
-export { AnimatedCounter, AnimatedStat } from "./animated-counter";
 export {
   PageTransition,
   FadeIn,
@@ -33,5 +32,4 @@ export { StatsSectionDark } from "./stats-section-dark";
 // Existing components used in homepage
 export { TrustLogosBar } from "./trust-logos-bar";
 export { TestimonialCard } from "./testimonial-card";
-export { TestimonialCarousel } from "./testimonial-carousel";
 export { CTASection } from "./cta-section";

@@ -510,7 +510,15 @@ export function FeaturesPageClient() {
       />
 
       {/* Stats */}
-      <StatsSectionDark heading="Powering Reputation Growth" />
+      <StatsSectionDark
+        heading="Powering Reputation Growth"
+        stats={[
+          { value: "Reviews", label: "Collection workflows" },
+          { value: "NPS", label: "Survey builder" },
+          { value: "AI", label: "Feedback insights" },
+          { value: "Teams", label: "Profile management" },
+        ]}
+      />
 
       {/* CTA */}
       <CTASection variant="gradient" />

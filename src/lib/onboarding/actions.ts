@@ -30,6 +30,7 @@ interface OnboardingStatusResult {
   selectedPlan?: string | null;
   selectedBillingCycle?: string | null;
   organizationId?: string;
+  accountType?: "individual" | "enterprise";
   shouldSkip?: boolean;
   error?: string;
 }
@@ -77,6 +78,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResult> {
     selectedPlan: isIndividual ? "basic" : (org?.selected_plan as string) || null,
     selectedBillingCycle: isIndividual ? null : (org?.selected_billing_cycle as string) || null,
     organizationId: userData.organization_id,
+    accountType: isIndividual ? "individual" : "enterprise",
     shouldSkip: false,
   };
 }

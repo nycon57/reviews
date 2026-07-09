@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { completeOnboarding } from "@/lib/onboarding/actions";
 import { fadeInUp, staggerContainer, scaleIn } from "@/lib/motion";
+import { SUPPORT_EMAIL } from "@/lib/brand";
 import Confetti from "react-confetti";
 
 interface CompletionClientProps {
@@ -223,7 +224,7 @@ export function CompletionClient({ isAlreadyCompleted, accountType }: Completion
             Check out our guides
           </a>{" "}
           or{" "}
-          <a href="mailto:support@repwell.ai" className="text-repwell-teal-300 hover:underline">
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="text-repwell-teal-300 hover:underline">
             contact support
           </a>
           .

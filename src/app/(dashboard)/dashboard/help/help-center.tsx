@@ -25,6 +25,7 @@ import {
   PaperPlaneRight as Send,
   Star,
 } from "@phosphor-icons/react";
+import { SECURITY_EMAIL, SUPPORT_EMAIL } from "@/lib/brand";
 
 interface FAQItem {
   id: string;
@@ -129,14 +130,14 @@ const SUPPORT_OPTIONS = [
     title: "Email Support",
     description: "Get help via email within 24 hours",
     icon: Mail,
-    action: "support@repwell.ai",
+    action: SUPPORT_EMAIL,
     actionLabel: "Send Email",
   },
   {
     title: "Security",
     description: "Report security concerns",
     icon: Shield,
-    action: "security@repwell.ai",
+    action: SECURITY_EMAIL,
     actionLabel: "Report Issue",
   },
 ];
@@ -308,7 +309,7 @@ export function HelpCenter() {
       <div className="text-center text-sm text-muted-foreground py-4">
         <p>
           Can't find what you're looking for?{" "}
-          <a href="mailto:support@repwell.ai" className="font-medium text-repwell-teal-400 underline">
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-repwell-teal-400 underline">
             Contact support
           </a>{" "}
           and we'll help you out.

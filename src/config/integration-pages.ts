@@ -555,7 +555,7 @@ const encompassConfig: IntegrationPageConfig = {
   slug: "encompass",
   name: "Encompass",
   shortDescription:
-    "Trigger post-closing surveys automatically when loans fund in Encompass. Purpose-built for client services.",
+    "Trigger post-closing surveys automatically when loans fund in Encompass. Purpose-built for lending teams.",
   category: "los",
   icon: "FileText",
 
@@ -599,7 +599,7 @@ const encompassConfig: IntegrationPageConfig = {
       icon: "ShieldCheck",
       title: "Compliance-Safe",
       description:
-        "Survey content and timing can be configured to comply with client services industry regulations.",
+        "Survey content and timing can be configured to stay compliant with your industry's regulations.",
     },
     {
       icon: "Buildings",

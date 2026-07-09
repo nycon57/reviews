@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { after, NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { BRAND_DOMAIN } from "@/lib/brand";
 import {
   extractApiKey,
   withApiAuth,
@@ -280,7 +281,7 @@ export function withOpenTier(
 function apiKeyRequiredResponse(): NextResponse {
   return apiV2Error(
     "api_key_required",
-    "This endpoint requires an API key. Register at repwell.com/developers",
+    `This endpoint requires an API key. Register at ${BRAND_DOMAIN}/developers`,
     401
   );
 }

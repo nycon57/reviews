@@ -135,10 +135,10 @@ export const solutionNavItems: SolutionNavItem[] = [
  */
 export const industryNavItems: IndustryNavItem[] = [
   {
-    slug: "client services",
-    title: "client services",
+    slug: "mortgage",
+    title: "Mortgage",
     icon: "House",
-    href: "/for/client services",
+    href: "/for/mortgage",
   },
   {
     slug: "real-estate",

@@ -14,14 +14,14 @@ import {
   AreaChart,
   Legend,
 } from "recharts";
-import { CHART_TOOLTIP_STYLE } from "@/components/analytics/chart-primitives";
+import { CHART_COLORS, CHART_TOOLTIP_STYLE } from "@/components/analytics/chart-primitives";
 import type { VideoTestimonialTrendDataPoint } from "@/lib/video-testimonials/analytics-actions";
 import type { TrendPeriod } from "./analytics-context";
 
 const TREND_CHART_COLORS = {
-  sent: "hsl(var(--chart-1))",
-  completed: "hsl(var(--chart-2))",
-  published: "hsl(var(--chart-4))",
+  sent: CHART_COLORS[0],
+  completed: CHART_COLORS[1],
+  published: CHART_COLORS[3],
 } as const;
 
 export const TrendChart = memo(function TrendChart({

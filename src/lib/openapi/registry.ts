@@ -9,6 +9,7 @@ import {
   extendZodWithOpenApi,
 } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
+import { SUPPORT_EMAIL } from '@/lib/brand';
 
 // Extend Zod with OpenAPI support
 extendZodWithOpenApi(z);
@@ -1927,7 +1928,7 @@ Common error codes:
       `.trim(),
       contact: {
         name: 'RepWell Support',
-        email: 'support@repwell.com',
+        email: SUPPORT_EMAIL,
         url: 'https://repwell.ai/support',
       },
     },

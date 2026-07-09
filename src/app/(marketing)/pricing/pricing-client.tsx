@@ -65,7 +65,7 @@ const faqs = [
   {
     question: "How does the free trial work?",
     answer:
-      "Start your 14-day free trial with full access to all features in your selected plan. A credit card is required to activate the trial, but you won't be charged until the trial ends. Cancel anytime before then.",
+      `Start your ${MARKETING_TRIAL_FACTS.shortCopy} with full access to all features in your selected plan. ${MARKETING_TRIAL_FACTS.creditCardCopy} You won't be charged until the trial ends.`,
   },
   {
     question: "Can I change plans later?",

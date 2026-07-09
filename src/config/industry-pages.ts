@@ -23,14 +23,12 @@ export const mortgagePageConfig: IndustryPageConfig = {
       title: "Reviews Take Too Long",
       description:
         "Manually chasing borrowers for reviews after closing wastes hours each week and most never follow through.",
-      stat: { value: "Insights", label: "hours/month wasted" },
     },
     {
       icon: "TrendingDown",
       title: "Falling Behind Competitors",
       description:
         "Other LOs in your market are building massive review profiles while you're stuck with a handful of outdated testimonials.",
-      stat: { value: "Reviews", label: "of borrowers check reviews" },
     },
     {
       icon: "MessageSquareOff",
@@ -82,7 +80,6 @@ export const mortgagePageConfig: IndustryPageConfig = {
           alt: "Mortgage professional helping clients",
         },
       ],
-      stat: { value: "Reviews", label: "more reviews collected" },
     },
     {
       icon: "BarChart3",
@@ -102,7 +99,6 @@ export const mortgagePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1556157382-97eda2d62296?w=600&h=700&fit=crop&q=80", alt: "Professional at desk" },
         { src: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=600&h=700&fit=crop&q=80", alt: "Team meeting" },
       ],
-      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "MessageSquare",
@@ -122,7 +118,6 @@ export const mortgagePageConfig: IndustryPageConfig = {
           alt: "Team collaboration",
         },
       ],
-      stat: { value: "AI", label: "accuracy rate" },
     },
     {
       icon: "Zap",
@@ -141,7 +136,6 @@ export const mortgagePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&h=600&fit=crop&q=80", alt: "Team success" },
         { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=1200&fit=crop&q=80", alt: "Professional" },
       ],
-      stat: { value: "Reviews", label: "review volume increase" },
     },
   ],
   roleTabs: [
@@ -277,14 +271,12 @@ export const realEstatePageConfig: IndustryPageConfig = {
       title: "Clients Forget to Review",
       description:
         "Even your happiest clients move on after closing. Without follow-up, many never leave a review.",
-      stat: { value: "Reviews", label: "never leave reviews" },
     },
     {
       icon: "Search",
       title: "Competitors Outrank You",
       description:
         "Agents with more reviews dominate Zillow and Google searches. Every day without reviews is lost visibility.",
-      stat: { value: "Reviews", label: "check reviews first" },
     },
     {
       icon: "Users",
@@ -336,7 +328,6 @@ export const realEstatePageConfig: IndustryPageConfig = {
           alt: "Real estate agent with happy clients",
         },
       ],
-      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -356,7 +347,6 @@ export const realEstatePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=700&fit=crop&q=80", alt: "Luxury home" },
         { src: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=700&fit=crop&q=80", alt: "Beautiful home" },
       ],
-      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "MessageSquare",
@@ -376,7 +366,6 @@ export const realEstatePageConfig: IndustryPageConfig = {
           alt: "Happy homeowners",
         },
       ],
-      stat: { value: "Referrals", label: "more referrals" },
     },
     {
       icon: "Trophy",
@@ -395,7 +384,6 @@ export const realEstatePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=600&fit=crop&q=80", alt: "Home exterior" },
         { src: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&h=1200&fit=crop&q=80", alt: "Real estate" },
       ],
-      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -535,7 +523,6 @@ export const insurancePageConfig: IndustryPageConfig = {
       title: "Trust Is Hard to Prove",
       description:
         "Insurance is a trust-based purchase. Without reviews, prospects rely on guesswork when choosing an agent.",
-      stat: { value: "Trust", label: "research online first" },
     },
     {
       icon: "UserMinus",
@@ -587,7 +574,6 @@ export const insurancePageConfig: IndustryPageConfig = {
           alt: "Insurance agent meeting with clients",
         },
       ],
-      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -607,7 +593,6 @@ export const insurancePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=700&fit=crop&q=80", alt: "Executive" },
         { src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&h=700&fit=crop&q=80", alt: "Presentation" },
       ],
-      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "Shield",
@@ -627,7 +612,6 @@ export const insurancePageConfig: IndustryPageConfig = {
           alt: "Insurance professional",
         },
       ],
-      stat: { value: "AI", label: "Claims feedback" },
     },
     {
       icon: "Trophy",
@@ -646,7 +630,6 @@ export const insurancePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=600&fit=crop&q=80", alt: "Team" },
         { src: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=600&h=1200&fit=crop&q=80", alt: "Professional" },
       ],
-      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -778,14 +761,12 @@ export const healthcarePageConfig: IndustryPageConfig = {
       title: "Patients Don't Leave Reviews",
       description:
         "Satisfied patients leave quietly. Without a system, only unhappy patients share their experience online.",
-      stat: { value: "Reviews", label: "leave reviews naturally" },
     },
     {
       icon: "Search",
       title: "Competitors Rank Higher",
       description:
         "Practices with more reviews dominate Healthgrades and Google. New patients find them first.",
-      stat: { value: "Reviews", label: "check reviews first" },
     },
     {
       icon: "FileWarning",
@@ -837,7 +818,6 @@ export const healthcarePageConfig: IndustryPageConfig = {
           alt: "Healthcare professional with patient",
         },
       ],
-      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -857,7 +837,6 @@ export const healthcarePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&h=700&fit=crop&q=80", alt: "Doctor" },
         { src: "https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=600&h=700&fit=crop&q=80", alt: "Medical team" },
       ],
-      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "AlertTriangle",
@@ -877,7 +856,6 @@ export const healthcarePageConfig: IndustryPageConfig = {
           alt: "Medical consultation",
         },
       ],
-      stat: { value: "Feedback", label: "recovery rate" },
     },
     {
       icon: "Trophy",
@@ -896,7 +874,6 @@ export const healthcarePageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&h=600&fit=crop&q=80", alt: "Hospital" },
         { src: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=1200&fit=crop&q=80", alt: "Healthcare" },
       ],
-      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -1043,7 +1020,6 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
       icon: "Search",
       title: "Prospects Research You",
       description: "Before trusting you with their wealth, prospects check your online reputation.",
-      stat: { value: "Trust", label: "research advisors online" },
     },
     {
       icon: "BarChart",
@@ -1080,7 +1056,6 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
           alt: "Financial advisor meeting",
         },
       ],
-      stat: { value: "Stories", label: "more testimonials" },
     },
     {
       icon: "BarChart3",
@@ -1099,7 +1074,6 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=700&fit=crop&q=80", alt: "Professional" },
         { src: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600&h=700&fit=crop&q=80", alt: "Business" },
       ],
-      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "MessageSquare",
@@ -1118,7 +1092,6 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
           alt: "Business presentation",
         },
       ],
-      stat: { value: "Governed", label: "compliance rate" },
     },
     {
       icon: "Trophy",
@@ -1136,7 +1109,6 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop&q=80", alt: "Team" },
         { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=1200&fit=crop&q=80", alt: "Executive" },
       ],
-      stat: { value: "Referrals", label: "referral increase" },
     },
   ],
   roleTabs: [
@@ -1272,7 +1244,6 @@ export const homeServicesPageConfig: IndustryPageConfig = {
       icon: "Search",
       title: "Competitors Have More Reviews",
       description: "They show up first on Google. You're losing jobs before prospects even call.",
-      stat: { value: "Reviews", label: "check reviews first" },
     },
     {
       icon: "Star",
@@ -1318,7 +1289,6 @@ export const homeServicesPageConfig: IndustryPageConfig = {
           alt: "Home service professional",
         },
       ],
-      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -1337,7 +1307,6 @@ export const homeServicesPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=600&h=700&fit=crop&q=80", alt: "Team" },
         { src: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&h=700&fit=crop&q=80", alt: "Work" },
       ],
-      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "AlertTriangle",
@@ -1356,7 +1325,6 @@ export const homeServicesPageConfig: IndustryPageConfig = {
           alt: "Customer service",
         },
       ],
-      stat: { value: "Feedback", label: "recovery rate" },
     },
     {
       icon: "Trophy",
@@ -1374,7 +1342,6 @@ export const homeServicesPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=600&h=600&fit=crop&q=80", alt: "House" },
         { src: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=1200&fit=crop&q=80", alt: "Exterior" },
       ],
-      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -1506,7 +1473,6 @@ export const legalPageConfig: IndustryPageConfig = {
       icon: "Search",
       title: "Competitors Rank Higher",
       description: "Firms with more Avvo and Google reviews get found first.",
-      stat: { value: "Reviews", label: "check reviews first" },
     },
     {
       icon: "FileText",
@@ -1553,7 +1519,6 @@ export const legalPageConfig: IndustryPageConfig = {
           alt: "Law office",
         },
       ],
-      stat: { value: "Reviews", label: "more reviews" },
     },
     {
       icon: "BarChart3",
@@ -1572,7 +1537,6 @@ export const legalPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=700&fit=crop&q=80", alt: "Attorney" },
         { src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=700&fit=crop&q=80", alt: "Lawyer" },
       ],
-      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "MessageSquare",
@@ -1591,7 +1555,6 @@ export const legalPageConfig: IndustryPageConfig = {
           alt: "Legal consultation",
         },
       ],
-      stat: { value: "Stories", label: "testimonials/month" },
     },
     {
       icon: "Trophy",
@@ -1609,7 +1572,6 @@ export const legalPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1521791055366-0d553872125f?w=600&h=600&fit=crop&q=80", alt: "Consultation" },
         { src: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&h=1200&fit=crop&q=80", alt: "Law" },
       ],
-      stat: { value: "Reviews", label: "review growth" },
     },
   ],
   roleTabs: [
@@ -1788,7 +1750,6 @@ export const consultingPageConfig: IndustryPageConfig = {
           alt: "Consulting meeting",
         },
       ],
-      stat: { value: "Stories", label: "more testimonials" },
     },
     {
       icon: "BarChart3",
@@ -1807,7 +1768,6 @@ export const consultingPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=700&fit=crop&q=80", alt: "Meeting" },
         { src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=700&fit=crop&q=80", alt: "Professional" },
       ],
-      stat: { value: "NPS", label: "Survey workflows" },
     },
     {
       icon: "FileText",
@@ -1826,7 +1786,6 @@ export const consultingPageConfig: IndustryPageConfig = {
           alt: "Presentation",
         },
       ],
-      stat: { value: "Stories", label: "faster case studies" },
     },
     {
       icon: "Trophy",
@@ -1844,7 +1803,6 @@ export const consultingPageConfig: IndustryPageConfig = {
         { src: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&h=600&fit=crop&q=80", alt: "Strategy" },
         { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=1200&fit=crop&q=80", alt: "Consultant" },
       ],
-      stat: { value: "Referrals", label: "referral increase" },
     },
   ],
   roleTabs: [

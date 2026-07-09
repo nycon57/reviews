@@ -281,7 +281,7 @@ export const birdeyeConfig: CompetitorPageConfig = {
       {
         question: "Is there a free trial?",
         answer:
-          `Yes. Every plan includes a ${MARKETING_TRIAL_FACTS.shortCopy}. A credit card is required to activate the trial.`,
+          `Yes. Every plan includes a ${MARKETING_TRIAL_FACTS.shortCopy}. ${MARKETING_TRIAL_FACTS.creditCardCopy}`,
       },
       {
         question: "How long does it take to get set up?",
@@ -357,7 +357,6 @@ export const birdeyeConfig: CompetitorPageConfig = {
     trustBadges: [
       { icon: "ShieldCheck", label: "SOC 2 (in progress)" },
       { icon: "CreditCard", label: MARKETING_TRIAL_FACTS.shortCopy },
-      { icon: "Clock", label: "Cancel anytime" },
       { icon: "Lock", label: "Bank-Level Encryption" },
     ],
   },

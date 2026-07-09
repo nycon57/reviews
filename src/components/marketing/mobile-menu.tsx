@@ -27,6 +27,7 @@ import {
   compareNavItems,
 } from "@/config/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 interface MobileMenuProps {
   className?: string;
@@ -136,7 +137,7 @@ export function MobileMenu({ className }: MobileMenuProps) {
         <SheetHeader className="border-b px-4 py-3">
           <SheetTitle className="flex items-center">
             <Image
-              src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+              src={BRAND_LOGO_URL}
               alt="RepWell"
               width={120}
               height={28}

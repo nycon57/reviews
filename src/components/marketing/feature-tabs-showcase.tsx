@@ -65,10 +65,6 @@ const FEATURE_TABS: FeatureTab[] = [
       name: "See how it works",
       href: "/features#reviews",
     },
-    stat: {
-      value: "3x",
-      label: "more reviews collected",
-    },
   },
   {
     icon: BarChart3,
@@ -104,10 +100,6 @@ const FEATURE_TABS: FeatureTab[] = [
       name: "Explore analytics",
       href: "/features#analytics",
     },
-    stat: {
-      value: "Live",
-      label: "feedback dashboards",
-    },
   },
   {
     icon: MessageSquare,
@@ -130,10 +122,6 @@ const FEATURE_TABS: FeatureTab[] = [
     link: {
       name: "Learn about AI",
       href: "/features#ai",
-    },
-    stat: {
-      value: "AI",
-      label: "theme detection",
     },
   },
   {
@@ -165,10 +153,6 @@ const FEATURE_TABS: FeatureTab[] = [
     link: {
       name: "Start amplifying",
       href: "/features#amplify",
-    },
-    stat: {
-      value: "Share",
-      label: "review highlights",
     },
   },
 ];

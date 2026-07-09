@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { BRAND_DOMAIN } from "@/lib/brand";
 import {
   ArrowRight,
   Book,
@@ -94,13 +95,13 @@ const featureCards = [
   },
 ];
 
-const curlExample = `curl "https://repwell.com/api/v2/professionals?name=jane+smith&industry=mortgage" \\
+const curlExample = `curl "https://${BRAND_DOMAIN}/api/v2/professionals?name=example&industry=financial_advisory" \\
   -H "Accept: application/json"`;
 
 const pythonExample = `import requests
 
 response = requests.get(
-    "https://repwell.com/api/v2/professionals/pro_123/reviews",
+    "https://${BRAND_DOMAIN}/api/v2/professionals/pro_123/reviews",
     headers={"Authorization": "Bearer rw_live_xxxxx"},
     params={"per_page": 25, "sort_by": "date_desc"},
     timeout=10,
@@ -109,7 +110,7 @@ response.raise_for_status()
 print(response.json())`;
 
 const javascriptExample = `const response = await fetch(
-  "https://repwell.com/api/v2/reviews?keyword=responsive&min_rating=4",
+  "https://${BRAND_DOMAIN}/api/v2/reviews?keyword=responsive&min_rating=4",
   {
     headers: {
       Authorization: \`Bearer \${process.env.REPWELL_API_KEY}\`,
@@ -128,14 +129,14 @@ export const responseExample = `{
   "data": [
     {
       "id": "pro_123",
-      "full_name": "Jane Smith",
-      "title": "Mortgage Advisor",
-      "company_name": "Summit Mortgage",
-      "industry": "mortgage",
-      "location": "Chicago, IL",
-      "average_rating": 4.9,
-      "total_reviews": 47,
-      "profile_url": "https://repwell.com/pro/jane-smith"
+      "full_name": "Example Professional",
+      "title": "Advisor",
+      "company_name": "Example Company",
+      "industry": "financial_advisory",
+      "location": "Example City",
+      "average_rating": null,
+      "total_reviews": 0,
+      "profile_url": "https://${BRAND_DOMAIN}/pro/example-professional"
     }
   ],
   "total": 1,
@@ -153,8 +154,8 @@ const structuredData = {
   about: {
     "@type": "WebAPI",
     name: "RepWell Public API v2",
-    documentation: "https://repwell.com/developers",
-    termsOfService: "https://repwell.com/terms",
+    documentation: `https://${BRAND_DOMAIN}/developers`,
+    termsOfService: `https://${BRAND_DOMAIN}/terms`,
   },
 };
 
@@ -239,7 +240,7 @@ export default function DevelopersPage() {
                 <div>
                   <h3 className="font-semibold text-heading">Base URLs</h3>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Production app base: <code className="rounded bg-muted px-1.5 py-0.5">https://repwell.com/api/v2</code>
+                    Production app base: <code className="rounded bg-muted px-1.5 py-0.5">https://{BRAND_DOMAIN}/api/v2</code>
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
                     Machine-readable specs: <Link href="/api/openapi-v2.json" className="font-medium text-repwell-teal-300 hover:underline">/api/openapi-v2.json</Link> and <Link href="/api/v2/schema" className="font-medium text-repwell-teal-300 hover:underline">/api/v2/schema</Link>

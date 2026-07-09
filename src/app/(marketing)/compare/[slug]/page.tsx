@@ -10,6 +10,7 @@ import { getBaseUrl } from "@/lib/seo";
 import { buildCompareBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
 import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 // ---------------------------------------------------------------------------
 // Static generation — all competitor pages are pre-rendered at build time
@@ -43,9 +44,7 @@ export async function generateMetadata({
 
   const baseUrl = getBaseUrl();
   const canonicalUrl = config.seo.canonicalUrl ?? `${baseUrl}/compare/${slug}`;
-  const ogImage =
-    config.seo.ogImage ??
-    "https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png";
+  const ogImage = config.seo.ogImage ?? BRAND_LOGO_URL;
 
   return {
     title: config.seo.title,

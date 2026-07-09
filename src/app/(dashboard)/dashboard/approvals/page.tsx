@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { requireEnterpriseManager } from "@/lib/access";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { SUPPORT_EMAIL } from "@/lib/brand";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   applyProofApprovalAction,
@@ -208,7 +209,7 @@ export default async function ApprovalsPage() {
               actions={[
                 {
                   label: "Contact support",
-                  href: "mailto:support@repwell.ai",
+                  href: `mailto:${SUPPORT_EMAIL}`,
                   iconName: "Envelope",
                 },
               ]}

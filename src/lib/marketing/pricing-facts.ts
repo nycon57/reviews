@@ -1,3 +1,5 @@
+import { PRICING_TIERS } from "@/lib/stripe/types";
+
 export type MarketingTierId = "basic" | "pro" | "enterprise";
 export type BillingCadence = "monthly" | "annual";
 
@@ -21,50 +23,32 @@ export const MARKETING_TRIAL_FACTS = {
   lengthDays: 14,
   creditCardRequired: true,
   cancelAnytime: true,
-  shortCopy: "14-day free trial · cancel anytime",
+  get shortCopy() {
+    return `${this.lengthDays}-day free trial · ${
+      this.cancelAnytime ? "cancel anytime" : "standard cancellation terms apply"
+    }`;
+  },
+  get creditCardCopy() {
+    return this.creditCardRequired
+      ? "A credit card is required to activate the trial."
+      : "No credit card is required to activate the trial.";
+  },
 } as const;
 
-export const MARKETING_PRICING_TIERS: readonly MarketingPricingTier[] = [
-  {
-    id: "basic",
-    name: "Basic",
-    monthlyPrice: 49,
+const MARKETING_TIER_FIELDS: Record<
+  MarketingTierId,
+  Pick<MarketingPricingTier, "annualMonthlyPrice" | "cta" | "highlighted" | "badge">
+> = {
+  basic: {
     annualMonthlyPrice: 39,
-    description: "Build Your Reputation",
-    features: [
-      "1 user profile",
-      "200 surveys/month",
-      "Email distribution",
-      "Review monitoring & management",
-      "Basic analytics (rating trends, NPS)",
-      "Testimonial collection (text + video)",
-      "Google Business integration",
-      "Email support",
-    ],
     cta: {
       label: "Start Free Trial",
       href: "/signup?plan=basic",
       annualHref: "/signup?plan=basic&billing=yearly",
     },
   },
-  {
-    id: "pro",
-    name: "Pro",
-    monthlyPrice: 99,
+  pro: {
     annualMonthlyPrice: 79,
-    description: "AI-Powered Reputation Intelligence",
-    features: [
-      "Everything in Basic, plus:",
-      "AI sentiment analysis",
-      "AI response suggestions",
-      "AI visibility / GEO reports",
-      "AI performance scorecards",
-      "1,000 surveys/month",
-      "Advanced analytics & reporting",
-      "API access (1,000 calls/day)",
-      "Custom branding",
-      "Priority support",
-    ],
     cta: {
       label: "Start Free Trial",
       href: "/signup?plan=pro",
@@ -73,25 +57,27 @@ export const MARKETING_PRICING_TIERS: readonly MarketingPricingTier[] = [
     highlighted: true,
     badge: "Most Popular",
   },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    monthlyPrice: "Custom",
+  enterprise: {
     annualMonthlyPrice: "Custom",
-    description: "Reputation at Scale",
-    features: [
-      "Everything in Pro, plus:",
-      "Unlimited team members & surveys",
-      "Team management & leaderboards",
-      "Manager dashboard with org-wide analytics",
-      "Employee experience surveys",
-      "SSO/SAML & white-label",
-      "Webhooks & CSV bulk import",
-      "Dedicated success manager",
-    ],
     cta: { label: "Contact Sales", href: "/contact?plan=enterprise" },
   },
-];
+};
+
+export const MARKETING_PRICING_TIERS: readonly MarketingPricingTier[] =
+  PRICING_TIERS.map((tier) => {
+    const marketingFields = MARKETING_TIER_FIELDS[tier.id as MarketingTierId];
+    return {
+      id: tier.id as MarketingTierId,
+      name: tier.name as MarketingPricingTier["name"],
+      monthlyPrice: tier.monthlyPrice === -1 ? "Custom" : tier.monthlyPrice,
+      annualMonthlyPrice: marketingFields.annualMonthlyPrice,
+      description: tier.description,
+      features: tier.features,
+      cta: marketingFields.cta,
+      highlighted: marketingFields.highlighted,
+      badge: marketingFields.badge,
+    };
+  });
 
 export function getMarketingTier(
   tierId: MarketingTierId,

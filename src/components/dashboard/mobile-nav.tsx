@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -18,10 +17,10 @@ import { cn } from "@/lib/utils";
 import { List as Menu, Lock } from "@phosphor-icons/react";
 import {
   useFilteredNav,
+  useNavIsActive,
   ICON_MAP,
   type FilteredNavItem,
 } from "@/lib/nav";
-import { isNavHrefActive } from "@/lib/nav/active";
 import { TaskBadge } from "@/components/dashboard/task-badge";
 
 interface MobileNavProps {
@@ -30,23 +29,8 @@ interface MobileNavProps {
 
 export function MobileNav({ className }: MobileNavProps) {
   const [open, setOpen] = React.useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { coreItems, sections, bottomItems } = useFilteredNav();
-
-  const allHrefs = React.useMemo(
-    () => [
-      ...coreItems.map((item) => item.href),
-      ...sections.flatMap((section) => section.items.map((item) => item.href)),
-      ...bottomItems.map((item) => item.href),
-    ],
-    [coreItems, sections, bottomItems]
-  );
-
-  const isActive = React.useCallback(
-    (href: string) => isNavHrefActive(href, pathname, searchParams, allHrefs),
-    [pathname, searchParams, allHrefs]
-  );
+  const isActive = useNavIsActive({ coreItems, sections, bottomItems });
 
   const handleNavClick = () => {
     setOpen(false);

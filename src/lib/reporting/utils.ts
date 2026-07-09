@@ -19,6 +19,7 @@ import {
   formatDateTime as formatCanonicalDateTime,
   formatRelativeTime,
 } from "@/lib/utils";
+export { isValidEmail } from "@/lib/utils";
 import type { ActionResult } from "@/lib/reviews/types";
 import type {
   DateRangePreset,
@@ -254,10 +255,6 @@ export function buildDefaultScheduleForm(
     scheduleTime: normalizeTime(report.scheduleTime),
     filters: report.filters || {},
   };
-}
-
-export function isValidEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 export async function copyText(text: string) {

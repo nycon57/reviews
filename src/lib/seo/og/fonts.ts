@@ -10,23 +10,11 @@ export type OgFont = {
   style: "normal";
 };
 
-const INTER_FONTS = [
-  {
-    url: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2",
-    weight: 400 as const,
-  },
-  {
-    url: "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYAZ9hiA.woff2",
-    weight: 700 as const,
-  },
-];
-
 let interFontsPromise: Promise<OgFont[]> | null = null;
 let erstoriaFontPromise: Promise<OgFont[]> | null = null;
 
 interface LoadOgFontsOptions {
   includeErstoria?: boolean;
-  excludeWoff2?: boolean;
 }
 
 export async function loadOgFonts(options: LoadOgFontsOptions = {}): Promise<OgFont[]> {
@@ -35,11 +23,7 @@ export async function loadOgFonts(options: LoadOgFontsOptions = {}): Promise<OgF
     loadInterFonts(),
   ]);
 
-  const usableInterFonts = options.excludeWoff2
-    ? interFonts.filter((font) => !isWoff2Font(font.data))
-    : interFonts;
-
-  return [...erstoriaFonts, ...usableInterFonts];
+  return [...erstoriaFonts, ...interFonts];
 }
 
 function loadErstoriaFont(): Promise<OgFont[]> {
@@ -69,40 +53,28 @@ function loadInterFonts(): Promise<OgFont[]> {
     return interFontsPromise;
   }
 
-  interFontsPromise = Promise.all(
-    INTER_FONTS.map(async ({ url, weight }): Promise<OgFont | null> => {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) {
-          console.error(`Failed to load Inter font for OG image (${weight}): HTTP ${res.status}`);
-          return null;
-        }
-
-        return {
-          name: "Inter",
-          data: await res.arrayBuffer(),
-          weight,
-          style: "normal",
-        };
-      } catch (err) {
-        console.error(`Failed to load Inter font for OG image (${weight}):`, err);
-        return null;
-      }
-    })
-  )
-    .then((fonts): OgFont[] => fonts.filter((font): font is OgFont => font !== null))
+  interFontsPromise = Promise.all([
+    readFile(join(process.cwd(), "public/fonts/Inter-Regular.ttf")),
+    readFile(join(process.cwd(), "public/fonts/Inter-Bold.ttf")),
+  ])
+    .then(([regular, bold]): OgFont[] => [
+      {
+        name: "Inter",
+        data: regular,
+        weight: 400,
+        style: "normal",
+      },
+      {
+        name: "Inter",
+        data: bold,
+        weight: 700,
+        style: "normal",
+      },
+    ])
     .catch((err): OgFont[] => {
-      console.error("Failed to load Inter fonts for OG image:", err);
+      console.error("Failed to load Inter font for OG image:", err);
       return [];
     });
 
   return interFontsPromise;
-}
-
-function isWoff2Font(data: ArrayBuffer | Buffer): boolean {
-  const signature = Buffer.isBuffer(data)
-    ? data.subarray(0, 4)
-    : Buffer.from(data.slice(0, 4));
-
-  return signature.toString("ascii") === "wOF2";
 }

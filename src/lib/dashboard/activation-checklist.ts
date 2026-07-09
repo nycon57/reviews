@@ -1,5 +1,3 @@
-import { getProfileCompletionSummary } from "@/lib/gamification/profile-completion-actions";
-import { getUnifiedRequestStats } from "@/lib/requests/unified-requests";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { User } from "@/lib/users/types";
 
@@ -8,12 +6,6 @@ export interface ActivationChecklistStep {
   label: string;
   href: string;
   done: boolean;
-}
-
-export interface ActivationChecklistState {
-  completionPercent: number;
-  isComplete: boolean;
-  steps: ActivationChecklistStep[];
 }
 
 async function hasConnectedReviewSource(user: User): Promise<boolean> {
@@ -40,19 +32,38 @@ async function hasConnectedReviewSource(user: User): Promise<boolean> {
   return (data?.length ?? 0) > 0;
 }
 
+async function hasSentReviewRequest(user: User): Promise<boolean> {
+  if (!user.organizationId) {
+    return false;
+  }
+
+  const supabase = createAdminClient();
+  const [surveyResult, videoResult] = await Promise.all([
+    supabase
+      .from("surveys")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", user.organizationId)
+      .limit(1),
+    supabase
+      .from("video_testimonial_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", user.organizationId)
+      .limit(1),
+  ]);
+
+  return (surveyResult.count ?? 0) > 0 || (videoResult.count ?? 0) > 0;
+}
+
 export async function getActivationChecklistState(
-  user: User
-): Promise<ActivationChecklistState> {
-  const [profileResult, requestStats, reviewSourceConnected] = await Promise.all([
-    getProfileCompletionSummary(user.id),
-    getUnifiedRequestStats(),
+  user: User,
+  profilePercent: number
+): Promise<ActivationChecklistStep[]> {
+  const [requestSent, reviewSourceConnected] = await Promise.all([
+    hasSentReviewRequest(user),
     hasConnectedReviewSource(user),
   ]);
 
-  const profilePercent =
-    profileResult.success && profileResult.data ? profileResult.data.percentage : 0;
-
-  const steps: ActivationChecklistStep[] = [
+  return [
     {
       id: "profile",
       label: "Complete your profile",
@@ -63,7 +74,7 @@ export async function getActivationChecklistState(
       id: "review-request",
       label: "Send your first review request",
       href: "/dashboard/reviews?tab=requests",
-      done: requestStats.total > 0,
+      done: requestSent,
     },
     {
       id: "review-source",
@@ -72,12 +83,4 @@ export async function getActivationChecklistState(
       done: reviewSourceConnected,
     },
   ];
-
-  const completedSteps = steps.filter((step) => step.done).length;
-
-  return {
-    completionPercent: Math.round((completedSteps / steps.length) * 100),
-    isComplete: completedSteps === steps.length,
-    steps,
-  };
 }

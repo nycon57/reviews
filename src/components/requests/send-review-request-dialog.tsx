@@ -92,7 +92,6 @@ export function SendReviewRequestDialog({
   // Prefer the caller-provided user id; fetch only as a fallback.
   useEffect(() => {
     if (!open) return;
-    if (providedCurrentUserId) return;
     if (currentUserId) return;
 
     let cancelled = false;

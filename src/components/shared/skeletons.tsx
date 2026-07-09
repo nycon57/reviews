@@ -6,6 +6,44 @@ interface SkeletonProps {
   className?: string;
 }
 
+export function PageHeaderSkeleton({
+  withIcon = true,
+  titleWidth = "w-40",
+  subtitleWidth = "w-72",
+  className,
+}: {
+  withIcon?: boolean;
+  titleWidth?: string;
+  subtitleWidth?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        withIcon ? "flex items-center gap-3" : "space-y-2",
+        className
+      )}
+    >
+      {withIcon && <Skeleton className="h-12 w-12 rounded-xl" />}
+      <div className="space-y-2">
+        <Skeleton className={cn("h-7", titleWidth)} />
+        <Skeleton className={cn("h-4 max-w-full", subtitleWidth)} />
+      </div>
+    </div>
+  );
+}
+
+export function ReviewsHubFallback() {
+  return (
+    <div className="space-y-6">
+      <StatsRowSkeleton />
+      <Skeleton className="h-10 w-80 max-w-full" />
+      <Skeleton className="h-12 w-full" />
+      <ReviewListSkeleton count={5} />
+    </div>
+  );
+}
+
 /**
  * Skeleton for metric/stat cards
  */

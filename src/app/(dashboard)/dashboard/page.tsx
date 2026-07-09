@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { DashboardEntrance } from "@/components/dashboard/dashboard-entrance";
 import {
   StatsRowSkeleton,
@@ -23,6 +24,8 @@ import {
   getUserRecentReviews,
 } from "@/lib/dashboard";
 import { getActivationChecklistState } from "@/lib/dashboard/activation-checklist";
+import { getProfileCompletionScore } from "@/lib/gamification/profile-completion-actions";
+import type { ProfileCompletionScore } from "@/lib/gamification/profile-completion-types";
 import { getCurrentUser } from "@/lib/users/actions";
 import type { User } from "@/lib/users/types";
 
@@ -30,6 +33,8 @@ export const metadata = {
   title: "Dashboard | RepWell",
   description: "Your RepWell dashboard overview",
 };
+
+const ACTIVATION_DISMISSED_COOKIE = "repwell_activation_dismissed";
 
 // Check if user is new (no data yet)
 function isNewUser(metrics: { totalReviews: number; averageRating: number; npsScore: number; responseRate: number }) {
@@ -66,23 +71,27 @@ async function RecentReviewsList() {
   return <UserRecentReviews initialReviews={result.success ? (result.data || []) : []} />;
 }
 
-function FullProfileCompletionCard() {
-  return <ProfileCompletionCard showMilestones showTips />;
+function FullProfileCompletionCard({
+  initialData,
+}: {
+  initialData: ProfileCompletionScore | null;
+}) {
+  return <ProfileCompletionCard showMilestones showTips initialData={initialData} />;
 }
 
-async function ActivationChecklist({ user }: { user: User }) {
-  const checklist = await getActivationChecklistState(user);
-
-  if (checklist.isComplete) {
-    return null;
-  }
+async function ActivationChecklist({
+  user,
+  profilePercent,
+}: {
+  user: User;
+  profilePercent: number;
+}) {
+  const steps = await getActivationChecklistState(user, profilePercent);
 
   return (
     <WelcomeBanner
-      userId={user.id}
       userName={user.fullName ?? undefined}
-      completionPercent={checklist.completionPercent}
-      steps={checklist.steps}
+      steps={steps}
     />
   );
 }
@@ -92,15 +101,26 @@ export default async function DashboardPage() {
   const user = userResult.success ? userResult.data : null;
   const userName = user?.fullName ?? null;
   const userId = user?.id ?? null;
+  const [cookieStore, profileCompletionResult] = await Promise.all([
+    cookies(),
+    user ? getProfileCompletionScore(user.id) : Promise.resolve(null),
+  ]);
+  const activationDismissed =
+    cookieStore.get(ACTIVATION_DISMISSED_COOKIE)?.value === "1";
+  const profileCompletion =
+    profileCompletionResult?.success && profileCompletionResult.data
+      ? profileCompletionResult.data
+      : null;
+  const profilePercent = profileCompletion?.percentage ?? 0;
 
   return (
     <DashboardEntrance className="flex-1 space-y-8">
       {/* Page header with Send Review Request CTA */}
       <DashboardHeader userName={userName} userId={userId} />
 
-      {user && (
+      {user && !activationDismissed && (
         <Suspense fallback={null}>
-          <ActivationChecklist user={user} />
+          <ActivationChecklist user={user} profilePercent={profilePercent} />
         </Suspense>
       )}
 
@@ -130,7 +150,7 @@ export default async function DashboardPage() {
             <GamificationStatsCard layout="vertical" />
           </Suspense>
           <Suspense fallback={<CardSkeleton />}>
-            <FullProfileCompletionCard />
+            <FullProfileCompletionCard initialData={profileCompletion} />
           </Suspense>
         </div>
       </div>

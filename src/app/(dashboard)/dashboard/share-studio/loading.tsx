@@ -1,16 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatsRowSkeleton, TableSkeleton } from "@/components/shared";
+import { PageHeaderSkeleton, StatsRowSkeleton, TableSkeleton } from "@/components/shared";
 
 export default function ShareStudioLoading() {
   return (
     <div className="flex-1 space-y-6">
-      <div className="flex items-start gap-3">
-        <Skeleton className="h-12 w-12 rounded-xl" />
-        <div className="space-y-2">
-          <Skeleton className="h-7 w-40" />
-          <Skeleton className="h-4 w-[28rem] max-w-full" />
-        </div>
-      </div>
+      <PageHeaderSkeleton className="items-start" titleWidth="w-40" subtitleWidth="w-[28rem]" />
 
       <StatsRowSkeleton count={3} />
       <Skeleton className="h-11 w-full rounded-none" />

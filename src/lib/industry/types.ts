@@ -163,37 +163,6 @@ export interface IndustryPainPoint {
   };
 }
 
-export interface IndustryFeatureTab {
-  /** Icon name (Lucide) */
-  icon: string;
-  /** Tab button text */
-  tabName: string;
-  /** Feature title */
-  title: string;
-  /** Feature summary */
-  summary: string;
-  /** Bullet points highlighting benefits */
-  bulletPoints?: string[];
-  /** Layout variant for the showcase */
-  layoutVariant: "single" | "floating" | "wide" | "grid";
-  /** Images to display */
-  images: Array<{
-    src: string;
-    alt: string;
-    className?: string;
-  }>;
-  /** Optional stat to highlight */
-  stat?: {
-    value: string;
-    label: string;
-  };
-  /** Optional link */
-  link?: {
-    name: string;
-    href: string;
-  };
-}
-
 export interface IndustryRoleTab {
   /** Role identifier */
   role: "professional" | "manager" | "enterprise";
@@ -287,8 +256,6 @@ export interface IndustryPageConfig {
   painPoints: IndustryPainPoint[];
   /** Trust stats bar */
   stats: IndustryStat[];
-  /** Feature tabs showcase */
-  featureTabs: IndustryFeatureTab[];
   /** Role-based features */
   roleTabs: IndustryRoleTab[];
   /** How it works timeline */

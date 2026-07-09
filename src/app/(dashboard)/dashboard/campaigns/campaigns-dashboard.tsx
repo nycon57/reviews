@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
+import { useMemo, useState, useTransition, type FormEvent } from "react";
 import posthog from "posthog-js";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -57,6 +57,8 @@ import type {
   WorkflowTemplate,
 } from "@/lib/campaigns/types";
 import { formatRelativeTime } from "@/lib/utils";
+import { pushMergedSearchParams } from "@/lib/url/search-params";
+import { useSyncedState } from "@/hooks/use-synced-state";
 import { useToast } from "@/hooks/use-toast";
 import dynamic from "next/dynamic";
 
@@ -121,7 +123,7 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
     ? (statusParam as FilterValue)
     : "all";
   const searchParam = searchParams.get("search") ?? "";
-  const [searchValue, setSearchValue] = useState(searchParam);
+  const [searchValue, setSearchValue] = useSyncedState(searchParam);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{
     id: string;
@@ -129,29 +131,14 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
     isDraft: boolean;
   } | null>(null);
 
-  useEffect(() => {
-    setSearchValue(searchParam);
-  }, [searchParam]);
-
-  const pushParams = (updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(updates)) {
-      if (!value) {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    }
-
-    const query = params.toString();
-    router.push(query ? `/dashboard/campaigns?${query}` : "/dashboard/campaigns", {
-      scroll: false,
-    });
-  };
-
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    pushParams({ search: searchValue.trim() || null });
+    pushMergedSearchParams(
+      router,
+      searchParams,
+      { search: searchValue.trim() || null },
+      { basePath: "/dashboard/campaigns" }
+    );
   };
 
   const stats = useMemo(() => {
@@ -334,7 +321,12 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
             <Tabs
               value={filter}
               onValueChange={(value) =>
-                pushParams({ status: value === "all" ? null : value })
+                pushMergedSearchParams(
+                  router,
+                  searchParams,
+                  { status: value },
+                  { basePath: "/dashboard/campaigns", defaults: { status: "all" } }
+                )
               }
             >
               <TabsList variant="pills" className="h-auto flex-wrap justify-start">

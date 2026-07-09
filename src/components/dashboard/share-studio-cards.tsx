@@ -7,8 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { isShareStudioSchemaReady } from "@/lib/share-studio/service";
+import { getShareStudioCardsForOrganization } from "@/lib/share-studio/hub-service";
 import type { ShareStudioCardsData } from "@/lib/share-studio/hub-types";
 
 /* ------------------------------------------------------------------ */
@@ -19,66 +19,7 @@ async function getShareStudioData(organizationId: string) {
   const schemaReady = await isShareStudioSchemaReady(organizationId);
   if (!schemaReady) return null;
 
-  const supabase = createUntypedAdminClient();
-
-  const [
-    activeJobsResult,
-    linkViewsResult,
-    linkClicksResult,
-    publishedLinksResult,
-    totalLinksResult,
-  ] = await Promise.all([
-    supabase
-      .from("proof_render_jobs")
-      .select("id, asset_type, status, proof_item_id, created_at")
-      .eq("organization_id", organizationId)
-      .in("status", ["queued", "processing"])
-      .order("created_at", { ascending: false })
-      .limit(10),
-    supabase
-      .from("proof_link_events")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId)
-      .eq("event_type", "view"),
-    supabase
-      .from("proof_link_events")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId)
-      .eq("event_type", "click"),
-    supabase
-      .from("proof_links")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId)
-      .eq("published", true),
-    supabase
-      .from("proof_links")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId),
-  ]);
-
-  const activeJobs = activeJobsResult.error
-    ? []
-    : ((activeJobsResult.data || []) as Record<string, unknown>[]);
-  const views = linkViewsResult.error ? 0 : (linkViewsResult.count || 0);
-  const clicks = linkClicksResult.error ? 0 : (linkClicksResult.count || 0);
-  const publishedLinks = publishedLinksResult.error ? 0 : (publishedLinksResult.count || 0);
-  const totalLinks = totalLinksResult.error ? 0 : (totalLinksResult.count || 0);
-
-  return {
-    activeJobs: activeJobs.map((job) => ({
-      id: String(job.id ?? ""),
-      assetType: String(job.asset_type ?? "asset"),
-      status: String(job.status ?? "queued"),
-      proofItemId:
-        typeof job.proof_item_id === "string" ? job.proof_item_id : null,
-      createdAt: String(job.created_at ?? ""),
-    })),
-    views,
-    clicks,
-    publishedLinks,
-    totalLinks,
-    periodLabel: "All time",
-  } satisfies ShareStudioCardsData;
+  return getShareStudioCardsForOrganization(organizationId);
 }
 
 /* ------------------------------------------------------------------ */

@@ -37,6 +37,8 @@ import type {
   ShareStudioAssetRow,
   ShareStudioAssetsResult,
 } from "@/lib/share-studio/hub-types";
+import { absoluteUrl } from "@/lib/share-studio/url";
+import { formatDate } from "@/lib/utils";
 
 interface AssetsGalleryProps {
   initialData: ShareStudioAssetsResult;
@@ -48,22 +50,6 @@ const TYPE_LABELS: Record<ShareStudioAssetFilter, string> = {
   image: "Images",
   video: "Videos",
 };
-
-function absoluteUrl(pathOrUrl: string): string {
-  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
-  if (typeof window === "undefined") return pathOrUrl;
-  return `${window.location.origin}${pathOrUrl}`;
-}
-
-function formatDate(value: string): string {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "Unknown";
-  return parsed.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function assetLabel(asset: ShareStudioAssetRow): string {
   if (asset.assetType === "video") return "Video clip";
@@ -216,7 +202,7 @@ export function AssetsGallery({ initialData, basePath }: AssetsGalleryProps) {
                   <div className="mb-1 flex items-center gap-2">
                     <Badge variant="outline">{sourceLabel(asset)}</Badge>
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(asset.createdAt)}
+                      {formatDate(asset.createdAt, "Unknown")}
                     </span>
                   </div>
                   <p className="truncate font-medium text-heading">

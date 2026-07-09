@@ -78,10 +78,6 @@ function startDateKey(days: number): string {
   return dateKey(start);
 }
 
-function startDateTimeIso(days: number): string {
-  return `${startDateKey(days)}T00:00:00.000Z`;
-}
-
 function escapeSearchForOr(search: string): string {
   return search.replace(/,/g, " ").replace(/([%_\\])/g, "\\$1");
 }
@@ -304,41 +300,13 @@ export async function getShareStudioHubSmartLinksData(
   organizationId: string,
   input: SmartLinksListInput = {}
 ): Promise<ShareStudioHubSmartLinksData> {
-  const supabase = createUntypedAdminClient();
-
-  const activeJobsPromise = supabase
-    .from("proof_render_jobs")
-    .select("id, asset_type, status, proof_item_id, created_at")
-    .eq("organization_id", organizationId)
-    .in("status", ["queued", "processing"])
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  const allLinksPromise = supabase
-    .from("proof_links")
-    .select("id, published")
-    .eq("organization_id", organizationId)
-    .is("archived_at", null);
-
-  const [activeJobsResult, allLinksResult, list] = await Promise.all([
-    activeJobsPromise,
-    allLinksPromise,
+  const [cardsData, list] = await Promise.all([
+    buildShareStudioCardsForOrganization(organizationId),
     executeSmartLinkListQuery({ ...input, organizationId }),
   ]);
 
-  if (activeJobsResult.error) {
-    throw new Error(activeJobsResult.error.message || "Failed to load render queue");
-  }
-  if (allLinksResult.error) {
-    throw new Error(allLinksResult.error.message || "Failed to load Smart Link totals");
-  }
-
-  const allLinks = (allLinksResult.data ?? []) as RecordRow[];
-  const allLinkIds = allLinks.map((row) => String(row.id));
-  const dailyRows = await loadDailyRowsForLinks(organizationId, allLinkIds, 7);
   const pageIds = new Set(list.rows.map((row) => String(row.id)));
-  const pageStats = aggregateStats(dailyRows, pageIds);
-  const totals = aggregateTotals(dailyRows);
+  const pageStats = aggregateStats(cardsData.dailyRows, pageIds);
 
   const smartLinks: SmartLinksListResult = {
     items: list.rows.map((row) =>
@@ -352,26 +320,69 @@ export async function getShareStudioHubSmartLinksData(
     status: list.status,
   };
 
-  const cards: ShareStudioCardsData = {
-    activeJobs: ((activeJobsResult.data ?? []) as RecordRow[]).map((job) => ({
-      id: String(job.id ?? ""),
-      assetType: String(job.asset_type ?? "asset"),
-      status: String(job.status ?? "queued"),
-      proofItemId: stringOrNull(job.proof_item_id),
-      createdAt: String(job.created_at ?? ""),
-    })),
-    views: totals.views,
-    clicks: totals.clicks,
-    publishedLinks: allLinks.filter((row) => row.published === true).length,
-    totalLinks: allLinks.length,
-    periodLabel: "Last 7 days",
-  };
-
   return {
-    cards,
+    cards: cardsData.cards,
     smartLinks,
     queryCount: 4,
   };
+}
+
+async function buildShareStudioCardsForOrganization(
+  organizationId: string
+): Promise<{ cards: ShareStudioCardsData; dailyRows: DailyEventRow[] }> {
+  const supabase = createUntypedAdminClient();
+
+  const [activeJobsResult, allLinksResult] = await Promise.all([
+    supabase
+      .from("proof_render_jobs")
+      .select("id, asset_type, status, proof_item_id, created_at")
+      .eq("organization_id", organizationId)
+      .in("status", ["queued", "processing"])
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("proof_links")
+      .select("id, published")
+      .eq("organization_id", organizationId)
+      .is("archived_at", null),
+  ]);
+
+  if (activeJobsResult.error) {
+    throw new Error(activeJobsResult.error.message || "Failed to load render queue");
+  }
+  if (allLinksResult.error) {
+    throw new Error(allLinksResult.error.message || "Failed to load Smart Link totals");
+  }
+
+  const allLinks = (allLinksResult.data ?? []) as RecordRow[];
+  const allLinkIds = allLinks.map((row) => String(row.id));
+  const dailyRows = await loadDailyRowsForLinks(organizationId, allLinkIds, 7);
+  const totals = aggregateTotals(dailyRows);
+
+  return {
+    cards: {
+      activeJobs: ((activeJobsResult.data ?? []) as RecordRow[]).map((job) => ({
+        id: String(job.id ?? ""),
+        assetType: String(job.asset_type ?? "asset"),
+        status: String(job.status ?? "queued"),
+        proofItemId: stringOrNull(job.proof_item_id),
+        createdAt: String(job.created_at ?? ""),
+      })),
+      views: totals.views,
+      clicks: totals.clicks,
+      publishedLinks: allLinks.filter((row) => row.published === true).length,
+      totalLinks: allLinks.length,
+      periodLabel: "Last 7 days",
+    },
+    dailyRows,
+  };
+}
+
+export async function getShareStudioCardsForOrganization(
+  organizationId: string
+): Promise<ShareStudioCardsData> {
+  const { cards } = await buildShareStudioCardsForOrganization(organizationId);
+  return cards;
 }
 
 export async function bulkUpdateSmartLinksForOrganization(input: {
@@ -451,34 +462,6 @@ function fillAnalyticsSeries(rows: DailyEventRow[], days: number): SmartLinkAnal
   }));
 }
 
-function normalizeReferrer(referrer: unknown): string {
-  if (typeof referrer !== "string" || referrer.trim().length === 0) {
-    return "Direct";
-  }
-
-  const value = referrer.trim();
-  try {
-    const url = new URL(value);
-    return url.hostname.replace(/^www\./, "") || value;
-  } catch {
-    return value;
-  }
-}
-
-function aggregateReferrers(rows: RecordRow[]): SmartLinkReferrerStat[] {
-  const counts = new Map<string, number>();
-
-  for (const row of rows) {
-    const referrer = normalizeReferrer(row.referrer);
-    counts.set(referrer, (counts.get(referrer) ?? 0) + 1);
-  }
-
-  return Array.from(counts.entries())
-    .map(([referrer, count]) => ({ referrer, count }))
-    .sort((a, b) => b.count - a.count || a.referrer.localeCompare(b.referrer))
-    .slice(0, 10);
-}
-
 export async function getSmartLinkAnalyticsForOrganization(input: {
   organizationId: string;
   linkId: string;
@@ -501,12 +484,11 @@ export async function getSmartLinkAnalyticsForOrganization(input: {
       .eq("proof_link_id", input.linkId)
       .gte("event_date", startDateKey(30)),
     supabase
-      .from("proof_link_events")
-      .select("referrer")
-      .eq("organization_id", input.organizationId)
-      .eq("proof_link_id", input.linkId)
-      .eq("event_type", "view")
-      .gte("created_at", startDateTimeIso(30)),
+      .rpc("proof_link_referrer_summary", {
+        p_link_id: input.linkId,
+        p_days: 30,
+        p_limit: 10,
+      }),
   ]);
 
   if (linkResult.error || !linkResult.data) {
@@ -534,7 +516,15 @@ export async function getSmartLinkAnalyticsForOrganization(input: {
     link: mapSmartLinkRow(linkResult.data as RecordRow, totals),
     totals: { ...totals, ctr },
     series,
-    referrers: aggregateReferrers((referrersResult.data ?? []) as RecordRow[]),
+    referrers: ((referrersResult.data ?? []) as RecordRow[]).map((row) => ({
+      referrer: String(row.referrer ?? "Direct"),
+      count:
+        typeof row.event_count === "number"
+          ? row.event_count
+          : row.event_count
+            ? Number(row.event_count)
+            : 0,
+    })) satisfies SmartLinkReferrerStat[],
   };
 }
 

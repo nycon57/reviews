@@ -77,7 +77,7 @@ function createQueryBuilder(response: QueryResponse) {
   return builder;
 }
 
-function createSupabaseClient(responses: QueryResponse[]) {
+function createSupabaseClient(responses: QueryResponse[], rpcResponses: QueryResponse[] = []) {
   const builders: ReturnType<typeof createQueryBuilder>[] = [];
   const fromMock = vi.fn(() => {
     const response = responses.shift();
@@ -88,10 +88,18 @@ function createSupabaseClient(responses: QueryResponse[]) {
     builders.push(builder);
     return builder;
   });
+  const rpcMock = vi.fn(() => {
+    const response = rpcResponses.shift();
+    if (!response) {
+      throw new Error("Unexpected Supabase RPC");
+    }
+    return Promise.resolve(response);
+  });
 
   return {
     client: {
       from: fromMock,
+      rpc: rpcMock,
       storage: {
         from: vi.fn(() => ({
           remove: vi.fn(() => Promise.resolve({ error: null })),
@@ -100,24 +108,37 @@ function createSupabaseClient(responses: QueryResponse[]) {
     },
     builders,
     fromMock,
+    rpcMock,
   };
 }
 
 const managerProfile = {
+  id: "user-1",
   organization_id: "org-1",
   role: "manager",
-  organizations: { account_type: "enterprise" },
+  is_owner: false,
+  organizations: {
+    account_type: "enterprise",
+    subscription_tier: "enterprise",
+    subscription_status: "active",
+    grace_period_ends_at: null,
+  },
 };
+
+function mockAccessContext() {
+  const { client } = createSupabaseClient([{ data: managerProfile, error: null }]);
+  createAdminClientMock.mockReturnValue(client);
+}
 
 describe("Share Studio hub actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     unifiedGetUserMock.mockResolvedValue({ id: "user-1", email: "manager@example.com" });
+    mockAccessContext();
   });
 
   it("lists Smart Links with a batched daily stats query", async () => {
     const { client, fromMock } = createSupabaseClient([
-      { data: managerProfile, error: null },
       {
         data: [
           {
@@ -179,7 +200,6 @@ describe("Share Studio hub actions", () => {
 
   it("bulk-updates Smart Links in the authenticated organization", async () => {
     const { client, builders } = createSupabaseClient([
-      { data: managerProfile, error: null },
       { data: [{ id: "link-1" }, { id: "link-2" }], error: null },
     ]);
     createUntypedAdminClientMock.mockReturnValue(client);
@@ -193,17 +213,16 @@ describe("Share Studio hub actions", () => {
       success: true,
       data: { updated: 2 },
     });
-    expect(builders[1].update).toHaveBeenCalledWith(
+    expect(builders[0].update).toHaveBeenCalledWith(
       expect.objectContaining({ published: false })
     );
-    expect(builders[1].eq).toHaveBeenCalledWith("organization_id", "org-1");
-    expect(builders[1].in).toHaveBeenCalledWith("id", ["link-1", "link-2"]);
+    expect(builders[0].eq).toHaveBeenCalledWith("organization_id", "org-1");
+    expect(builders[0].in).toHaveBeenCalledWith("id", ["link-1", "link-2"]);
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard/share-studio");
   });
 
   it("loads per-link analytics with totals, CTR, series, and referrers", async () => {
-    const { client } = createSupabaseClient([
-      { data: managerProfile, error: null },
+    const { client, rpcMock } = createSupabaseClient([
       {
         data: {
           id: "link-1",
@@ -241,11 +260,11 @@ describe("Share Studio hub actions", () => {
         ],
         error: null,
       },
+    ], [
       {
         data: [
-          { referrer: null },
-          { referrer: "https://www.linkedin.com/feed/" },
-          { referrer: "https://www.linkedin.com/feed/" },
+          { referrer: "linkedin.com", event_count: 2 },
+          { referrer: "Direct", event_count: 1 },
         ],
         error: null,
       },
@@ -265,5 +284,10 @@ describe("Share Studio hub actions", () => {
       { referrer: "linkedin.com", count: 2 },
       { referrer: "Direct", count: 1 },
     ]);
+    expect(rpcMock).toHaveBeenCalledWith("proof_link_referrer_summary", {
+      p_link_id: "link-1",
+      p_days: 30,
+      p_limit: 10,
+    });
   });
 });

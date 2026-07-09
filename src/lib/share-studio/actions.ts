@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { getAccessContext } from "@/lib/access";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import {
@@ -95,49 +97,19 @@ async function getShareStudioHubActionContext(): Promise<
       error: string;
     }
 > {
-  const user = await unifiedGetUser();
-  if (!user) {
-    return { ok: false, error: "Not authenticated" };
-  }
-
-  const supabase = createUntypedAdminClient();
-  const { data: profile, error } = await supabase
-    .from("users")
-    .select("organization_id, role, organizations(account_type)")
-    .eq("id", user.id)
-    .single();
-
-  const organizationId =
-    profile && typeof profile.organization_id === "string"
-      ? profile.organization_id
-      : null;
-
-  if (error || !organizationId) {
+  const ctx = await getAccessContext();
+  if (!ctx) {
     return { ok: false, error: "Could not load user profile" };
   }
 
-  const organization = Array.isArray(profile.organizations)
-    ? profile.organizations[0]
-    : profile.organizations;
-  const accountType = String(
-    (organization as { account_type?: string | null } | null)?.account_type ||
-      "individual"
-  );
-  const rawRole = String(profile.role || (accountType === "individual" ? "admin" : "user"));
-  const role = rawRole === "loan_officer" ? "user" : rawRole;
-
-  if (
-    accountType === "enterprise" &&
-    role !== "admin" &&
-    role !== "manager"
-  ) {
+  if (!hasPermission(ctx, PERMISSIONS.VIEW_SHARE_STUDIO)) {
     return { ok: false, error: "You do not have permission to manage Share Studio." };
   }
 
   return {
     ok: true,
-    userId: user.id,
-    organizationId,
+    userId: ctx.userId,
+    organizationId: ctx.organizationId,
   };
 }
 

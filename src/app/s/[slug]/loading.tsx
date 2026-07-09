@@ -1,9 +1,7 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 function SkeletonBlock({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`rounded-lg bg-repwell-sage-100/50 motion-safe:animate-shimmer ${className}`}
-    />
-  );
+  return <Skeleton className={`rounded-lg bg-repwell-sage-100/50 ${className}`} />;
 }
 
 export default function SmartLinkLoading() {

@@ -33,6 +33,7 @@ import {
 } from "@/components/analytics/chart-primitives";
 import { SmartLinkQRCode } from "@/components/share-studio/smart-link-qr-code";
 import { getSmartLinkAnalytics } from "@/lib/share-studio/actions";
+import { absoluteUrl } from "@/lib/share-studio/url";
 import type {
   SmartLinkAnalyticsResult,
   SmartLinkRow,
@@ -42,11 +43,6 @@ interface SmartLinkAnalyticsSheetProps {
   link: SmartLinkRow | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-function absoluteUrl(path: string): string {
-  if (typeof window === "undefined") return path;
-  return `${window.location.origin}${path}`;
 }
 
 function formatDateLabel(date: string): string {

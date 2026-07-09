@@ -48,6 +48,8 @@ import type {
   SmartLinksListResult,
   SmartLinkStatusFilter,
 } from "@/lib/share-studio/hub-types";
+import { absoluteUrl } from "@/lib/share-studio/url";
+import { formatDate } from "@/lib/utils";
 import { SmartLinkAnalyticsSheet } from "@/components/share-studio/smart-link-analytics-sheet";
 
 interface SmartLinksTableProps {
@@ -61,21 +63,6 @@ const STATUS_LABELS: Record<SmartLinkStatusFilter, string> = {
   unpublished: "Unpublished",
   archived: "Archived",
 };
-
-function absoluteUrl(path: string): string {
-  if (typeof window === "undefined") return path;
-  return `${window.location.origin}${path}`;
-}
-
-function formatDate(value: string): string {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "Unknown";
-  return parsed.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function sourceLabel(link: SmartLinkRow): string {
   const sourceType = link.source?.sourceType;
@@ -356,7 +343,7 @@ export function SmartLinksTable({ initialData, basePath }: SmartLinksTableProps)
                   </TableCell>
                   <TableCell>{statusBadge(link)}</TableCell>
                   <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
-                    {formatDate(link.createdAt)}
+                    {formatDate(link.createdAt, "Unknown")}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex items-center gap-3 text-sm tabular-nums">

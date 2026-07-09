@@ -8,7 +8,10 @@ export function cn(...inputs: ClassValue[]) {
 export function formatDate(date: Date | string | null | undefined, fallback = ""): string {
   if (!date) return fallback;
 
-  return new Date(date).toLocaleDateString("en-US", {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return fallback;
+
+  return parsed.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",

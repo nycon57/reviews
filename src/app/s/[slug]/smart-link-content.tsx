@@ -17,6 +17,7 @@ import {
 import { CopyLinkButton } from "./copy-link-button";
 import { getInitials } from "@/lib/utils";
 import { getSafeUrl, getDisplayHostname, formatAddressLines } from "@/lib/contact-display";
+import { checkWcagContrast, getContrastRatio } from "@/lib/widgets/theme-utils";
 import { ZillowIcon } from "@/components/icons/zillow-icon";
 import { ReferFriendModal } from "@/app/pro/[slug]/components/refer-friend-modal";
 import { firstName } from "@/app/(public)/video-testimonial/[token]/testimonial-shell";
@@ -87,67 +88,32 @@ const SHORT_QUOTE_CHARS = 180;
 const MID_QUOTE_CHARS = 420;
 const REPWELL_DEEP_TEAL = "#2f3e46";
 
-function parseHexColor(color: string): [number, number, number] | null {
-  const normalized = color.trim().replace(/^#/, "");
-  const hex =
-    normalized.length === 3
-      ? normalized
-          .split("")
-          .map((char) => char + char)
-          .join("")
-      : normalized;
-
-  if (!/^[0-9a-fA-F]{6}$/.test(hex)) return null;
-
-  return [
-    Number.parseInt(hex.slice(0, 2), 16),
-    Number.parseInt(hex.slice(2, 4), 16),
-    Number.parseInt(hex.slice(4, 6), 16),
-  ];
-}
-
-function relativeLuminance([r, g, b]: [number, number, number]) {
-  const [rs, gs, bs] = [r, g, b].map((channel) => {
-    const value = channel / 255;
-    return value <= 0.03928
-      ? value / 12.92
-      : Math.pow((value + 0.055) / 1.055, 2.4);
-  });
-
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-}
-
-function contrastRatio(colorA: string, colorB: string) {
-  const rgbA = parseHexColor(colorA);
-  const rgbB = parseHexColor(colorB);
-  if (!rgbA || !rgbB) return 21;
-
-  const lumA = relativeLuminance(rgbA);
-  const lumB = relativeLuminance(rgbB);
-  const lighter = Math.max(lumA, lumB);
-  const darker = Math.min(lumA, lumB);
-
-  return (lighter + 0.05) / (darker + 0.05);
+function normalizeSafeBrandColor(primaryColor: string) {
+  const ratio = getContrastRatio(primaryColor, "#ffffff");
+  return ratio === null || !Number.isFinite(ratio) ? REPWELL_DEEP_TEAL : primaryColor;
 }
 
 function getAccessibleBrandFillStyle(primaryColor: string): React.CSSProperties {
-  if (contrastRatio(primaryColor, "#ffffff") >= 4.5) {
-    return { background: primaryColor, color: "#ffffff" };
+  const brandColor = normalizeSafeBrandColor(primaryColor);
+
+  if (checkWcagContrast("#ffffff", brandColor)?.passNormal) {
+    return { background: brandColor, color: "#ffffff" };
   }
 
-  if (contrastRatio(primaryColor, REPWELL_DEEP_TEAL) >= 4.5) {
-    return { background: primaryColor, color: REPWELL_DEEP_TEAL };
+  if (checkWcagContrast(REPWELL_DEEP_TEAL, brandColor)?.passNormal) {
+    return { background: brandColor, color: REPWELL_DEEP_TEAL };
   }
 
   return {
-    background: `linear-gradient(rgba(47, 62, 70, 0.4), rgba(47, 62, 70, 0.4)), ${primaryColor}`,
+    background: `linear-gradient(rgba(47, 62, 70, 0.4), rgba(47, 62, 70, 0.4)), ${brandColor}`,
     color: "#ffffff",
   };
 }
 
 function getAccessibleAccentColor(primaryColor: string) {
-  return contrastRatio(primaryColor, "#f7faf7") >= 4.5
-    ? primaryColor
+  const brandColor = normalizeSafeBrandColor(primaryColor);
+  return checkWcagContrast(brandColor, "#f7faf7")?.passNormal
+    ? brandColor
     : REPWELL_DEEP_TEAL;
 }
 

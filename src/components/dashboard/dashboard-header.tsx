@@ -9,9 +9,10 @@ import { SendReviewRequestDialog } from "@/components/requests/send-review-reque
 
 interface DashboardHeaderProps {
   userName?: string | null;
+  userId?: string | null;
 }
 
-export function DashboardHeader({ userName }: DashboardHeaderProps) {
+export function DashboardHeader({ userName, userId }: DashboardHeaderProps) {
   const firstName = userName?.split(" ")[0] || "there";
   const [dialogOpen, setDialogOpen] = useState(false);
   const requestButtonRef = useRef<HTMLButtonElement>(null);
@@ -41,6 +42,7 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSuccess={() => setDialogOpen(false)}
+        currentUserId={userId}
         restoreFocusRef={requestButtonRef}
       />
     </>

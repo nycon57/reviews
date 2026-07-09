@@ -232,7 +232,7 @@ function NotificationItem({
       </div>
 
       {/* Content */}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 pr-14">
         <div className="flex items-start justify-between gap-2">
           <p className={cn("text-sm", !notification.is_read && "font-medium")}>
             {notification.title}
@@ -250,7 +250,7 @@ function NotificationItem({
       </div>
 
       {/* Actions (visible on hover) */}
-      <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute right-2 top-2 flex gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100 group-focus-within:opacity-100">
         {!notification.is_read && (
           <Button
             variant="ghost"

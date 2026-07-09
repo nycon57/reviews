@@ -45,6 +45,8 @@ export interface RecentReview {
   userSlug: string | null;
 }
 
+export type RecentReviewStatusFilter = "pending" | "approved" | "rejected" | "archived";
+
 export interface TrendDataPoint {
   date: string;
   value: number;
@@ -208,7 +210,8 @@ export async function getUserMetrics(
 // Get recent reviews for user
 export async function getUserRecentReviews(
   userId?: string,
-  limit: number = 5
+  limit: number = 5,
+  status?: RecentReviewStatusFilter
 ): Promise<ActionResult<RecentReview[]>> {
   const context = await getUserContext();
   if (!context) {
@@ -235,7 +238,7 @@ export async function getUserRecentReviews(
     .eq("id", targetUserId)
     .single();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("reviews")
     .select(`
       id,
@@ -249,7 +252,13 @@ export async function getUserRecentReviews(
       source_url
     `)
     .eq("user_id", targetUserId)
-    .eq("organization_id", context.organizationId)
+    .eq("organization_id", context.organizationId);
+
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  const { data, error } = await query
     .order("review_date", { ascending: false })
     .limit(limit);
 

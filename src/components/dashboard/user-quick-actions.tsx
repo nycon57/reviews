@@ -38,9 +38,10 @@ interface QuickAction {
 interface UserQuickActionsProps {
   profileSlug: string | null;
   userName: string | null;
+  userId?: string | null;
 }
 
-export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProps) {
+export function UserQuickActions({ profileSlug, userName, userId }: UserQuickActionsProps) {
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const requestButtonRef = useRef<HTMLButtonElement>(null);
   const [copied, setCopied] = useState(false);
@@ -231,6 +232,7 @@ export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProp
         open={requestDialogOpen}
         onOpenChange={setRequestDialogOpen}
         onSuccess={() => setRequestDialogOpen(false)}
+        currentUserId={userId}
         restoreFocusRef={requestButtonRef}
       />
     </>

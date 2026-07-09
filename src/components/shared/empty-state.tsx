@@ -1,8 +1,10 @@
 "use client";
 
 import { createElement } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { SUPPORT_EMAIL } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { scaleIn, staggerContainer, staggerContainerDelayed, fadeInUp } from "@/lib/motion";
 import { getIconOrDefault } from "@/lib/icons/registry";
@@ -10,8 +12,10 @@ import { getIconOrDefault } from "@/lib/icons/registry";
 interface EmptyStateAction {
   label: string;
   href?: string;
+  onClick?: () => void;
   variant?: "default" | "outline" | "ghost";
   iconName?: string;
+  ariaLabel?: string;
 }
 
 interface EmptyStateProps {
@@ -127,14 +131,29 @@ export function EmptyState({
                 </>
               );
 
+              const variant = action.variant || (index === 0 ? "default" : "outline");
+              const size = compact ? "sm" : "default";
+
+              if (action.href) {
+                return (
+                  <Button key={index} variant={variant} size={size} asChild>
+                    <a href={action.href} aria-label={action.ariaLabel}>
+                      {buttonContent}
+                    </a>
+                  </Button>
+                );
+              }
+
               return (
                 <Button
                   key={index}
-                  variant={action.variant || (index === 0 ? "default" : "outline")}
-                  size={compact ? "sm" : "default"}
-                  asChild
+                  type="button"
+                  variant={variant}
+                  size={size}
+                  onClick={action.onClick}
+                  aria-label={action.ariaLabel}
                 >
-                  <a href={action.href}>{buttonContent}</a>
+                  {buttonContent}
                 </Button>
               );
             })}
@@ -142,6 +161,54 @@ export function EmptyState({
         )}
       </Wrapper>
     </div>
+  );
+}
+
+interface ErrorStateProps {
+  title?: string;
+  description?: string;
+  retry?: () => void;
+  retryLabel?: string;
+  supportEmail?: string;
+  supportLabel?: string;
+  className?: string;
+  compact?: boolean;
+}
+
+export function ErrorState({
+  title = "We couldn't load this section",
+  description = "Something interrupted this view. Try again, or contact support if it keeps happening.",
+  retry,
+  retryLabel = "Try again",
+  supportEmail = SUPPORT_EMAIL,
+  supportLabel = "Contact support",
+  className,
+  compact = false,
+}: ErrorStateProps) {
+  const router = useRouter();
+  const handleRetry = retry ?? (() => router.refresh());
+
+  return (
+    <EmptyState
+      iconName="WarningCircle"
+      title={title}
+      description={description}
+      compact={compact}
+      className={className}
+      actions={[
+        {
+          label: retryLabel,
+          onClick: handleRetry,
+          iconName: "ArrowsClockwise",
+        },
+        {
+          label: supportLabel,
+          href: `mailto:${supportEmail}`,
+          variant: "outline",
+          iconName: "Envelope",
+        },
+      ]}
+    />
   );
 }
 

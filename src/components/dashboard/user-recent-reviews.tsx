@@ -30,7 +30,7 @@ import {
   Copy,
   Link as LinkIcon,
 } from "@phosphor-icons/react";
-import type { RecentReview } from "@/lib/dashboard";
+import type { RecentReview, RecentReviewStatusFilter } from "@/lib/dashboard";
 import { getUserRecentReviews } from "@/lib/dashboard";
 import { useToast } from "@/hooks/use-toast";
 import { ensureReviewSmartLink } from "@/lib/share-studio/actions";
@@ -60,13 +60,10 @@ export function UserRecentReviews({
   const handleFilterChange = (value: string) => {
     setStatusFilter(value);
     startTransition(async () => {
-      const result = await getUserRecentReviews(userId, 10);
+      const status = value === "all" ? undefined : (value as RecentReviewStatusFilter);
+      const result = await getUserRecentReviews(userId, 10, status);
       if (result.success && result.data) {
-        if (value === "all") {
-          setReviews(result.data);
-        } else {
-          setReviews(result.data.filter((r) => r.status === value));
-        }
+        setReviews(result.data);
       }
     });
   };
@@ -133,6 +130,10 @@ export function UserRecentReviews({
     const text = buildShareText(review);
     try {
       await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied!",
+        description: "Review text copied to clipboard.",
+      });
     } catch {
       toast({
         title: "Copy failed",
@@ -274,7 +275,7 @@ export function UserRecentReviews({
                           <span className="ml-2">via {formatReviewSource(review.source)}</span>
                         )}
                       </span>
-                      <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="flex shrink-0 gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100 group-focus-within:opacity-100">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -282,6 +283,7 @@ export function UserRecentReviews({
                               size="icon"
                               className="h-7 w-7"
                               title="Share review"
+                              aria-label={`Share review from ${review.customerName || "anonymous customer"}`}
                             >
                               <Share2 className="h-3.5 w-3.5" />
                             </Button>
@@ -299,7 +301,7 @@ export function UserRecentReviews({
                               <FacebookLogo className="mr-2 h-4 w-4" />
                               Share to Facebook
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleCopyReview(review)}>
+                            <DropdownMenuItem onClick={() => void handleCopyReview(review)}>
                               <Copy className="mr-2 h-4 w-4" />
                               Copy review text
                             </DropdownMenuItem>
@@ -317,7 +319,10 @@ export function UserRecentReviews({
                           asChild
                           title="Respond"
                         >
-                          <a href={`/dashboard/reviews/${review.id}`}>
+                          <a
+                            href={`/dashboard/reviews/${review.id}`}
+                            aria-label={`Respond to review from ${review.customerName || "anonymous customer"}`}
+                          >
                             <MessageCircle className="h-3.5 w-3.5" />
                           </a>
                         </Button>

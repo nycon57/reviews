@@ -23,12 +23,9 @@ export function TestimonialShell({
   wide?: boolean;
 }) {
   return (
-    <div className="relative flex min-h-svh flex-col overflow-hidden bg-[#f7faf7]">
+    <div className="relative flex min-h-svh flex-col overflow-hidden bg-background-subtle">
       {/* Atmosphere */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-      >
+      <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-repwell-sage-100/35 via-repwell-sage-100/10 to-transparent" />
         <div
           className="absolute inset-x-0 top-0 h-[420px] opacity-25"
@@ -95,7 +92,9 @@ export function StepRail({ current }: { current: 1 | 2 | 3 }) {
                     "flex h-6 w-6 items-center justify-center rounded-full font-sans text-xs font-semibold transition-colors duration-200",
                     done && "bg-repwell-teal-300 text-white",
                     active && "bg-repwell-teal-500 text-white",
-                    !done && !active && "border border-repwell-sage-100 bg-white text-repwell-teal-300"
+                    !done &&
+                      !active &&
+                      "border border-repwell-sage-100 bg-white text-repwell-teal-300"
                   )}
                 >
                   {done ? <CheckCircle weight="fill" size={14} /> : step}
@@ -153,20 +152,9 @@ export function ProBadge({
 }
 
 /** White surface panel; the single card chrome used across the flow. */
-export function Panel({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+export function Panel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-[#e2e8e4] bg-white shadow-soft",
-        className
-      )}
-    >
+    <div className={cn("rounded-2xl border border-border bg-white shadow-soft", className)}>
       {children}
     </div>
   );

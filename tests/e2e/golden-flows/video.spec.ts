@@ -20,7 +20,7 @@ test("video testimonial request reaches public consent and ready-to-upload state
 }, testInfo) => {
   const runId = `${Date.now()}-${testInfo.workerIndex}`;
   const customerName = `Golden Video Customer ${runId}`;
-  const customerEmail = `golden-video-${runId}@example.com`;
+  const customerEmail = `delivered+golden-video-${runId}@resend.dev`; // Resend test inbox: accepts mail, never bounces
 
   await loginAs(page, TEST_USERS["enterprise-manager"]);
   const dialog = await openReviewRequestDialog(page);

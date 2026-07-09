@@ -22,7 +22,7 @@ test("enterprise manager creates a real review request and anonymous customer co
 }, testInfo) => {
   const runId = `${Date.now()}-${testInfo.workerIndex}`;
   const customerName = `Golden Survey Customer ${runId}`;
-  const customerEmail = `golden-survey-${runId}@example.com`;
+  const customerEmail = `delivered+golden-survey-${runId}@resend.dev`; // Resend test inbox: accepts mail, never bounces
   const testimonialText =
     `The golden acquisition path stayed personal and precise for ${customerName}. ` +
     "Every update was clear, the closing steps were easy to follow, and I would happily recommend this team.";

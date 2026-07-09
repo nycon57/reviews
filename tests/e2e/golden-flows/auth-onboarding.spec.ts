@@ -15,8 +15,20 @@ test.afterAll(async () => {
 test("fresh signup creates an account, completes non-Stripe onboarding, and reaches dashboard", async ({
   page,
 }, testInfo) => {
+  // INCIDENT GUARD (2026-07-08): driving the real signup form makes Supabase's
+  // shared mailer send confirmation emails to synthetic addresses; the bounces
+  // got the project's email sending RESTRICTED. This spec only runs where a
+  // dedicated test project / custom SMTP absorbs that (CI sets the flag).
+  // Locally it is OFF by default.
+  test.skip(
+    process.env.GOLDEN_ALLOW_SIGNUP !== "1",
+    "Signup flow sends real confirmation emails — set GOLDEN_ALLOW_SIGNUP=1 only against a test project with custom SMTP"
+  );
+
   const runId = `${Date.now()}-${testInfo.workerIndex}`;
-  const email = `golden-signup-${runId}@gmail.com`;
+  // RFC 2606 reserved domain: guaranteed-undeliverable by design, and mail to
+  // .invalid is dropped rather than bounced back at the sender's reputation.
+  const email = `golden-signup-${runId}@golden.invalid`;
   const fullName = `Golden Signup ${runId}`;
   const organizationName = `Golden Signup Org ${runId}`;
 
@@ -27,7 +39,22 @@ test("fresh signup creates an account, completes non-Stripe onboarding, and reac
   await page.getByPlaceholder("Create a strong password").fill("TestPassword123!");
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await page.waitForURL(/\/(verify-email|onboarding|dashboard)/, { timeout: 20_000 });
+  // Hosted Supabase's built-in mailer allows only a handful of confirmation
+  // emails per hour; when that budget is spent the signup itself is throttled.
+  // That is an environment limit, not a product regression — skip loudly.
+  const rateLimited = page.getByText(/email rate limit exceeded/i);
+  const outcome = await Promise.race([
+    page
+      .waitForURL(/\/(verify-email|onboarding|dashboard)/, { timeout: 20_000 })
+      .then(() => "navigated" as const),
+    rateLimited.waitFor({ timeout: 20_000 }).then(() => "rate-limited" as const),
+  ]).catch(() => "timeout" as const);
+
+  test.skip(
+    outcome === "rate-limited",
+    "Supabase confirmation-email rate limit exhausted (environmental, not product)"
+  );
+  expect(outcome).toBe("navigated");
 
   let createdUser: UserRow | null = null;
   await expect

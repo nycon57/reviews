@@ -10,39 +10,15 @@ import {
 import {
   generateWebhookSecret,
   outboundWebhookSubscriptionInputSchema,
-  type OutboundWebhookEventType,
 } from "@/lib/webhooks/outbound";
-
-type SubscriptionRow = {
-  id: string;
-  target_url: string;
-  events: string[];
-  description: string | null;
-  source: string;
-  is_active: boolean;
-  last_delivery_at: string | null;
-  failure_count: number;
-  created_at: string;
-  updated_at: string;
-};
+import {
+  mapOutboundWebhookSubscriptionRow,
+  normalizeOutboundWebhookEvents,
+  type OutboundWebhookSubscriptionRow,
+} from "@/lib/webhooks/outbound/subscriptions";
 
 function sourceFromUserAgent(userAgent: string | null): "api" | "zapier" {
   return userAgent?.startsWith("Zapier") ? "zapier" : "api";
-}
-
-function mapSubscription(row: SubscriptionRow) {
-  return {
-    id: row.id,
-    target_url: row.target_url,
-    events: row.events as OutboundWebhookEventType[],
-    description: row.description,
-    source: row.source,
-    is_active: row.is_active,
-    last_delivery_at: row.last_delivery_at,
-    failure_count: row.failure_count,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  };
 }
 
 async function handleGet(_request: NextRequest, context: ApiAuthContext) {
@@ -62,7 +38,12 @@ async function handleGet(_request: NextRequest, context: ApiAuthContext) {
     return apiInternalError(context.requestId, "Failed to list webhook subscriptions");
   }
 
-  return apiSuccess((data ?? []).map(mapSubscription), context.requestId);
+  return apiSuccess(
+    ((data ?? []) as OutboundWebhookSubscriptionRow[]).map(
+      mapOutboundWebhookSubscriptionRow
+    ),
+    context.requestId
+  );
 }
 
 async function handlePost(request: NextRequest, context: ApiAuthContext) {
@@ -113,7 +94,7 @@ async function handlePost(request: NextRequest, context: ApiAuthContext) {
     {
       id: data.id,
       target_url: data.target_url,
-      events: data.events as OutboundWebhookEventType[],
+      events: normalizeOutboundWebhookEvents(data.events),
       secret,
       created_at: data.created_at,
     },

@@ -5,7 +5,7 @@
   "description": "RepWell Zapier Platform CLI integration",
   "main": "index.js",
   "scripts": {
-    "build": "node scripts/check-syntax.js",
+    "build": "npm run validate && npm run typecheck",
     "test": "node --test test/*.test.js",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "validate": "zapier-platform validate"

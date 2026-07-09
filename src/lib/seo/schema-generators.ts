@@ -15,6 +15,7 @@ import type {
   LocalBusinessSchema,
   OpeningHoursSpecificationSchema,
 } from "./types";
+import { getProfessionalDateModified } from "./date-modified";
 
 // Industry display labels and slugs for breadcrumbs
 const industryLabels: Record<string, string> = {
@@ -184,33 +185,6 @@ function durationToIso8601(durationSeconds?: number | null): string | undefined 
   const minutes = Math.floor(durationSeconds / 60);
   const seconds = Math.floor(durationSeconds % 60);
   return `PT${minutes}M${seconds}S`;
-}
-
-function getValidTimestamp(value: string | null | undefined): number | null {
-  if (!value) {
-    return null;
-  }
-
-  const timestamp = new Date(value).getTime();
-  return Number.isNaN(timestamp) ? null : timestamp;
-}
-
-function getProfessionalDateModified(
-  professional: SchemaProfessional,
-  reviews: SchemaReview[] = []
-): string | undefined {
-  const timestamps = [
-    getValidTimestamp(professional.updated_at),
-    ...reviews.map((review) =>
-      getValidTimestamp(review.updated_at) ?? getValidTimestamp(review.review_date)
-    ),
-  ].filter((timestamp): timestamp is number => timestamp !== null);
-
-  if (timestamps.length === 0) {
-    return undefined;
-  }
-
-  return new Date(Math.max(...timestamps)).toISOString();
 }
 
 /**

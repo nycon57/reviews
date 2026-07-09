@@ -25,7 +25,7 @@ import {
   Tray as Inbox,
   Funnel as Filter,
 } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import { NOTIFICATION_TYPE_CONFIG, getNotificationTypeConfig } from "@/lib/notifications/config";
 import type { NotificationWithDetails, NotificationType } from "@/lib/notifications/types";
 import {
@@ -33,7 +33,7 @@ import {
   markNotificationsAsRead,
 } from "@/lib/notifications/actions";
 import { useArchivableNotifications } from "./use-archivable-notifications";
-import { formatDistanceToNow, format } from "date-fns";
+import { format } from "date-fns";
 
 interface NotificationsListProps {
   initialNotifications: NotificationWithDetails[];
@@ -443,7 +443,7 @@ function NotificationRow({
                 {typeLabel}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                {formatRelativeTime(notification.created_at)}
               </span>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(notification.created_at), "MMM d, yyyy h:mm a")}

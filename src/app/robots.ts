@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { AI_CRAWLER_BOT_NAMES } from "@/lib/agents/detection";
 import { getBaseUrl } from "@/lib/seo";
 
 /**
@@ -32,18 +33,6 @@ export default function robots(): MetadataRoute.Robots {
     "/auth/",
     "/unsubscribed",
   ];
-  const aiCrawlers = [
-    "GPTBot",
-    "OAI-SearchBot",
-    "ChatGPT-User",
-    "ClaudeBot",
-    "Claude-Web",
-    "anthropic-ai",
-    "PerplexityBot",
-    "Google-Extended",
-    "CCBot",
-  ];
-
   return {
     rules: [
       {
@@ -51,7 +40,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: publicAllow,
         disallow: privateDisallow,
       },
-      ...aiCrawlers.map((userAgent) => ({
+      ...AI_CRAWLER_BOT_NAMES.map((userAgent) => ({
         userAgent,
         allow: publicAllow,
         disallow: privateDisallow,

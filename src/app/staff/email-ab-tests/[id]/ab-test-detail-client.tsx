@@ -48,8 +48,8 @@ import {
   CheckCircle as CheckCircle2,
   Info,
 } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
-import { format, formatDistanceToNow } from "date-fns";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import {
   type ABTestWithResults,
@@ -445,7 +445,7 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
               <CardContent>
                 <div className="text-2xl font-bold">
                   {test.startedAt
-                    ? formatDistanceToNow(new Date(test.startedAt), { addSuffix: false })
+                    ? formatRelativeTime(test.startedAt, { addSuffix: false })
                     : "Not started"}
                 </div>
                 {test.endedAt && (

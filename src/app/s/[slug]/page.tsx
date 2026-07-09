@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { classifyAgentUserAgent } from "@/lib/agents/detection";
 import { getProofLinkBySlug, recordProofLinkEvent } from "@/lib/share-studio/service";
 import { platformLabel } from "@/lib/share-studio/utils";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
@@ -175,9 +176,8 @@ export default async function SmartLinkPage({ params }: RouteParams) {
   const forwarded = headersStore.get("x-forwarded-for");
   const ipAddress = forwarded?.split(",")[0]?.trim() || headersStore.get("x-real-ip");
 
-  // Skip analytics for known bots/crawlers
-  const BOT_PATTERN = /bot|crawl|spider|slurp|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Googlebot|Bingbot|Baiduspider|YandexBot|DuckDuckBot|Sogou|Exabot|ia_archiver|AhrefsBot|SemrushBot|MJ12bot|DotBot|PetalBot|Bytespider|GPTBot|ClaudeBot|Applebot|prefetch|prerender/i;
-  const isBot = BOT_PATTERN.test(userAgent);
+  // Skip analytics for known bots/crawlers.
+  const isBot = classifyAgentUserAgent(userAgent) !== null;
 
   if (!isBot) {
     try {

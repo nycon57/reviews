@@ -26,6 +26,9 @@ export interface ApiV2Context {
   rateLimit: {
     isAllowed: boolean;
     currentCount: number;
+    limit: number;
+    remaining: number;
+    resetAt: number;
     retryAfterSeconds: number;
   };
 }
@@ -42,6 +45,9 @@ type ApiV2Handler<TContext> = (
 type MinuteRateLimitResult = {
   isAllowed: boolean;
   currentCount: number;
+  limit: number;
+  remaining: number;
+  resetAt: number;
   retryAfterSeconds: number;
 };
 
@@ -77,6 +83,9 @@ export async function checkMinuteRateLimit(params: {
     return {
       isAllowed: false,
       currentCount: params.limit,
+      limit: params.limit,
+      remaining: 0,
+      resetAt: Math.floor((Date.now() + 60000) / 1000),
       retryAfterSeconds: 60,
     };
   }
@@ -87,15 +96,33 @@ export async function checkMinuteRateLimit(params: {
     return {
       isAllowed: false,
       currentCount: params.limit,
+      limit: params.limit,
+      remaining: 0,
+      resetAt: Math.floor((Date.now() + 60000) / 1000),
       retryAfterSeconds: 60,
     };
   }
 
+  const retryAfterSeconds = Math.max(1, Number(row.retry_after_seconds ?? 60));
+  const currentCount = Number(row.current_count ?? 0);
+
   return {
     isAllowed: Boolean(row.is_allowed),
-    currentCount: Number(row.current_count ?? 0),
-    retryAfterSeconds: Math.max(1, Number(row.retry_after_seconds ?? 60)),
+    currentCount,
+    limit: params.limit,
+    remaining: Math.max(0, params.limit - currentCount),
+    resetAt: Math.floor((Date.now() + retryAfterSeconds * 1000) / 1000),
+    retryAfterSeconds,
   };
+}
+
+function setRateLimitHeaders(
+  response: NextResponse,
+  rateLimit: MinuteRateLimitResult
+): void {
+  response.headers.set("X-RateLimit-Limit", String(rateLimit.limit));
+  response.headers.set("X-RateLimit-Remaining", String(rateLimit.remaining));
+  response.headers.set("X-RateLimit-Reset", String(rateLimit.resetAt));
 }
 
 function queryParamsToJson(request: NextRequest): Json {
@@ -180,6 +207,7 @@ async function runTier<TContext>(
 
   if (!rateLimit.isAllowed) {
     const response = apiV2RateLimitError(rateLimit.retryAfterSeconds);
+    setRateLimitHeaders(response, rateLimit);
     scheduleUsageLog({
       request,
       tier: config.tier,
@@ -193,6 +221,7 @@ async function runTier<TContext>(
   try {
     const response = await handler(request, contextFactory(rateLimit));
     setApiV2Headers(response);
+    setRateLimitHeaders(response, rateLimit);
     scheduleUsageLog({
       request,
       tier: config.tier,

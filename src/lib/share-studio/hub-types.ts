@@ -4,12 +4,6 @@ export type SmartLinkBulkAction = "archive" | "unpublish" | "republish";
 
 export type ShareStudioAssetFilter = "all" | "image" | "video";
 
-export interface ActionResult<T = void> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
 export interface SmartLinkEventStats {
   views: number;
   clicks: number;

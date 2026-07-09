@@ -5,6 +5,7 @@
 import type { Metadata } from "next";
 import type { Tables, Json } from "@/types/database.types";
 import { getBranchPublicPath } from "@/lib/branches/utils";
+import { getProfessionalDateModified } from "@/lib/seo/date-modified";
 
 type Branch = Tables<"branches">;
 
@@ -71,33 +72,6 @@ function buildOgImageMetadata(profileUrl: string, alt: string) {
       images: [profileImageUrl],
     },
   };
-}
-
-function getValidTimestamp(value: string | null | undefined): number | null {
-  if (!value) {
-    return null;
-  }
-
-  const timestamp = new Date(value).getTime();
-  return Number.isNaN(timestamp) ? null : timestamp;
-}
-
-export function getProfessionalDateModified(
-  professional: MetadataProfessional,
-  reviews: MetadataReview[] = []
-): string | undefined {
-  const timestamps = [
-    getValidTimestamp(professional.updated_at),
-    ...reviews.map((review) =>
-      getValidTimestamp(review.updated_at) ?? getValidTimestamp(review.review_date)
-    ),
-  ].filter((timestamp): timestamp is number => timestamp !== null);
-
-  if (timestamps.length === 0) {
-    return undefined;
-  }
-
-  return new Date(Math.max(...timestamps)).toISOString();
 }
 
 /**

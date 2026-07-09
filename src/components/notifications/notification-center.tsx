@@ -18,7 +18,7 @@ import {
   Gear as Settings,
   Archive,
 } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import { getNotificationTypeConfig } from "@/lib/notifications/config";
 import type { NotificationWithDetails } from "@/lib/notifications/types";
 import {
@@ -27,7 +27,6 @@ import {
   markNotificationsAsRead,
 } from "@/lib/notifications/actions";
 import { useArchivableNotifications } from "./use-archivable-notifications";
-import { formatDistanceToNow } from "date-fns";
 
 interface NotificationCenterProps {
   className?: string;
@@ -246,7 +245,7 @@ function NotificationItem({
           {notification.message}
         </p>
         <p className="mt-1 text-xs text-muted-foreground/70">
-          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+          {formatRelativeTime(notification.created_at)}
         </p>
       </div>
 

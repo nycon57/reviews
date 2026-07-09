@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { formatDistanceToNow } from "date-fns";
 import posthog from "posthog-js";
 import { useRouter } from "next/navigation";
 import {
@@ -55,6 +54,7 @@ import type {
   CampaignStatus,
   WorkflowTemplate,
 } from "@/lib/campaigns/types";
+import { formatRelativeTime } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import dynamic from "next/dynamic";
 
@@ -106,7 +106,7 @@ function formatRelativeTimestamp(value: string): string {
     return "-";
   }
 
-  return formatDistanceToNow(date, { addSuffix: true });
+  return formatRelativeTime(date);
 }
 
 export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardProps) {

@@ -7,7 +7,6 @@ import {
   endOfMonth,
   endOfQuarter,
   format,
-  formatDistanceToNow,
   startOfMonth,
   startOfQuarter,
   startOfYear,
@@ -18,6 +17,7 @@ import { DAYS_OF_WEEK } from "@/lib/constants/days";
 import {
   formatDate as formatCanonicalDate,
   formatDateTime as formatCanonicalDateTime,
+  formatRelativeTime,
 } from "@/lib/utils";
 import type { ActionResult } from "@/lib/reviews/types";
 import type {
@@ -188,7 +188,7 @@ export function formatReportDateTime(value: Date | string | null | undefined) {
 
 export function formatRelativeDate(value: Date | string | null | undefined) {
   const date = toDate(value);
-  return date ? formatDistanceToNow(date, { addSuffix: true }) : "Never";
+  return date ? formatRelativeTime(date) : "Never";
 }
 
 export function formatReportDateRange(start: Date | string, end: Date | string) {

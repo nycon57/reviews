@@ -52,7 +52,8 @@ import {
   ChartBar as BarChart3,
   Copy,
 } from "@phosphor-icons/react";
-import { formatDistanceToNow, format } from "date-fns";
+import { format } from "date-fns";
+import { formatRelativeTime } from "@/lib/utils";
 import {
   getWebhookLogs,
   getWebhookStats,
@@ -392,9 +393,7 @@ export function WebhookLogsViewer() {
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <span className="text-sm text-muted-foreground">
-                            {formatDistanceToNow(new Date(log.createdAt), {
-                              addSuffix: true,
-                            })}
+                            {formatRelativeTime(log.createdAt)}
                           </span>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">

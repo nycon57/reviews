@@ -9,23 +9,13 @@ import {
   Flag,
   Info,
   ShieldCheck,
-  SpinnerGap,
   XCircle,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { AnimatedSection } from "@/components/motion";
+import { DisputeResolutionDialog } from "@/components/reviews/dispute-resolution-dialog";
 import { toast } from "@/hooks/use-toast";
 import {
   dismissFlag,
@@ -319,60 +309,46 @@ export function DisputeQueue({
         </AnimatedSection>
       )}
 
-      {/* Adjudication dialog */}
-      <Dialog open={dialogMode !== null} onOpenChange={(open) => !open && closeDialog()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {dialogMode === "uphold" ? "Uphold dispute and remove review?" : "Dismiss dispute?"}
-            </DialogTitle>
-            <DialogDescription>
-              {dialogMode === "uphold"
-                ? "This permanently removes the review from public display."
-                : "The review stays live and the dispute is closed."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="dispute-resolution-note">
-              Resolution note{dialogMode === "dismiss" ? " (optional)" : ""}
-            </Label>
-            <Textarea
-              id="dispute-resolution-note"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder={
-                dialogMode === "uphold"
-                  ? "Explain why this dispute was upheld..."
-                  : "Add context for the record..."
-              }
-              rows={4}
-            />
-            {dialogMode === "uphold" && (
-              <p className="text-xs text-muted-foreground">
-                A note of at least {MIN_RESOLUTION_NOTE_LENGTH} characters is required for the record.
-              </p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={closeDialog} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant={dialogMode === "uphold" ? "destructive" : "default"}
-              onClick={handleConfirm}
-              disabled={
-                isSubmitting ||
-                (dialogMode === "uphold" &&
-                  note.trim().length < MIN_RESOLUTION_NOTE_LENGTH)
-              }
-            >
-              {isSubmitting && <SpinnerGap className="mr-2 h-4 w-4 animate-spin" />}
-              {dialogMode === "uphold" ? "Uphold and remove" : "Dismiss dispute"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DisputeResolutionDialog
+        primitive="dialog"
+        open={dialogMode !== null}
+        onOpenChange={(open) => {
+          if (!open) closeDialog();
+        }}
+        mode={dialogMode}
+        title={
+          dialogMode === "uphold"
+            ? "Uphold dispute and remove review?"
+            : "Dismiss dispute?"
+        }
+        description={
+          dialogMode === "uphold"
+            ? "This permanently removes the review from public display."
+            : "The review stays live and the dispute is closed."
+        }
+        note={note}
+        onNoteChange={setNote}
+        noteLabel={`Resolution note${dialogMode === "dismiss" ? " (optional)" : ""}`}
+        notePlaceholder={
+          dialogMode === "uphold"
+            ? "Explain why this dispute was upheld..."
+            : "Add context for the record..."
+        }
+        noteHelper={
+          dialogMode === "uphold"
+            ? `A note of at least ${MIN_RESOLUTION_NOTE_LENGTH} characters is required for the record.`
+            : undefined
+        }
+        isSubmitting={isSubmitting}
+        confirmDisabled={
+          dialogMode === "uphold" &&
+          note.trim().length < MIN_RESOLUTION_NOTE_LENGTH
+        }
+        confirmLabel={
+          dialogMode === "uphold" ? "Uphold and remove" : "Dismiss dispute"
+        }
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 }

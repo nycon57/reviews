@@ -112,9 +112,7 @@ function getAccessibleBrandFillStyle(primaryColor: string): React.CSSProperties 
 
 function getAccessibleAccentColor(primaryColor: string) {
   const brandColor = normalizeSafeBrandColor(primaryColor);
-  return checkWcagContrast(brandColor, "#f7faf7")?.passNormal
-    ? brandColor
-    : REPWELL_DEEP_TEAL;
+  return checkWcagContrast(brandColor, "#f8faf8")?.passNormal ? brandColor : REPWELL_DEEP_TEAL;
 }
 
 // ---- Sub-sections ----
@@ -156,12 +154,12 @@ function IdentityBlock({
           <img
             src={professional.photoUrl}
             alt={professional.fullName}
-            className="h-16 w-16 rounded-full object-cover shadow-elevation-2 lg:h-20 lg:w-20"
+            className="h-16 w-16 rounded-full object-cover shadow-md lg:h-20 lg:w-20"
             style={{ border: `3px solid ${primaryColor}` }}
           />
         ) : (
           <div
-            className="flex h-16 w-16 items-center justify-center rounded-full text-xl font-semibold text-white shadow-elevation-2 lg:h-20 lg:w-20"
+            className="flex h-16 w-16 items-center justify-center rounded-full text-xl font-semibold text-white shadow-md lg:h-20 lg:w-20"
             style={{ background: primaryColor }}
           >
             {profInitials}
@@ -202,13 +200,7 @@ function IdentityBlock({
   );
 }
 
-function ContactRow({
-  icon,
-  children,
-}: {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
+function ContactRow({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
       <span className="mt-0.5 shrink-0 text-repwell-teal-300">{icon}</span>
@@ -236,11 +228,31 @@ function ActionPanel({
   const websiteUrl = getSafeUrl(contact?.personalWebsiteUrl);
   const socials = contact
     ? [
-        { url: getSafeUrl(contact.linkedinUrl), label: "LinkedIn", icon: <LinkedinLogo className="h-5 w-5" weight="fill" /> },
-        { url: getSafeUrl(contact.facebookUrl), label: "Facebook", icon: <FacebookLogo className="h-5 w-5" weight="fill" /> },
-        { url: getSafeUrl(contact.instagramUrl), label: "Instagram", icon: <InstagramLogo className="h-5 w-5" weight="fill" /> },
-        { url: getSafeUrl(contact.twitterUrl), label: "X", icon: <XLogo className="h-5 w-5" weight="fill" /> },
-        { url: getSafeUrl(contact.zillowUrl), label: "Zillow", icon: <ZillowIcon className="h-5 w-5" /> },
+        {
+          url: getSafeUrl(contact.linkedinUrl),
+          label: "LinkedIn",
+          icon: <LinkedinLogo className="h-5 w-5" weight="fill" />,
+        },
+        {
+          url: getSafeUrl(contact.facebookUrl),
+          label: "Facebook",
+          icon: <FacebookLogo className="h-5 w-5" weight="fill" />,
+        },
+        {
+          url: getSafeUrl(contact.instagramUrl),
+          label: "Instagram",
+          icon: <InstagramLogo className="h-5 w-5" weight="fill" />,
+        },
+        {
+          url: getSafeUrl(contact.twitterUrl),
+          label: "X",
+          icon: <XLogo className="h-5 w-5" weight="fill" />,
+        },
+        {
+          url: getSafeUrl(contact.zillowUrl),
+          label: "Zillow",
+          icon: <ZillowIcon className="h-5 w-5" />,
+        },
       ].filter((s) => s.url)
     : [];
 
@@ -250,7 +262,7 @@ function ActionPanel({
   if (!primaryAction && !secondaryAction && !hasContactDetails && !contact) return null;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#e2e8e4] bg-white shadow-soft">
+    <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-soft">
       <div className="space-y-4 p-5 lg:p-6">
         {contact && (
           <p className="font-display text-lg text-repwell-teal-500">
@@ -263,7 +275,7 @@ function ActionPanel({
             href={primaryAction.href}
             target={primaryAction.external ? "_blank" : undefined}
             rel={primaryAction.external ? "noopener noreferrer" : undefined}
-            className="inline-flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3.5 text-center text-base font-semibold transition-shadow hover:shadow-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3.5 text-center text-base font-semibold transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
             style={accessibleBrandFillStyle}
             onClick={() =>
               posthog.capture("smart_link_cta_clicked", {
@@ -273,8 +285,7 @@ function ActionPanel({
               })
             }
           >
-            {primaryAction.label}{" "}
-            <ArrowRight className="ml-0.5 inline h-4 w-4" weight="bold" />
+            {primaryAction.label} <ArrowRight className="ml-0.5 inline h-4 w-4" weight="bold" />
           </a>
         )}
 
@@ -422,12 +433,10 @@ export function SmartLinkContent({
       ? { label: contact?.ctaText || "Get started", href: contactCtaUrl }
       : null;
 
-  const sourceMeta = [sourcePlatform ? sourceLabel : null, reviewDate]
-    .filter(Boolean)
-    .join(" · ");
+  const sourceMeta = [sourcePlatform ? sourceLabel : null, reviewDate].filter(Boolean).join(" · ");
 
   return (
-    <div className="relative min-h-svh overflow-hidden bg-[#f7faf7]">
+    <div className="relative min-h-svh overflow-hidden bg-background-subtle">
       {/* Atmosphere: soft sage wash + faint dot grid, same language as the
           recording flow so the whole testimonial family reads as one. */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -445,9 +454,7 @@ export function SmartLinkContent({
         <div className="absolute -right-20 bottom-10 h-72 w-72 rounded-full bg-repwell-teal-300/10 blur-3xl" />
       </div>
 
-      <div
-        className="relative mx-auto flex min-h-svh w-full max-w-6xl flex-col justify-center px-5 py-10 sm:px-8 lg:px-12 lg:py-14"
-      >
+      <div className="relative mx-auto flex min-h-svh w-full max-w-6xl flex-col justify-center px-5 py-10 sm:px-8 lg:px-12 lg:py-14">
         {/* Mobile stacks identity → quote → actions; desktop pins the quote as
             the left-hand hero with the identity + action rail alongside. */}
         <div className="grid grid-cols-1 gap-8 [grid-template-areas:'identity'_'quote'_'action'] lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-x-16 lg:gap-y-7 lg:[grid-template-areas:'quote_identity'_'quote_action']">
@@ -499,9 +506,7 @@ export function SmartLinkContent({
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-repwell-teal-500">{customerName}</p>
-                  {sourceMeta && (
-                    <p className="text-xs text-repwell-teal-300">{sourceMeta}</p>
-                  )}
+                  {sourceMeta && <p className="text-xs text-repwell-teal-300">{sourceMeta}</p>}
                 </div>
               </div>
               <StarRating rating={rating} />

@@ -107,13 +107,13 @@ export function VideoTestimonialPlayer({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-repwell-sage-100 via-white to-repwell-teal-50">
-      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+    <div className="min-h-screen bg-gradient-to-br from-background-muted via-card to-background-subtle">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
         {/* Header with Organization Branding */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="mb-8 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             {video.organization.logoUrl ? (
@@ -125,15 +125,15 @@ export function VideoTestimonialPlayer({
                 className="rounded-lg object-contain"
               />
             ) : (
-              <div className="w-12 h-12 rounded-lg bg-repwell-sage-200 flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-repwell-sage-700" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-surface-soft">
+                <Building2 className="h-6 w-6 text-repwell-teal-500" />
               </div>
             )}
             <div>
-              <h2 className="font-display text-lg font-semibold text-gray-900">
+              <h2 className="font-display text-lg font-semibold text-heading">
                 {video.organization.name}
               </h2>
-              <p className="text-sm text-gray-500">Customer Testimonial</p>
+              <p className="text-sm text-muted-foreground">Customer Testimonial</p>
             </div>
           </div>
           <Button
@@ -142,7 +142,7 @@ export function VideoTestimonialPlayer({
             onClick={() => setShowShareDialog(true)}
             className="gap-2"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="h-4 w-4" />
             Share
           </Button>
         </motion.header>
@@ -152,15 +152,15 @@ export function VideoTestimonialPlayer({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl shadow-lg overflow-hidden"
+          className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
         >
           {/* Video Container */}
-          <div className="relative aspect-video bg-gray-900 group">
+          <div className="group relative aspect-video bg-repwell-teal-500">
             <video
               ref={videoRef}
               src={video.videoUrl}
               poster={video.thumbnailUrl || undefined}
-              className="w-full h-full object-contain"
+              className="h-full w-full object-contain"
               onTimeUpdate={handleTimeUpdate}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
@@ -176,21 +176,21 @@ export function VideoTestimonialPlayer({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   onClick={togglePlay}
-                  className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
+                  className="absolute inset-0 flex cursor-pointer items-center justify-center bg-black/30"
                   aria-label="Play video"
                 >
-                  <div className="w-20 h-20 rounded-full bg-white/90 flex items-center justify-center shadow-lg hover:bg-white transition-colors">
-                    <Play className="w-10 h-10 text-repwell-teal-500 ml-1" />
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-card/90 shadow-lg transition-colors hover:bg-card">
+                    <Play className="ml-1 h-10 w-10 text-repwell-teal-500" />
                   </div>
                 </motion.button>
               )}
             </AnimatePresence>
 
             {/* Video Controls */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 transition-opacity group-hover:opacity-100">
               {/* Progress Bar */}
               <div
-                className="w-full h-1 bg-white/30 rounded-full mb-3 cursor-pointer"
+                className="mb-3 h-1 w-full cursor-pointer rounded-full bg-white/30"
                 onClick={handleSeek}
                 onKeyDown={handleSliderKeyDown}
                 role="slider"
@@ -201,7 +201,7 @@ export function VideoTestimonialPlayer({
                 tabIndex={0}
               >
                 <div
-                  className="h-full bg-repwell-teal-400 rounded-full transition-all"
+                  className="h-full rounded-full bg-repwell-teal-400 transition-all"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -210,37 +210,38 @@ export function VideoTestimonialPlayer({
                 <div className="flex items-center gap-3">
                   <button
                     onClick={togglePlay}
-                    className="text-white hover:text-repwell-teal-300 transition-colors"
+                    className="text-white transition-colors hover:text-repwell-teal-300"
                     aria-label={isPlaying ? "Pause" : "Play"}
                   >
-                    {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                    {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
                   </button>
                   <button
                     onClick={toggleMute}
-                    className="text-white hover:text-repwell-teal-300 transition-colors"
+                    className="text-white transition-colors hover:text-repwell-teal-300"
                     aria-label={isMuted ? "Unmute" : "Mute"}
                   >
-                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                    {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                   </button>
-                  <span className="text-white text-sm font-mono">
-                    {formatDuration(Math.floor(currentTime))} / {formatDuration(video.durationSeconds)}
+                  <span className="font-mono text-sm text-white">
+                    {formatDuration(Math.floor(currentTime))} /{" "}
+                    {formatDuration(video.durationSeconds)}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowShareDialog(true)}
-                    className="text-white hover:text-repwell-teal-300 transition-colors"
+                    className="text-white transition-colors hover:text-repwell-teal-300"
                     aria-label="Share video"
                   >
-                    <Share2 className="w-5 h-5" />
+                    <Share2 className="h-5 w-5" />
                   </button>
                   <button
                     onClick={enterFullscreen}
-                    className="text-white hover:text-repwell-teal-300 transition-colors"
+                    className="text-white transition-colors hover:text-repwell-teal-300"
                     aria-label="Enter fullscreen"
                   >
-                    <Maximize className="w-5 h-5" />
+                    <Maximize className="h-5 w-5" />
                   </button>
                 </div>
               </div>
@@ -250,23 +251,23 @@ export function VideoTestimonialPlayer({
           {/* Video Info */}
           <div className="p-6 sm:p-8">
             {/* Customer Info */}
-            <div className="flex items-start gap-4 mb-6">
-              <div className="w-14 h-14 rounded-full bg-repwell-sage-200 flex items-center justify-center flex-shrink-0">
-                <User className="w-7 h-7 text-repwell-sage-700" />
+            <div className="mb-6 flex items-start gap-4">
+              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-surface-soft">
+                <User className="h-7 w-7 text-repwell-teal-500" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="font-display text-2xl font-semibold text-gray-900 mb-1">
+              <div className="min-w-0 flex-1">
+                <h1 className="mb-1 font-display text-2xl font-semibold text-heading">
                   {video.customer.displayName}
                 </h1>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                   {video.customer.relationship && (
-                    <Badge variant="secondary" className="bg-repwell-sage-100 text-repwell-sage-800">
+                    <Badge variant="secondary" className="bg-surface-soft text-heading">
                       {formatRelationship(video.customer.relationship)}
                     </Badge>
                   )}
                   {video.durationSeconds && (
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
+                      <Clock className="h-3.5 w-3.5" />
                       {formatDuration(video.durationSeconds)}
                     </span>
                   )}
@@ -276,9 +277,9 @@ export function VideoTestimonialPlayer({
 
             {/* AI Generated Quote/Summary */}
             {video.aiGeneratedText && (
-              <div className="relative bg-repwell-sage-50 rounded-xl p-6 mb-6">
-                <Quote className="absolute top-4 left-4 w-8 h-8 text-repwell-sage-300" />
-                <p className="text-gray-700 leading-relaxed pl-8 italic">
+              <div className="relative mb-6 rounded-xl bg-background-muted p-6">
+                <Quote className="absolute left-4 top-4 h-8 w-8 text-repwell-sage-300" />
+                <p className="pl-8 italic leading-relaxed text-foreground">
                   &ldquo;{video.aiGeneratedText}&rdquo;
                 </p>
               </div>
@@ -286,12 +287,12 @@ export function VideoTestimonialPlayer({
 
             {/* Key Phrases */}
             {video.keyPhrases && video.keyPhrases.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
+              <div className="mb-6 flex flex-wrap gap-2">
                 {video.keyPhrases.slice(0, 5).map((phrase, index) => (
                   <Badge
                     key={index}
                     variant="outline"
-                    className="text-repwell-teal-700 border-repwell-teal-200 bg-repwell-teal-50"
+                    className="border-repwell-teal-300/20 bg-repwell-teal-300/10 text-repwell-teal-300"
                   >
                     {phrase}
                   </Badge>
@@ -300,8 +301,8 @@ export function VideoTestimonialPlayer({
             )}
 
             {/* Loan Officer Info */}
-            <div className="border-t border-gray-100 pt-6">
-              <p className="text-sm text-gray-500 mb-3">Testimonial for</p>
+            <div className="border-t border-border pt-6">
+              <p className="mb-3 text-sm text-muted-foreground">Testimonial for</p>
               <div className="flex items-center gap-3">
                 {video.professional.photoUrl ? (
                   <Image
@@ -312,14 +313,14 @@ export function VideoTestimonialPlayer({
                     className="rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-repwell-teal-100 flex items-center justify-center">
-                    <User className="w-6 h-6 text-repwell-teal-600" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-repwell-teal-100">
+                    <User className="h-6 w-6 text-repwell-teal-400" />
                   </div>
                 )}
                 <div>
-                  <p className="font-medium text-gray-900">{video.professional.fullName}</p>
+                  <p className="font-medium text-heading">{video.professional.fullName}</p>
                   {video.professional.title && (
-                    <p className="text-sm text-gray-500">{video.professional.title}</p>
+                    <p className="text-sm text-muted-foreground">{video.professional.title}</p>
                   )}
                 </div>
               </div>
@@ -334,7 +335,7 @@ export function VideoTestimonialPlayer({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="mt-8 text-center text-sm text-gray-500"
+          className="mt-8 text-center text-sm text-muted-foreground"
         >
           <p>Powered by RepWell</p>
         </motion.footer>
@@ -353,15 +354,15 @@ export function VideoTestimonialPlayer({
           <Tabs defaultValue="social" className="mt-4">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="social" className="gap-2">
-                <Share2 className="w-4 h-4" />
+                <Share2 className="h-4 w-4" />
                 Social
               </TabsTrigger>
               <TabsTrigger value="link" className="gap-2">
-                <Link className="w-4 h-4" />
+                <Link className="h-4 w-4" />
                 Link
               </TabsTrigger>
               <TabsTrigger value="embed" className="gap-2">
-                <Code className="w-4 h-4" />
+                <Code className="h-4 w-4" />
                 Embed
               </TabsTrigger>
             </TabsList>
@@ -371,23 +372,23 @@ export function VideoTestimonialPlayer({
               <div className="grid grid-cols-3 gap-3">
                 <SocialButton
                   href={socialLinks.facebook}
-                  icon={<Facebook className="w-8 h-8 text-blue-600" />}
+                  icon={<Facebook className="h-8 w-8 text-blue-600" />}
                   label="Facebook"
                   hoverClass="hover:bg-blue-50 hover:border-blue-200"
                   onClick={() => handleSocialShare("facebook")}
                 />
                 <SocialButton
                   href={socialLinks.linkedin}
-                  icon={<Linkedin className="w-8 h-8 text-blue-700" />}
+                  icon={<Linkedin className="h-8 w-8 text-blue-700" />}
                   label="LinkedIn"
                   hoverClass="hover:bg-blue-50 hover:border-blue-200"
                   onClick={() => handleSocialShare("linkedin")}
                 />
                 <SocialButton
                   href={socialLinks.twitter}
-                  icon={<Twitter className="w-8 h-8 text-gray-900" />}
+                  icon={<Twitter className="h-8 w-8 text-heading" />}
                   label="X"
-                  hoverClass="hover:bg-gray-50 hover:border-gray-300"
+                  hoverClass="hover:bg-background-muted hover:border-border"
                   onClick={() => handleSocialShare("twitter")}
                 />
               </div>
@@ -443,7 +444,7 @@ function SocialButton({
       rel="noopener noreferrer"
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 transition-colors",
+        "flex flex-col items-center gap-2 rounded-lg border border-border p-4 transition-colors",
         hoverClass
       )}
     >
@@ -479,18 +480,18 @@ function CopyField({
               value={value}
               readOnly
               rows={6}
-              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg font-mono resize-none"
+              className="w-full resize-none rounded-lg border border-border bg-background-subtle px-3 py-2 font-mono text-sm text-foreground"
             />
             <Button
               variant="outline"
               size="sm"
               onClick={() => onCopy(value, field)}
               className={cn(
-                "absolute top-2 right-2 gap-2",
-                isCopied && "text-green-600 border-green-200"
+                "absolute right-2 top-2 gap-2",
+                isCopied && "border-success/20 text-success"
               )}
             >
-              {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {isCopied ? "Copied" : "Copy"}
             </Button>
           </>
@@ -500,17 +501,22 @@ function CopyField({
               type="text"
               value={value}
               readOnly
-              className="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg font-mono"
+              className="flex-1 rounded-lg border border-border bg-background-subtle px-3 py-2 font-mono text-sm text-foreground"
             />
-            <Button variant="outline" size="sm" onClick={() => onCopy(value, field)} className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCopy(value, field)}
+              className="gap-2"
+            >
               {isCopied ? (
                 <>
-                  <Check className="w-4 h-4 text-green-500" />
+                  <Check className="h-4 w-4 text-success" />
                   Copied
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4" />
+                  <Copy className="h-4 w-4" />
                   Copy
                 </>
               )}
@@ -518,7 +524,7 @@ function CopyField({
           </>
         )}
       </div>
-      <p className="text-sm text-gray-500">{description}</p>
+      <p className="text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }

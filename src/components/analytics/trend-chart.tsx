@@ -2,13 +2,7 @@
 
 import { memo, useMemo } from "react";
 import { ChartBar } from "@phosphor-icons/react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import {
   XAxis,
@@ -24,6 +18,12 @@ import { CHART_TOOLTIP_STYLE } from "@/components/analytics/chart-primitives";
 import type { VideoTestimonialTrendDataPoint } from "@/lib/video-testimonials/analytics-actions";
 import type { TrendPeriod } from "./analytics-context";
 
+const TREND_CHART_COLORS = {
+  sent: "hsl(var(--chart-1))",
+  completed: "hsl(var(--chart-2))",
+  published: "hsl(var(--chart-4))",
+} as const;
+
 export const TrendChart = memo(function TrendChart({
   data,
   period,
@@ -31,14 +31,15 @@ export const TrendChart = memo(function TrendChart({
   data: VideoTestimonialTrendDataPoint[];
   period: TrendPeriod;
 }) {
-  const chartData = useMemo(() => data.map((d) => ({
-    ...d,
-    originalDate: d.date,
-    date: format(
-      new Date(d.date),
-      period === "monthly" ? "MMM yyyy" : "MMM d"
-    ),
-  })), [data, period]);
+  const chartData = useMemo(
+    () =>
+      data.map((d) => ({
+        ...d,
+        originalDate: d.date,
+        date: format(new Date(d.date), period === "monthly" ? "MMM yyyy" : "MMM d"),
+      })),
+    [data, period]
+  );
 
   if (chartData.length === 0) {
     return (
@@ -84,12 +85,20 @@ export const TrendChart = memo(function TrendChart({
           <table>
             <caption>Video testimonial trends data</caption>
             <thead>
-              <tr><th>Date</th><th>Sent</th><th>Completed</th><th>Published</th></tr>
+              <tr>
+                <th>Date</th>
+                <th>Sent</th>
+                <th>Completed</th>
+                <th>Published</th>
+              </tr>
             </thead>
             <tbody>
               {chartData.map((point) => (
                 <tr key={point.originalDate}>
-                  <td>{point.date}</td><td>{point.sent}</td><td>{point.completed}</td><td>{point.published}</td>
+                  <td>{point.date}</td>
+                  <td>{point.sent}</td>
+                  <td>{point.completed}</td>
+                  <td>{point.published}</td>
                 </tr>
               ))}
             </tbody>
@@ -100,21 +109,32 @@ export const TrendChart = memo(function TrendChart({
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradient-sent" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#52796f" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#52796f" stopOpacity={0} />
+                  <stop offset="5%" stopColor={TREND_CHART_COLORS.sent} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={TREND_CHART_COLORS.sent} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradient-completed" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#84a98c" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#84a98c" stopOpacity={0} />
+                  <stop offset="5%" stopColor={TREND_CHART_COLORS.completed} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={TREND_CHART_COLORS.completed} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradient-published" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#52796f" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#52796f" stopOpacity={0} />
+                  <stop offset="5%" stopColor={TREND_CHART_COLORS.published} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={TREND_CHART_COLORS.published} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} />
+              <XAxis
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                dy={10}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                dx={-10}
+              />
               <Tooltip
                 contentStyle={{
                   ...CHART_TOOLTIP_STYLE,
@@ -123,9 +143,33 @@ export const TrendChart = memo(function TrendChart({
                 labelStyle={{ color: "hsl(var(--popover-foreground))" }}
               />
               <Legend verticalAlign="top" height={36} />
-              <Area type="monotone" dataKey="sent" name="Sent" stroke="#52796f" strokeWidth={2} fill="url(#gradient-sent)" connectNulls />
-              <Area type="monotone" dataKey="completed" name="Completed" stroke="#84a98c" strokeWidth={2} fill="url(#gradient-completed)" connectNulls />
-              <Area type="monotone" dataKey="published" name="Published" stroke="#52796f" strokeWidth={2} fill="url(#gradient-published)" connectNulls />
+              <Area
+                type="monotone"
+                dataKey="sent"
+                name="Sent"
+                stroke={TREND_CHART_COLORS.sent}
+                strokeWidth={2}
+                fill="url(#gradient-sent)"
+                connectNulls
+              />
+              <Area
+                type="monotone"
+                dataKey="completed"
+                name="Completed"
+                stroke={TREND_CHART_COLORS.completed}
+                strokeWidth={2}
+                fill="url(#gradient-completed)"
+                connectNulls
+              />
+              <Area
+                type="monotone"
+                dataKey="published"
+                name="Published"
+                stroke={TREND_CHART_COLORS.published}
+                strokeWidth={2}
+                fill="url(#gradient-published)"
+                connectNulls
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>

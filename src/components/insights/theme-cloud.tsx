@@ -18,24 +18,25 @@ interface ThemeCloudProps {
 }
 
 const themeColors: Record<string, string> = {
-  communication: "bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:hover:bg-blue-950/50",
-  process: "bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:hover:bg-purple-950/50",
-  service: "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-950/30 dark:text-green-400 dark:hover:bg-green-950/50",
-  responsiveness: "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-950/50",
-  professionalism: "bg-indigo-100 text-indigo-800 hover:bg-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:hover:bg-indigo-950/50",
-  knowledge: "bg-cyan-100 text-cyan-800 hover:bg-cyan-200 dark:bg-cyan-950/30 dark:text-cyan-400 dark:hover:bg-cyan-950/50",
-  rates: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:hover:bg-emerald-950/50",
-  closing: "bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-950/50",
-  documentation: "bg-orange-100 text-orange-800 hover:bg-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:hover:bg-orange-950/50",
-  timeliness: "bg-teal-100 text-teal-800 hover:bg-teal-200 dark:bg-teal-950/30 dark:text-teal-400 dark:hover:bg-teal-950/50",
+  communication: "border border-info/20 bg-info/10 text-info hover:bg-info/15",
+  process: "border border-chart-4/20 bg-chart-4/10 text-chart-4 hover:bg-chart-4/15",
+  service: "border border-success/20 bg-success/10 text-success hover:bg-success/15",
+  responsiveness: "border border-warning/20 bg-warning/10 text-warning hover:bg-warning/15",
+  professionalism: "border border-chart-1/20 bg-chart-1/10 text-chart-1 hover:bg-chart-1/15",
+  knowledge: "border border-chart-3/20 bg-chart-3/10 text-chart-3 hover:bg-chart-3/15",
+  rates: "border border-success/20 bg-success/10 text-success hover:bg-success/15",
+  closing:
+    "border border-destructive/20 bg-destructive/10 text-destructive hover:bg-destructive/15",
+  documentation: "border border-warning/20 bg-warning/10 text-warning hover:bg-warning/15",
+  timeliness: "border border-chart-2/20 bg-chart-2/10 text-chart-2 hover:bg-chart-2/15",
 };
 
 function TrendIcon({ trend }: { trend: "increasing" | "stable" | "decreasing" }) {
   if (trend === "increasing") {
-    return <TrendingUp className="h-3 w-3 text-green-600" />;
+    return <TrendingUp className="h-3 w-3 text-success" />;
   }
   if (trend === "decreasing") {
-    return <TrendingDown className="h-3 w-3 text-red-600" />;
+    return <TrendingDown className="h-3 w-3 text-destructive" />;
   }
   return <Minus className="h-3 w-3 text-muted-foreground" />;
 }
@@ -99,7 +100,7 @@ export function ThemeCloud({ data, isLoading }: ThemeCloudProps) {
               key={theme.theme}
               className={cn(
                 "group relative inline-flex cursor-default items-center gap-1 rounded-lg px-3 py-1.5 transition-colors",
-                themeColors[theme.theme] || "bg-muted text-foreground"
+                themeColors[theme.theme] || "border border-border bg-muted text-foreground"
               )}
             >
               <span className={getSize(theme.count)} style={{ textTransform: "capitalize" }}>
@@ -114,9 +115,9 @@ export function ThemeCloud({ data, isLoading }: ThemeCloudProps) {
                   {THEME_DESCRIPTIONS[theme.theme]}
                 </div>
                 <div className="mt-1 flex gap-2 text-[10px]">
-                  <span className="text-green-600">+{theme.sentimentBreakdown.positive}</span>
+                  <span className="text-success">+{theme.sentimentBreakdown.positive}</span>
                   <span className="text-muted-foreground">{theme.sentimentBreakdown.neutral}</span>
-                  <span className="text-red-600">-{theme.sentimentBreakdown.negative}</span>
+                  <span className="text-destructive">-{theme.sentimentBreakdown.negative}</span>
                 </div>
               </div>
             </div>
@@ -125,7 +126,9 @@ export function ThemeCloud({ data, isLoading }: ThemeCloudProps) {
 
         {/* Theme breakdown list */}
         <div className="mt-6 space-y-3">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Theme Breakdown</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Theme Breakdown
+          </h4>
           {data.slice(0, 5).map((theme) => {
             return (
               <div key={theme.theme} className="space-y-1">
@@ -139,16 +142,22 @@ export function ThemeCloud({ data, isLoading }: ThemeCloudProps) {
                   aria-label={`${theme.theme} sentiment breakdown: ${theme.sentimentBreakdown.positive} positive, ${theme.sentimentBreakdown.neutral} neutral, ${theme.sentimentBreakdown.negative} negative`}
                 >
                   <div
-                    className="bg-green-500 transition-all"
-                    style={{ width: `${theme.count > 0 ? (theme.sentimentBreakdown.positive / theme.count) * 100 : 0}%` }}
+                    className="bg-success transition-all"
+                    style={{
+                      width: `${theme.count > 0 ? (theme.sentimentBreakdown.positive / theme.count) * 100 : 0}%`,
+                    }}
                   />
                   <div
                     className="bg-muted-foreground transition-all"
-                    style={{ width: `${theme.count > 0 ? (theme.sentimentBreakdown.neutral / theme.count) * 100 : 0}%` }}
+                    style={{
+                      width: `${theme.count > 0 ? (theme.sentimentBreakdown.neutral / theme.count) * 100 : 0}%`,
+                    }}
                   />
                   <div
-                    className="bg-red-500 transition-all"
-                    style={{ width: `${theme.count > 0 ? (theme.sentimentBreakdown.negative / theme.count) * 100 : 0}%` }}
+                    className="bg-destructive transition-all"
+                    style={{
+                      width: `${theme.count > 0 ? (theme.sentimentBreakdown.negative / theme.count) * 100 : 0}%`,
+                    }}
                   />
                 </div>
               </div>

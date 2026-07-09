@@ -21,7 +21,11 @@ async function getUserContext() {
     .single();
 
   if (!data) throw new Error("User not found");
-  return { userId: data.id, organizationId: data.organization_id as string, role: data.role as string };
+  return {
+    userId: data.id,
+    organizationId: data.organization_id as string,
+    role: data.role as string,
+  };
 }
 
 /**
@@ -35,9 +39,7 @@ function templatesTable(supabase: ReturnType<typeof createAdminClient>): any {
 }
 
 /** Fetch email branding config for the current user's org. */
-async function getOrgBrandingForUser(
-  organizationId: string
-): Promise<EmailBrandingConfig | null> {
+async function getOrgBrandingForUser(organizationId: string): Promise<EmailBrandingConfig | null> {
   const supabase = createAdminClient();
   const { data: org } = await supabase
     .from("organizations")
@@ -77,9 +79,7 @@ export async function listTemplates(): Promise<CustomEmailTemplate[]> {
   return (data ?? []) as CustomEmailTemplate[];
 }
 
-export async function getTemplateById(
-  id: string
-): Promise<CustomEmailTemplate | null> {
+export async function getTemplateById(id: string): Promise<CustomEmailTemplate | null> {
   const ctx = await getUserContext();
   const supabase = createAdminClient();
 
@@ -153,7 +153,8 @@ export async function createTemplate(input: {
     .select()
     .single();
 
-  if (error) throw new Error(`Failed to create template: ${(error as { message: string }).message}`);
+  if (error)
+    throw new Error(`Failed to create template: ${(error as { message: string }).message}`);
   return data as CustomEmailTemplate;
 }
 
@@ -208,7 +209,8 @@ export async function updateTemplate(
     .select()
     .single();
 
-  if (error) throw new Error(`Failed to update template: ${(error as { message: string }).message}`);
+  if (error)
+    throw new Error(`Failed to update template: ${(error as { message: string }).message}`);
   return data as CustomEmailTemplate;
 }
 
@@ -221,12 +223,11 @@ export async function deleteTemplate(id: string): Promise<void> {
     .eq("id", id)
     .eq("organization_id", ctx.organizationId);
 
-  if (error) throw new Error(`Failed to delete template: ${(error as { message: string }).message}`);
+  if (error)
+    throw new Error(`Failed to delete template: ${(error as { message: string }).message}`);
 }
 
-export async function duplicateTemplate(
-  id: string
-): Promise<CustomEmailTemplate> {
+export async function duplicateTemplate(id: string): Promise<CustomEmailTemplate> {
   const existing = await getTemplateById(id);
   if (!existing) throw new Error("Template not found");
 
@@ -238,55 +239,6 @@ export async function duplicateTemplate(
     previewText: existing.preview_text ?? undefined,
     document: existing.document,
   });
-}
-
-// ---------- Resolve (shared by send.ts + campaign-email-sender.ts) ----------
-
-/**
- * Load a custom template by ID and render it with merge values.
- * Uses html_cache when available to avoid re-rendering on every send.
- * Falls back to full render if cache is missing.
- */
-export async function resolveTemplateById(
-  templateId: string,
-  mergeValues: Record<string, string>
-): Promise<{ subject: string; html: string }> {
-  const supabase = createAdminClient();
-
-  const { data, error } = await templatesTable(supabase)
-    .select("document, subject, html_cache, organization_id")
-    .eq("id", templateId)
-    .single();
-
-  if (error || !data) {
-    throw new Error(`Custom template not found: ${templateId}`);
-  }
-
-  const row = data as { document: unknown; subject: string; html_cache: string | null; organization_id: string };
-  const subject = replaceMergeFields(row.subject, mergeValues);
-
-  // Fast path: use cached HTML with merge field replacement
-  if (row.html_cache) {
-    const html = replaceMergeFields(row.html_cache, mergeValues);
-    return { subject, html };
-  }
-
-  // Slow path: full React Email render (cache miss or first use)
-  const raw = row.document;
-  if (
-    !raw ||
-    typeof raw !== "object" ||
-    !("blocks" in (raw as Record<string, unknown>)) ||
-    !Array.isArray((raw as Record<string, unknown>).blocks) ||
-    !("settings" in (raw as Record<string, unknown>))
-  ) {
-    throw new Error(`Custom template ${templateId} has an invalid document structure`);
-  }
-
-  const doc = raw as EmailDocument;
-  const orgBranding = await getOrgBrandingForUser(row.organization_id);
-  const { html } = await renderEmailDocument(doc, mergeValues, orgBranding);
-  return { subject, html };
 }
 
 // ---------- Preview ----------
@@ -304,7 +256,13 @@ export async function previewTemplate(
 
 /** Fetch team members for the "send as" selector. */
 export async function getTeamMembersForTestEmail(): Promise<
-  { id: string; full_name: string; email: string; avatar_url: string | null; title: string | null }[]
+  {
+    id: string;
+    full_name: string;
+    email: string;
+    avatar_url: string | null;
+    title: string | null;
+  }[]
 > {
   const ctx = await getUserContext();
   const supabase = createAdminClient();
@@ -317,7 +275,13 @@ export async function getTeamMembersForTestEmail(): Promise<
     .order("full_name");
 
   if (error) return [];
-  return (data ?? []) as { id: string; full_name: string; email: string; avatar_url: string | null; title: string | null }[];
+  return (data ?? []) as {
+    id: string;
+    full_name: string;
+    email: string;
+    avatar_url: string | null;
+    title: string | null;
+  }[];
 }
 
 /** Build real merge values from a specific user + their org. */
@@ -330,7 +294,9 @@ async function buildMergeValuesForUser(
   const [{ data: user }, { data: org }] = await Promise.all([
     supabase
       .from("users")
-      .select("full_name, email, avatar_url, photo_url, title, phone, personal_website_url, linkedin_url")
+      .select(
+        "full_name, email, avatar_url, photo_url, title, phone, personal_website_url, linkedin_url"
+      )
       .eq("id", userId)
       .single(),
     supabase
@@ -340,8 +306,22 @@ async function buildMergeValuesForUser(
       .single(),
   ]);
 
-  const u = user as { full_name: string; email: string; avatar_url: string | null; photo_url: string | null; title: string | null; phone: string | null; personal_website_url: string | null; linkedin_url: string | null } | null;
-  const o = org as { name: string; logo_url: string | null; company_email: string | null; company_phone: string | null } | null;
+  const u = user as {
+    full_name: string;
+    email: string;
+    avatar_url: string | null;
+    photo_url: string | null;
+    title: string | null;
+    phone: string | null;
+    personal_website_url: string | null;
+    linkedin_url: string | null;
+  } | null;
+  const o = org as {
+    name: string;
+    logo_url: string | null;
+    company_email: string | null;
+    company_phone: string | null;
+  } | null;
 
   const firstName = u?.full_name?.split(" ")[0] ?? "Test";
   const { emailConfig } = await import("@/lib/email/client");

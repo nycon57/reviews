@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Profile & Setup Reminder Sequence Service (S084)
  *
@@ -70,7 +68,14 @@ interface ReminderScheduleItem {
   reminderType: ReminderType;
   daysSinceSignup: number;
   templateName: EmailTemplate;
-  condition: "missing_photo" | "missing_bio" | "missing_profile" | "no_survey_template" | "no_survey_sent" | "no_google" | "no_team";
+  condition:
+    | "missing_photo"
+    | "missing_bio"
+    | "missing_profile"
+    | "no_survey_template"
+    | "no_survey_sent"
+    | "no_google"
+    | "no_team";
   role?: "admin" | "any";
 }
 
@@ -278,7 +283,7 @@ async function getUserCompletionStatus(
     .eq("id", userId)
     .single();
 
-  const hasPhoto = !!(user?.photo_url);
+  const hasPhoto = !!user?.photo_url;
   const hasBio = !!(user?.bio && user.bio.trim().length > 0);
 
   // Check for survey templates
@@ -411,7 +416,8 @@ export async function detectUsersAndStartReminderSequences(): Promise<DetectionR
 
   const { data: eligibleUsers, error } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       id,
       email,
       full_name,
@@ -420,7 +426,8 @@ export async function detectUsersAndStartReminderSequences(): Promise<DetectionR
       created_at,
       receive_notifications,
       organizations!inner(name)
-    `)
+    `
+    )
     .lte("created_at", threeDaysAgo.toISOString())
     .eq("is_active", true)
     .eq("receive_notifications", true);
@@ -465,11 +472,7 @@ export async function detectUsersAndStartReminderSequences(): Promise<DetectionR
       }
 
       // Get user completion status
-      const status = await getUserCompletionStatus(
-        user.id,
-        user.organization_id,
-        user.role
-      );
+      const status = await getUserCompletionStatus(user.id, user.organization_id, user.role);
 
       // Skip if profile and setup are both complete
       if (status.profileCompletionPercent === 100 && status.setupCompletionPercent === 100) {
@@ -608,13 +611,15 @@ export async function processReminderSequenceQueue(
   }
 
   // Optimistic locking: mark sequences as processing
-  const sequenceIds = (sequences as SequenceRecord[]).map(s => s.id);
+  const sequenceIds = (sequences as SequenceRecord[]).map((s) => s.id);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: lockedSequences, error: lockError } = await (supabase.from as any)("email_sequences")
+  const { data: lockedSequences, error: lockError } = await (supabase.from as any)(
+    "email_sequences"
+  )
     .update({
       status: "processing",
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
     .in("id", sequenceIds)
     .eq("status", "active")
@@ -626,7 +631,7 @@ export async function processReminderSequenceQueue(
   }
 
   const lockedIds = new Set((lockedSequences || []).map((s: { id: string }) => s.id));
-  const sequencesToProcess = (sequences as SequenceRecord[]).filter(s => lockedIds.has(s.id));
+  const sequencesToProcess = (sequences as SequenceRecord[]).filter((s) => lockedIds.has(s.id));
 
   if (sequencesToProcess.length === 0) {
     return result;
@@ -649,9 +654,7 @@ export async function processReminderSequenceQueue(
         }
       } else {
         result.failed++;
-        result.errors.push(
-          `Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`
-        );
+        result.errors.push(`Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`);
         await resetSequenceToActive(supabase, sequence.id);
       }
     } catch (err) {
@@ -674,7 +677,7 @@ async function resetSequenceToActive(
   await (supabase.from as any)("email_sequences")
     .update({
       status: "active",
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
     .eq("id", sequenceId)
     .eq("status", "processing");
@@ -722,11 +725,7 @@ async function processSequenceStep(
   }
 
   // Get current completion status
-  const status = await getUserCompletionStatus(
-    user.id,
-    user.organization_id,
-    user.role
-  );
+  const status = await getUserCompletionStatus(user.id, user.organization_id, user.role);
 
   // Check if all items are complete - exit sequence
   if (status.profileCompletionPercent === 100 && status.setupCompletionPercent === 100) {
@@ -735,16 +734,13 @@ async function processSequenceStep(
   }
 
   // Calculate days since signup
-  const daysSinceSignup = daysBetween(
-    new Date(),
-    new Date(sequence.metadata.signupDate)
-  );
+  const daysSinceSignup = daysBetween(new Date(), new Date(sequence.metadata.signupDate));
 
   // Find which reminders have already been sent
   const sentReminders = new Set<ReminderType>(
     sequence.steps_completed
-      .filter(s => s.reminder_type)
-      .map(s => s.reminder_type as ReminderType)
+      .filter((s) => s.reminder_type)
+      .map((s) => s.reminder_type as ReminderType)
   );
 
   // Find the next applicable reminder
@@ -770,7 +766,7 @@ async function processSequenceStep(
 
   if (!reminderToSend) {
     // No reminder to send right now, check if sequence is complete
-    const allSentOrSkipped = REMINDER_SCHEDULE.every(r => {
+    const allSentOrSkipped = REMINDER_SCHEDULE.every((r) => {
       if (r.role === "admin" && user.role !== "admin") {
         return true; // Not applicable for this user
       }
@@ -816,11 +812,7 @@ async function processSequenceStep(
   }
 
   // Update sequence after successful send
-  await updateSequenceAfterSend(
-    sequence,
-    sendResult.emailId!,
-    reminderToSend
-  );
+  await updateSequenceAfterSend(sequence, sendResult.emailId!, reminderToSend);
 
   return { success: true, action: "sent" };
 }
@@ -1003,8 +995,7 @@ async function sendReminderEmail(
 
     return { success: true, emailId: emailId || result.messageId };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: user.email,
@@ -1150,12 +1141,7 @@ export async function checkAndExitSequenceOnCompletion(
       .single();
 
     if (sequence) {
-      await updateSequenceStatus(
-        sequence.id,
-        "exited",
-        "all_steps_completed",
-        "full_completion"
-      );
+      await updateSequenceStatus(sequence.id, "exited", "all_steps_completed", "full_completion");
       return { shouldExit: true, exitReason: "all_steps_completed" };
     }
   }

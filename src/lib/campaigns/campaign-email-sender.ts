@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { EmailContext } from "@/lib/email/orchestration/types";
-import { resolveTemplateById } from "@/lib/email-builder/actions";
+import { resolveTemplateById } from "@/lib/email-builder/template-resolver";
 
 /**
  * Generic email sender for campaign sequences.
@@ -25,9 +25,7 @@ export async function campaignEmailSender(
   const variant = ctx.variant;
 
   // Build subject
-  const subject =
-    subjectOverride ||
-    buildSubjectFromTemplate(templateName, userName, variant);
+  const subject = subjectOverride || buildSubjectFromTemplate(templateName, userName, variant);
 
   // Build HTML body
   const html = buildHtmlFromTemplate(templateName, {
@@ -84,9 +82,7 @@ function buildSubjectFromTemplate(
   }
 
   // Fallback: humanize the template name
-  const humanized = templateName
-    .replace(/[_-]/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const humanized = templateName.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   return variant ? `${humanized} (${variant})` : humanized;
 }
 

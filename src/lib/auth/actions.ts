@@ -121,18 +121,16 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
     userSlug = slugify(fullName) + "-" + Date.now();
   }
 
-  const { error: userError } = await supabaseAdmin
-    .from("users")
-    .insert({
-      id: authData.user.id,
-      organization_id: orgData.id,
-      email: email,
-      full_name: fullName,
-      slug: userSlug,
-      role: "admin", // First user is admin
-      is_active: true,
-      is_owner: true, // Self-serve signup = owner of their org
-    });
+  const { error: userError } = await supabaseAdmin.from("users").insert({
+    id: authData.user.id,
+    organization_id: orgData.id,
+    email: email,
+    full_name: fullName,
+    slug: userSlug,
+    role: "admin", // First user is admin
+    is_active: true,
+    is_owner: true, // Self-serve signup = owner of their org
+  });
 
   if (userError) {
     console.error("User record creation error:", userError);
@@ -243,6 +241,13 @@ export async function resetPassword(formData: ResetPasswordInput): Promise<AuthR
 
 export async function updatePassword(formData: UpdatePasswordInput): Promise<AuthResult> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
 
   // Validate input
   const result = updatePasswordSchema.safeParse(formData);
@@ -268,14 +273,22 @@ export async function updatePassword(formData: UpdatePasswordInput): Promise<Aut
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    await supabase.auth.signOut();
+  }
   redirect("/login");
 }
 
 export async function resendVerificationEmail(): Promise<AuthResult> {
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user?.email) {
     return { success: false, error: "No user email found" };
@@ -298,22 +311,28 @@ export async function resendVerificationEmail(): Promise<AuthResult> {
 
 export async function getUser() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 }
 
 export async function getUserWithProfile() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) return null;
 
   const { data: profile } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       *,
       organization:organizations(*)
-    `)
+    `
+    )
     .eq("id", user.id)
     .single();
 
@@ -327,16 +346,20 @@ export async function getUserWithProfile() {
  */
 export async function checkAdminAccess(): Promise<boolean> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) return false;
 
   const { data: userData } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       role,
       organization:organizations!inner(account_type)
-    `)
+    `
+    )
     .eq("id", user.id)
     .single();
 
@@ -411,9 +434,7 @@ export async function unifiedSignIn(formData: SignInInput): Promise<AuthResult> 
  * Unified magic link sign in function
  */
 export async function unifiedSignInWithMagicLink(formData: MagicLinkInput): Promise<AuthResult> {
-  return USE_BETTER_AUTH
-    ? signInWithMagicLinkBetterAuth(formData)
-    : signInWithMagicLink(formData);
+  return USE_BETTER_AUTH ? signInWithMagicLinkBetterAuth(formData) : signInWithMagicLink(formData);
 }
 
 /**
@@ -461,9 +482,7 @@ export async function unifiedGetUserWithProfile() {
  * Unified resend verification email function
  */
 export async function unifiedResendVerificationEmail(): Promise<AuthResult> {
-  return USE_BETTER_AUTH
-    ? resendVerificationEmailBetterAuth()
-    : resendVerificationEmail();
+  return USE_BETTER_AUTH ? resendVerificationEmailBetterAuth() : resendVerificationEmail();
 }
 
 /**

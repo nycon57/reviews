@@ -1,5 +1,3 @@
-"use server";
-
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, getFromAddress, emailConfig } from "./client";
 import {
@@ -109,7 +107,7 @@ import {
   renderReviewVideoUpsellEmail,
   renderReviewDisputeEscalationEmail,
 } from "./templates/index";
-import { resolveTemplateById } from "@/lib/email-builder/actions";
+import { resolveTemplateById } from "@/lib/email-builder/template-resolver";
 import { contactPageUrlToOneClickUrl } from "@/lib/contacts/tokens";
 
 // Check if email is unsubscribed
@@ -230,14 +228,12 @@ export async function sendSurveyInvitationEmail(
     emailType: data.customTemplateId ? undefined : "survey_invitation",
     // Contact-linked acquisition sends: machine one-click → Contact suppression.
     listUnsubscribeUrl: data.unsubscribeUrl
-      ? contactPageUrlToOneClickUrl(data.unsubscribeUrl) ?? undefined
+      ? (contactPageUrlToOneClickUrl(data.unsubscribeUrl) ?? undefined)
       : undefined,
     tags: [
       { name: "template", value: "survey_invitation" },
       ...(data.surveyId ? [{ name: "survey_id", value: data.surveyId }] : []),
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 
@@ -275,9 +271,7 @@ export async function sendSurveyReminderEmail(
   const templateName: EmailTemplate =
     data.reminderNumber === 1 ? "survey_reminder_3day" : "survey_reminder_7day";
   const { subject, html } =
-    data.reminderNumber === 1
-      ? getSurveyReminder3DayEmail(data)
-      : getSurveyReminder7DayEmail(data);
+    data.reminderNumber === 1 ? getSurveyReminder3DayEmail(data) : getSurveyReminder7DayEmail(data);
   const idempotencyKey = getSurveyReminderIdempotencyKey(
     data.surveyId || `survey-${Date.now()}`,
     data.toEmail,
@@ -296,14 +290,12 @@ export async function sendSurveyReminderEmail(
     organizationId: data.organizationId,
     emailType: templateName,
     listUnsubscribeUrl: data.unsubscribeUrl
-      ? contactPageUrlToOneClickUrl(data.unsubscribeUrl) ?? undefined
+      ? (contactPageUrlToOneClickUrl(data.unsubscribeUrl) ?? undefined)
       : undefined,
     tags: [
       { name: "template", value: templateName },
       ...(data.surveyId ? [{ name: "survey_id", value: data.surveyId }] : []),
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 
@@ -357,9 +349,7 @@ export async function sendNewReviewNotificationEmail(
     emailType: "new_review_notification",
     tags: [
       { name: "template", value: "new_review_notification" },
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 
@@ -425,7 +415,11 @@ export async function sendReviewResponseEmail(
   // Use organization + user + customer email + response hash for idempotency
   // This prevents duplicate emails for the same response to the same customer
   const responseHash = data.responseText
-    ? Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data.responseText))))
+    ? Array.from(
+        new Uint8Array(
+          await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data.responseText))
+        )
+      )
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("")
         .slice(0, 16)
@@ -445,12 +439,8 @@ export async function sendReviewResponseEmail(
     emailType: "review_response_to_reviewer",
     tags: [
       { name: "template", value: "review_response_to_reviewer" },
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
-      ...(data.loanOfficerId
-        ? [{ name: "user_id", value: data.loanOfficerId }]
-        : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
     ],
   });
 
@@ -519,16 +509,12 @@ export async function sendVideoTestimonialInvitationEmail(
     organizationId: data.organizationId,
     emailType: "video_testimonial_invitation",
     listUnsubscribeUrl: data.unsubscribeUrl
-      ? contactPageUrlToOneClickUrl(data.unsubscribeUrl) ?? undefined
+      ? (contactPageUrlToOneClickUrl(data.unsubscribeUrl) ?? undefined)
       : undefined,
     tags: [
       { name: "template", value: "video_testimonial_invitation" },
-      ...(data.requestId
-        ? [{ name: "request_id", value: data.requestId }]
-        : []),
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.requestId ? [{ name: "request_id", value: data.requestId }] : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 
@@ -598,12 +584,8 @@ export async function sendVideoTestimonialReminderEmail(
     emailType: templateName,
     tags: [
       { name: "template", value: templateName },
-      ...(data.requestId
-        ? [{ name: "request_id", value: data.requestId }]
-        : []),
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.requestId ? [{ name: "request_id", value: data.requestId }] : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 
@@ -658,12 +640,8 @@ export async function sendVideoTestimonialReceivedEmail(
     emailType: "video_testimonial_received",
     tags: [
       { name: "template", value: "video_testimonial_received" },
-      ...(data.testimonialId
-        ? [{ name: "testimonial_id", value: data.testimonialId }]
-        : []),
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.testimonialId ? [{ name: "testimonial_id", value: data.testimonialId }] : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 
@@ -707,12 +685,8 @@ export async function sendVideoTestimonialApprovedEmail(
       html,
       tags: [
         { name: "template", value: "video_testimonial_approved" },
-        ...(data.testimonialId
-          ? [{ name: "testimonial_id", value: data.testimonialId }]
-          : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
+        ...(data.testimonialId ? [{ name: "testimonial_id", value: data.testimonialId }] : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
       ],
     });
 
@@ -746,8 +720,7 @@ export async function sendVideoTestimonialApprovedEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -786,12 +759,8 @@ export async function sendVideoTestimonialPendingApprovalEmail(
       html,
       tags: [
         { name: "template", value: "video_testimonial_pending_approval" },
-        ...(data.testimonialId
-          ? [{ name: "testimonial_id", value: data.testimonialId }]
-          : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
+        ...(data.testimonialId ? [{ name: "testimonial_id", value: data.testimonialId }] : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
       ],
     });
 
@@ -825,8 +794,7 @@ export async function sendVideoTestimonialPendingApprovalEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -870,12 +838,8 @@ export async function sendSurveyCompletionThankYouEmail(
       tags: [
         { name: "template", value: "survey_completion_thank_you" },
         { name: "survey_type", value: data.surveyType },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -911,8 +875,7 @@ export async function sendSurveyCompletionThankYouEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -959,15 +922,9 @@ export async function sendSurveyHighRatingFollowUpEmail(
         { name: "template", value: "survey_high_rating_followup" },
         { name: "survey_type", value: data.surveyType },
         { name: "rating", value: String(data.rating) },
-        ...(subjectVariant
-          ? [{ name: "subject_variant", value: subjectVariant }]
-          : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(subjectVariant ? [{ name: "subject_variant", value: subjectVariant }] : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1003,8 +960,7 @@ export async function sendSurveyHighRatingFollowUpEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1046,12 +1002,8 @@ export async function sendSurveyLowRatingFollowUpEmail(
         { name: "template", value: "survey_low_rating_followup" },
         { name: "survey_type", value: data.surveyType },
         { name: "rating", value: String(data.rating) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1087,8 +1039,7 @@ export async function sendSurveyLowRatingFollowUpEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1133,12 +1084,8 @@ export async function sendSurveyResponseReceivedNotificationEmail(
         ...(data.surveyResponseId
           ? [{ name: "survey_response_id", value: data.surveyResponseId }]
           : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1172,8 +1119,7 @@ export async function sendSurveyResponseReceivedNotificationEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1218,12 +1164,8 @@ export async function sendReviewPendingApprovalEmail(
         { name: "template", value: "review_pending_approval" },
         { name: "rating", value: String(data.rating) },
         ...(data.reviewId ? [{ name: "review_id", value: data.reviewId }] : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1257,8 +1199,7 @@ export async function sendReviewPendingApprovalEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1299,12 +1240,8 @@ export async function sendReviewApprovedEmail(
         { name: "template", value: "review_approved" },
         { name: "rating", value: String(data.rating) },
         ...(data.reviewId ? [{ name: "review_id", value: data.reviewId }] : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1338,8 +1275,7 @@ export async function sendReviewApprovedEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1380,12 +1316,8 @@ export async function sendReviewRejectedEmail(
         { name: "template", value: "review_rejected" },
         { name: "rating", value: String(data.rating) },
         ...(data.reviewId ? [{ name: "review_id", value: data.reviewId }] : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1419,8 +1351,7 @@ export async function sendReviewRejectedEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1460,12 +1391,8 @@ export async function sendReviewResponseSentConfirmationEmail(
       tags: [
         { name: "template", value: "review_response_sent_confirmation" },
         { name: "rating", value: String(data.rating) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1501,8 +1428,7 @@ export async function sendReviewResponseSentConfirmationEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1544,12 +1470,8 @@ export async function sendReviewPublishedNotificationEmail(
         { name: "template", value: "review_published_notification" },
         { name: "rating", value: String(data.rating) },
         { name: "platform", value: data.publishedPlatform },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1583,8 +1505,7 @@ export async function sendReviewPublishedNotificationEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1625,12 +1546,8 @@ export async function sendReviewResponseReceivedEmail(
         { name: "template", value: "review_response_received" },
         { name: "rating", value: String(data.rating) },
         ...(data.reviewId ? [{ name: "review_id", value: data.reviewId }] : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1664,8 +1581,7 @@ export async function sendReviewResponseReceivedEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1706,12 +1622,8 @@ export async function sendNegativeReviewAlertEnhancedEmail(
         { name: "template", value: "negative_review_alert_enhanced" },
         { name: "rating", value: String(data.rating) },
         ...(data.reviewId ? [{ name: "review_id", value: data.reviewId }] : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "user_id", value: data.loanOfficerId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
       ],
     });
 
@@ -1745,8 +1657,7 @@ export async function sendNegativeReviewAlertEnhancedEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1786,7 +1697,10 @@ async function sendRenderedMilestoneEmail(
 ): Promise<EmailSendResult> {
   const preferenceCheck = await shouldSendEmail(templateName, data.loanOfficerId);
   if (!preferenceCheck.allowed) {
-    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
+    return {
+      success: false,
+      error: preferenceCheck.reason || "User has disabled milestone emails",
+    };
   }
 
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
@@ -1830,8 +1744,7 @@ async function sendRenderedMilestoneEmail(
 
     return result;
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -1855,16 +1768,19 @@ export async function sendFirstReviewMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderFirstReviewMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_first_review", subject, html, [
-    { name: "template", value: "milestone_first_review" },
-    { name: "milestone_id", value: data.milestoneId },
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_first_review",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_first_review" },
+      { name: "milestone_id", value: data.milestoneId },
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // Send review count milestone email
@@ -1873,17 +1789,20 @@ export async function sendReviewCountMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderReviewCountMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_review_count", subject, html, [
-    { name: "template", value: "milestone_review_count" },
-    { name: "milestone_id", value: data.milestoneId },
-    { name: "review_count", value: String(data.reviewCount) },
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_review_count",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_review_count" },
+      { name: "milestone_id", value: data.milestoneId },
+      { name: "review_count", value: String(data.reviewCount) },
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // Send first 5-star milestone email
@@ -1892,16 +1811,19 @@ export async function sendFirst5StarMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderFirst5StarMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_first_5_star", subject, html, [
-    { name: "template", value: "milestone_first_5_star" },
-    { name: "milestone_id", value: data.milestoneId },
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_first_5_star",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_first_5_star" },
+      { name: "milestone_id", value: data.milestoneId },
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // Send rating improvement milestone email
@@ -1910,19 +1832,22 @@ export async function sendRatingImprovementMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderRatingImprovementMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_rating_improvement", subject, html, [
-    { name: "template", value: "milestone_rating_improvement" },
-    { name: "milestone_id", value: data.milestoneId },
-    { name: "previous_rating", value: String(data.previousRating) },
-    { name: "current_rating", value: String(data.currentRating) },
-    { name: "improvement_amount", value: String(data.improvementAmount) },
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_rating_improvement",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_rating_improvement" },
+      { name: "milestone_id", value: data.milestoneId },
+      { name: "previous_rating", value: String(data.previousRating) },
+      { name: "current_rating", value: String(data.currentRating) },
+      { name: "improvement_amount", value: String(data.improvementAmount) },
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // Send NPS improvement milestone email
@@ -1931,19 +1856,22 @@ export async function sendNpsImprovementMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderNpsImprovementMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_nps_improvement", subject, html, [
-    { name: "template", value: "milestone_nps_improvement" },
-    { name: "milestone_id", value: data.milestoneId },
-    { name: "previous_nps", value: String(data.previousNps) },
-    { name: "current_nps", value: String(data.currentNps) },
-    { name: "improvement_amount", value: String(data.improvementAmount) },
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_nps_improvement",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_nps_improvement" },
+      { name: "milestone_id", value: data.milestoneId },
+      { name: "previous_nps", value: String(data.previousNps) },
+      { name: "current_nps", value: String(data.currentNps) },
+      { name: "improvement_amount", value: String(data.improvementAmount) },
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // Send leaderboard milestone email
@@ -1952,18 +1880,21 @@ export async function sendLeaderboardMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderLeaderboardMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_leaderboard", subject, html, [
-    { name: "template", value: "milestone_leaderboard" },
-    { name: "milestone_id", value: data.milestoneId },
-    { name: "achievement_type", value: data.achievementType },
-    { name: "current_rank", value: String(data.currentRank) },
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_leaderboard",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_leaderboard" },
+      { name: "milestone_id", value: data.milestoneId },
+      { name: "achievement_type", value: data.achievementType },
+      { name: "current_rank", value: String(data.currentRank) },
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // Send badge earned milestone email
@@ -1972,18 +1903,21 @@ export async function sendBadgeEarnedMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderBadgeEarnedMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_badge_earned", subject, html, [
-    { name: "template", value: "milestone_badge_earned" },
-    { name: "milestone_id", value: data.milestoneId },
-    { name: "badge_name", value: data.badgeName },
-    ...(data.badgeTier ? [{ name: "badge_tier", value: data.badgeTier }] : []),
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_badge_earned",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_badge_earned" },
+      { name: "milestone_id", value: data.milestoneId },
+      { name: "badge_name", value: data.badgeName },
+      ...(data.badgeTier ? [{ name: "badge_tier", value: data.badgeTier }] : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // Send streak milestone email
@@ -1992,18 +1926,21 @@ export async function sendStreakMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderStreakMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_streak", subject, html, [
-    { name: "template", value: "milestone_streak" },
-    { name: "milestone_id", value: data.milestoneId },
-    { name: "streak_days", value: String(data.streakDays) },
-    { name: "streak_type", value: data.streakType },
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_streak",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_streak" },
+      { name: "milestone_id", value: data.milestoneId },
+      { name: "streak_days", value: String(data.streakDays) },
+      { name: "streak_type", value: data.streakType },
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // Send profile completion milestone email
@@ -2012,17 +1949,20 @@ export async function sendProfileCompletionMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderProfileCompletionMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_profile_completion", subject, html, [
-    { name: "template", value: "milestone_profile_completion" },
-    { name: "milestone_id", value: data.milestoneId },
-    { name: "completion_percent", value: String(data.completionPercent) },
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_profile_completion",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_profile_completion" },
+      { name: "milestone_id", value: data.milestoneId },
+      { name: "completion_percent", value: String(data.completionPercent) },
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // Send video milestone email
@@ -2031,17 +1971,20 @@ export async function sendVideoMilestoneEmail(
   emailTypeSendResolver?: EmailTypeSendResolver
 ): Promise<EmailSendResult> {
   const { subject, html } = await renderVideoMilestoneEmail(data);
-  return sendRenderedMilestoneEmail(data, "milestone_video", subject, html, [
-    { name: "template", value: "milestone_video" },
-    { name: "milestone_id", value: data.milestoneId },
-    { name: "video_count", value: String(data.videoCount) },
-    ...(data.organizationId
-      ? [{ name: "organization_id", value: data.organizationId }]
-      : []),
-    ...(data.loanOfficerId
-      ? [{ name: "user_id", value: data.loanOfficerId }]
-      : []),
-  ], emailTypeSendResolver);
+  return sendRenderedMilestoneEmail(
+    data,
+    "milestone_video",
+    subject,
+    html,
+    [
+      { name: "template", value: "milestone_video" },
+      { name: "milestone_id", value: data.milestoneId },
+      { name: "video_count", value: String(data.videoCount) },
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+      ...(data.loanOfficerId ? [{ name: "user_id", value: data.loanOfficerId }] : []),
+    ],
+    emailTypeSendResolver
+  );
 }
 
 // ============================================================================
@@ -2070,9 +2013,7 @@ export async function sendTrialEnding1AccomplishmentsEmail(
       tags: [
         { name: "template", value: "trial_ending_1_accomplishments" },
         { name: "days_remaining", value: String(data.daysRemaining) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
       ],
     });
 
@@ -2104,8 +2045,7 @@ export async function sendTrialEnding1AccomplishmentsEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -2144,9 +2084,7 @@ export async function sendTrialEnding2FeatureComparisonEmail(
       tags: [
         { name: "template", value: "trial_ending_2_feature_comparison" },
         { name: "days_remaining", value: String(data.daysRemaining) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
       ],
     });
 
@@ -2178,8 +2116,7 @@ export async function sendTrialEnding2FeatureComparisonEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -2218,9 +2155,7 @@ export async function sendTrialEnding3FinalReminderEmail(
       tags: [
         { name: "template", value: "trial_ending_3_final_reminder" },
         { name: "days_remaining", value: String(data.daysRemaining) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
         { name: "ab_variant", value: data.messageVariant },
       ],
     });
@@ -2253,8 +2188,7 @@ export async function sendTrialEnding3FinalReminderEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -2293,9 +2227,7 @@ export async function sendTrialEnding4GracePeriodEmail(
       tags: [
         { name: "template", value: "trial_ending_4_grace_period" },
         { name: "grace_period_days", value: String(data.gracePeriodDays) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
       ],
     });
 
@@ -2327,8 +2259,7 @@ export async function sendTrialEnding4GracePeriodEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -2367,12 +2298,8 @@ export async function sendTrialEnding5WinbackEmail(
       tags: [
         { name: "template", value: "trial_ending_5_winback" },
         { name: "days_since_trial_ended", value: String(data.daysSinceTrialEnded) },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.specialOffer
-          ? [{ name: "has_special_offer", value: "true" }]
-          : []),
+        ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
+        ...(data.specialOffer ? [{ name: "has_special_offer", value: "true" }] : []),
         { name: "is_high_value", value: String(data.isHighValueProspect) },
       ],
     });
@@ -2405,8 +2332,7 @@ export async function sendTrialEnding5WinbackEmail(
 
     return { success: true, messageId: response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: data.toEmail,
@@ -2442,8 +2368,7 @@ export async function sendProfileReferralIntroductionEmail(
   }
 
   const fromAddress = getFromAddress(data.organizationName);
-  const { subject, html } =
-    await renderProfileReferralIntroductionEmail(data);
+  const { subject, html } = await renderProfileReferralIntroductionEmail(data);
   const idempotencyKey = `profile-referral-intro-${referralId}`;
 
   const result = await sendWithReliability({
@@ -2460,9 +2385,7 @@ export async function sendProfileReferralIntroductionEmail(
     tags: [
       { name: "template", value: "profile_referral_introduction" },
       { name: "referral_id", value: referralId },
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 
@@ -2517,9 +2440,7 @@ export async function sendReviewVerificationEmail(
     tags: [
       { name: "template", value: "review_verification" },
       { name: "review_id", value: data.reviewId },
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 
@@ -2568,9 +2489,7 @@ export async function sendReviewVideoUpsellEmail(
     tags: [
       { name: "template", value: "review_video_upsell" },
       { name: "review_id", value: data.reviewId },
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 
@@ -2617,9 +2536,7 @@ export async function sendReviewDisputeEscalationEmail(
     tags: [
       { name: "template", value: "review_dispute_escalation" },
       { name: "review_id", value: data.reviewId },
-      ...(data.organizationId
-        ? [{ name: "organization_id", value: data.organizationId }]
-        : []),
+      ...(data.organizationId ? [{ name: "organization_id", value: data.organizationId }] : []),
     ],
   });
 

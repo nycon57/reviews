@@ -7,6 +7,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { requireCronSecretRequest } from "@/lib/auth/server-action-guards";
 import { randomBytes } from "crypto";
 import { addDays, addMonths, setHours, setMinutes, startOfDay, nextMonday } from "date-fns";
 import type { ActionResult } from "@/lib/reviews/types";
@@ -86,6 +87,23 @@ async function getUserContext() {
     organizationId: userData.organization_id!,
     role: userData.role,
   };
+}
+
+async function hasOrgReportAccess(organizationId: string): Promise<boolean> {
+  const context = await getUserContext();
+  if (
+    context?.organizationId === organizationId &&
+    (context.role === "manager" || context.role === "admin")
+  ) {
+    return true;
+  }
+
+  try {
+    await requireCronSecretRequest();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -467,6 +485,11 @@ export async function createReportShareForOrg({
   expiresInDays,
   sharedBy = null,
 }: CreateReportShareForOrgParams): Promise<ActionResult<ReportShare>> {
+  const hasAccess = await hasOrgReportAccess(organizationId);
+  if (!hasAccess) {
+    return { success: false, error: "Unauthorized" };
+  }
+
   const supabase = createAdminClient();
 
   const shareToken = randomBytes(32).toString("hex");
@@ -631,6 +654,11 @@ export async function exportAndRecordReportForOrg({
   report: providedReport,
   organizationName,
 }: ExportAndRecordReportForOrgParams): Promise<ActionResult<ReportExportPayload>> {
+  const hasAccess = await hasOrgReportAccess(organizationId);
+  if (!hasAccess) {
+    return { success: false, error: "Unauthorized" };
+  }
+
   const reportResult = providedReport
     ? { success: true as const, data: providedReport }
     : await generateReportForOrg({

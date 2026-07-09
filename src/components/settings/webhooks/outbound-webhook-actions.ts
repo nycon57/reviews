@@ -15,6 +15,7 @@ import {
   type OutboundWebhookDeliverySummary as LibDelivery,
   type ActionResult,
 } from "@/lib/webhooks/outbound/actions";
+import { requireAdminAccess } from "@/lib/webhooks/actions";
 import type { OutboundWebhookEventType } from "@/lib/webhooks/outbound";
 
 export type OutboundWebhookEvent = OutboundWebhookEventType;
@@ -52,6 +53,12 @@ export interface CreateOutboundWebhookSubscriptionInput {
   description?: string;
 }
 
+type ViewResult<T> =
+  | { success: true; data: T; error?: never }
+  | { success: false; data?: never; error?: string };
+
+type EmptyResult = { success: true; error?: never } | { success: false; error?: string };
+
 function toViewSubscription(
   row: LibSubscription & { secret?: string }
 ): OutboundWebhookSubscription {
@@ -85,24 +92,42 @@ function toViewDelivery(row: LibDelivery): OutboundWebhookDelivery {
   };
 }
 
-function mapResult<T, U>(
-  result: ActionResult<T>,
-  map: (data: T) => U
-): { success: boolean; data?: U; error?: string } {
+function mapResult<T, U>(result: ActionResult<T>, map: (data: T) => U): ViewResult<U> {
   if (!result.success || result.data === undefined) {
-    return { success: result.success, error: result.error };
+    return { success: false, error: result.error };
   }
   return { success: true, data: map(result.data) };
 }
 
-export async function listOutboundEndpoints() {
+function mapEmptyResult(result: ActionResult<unknown>): EmptyResult {
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+  return { success: true };
+}
+
+async function requireOutboundEndpointAccess(): Promise<EmptyResult> {
+  const auth = await requireAdminAccess();
+  if (!auth.success) {
+    return { success: false, error: auth.error };
+  }
+  return { success: true };
+}
+
+export async function listOutboundEndpoints(): Promise<ViewResult<OutboundWebhookSubscription[]>> {
+  const auth = await requireOutboundEndpointAccess();
+  if (!auth.success) return auth;
+
   const result = await listOutboundWebhookSubscriptions();
   return mapResult(result, (rows) => rows.map(toViewSubscription));
 }
 
 export async function createOutboundEndpoint(
   input: CreateOutboundWebhookSubscriptionInput
-) {
+): Promise<ViewResult<OutboundWebhookSubscription>> {
+  const auth = await requireOutboundEndpointAccess();
+  if (!auth.success) return auth;
+
   const result = await createOutboundWebhookSubscription({
     target_url: input.targetUrl,
     events: input.events,
@@ -111,15 +136,26 @@ export async function createOutboundEndpoint(
   return mapResult(result, toViewSubscription);
 }
 
-export async function toggleOutboundEndpoint(id: string, isActive: boolean) {
-  return toggleOutboundWebhookSubscription(id, isActive);
+export async function toggleOutboundEndpoint(id: string, isActive: boolean): Promise<EmptyResult> {
+  const auth = await requireOutboundEndpointAccess();
+  if (!auth.success) return auth;
+
+  return mapEmptyResult(await toggleOutboundWebhookSubscription(id, isActive));
 }
 
-export async function deleteOutboundEndpoint(id: string) {
-  return deleteOutboundWebhookSubscription(id);
+export async function deleteOutboundEndpoint(id: string): Promise<EmptyResult> {
+  const auth = await requireOutboundEndpointAccess();
+  if (!auth.success) return auth;
+
+  return mapEmptyResult(await deleteOutboundWebhookSubscription(id));
 }
 
-export async function listOutboundDeliveries(subscriptionId: string) {
+export async function listOutboundDeliveries(
+  subscriptionId: string
+): Promise<ViewResult<OutboundWebhookDelivery[]>> {
+  const auth = await requireOutboundEndpointAccess();
+  if (!auth.success) return auth;
+
   const result = await getRecentWebhookDeliveries(subscriptionId);
   return mapResult(result, (rows) => rows.map(toViewDelivery));
 }

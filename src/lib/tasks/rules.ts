@@ -1,5 +1,3 @@
-"use server";
-
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TaskCandidate } from "./types";
 
@@ -255,19 +253,13 @@ export async function checkRatingImprovement(
 
   const recent = ratingData.filter((r) => new Date(r.review_date) >= thirtyDaysAgo);
   const older = ratingData.filter(
-    (r) =>
-      new Date(r.review_date) < thirtyDaysAgo &&
-      new Date(r.review_date) >= sixtyDaysAgo
+    (r) => new Date(r.review_date) < thirtyDaysAgo && new Date(r.review_date) >= sixtyDaysAgo
   );
 
   const recentAvg =
-    recent.length > 0
-      ? recent.reduce((sum, r) => sum + r.rating!, 0) / recent.length
-      : 0;
+    recent.length > 0 ? recent.reduce((sum, r) => sum + r.rating!, 0) / recent.length : 0;
   const olderAvg =
-    older.length > 0
-      ? older.reduce((sum, r) => sum + r.rating!, 0) / older.length
-      : 0;
+    older.length > 0 ? older.reduce((sum, r) => sum + r.rating!, 0) / older.length : 0;
 
   if (olderAvg === 0 || recentAvg <= olderAvg + 0.2) return [];
 

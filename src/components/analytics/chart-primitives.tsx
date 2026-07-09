@@ -12,6 +12,7 @@ export const CHART_TOOLTIP_STYLE: CSSProperties = {
   backgroundColor: "hsl(var(--popover))",
   border: "1px solid hsl(var(--border))",
   borderRadius: "8px",
+  color: "hsl(var(--popover-foreground))",
 };
 
 export const CHART_COLORS = [
@@ -62,7 +63,7 @@ export function TrendIndicator(props: TrendIndicatorProps) {
 
     if (stats.trend === "up") {
       return (
-        <div className="flex items-center gap-1 text-green-600">
+        <div className="flex items-center gap-1 text-green-700">
           <TrendingUp className="h-4 w-4" />
           <span className="text-sm font-medium">+{stats.change}%</span>
         </div>
@@ -89,7 +90,7 @@ export function TrendIndicator(props: TrendIndicatorProps) {
   if (isDirectionTrendProps(props)) {
     if (props.direction === "up") {
       return (
-        <span className="inline-flex items-center gap-0.5 text-xs text-green-600 dark:text-green-400">
+        <span className="inline-flex items-center gap-0.5 text-xs text-green-700 dark:text-green-400">
           <TrendingUp className="h-3 w-3" weight="bold" />
           {props.value}
         </span>
@@ -119,7 +120,7 @@ export function TrendIndicator(props: TrendIndicatorProps) {
 
   if (value > 0) {
     return (
-      <div className="flex items-center gap-1 text-green-600">
+      <div className="flex items-center gap-1 text-green-700">
         <TrendingUp className={iconClass} />
         <span className={textClass}>+{value}{suffix}</span>
       </div>

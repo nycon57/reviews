@@ -137,7 +137,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
               </Button>
             )}
             <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-              <Link href="/dashboard/settings">
+              <Link href="/dashboard/settings" aria-label="Notification settings">
                 <Settings className="h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -262,6 +262,7 @@ function NotificationItem({
               onMarkAsRead();
             }}
             title="Mark as read"
+            aria-label={`Mark notification as read: ${notification.title}`}
           >
             <Check className="h-3 w-3" />
           </Button>
@@ -276,6 +277,7 @@ function NotificationItem({
             onArchive();
           }}
           title="Archive"
+          aria-label={`Archive notification: ${notification.title}`}
         >
           <Archive className="h-3 w-3" />
         </Button>

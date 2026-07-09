@@ -135,14 +135,14 @@ export function ProProfileContent({
                     </div>
                     <Badge
                       variant="secondary"
-                      className="bg-repwell-sage-100 text-repwell-teal-400"
+                      className="bg-repwell-sage-100 text-repwell-teal-500"
                     >
                       {professional.total_reviews}{" "}
                       {professional.total_reviews === 1 ? "Review" : "Reviews"}
                     </Badge>
                   </div>
                 ) : (
-                  <p className="mt-4 text-sm text-repwell-teal-300">
+                  <p className="mt-4 text-sm text-repwell-teal-400">
                     No reviews yet
                   </p>
                 )}

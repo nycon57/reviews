@@ -17,6 +17,7 @@ interface PlacesAutocompleteInputProps {
   onPlaceClear: () => void;
   onChange: (value: string) => void;
   placeholder?: string;
+  "aria-label"?: string;
   className?: string;
 }
 
@@ -61,6 +62,7 @@ export function PlacesAutocompleteInput({
   onPlaceClear,
   onChange,
   placeholder = "Search city...",
+  "aria-label": ariaLabel,
   className,
 }: PlacesAutocompleteInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -134,6 +136,7 @@ export function PlacesAutocompleteInput({
       <div className={`relative flex-1 ${className || ""}`}>
         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
+          aria-label={ariaLabel}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -148,6 +151,7 @@ export function PlacesAutocompleteInput({
       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
       <Input
         ref={inputRef}
+        aria-label={ariaLabel}
         placeholder={loaded ? placeholder : "Loading..."}
         value={value}
         onChange={(e) => onChange(e.target.value)}

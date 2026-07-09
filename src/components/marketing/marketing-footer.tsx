@@ -30,7 +30,7 @@ export function MarketingFooter() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-7">
           {/* Brand Column */}
           <motion.div variants={fadeInUp} className="sm:col-span-2">
-            <Link href="/" className="inline-block mb-5">
+            <Link href="/" className="inline-block mb-5" aria-label="RepWell home">
               <Image
                 src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
                 alt="RepWell"
@@ -41,7 +41,7 @@ export function MarketingFooter() {
                 loading="lazy"
               />
             </Link>
-            <p className="text-body-sm text-repwell-teal-400 max-w-xs mb-6">
+            <p className="text-body-sm text-repwell-teal-500 max-w-xs mb-6">
               Collect customer reviews, manage your reputation, and gain
               AI-powered insights to improve customer experience.
             </p>
@@ -77,14 +77,14 @@ export function MarketingFooter() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-body-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
+                        className="text-body-sm text-repwell-teal-500 underline-offset-4 hover:text-repwell-teal-400 hover:underline transition-colors"
                       >
                         {link.label}
                       </a>
                     ) : (
                       <Link
                         href={link.href}
-                        className="text-body-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
+                        className="text-body-sm text-repwell-teal-500 underline-offset-4 hover:text-repwell-teal-400 hover:underline transition-colors"
                       >
                         {link.label}
                       </Link>
@@ -101,7 +101,7 @@ export function MarketingFooter() {
           variants={fadeInUp}
           className="mt-12 pt-8 border-t border-border/50 text-center"
         >
-          <p className="text-body-sm text-repwell-teal-400">
+          <p className="text-body-sm text-repwell-teal-500">
             &copy; {currentYear} RepWell. All rights reserved.
           </p>
         </motion.div>

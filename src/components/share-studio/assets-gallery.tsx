@@ -139,7 +139,7 @@ export function AssetsGallery({ initialData, basePath }: AssetsGalleryProps) {
           </p>
         </div>
         <Select value={initialData.type} onValueChange={pushType}>
-          <SelectTrigger className="w-[170px]">
+          <SelectTrigger className="w-[170px]" aria-label="Filter share assets">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

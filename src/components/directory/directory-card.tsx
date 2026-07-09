@@ -83,7 +83,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
                   src={professional.photo_url || undefined}
                   alt={professional.full_name}
                 />
-                <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                <AvatarFallback className="text-sm font-semibold bg-primary/10 text-repwell-teal-500">
                   {getInitials(professional.full_name)}
                 </AvatarFallback>
               </Avatar>
@@ -133,7 +133,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
                 {professional.distance_miles != null && (
                   <>
                     <span className="text-muted-foreground/50">·</span>
-                    <span className="text-repwell-teal-300 font-medium whitespace-nowrap">
+                      <span className="text-repwell-teal-400 font-medium whitespace-nowrap">
                       {professional.distance_miles < 1
                         ? "< 1 mi"
                         : `${professional.distance_miles.toFixed(1)} mi`}
@@ -210,7 +210,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
                 src={professional.photo_url || undefined}
                 alt={professional.full_name}
               />
-              <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
+              <AvatarFallback className="text-lg font-semibold bg-primary/10 text-repwell-teal-500">
                 {getInitials(professional.full_name)}
               </AvatarFallback>
             </Avatar>
@@ -237,7 +237,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
                 <MapPin className="h-3 w-3 shrink-0" />
                 <span className="truncate">{location}</span>
                 {professional.distance_miles != null && (
-                  <span className="text-repwell-teal-300 font-medium ml-1 whitespace-nowrap">
+                  <span className="text-repwell-teal-400 font-medium ml-1 whitespace-nowrap">
                     ({professional.distance_miles < 1
                       ? "< 1 mi"
                       : `${professional.distance_miles.toFixed(1)} mi`})

@@ -23,6 +23,7 @@ import {
   Chats as MessageSquare,
   Sparkle as Sparkles,
   ShareNetwork,
+  Eye,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { Review, AggregatedReview } from "@/lib/reviews/types";
@@ -73,19 +74,16 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
       layout
       variants={fadeInUp}
       exit={{ opacity: 0, scale: 0.95, transition: transitions.fast }}
-      className={cn(
-        "flex gap-4 p-4 transition-colors hover:bg-muted/50",
-        !state.isPendingMode && "cursor-pointer"
-      )}
-      onClick={() => !state.isPendingMode && router.push(`/dashboard/reviews/${review.id}`)}
+      className="flex gap-4 p-4 transition-colors hover:bg-muted/50"
     >
-      <div className="flex items-start pt-1" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-start pt-1">
         <Checkbox
           checked={state.selectedIds.has(review.id)}
           onCheckedChange={() => actions.toggleSelection(review.id)}
+          aria-label={`Select review from ${review.customerName || "Anonymous"}`}
         />
       </div>
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-repwell-teal-500 shrink-0">
         {review.customerName && review.customerName.trim()
           ? review.customerName.trim().split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
           : "?"}
@@ -99,11 +97,11 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
                 &middot; {formatDate(review.reviewDate)}
               </span>
               {isFeatured && <Flag className="h-4 w-4 text-amber-500 fill-amber-500" />}
-              {hasResponse && <MessageSquare className="h-4 w-4 text-green-500" />}
+              {hasResponse && <MessageSquare className="h-4 w-4 text-green-700" />}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5" role="img" aria-label={`${review.rating} out of 5 stars`}>
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
@@ -155,13 +153,23 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
             </div>
           );
         })()}
-        <div className="flex items-center justify-end gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-2 pt-2">
           {/* Ellipsis menu — state-based actions */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
+              <Button size="sm" variant="ghost" aria-label={`Actions for review from ${review.customerName || "Anonymous"}`}>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {!state.isPendingMode && (
+                <>
+                  <DropdownMenuItem onClick={() => router.push(`/dashboard/reviews/${review.id}`)}>
+                    <Eye className="mr-2 h-4 w-4" />View details
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               {review.status === "approved" && (
                 <>
                   <DropdownMenuItem onClick={() => actions.handleToggleFeatured(review.id, !isFeatured)}>

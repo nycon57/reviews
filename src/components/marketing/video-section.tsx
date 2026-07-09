@@ -182,16 +182,17 @@ export function VideoSection({
 
         {/* CTA button */}
         <motion.div variants={fadeInUp} className="text-center">
-          <Link href={ctaHref}>
-            <Button
-              size="lg"
-              variant="default"
-              className="shadow-lg shadow-repwell-teal-300/20"
-            >
+          <Button
+            asChild
+            size="lg"
+            variant="default"
+            className="shadow-lg shadow-repwell-teal-300/20"
+          >
+            <Link href={ctaHref}>
               {ctaText}
               <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </motion.div>
       </div>
     </motion.section>

@@ -239,7 +239,7 @@ export function ResponseComposer({
             Canned responses
           </label>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[140px] h-8 text-xs">
+            <SelectTrigger className="w-[140px] h-8 text-xs" aria-label="Filter canned responses by category">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
@@ -306,7 +306,7 @@ export function ResponseComposer({
             </p>
           </div>
           <Select value={aiTone} onValueChange={(v) => setAiTone(v as typeof aiTone)}>
-            <SelectTrigger className="w-[120px] h-8 text-xs">
+            <SelectTrigger className="w-[120px] h-8 text-xs" aria-label="AI response tone">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -353,10 +353,12 @@ export function ResponseComposer({
       {/* Response Editor */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Response</label>
+          <label htmlFor="review-response-text" className="text-sm font-medium">Response</label>
           <span className="text-xs text-muted-foreground">{wordCount} words</span>
         </div>
         <Textarea
+          id="review-response-text"
+          aria-label="Review response"
           placeholder="Write your response to this review..."
           value={responseText}
           onChange={(e) => {

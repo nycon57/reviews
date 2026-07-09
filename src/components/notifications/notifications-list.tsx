@@ -249,7 +249,7 @@ export function NotificationsList({
                   setPage(1);
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label="Filter notifications">
                   <SelectValue placeholder="Filter notifications" />
                 </SelectTrigger>
                 <SelectContent>
@@ -325,6 +325,7 @@ export function NotificationsList({
                   id="select-all"
                   checked={selectedIds.size === displayedNotifications.length && displayedNotifications.length > 0}
                   onCheckedChange={toggleSelectAll}
+                  aria-label="Select all notifications"
                 />
                 <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
                   Select all
@@ -415,6 +416,7 @@ function NotificationRow({
           checked={selected}
           onCheckedChange={() => onToggleSelect()}
           onClick={(e) => e.stopPropagation()}
+          aria-label={`Select notification: ${notification.title}`}
         />
       </div>
 
@@ -464,6 +466,7 @@ function NotificationRow({
                   onMarkAsRead();
                 }}
                 title="Mark as read"
+                aria-label={`Mark notification as read: ${notification.title}`}
               >
                 <Check className="h-4 w-4" />
               </Button>
@@ -478,6 +481,7 @@ function NotificationRow({
                 onArchive();
               }}
               title="Archive"
+              aria-label={`Archive notification: ${notification.title}`}
             >
               <Archive className="h-4 w-4" />
             </Button>

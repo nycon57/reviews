@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Email Sequence Orchestration Engine - Trigger System
  *
@@ -105,17 +103,11 @@ async function cancelExistingSequence(
 /**
  * Build condition context for evaluation
  */
-async function buildConditionContext(
-  context: TriggerContext
-): Promise<ConditionContext> {
+async function buildConditionContext(context: TriggerContext): Promise<ConditionContext> {
   const supabase = createAdminClient();
 
   // Get user data
-  const { data: user } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", context.userId)
-    .single();
+  const { data: user } = await supabase.from("users").select("*").eq("id", context.userId).single();
 
   // Get organization data
   const { data: organization } = await supabase
@@ -150,9 +142,7 @@ async function buildConditionContext(
 /**
  * Assign A/B test variants for a sequence
  */
-function assignABTestVariants(
-  assignmentKeys: string[] = []
-): Record<string, string> {
+function assignABTestVariants(assignmentKeys: string[] = []): Record<string, string> {
   const assignments: Record<string, string> = {};
 
   for (const key of assignmentKeys) {
@@ -302,11 +292,7 @@ export async function handleEventTrigger(
   }
 
   // Find matching triggers
-  const matchingTriggers = findMatchingTriggers(
-    definition,
-    event,
-    context.customEvent
-  );
+  const matchingTriggers = findMatchingTriggers(definition, event, context.customEvent);
 
   if (matchingTriggers.length === 0) {
     return {
@@ -487,17 +473,11 @@ export async function checkTimeBasedTriggers(
       for (const trigger of timeTriggers) {
         const conditionsMet = await evaluateTriggerConditions(trigger, context);
         if (conditionsMet) {
-          const createResult = await createSequenceInstance(
-            definition,
-            context,
-            trigger
-          );
+          const createResult = await createSequenceInstance(definition, context, trigger);
           if (createResult.success) {
             result.triggered++;
           } else if (!createResult.skipped) {
-            result.errors.push(
-              `User ${user.id}: ${createResult.error || "Unknown error"}`
-            );
+            result.errors.push(`User ${user.id}: ${createResult.error || "Unknown error"}`);
           } else {
             result.skipped++;
           }
@@ -535,7 +515,9 @@ export async function getEligibleUsers(
     .eq("sequence_type", definition.type)
     .in("status", ["active", "paused", "processing"]);
 
-  const excludeUserIds = new Set((activeSequenceUserIds || []).map((r: { user_id: string }) => r.user_id));
+  const excludeUserIds = new Set(
+    (activeSequenceUserIds || []).map((r: { user_id: string }) => r.user_id)
+  );
 
   // Get eligible users (active, with notifications enabled, not in exclude list)
   let query = supabase
@@ -553,8 +535,8 @@ export async function getEligibleUsers(
 
   // Filter out users who already have active sequences and users without organization
   // (in-memory filter is now O(1) per user)
-  return users
-    .filter((user): user is typeof user & { organization_id: string } =>
+  return users.filter(
+    (user): user is typeof user & { organization_id: string } =>
       !excludeUserIds.has(user.id) && user.organization_id !== null
-    );
+  );
 }

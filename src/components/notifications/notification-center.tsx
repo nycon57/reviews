@@ -18,7 +18,7 @@ import {
   Gear as Settings,
   Archive,
 } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import { getNotificationTypeConfig } from "@/lib/notifications/config";
 import type { NotificationWithDetails } from "@/lib/notifications/types";
 import {
@@ -27,7 +27,6 @@ import {
   markNotificationsAsRead,
 } from "@/lib/notifications/actions";
 import { useArchivableNotifications } from "./use-archivable-notifications";
-import { formatDistanceToNow } from "date-fns";
 
 interface NotificationCenterProps {
   className?: string;
@@ -138,7 +137,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
               </Button>
             )}
             <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-              <Link href="/dashboard/settings">
+              <Link href="/dashboard/settings" aria-label="Notification settings">
                 <Settings className="h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -246,7 +245,7 @@ function NotificationItem({
           {notification.message}
         </p>
         <p className="mt-1 text-xs text-muted-foreground/70">
-          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+          {formatRelativeTime(notification.created_at)}
         </p>
       </div>
 
@@ -263,6 +262,7 @@ function NotificationItem({
               onMarkAsRead();
             }}
             title="Mark as read"
+            aria-label={`Mark notification as read: ${notification.title}`}
           >
             <Check className="h-3 w-3" />
           </Button>
@@ -277,6 +277,7 @@ function NotificationItem({
             onArchive();
           }}
           title="Archive"
+          aria-label={`Archive notification: ${notification.title}`}
         >
           <Archive className="h-3 w-3" />
         </Button>

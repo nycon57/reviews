@@ -255,7 +255,7 @@ export function ReviewItem({
               {review.rating}/5
             </span>
           </div>
-          <p className="mt-1 text-sm text-repwell-teal-300">
+          <p className="mt-1 text-sm text-repwell-teal-400">
             {review.customer_name || "Anonymous"}
             {review.customer_location && (
               <span> - {review.customer_location}</span>
@@ -285,7 +285,7 @@ export function ReviewItem({
 
       {/* Attribution + Actions row */}
       {(attribution || shareLinks || onFlag) && (
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-repwell-teal-300">
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-repwell-teal-400">
           {attribution && (
             <>
               <Link
@@ -410,7 +410,7 @@ export function ReviewItem({
       {/* Response box */}
       {review.response_text && (
         <div className="mt-4 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 p-3">
-          <p className="text-xs font-medium text-repwell-teal-300 mb-1">
+          <p className="text-xs font-medium text-repwell-teal-400 mb-1">
             Response from {respondentName || "the team"}
           </p>
           <p className="text-sm text-label">{review.response_text}</p>

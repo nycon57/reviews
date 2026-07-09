@@ -10,8 +10,7 @@ import {
   hasAutoReplyFeature,
 } from "./auto-reply-config";
 
-const AUTO_REPLY_UPGRADE_MESSAGE =
-  "Auto-reply is available on Professional and Enterprise plans";
+const AUTO_REPLY_UPGRADE_MESSAGE = "Auto-reply is available on Professional and Enterprise plans";
 
 interface UserOrgContext {
   userId: string;
@@ -59,9 +58,7 @@ async function enqueueExistingApprovedReviews(
   const supabase = createUntypedAdminClient();
   const { data: reviews, error } = await supabase
     .from("reviews")
-    .select(
-      "id, user_id, review_date, approved_at, created_at, response_text, response_status"
-    )
+    .select("id, user_id, review_date, approved_at, created_at, response_text, response_status")
     .eq("organization_id", organizationId)
     .eq("status", "approved")
     .is("response_text", null)
@@ -76,9 +73,7 @@ async function enqueueExistingApprovedReviews(
   }
 
   const queueRows = reviews
-    .filter(
-      (review) => review.user_id && review.response_status !== "posted"
-    )
+    .filter((review) => review.user_id && review.response_status !== "posted")
     .map((review) => ({
       organization_id: organizationId,
       review_id: review.id,
@@ -108,16 +103,11 @@ async function enqueueExistingApprovedReviews(
   }
 
   if (chunkErrors.length > 0) {
-    console.error(
-      `Failed to enqueue ${chunkErrors.length} chunk(s) of auto-replies:`,
-      chunkErrors
-    );
+    console.error(`Failed to enqueue ${chunkErrors.length} chunk(s) of auto-replies:`, chunkErrors);
   }
 }
 
-export async function getAutoReplyFeatureAccess(): Promise<
-  ActionResult<{ hasAccess: boolean }>
-> {
+export async function getAutoReplyFeatureAccess(): Promise<ActionResult<{ hasAccess: boolean }>> {
   const ctx = await getUserOrgContext();
   if (!ctx) return { success: false, error: "Unauthorized" };
 
@@ -199,8 +189,7 @@ export async function updateAutoReplySettings(
     ...currentSettings,
     ...mergedAutoReply,
   };
-  const isEnabling =
-    !currentAutoReply.auto_reply_enabled && mergedAutoReply.auto_reply_enabled;
+  const isEnabling = !currentAutoReply.auto_reply_enabled && mergedAutoReply.auto_reply_enabled;
 
   const { data: updateResult, error } = await supabase
     .from("organizations")
@@ -336,10 +325,7 @@ export async function updateAutoReplyOptOut(optOut: boolean): Promise<ActionResu
 
   const { error } = await supabase
     .from("notification_preferences")
-    .upsert(
-      { user_id: ctx.userId, auto_reply_opt_out: optOut },
-      { onConflict: "user_id" }
-    );
+    .upsert({ user_id: ctx.userId, auto_reply_opt_out: optOut }, { onConflict: "user_id" });
 
   if (error) {
     return { success: false, error: "Failed to update preference" };
@@ -355,10 +341,11 @@ export async function updateAutoReplyOptOut(optOut: boolean): Promise<ActionResu
       .eq("status", "pending");
 
     if (cancelError) {
-      console.error(
-        "Failed to cancel pending auto-reply queue items after opt-out",
-        { userId: ctx.userId, organizationId: ctx.organizationId, error: cancelError }
-      );
+      console.error("Failed to cancel pending auto-reply queue items after opt-out", {
+        userId: ctx.userId,
+        organizationId: ctx.organizationId,
+        error: cancelError,
+      });
       revalidatePath("/dashboard/settings");
       return { success: false, error: "Opt-out saved but queue cancellation failed" };
     }
@@ -378,6 +365,10 @@ export async function enqueueReviewForAutoReply(
   userId: string | null
 ) {
   try {
+    const ctx = await getUserOrgContext();
+    if (!ctx || ctx.organizationId !== orgId) return;
+    if (ctx.role === "user" && userId !== ctx.userId) return;
+
     const supabase = createUntypedAdminClient();
 
     // Check if org has auto-reply enabled
@@ -404,18 +395,16 @@ export async function enqueueReviewForAutoReply(
     if (review.response_text || review.response_status === "posted") return;
 
     // Upsert to auto_reply_queue
-    await supabase
-      .from("auto_reply_queue")
-      .upsert(
-        {
-          organization_id: orgId,
-          review_id: reviewId,
-          user_id: userId,
-          tone: settings.auto_reply_tone,
-          eligible_at: calculateAutoReplyEligibleAt(new Date().toISOString()),
-        },
-        { onConflict: "review_id", ignoreDuplicates: true }
-      );
+    await supabase.from("auto_reply_queue").upsert(
+      {
+        organization_id: orgId,
+        review_id: reviewId,
+        user_id: userId,
+        tone: settings.auto_reply_tone,
+        eligible_at: calculateAutoReplyEligibleAt(new Date().toISOString()),
+      },
+      { onConflict: "review_id", ignoreDuplicates: true }
+    );
   } catch {
     // Silently fail - auto-reply is best-effort
   }

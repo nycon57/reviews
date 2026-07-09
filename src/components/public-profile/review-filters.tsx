@@ -142,6 +142,7 @@ export function ReviewFiltersBar({
         <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
+          aria-label="Search reviews"
           placeholder="Search reviews..."
           value={filters.search}
           onChange={(e) => handleSearchChange(e.target.value)}
@@ -156,7 +157,7 @@ export function ReviewFiltersBar({
           value={filters.rating?.toString() || "all"}
           onValueChange={handleRatingChange}
         >
-          <SelectTrigger className="h-8 w-auto gap-1 text-xs px-2.5 [&>svg:last-child]:hidden">
+          <SelectTrigger className="h-8 w-auto gap-1 text-xs px-2.5 [&>svg:last-child]:hidden" aria-label="Filter reviews by rating">
             <SelectValue placeholder="Rating" />
             <CaretUpDown className="h-3 w-3 shrink-0 opacity-50" />
           </SelectTrigger>
@@ -174,6 +175,7 @@ export function ReviewFiltersBar({
           <PopoverTrigger asChild>
             <button
               type="button"
+              aria-label="Filter reviews by date range"
               className={cn(
                 "flex h-8 w-auto items-center gap-1 rounded-md border border-input bg-background px-2.5 text-xs ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                 filters.dateRange?.from ? "text-foreground" : "text-muted-foreground"
@@ -212,6 +214,7 @@ export function ReviewFiltersBar({
             <PopoverTrigger asChild>
               <button
                 type="button"
+                aria-label="Filter reviews by source"
                 className={cn(
                   "flex h-8 w-auto items-center gap-1 rounded-md border border-input bg-background px-2.5 text-xs ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                   filters.sources.length > 0 ? "text-foreground" : "text-muted-foreground"
@@ -246,7 +249,7 @@ export function ReviewFiltersBar({
 
         {/* Sort */}
         <Select value={filters.sort} onValueChange={handleSortChange}>
-          <SelectTrigger className="h-8 w-auto gap-1 text-xs px-2.5 [&>svg:last-child]:hidden">
+          <SelectTrigger className="h-8 w-auto gap-1 text-xs px-2.5 [&>svg:last-child]:hidden" aria-label="Sort reviews">
             <SelectValue placeholder="Sort" />
             <CaretUpDown className="h-3 w-3 shrink-0 opacity-50" />
           </SelectTrigger>

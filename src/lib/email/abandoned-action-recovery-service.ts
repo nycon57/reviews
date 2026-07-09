@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Abandoned Action Recovery Service (S093)
  *
@@ -351,9 +349,8 @@ async function processRecoveryEmailQueue(
     errors: [],
   };
 
-  const rpcName = emailNumber === 1
-    ? "get_actions_for_recovery_email_1"
-    : "get_actions_for_recovery_email_2";
+  const rpcName =
+    emailNumber === 1 ? "get_actions_for_recovery_email_1" : "get_actions_for_recovery_email_2";
 
   const { data: actions, error } = await supabase.rpc(rpcName, {
     p_batch_size: batchSize,
@@ -372,11 +369,7 @@ async function processRecoveryEmailQueue(
 
   for (const action of actions as ActionReadyForEmail[]) {
     try {
-      const sendResult = await sendRecoveryEmail(
-        action,
-        emailNumber,
-        emailTypeSendResolver
-      );
+      const sendResult = await sendRecoveryEmail(action, emailNumber, emailTypeSendResolver);
 
       if (sendResult.success) {
         result.processed++;
@@ -448,14 +441,16 @@ async function sendRecoveryEmail(
   // Get user data
   const { data: user, error: userError } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       id,
       email,
       full_name,
       receive_notifications,
       organization_id,
       organizations!inner(name)
-    `)
+    `
+    )
     .eq("id", action.user_id)
     .single();
 
@@ -561,8 +556,7 @@ async function sendRecoveryEmail(
       emailData = {
         ...baseEmailData,
         integrationType,
-        integrationDisplayName:
-          getIntegrationDisplayName(integrationType) || "Integration",
+        integrationDisplayName: getIntegrationDisplayName(integrationType) || "Integration",
         oauthStep: safeString(context.oauth_step),
         integrationsUrl: `${baseUrl}/dashboard/organization?tab=integrations`,
         setupGuideUrl: safeString(context.setup_guide_url),
@@ -577,11 +571,7 @@ async function sendRecoveryEmail(
   let emailContent: { subject: string; html: string };
 
   try {
-    emailContent = getAbandonedActionRecoveryEmail(
-      action.action_type,
-      emailNumber,
-      emailData
-    );
+    emailContent = getAbandonedActionRecoveryEmail(action.action_type, emailNumber, emailData);
   } catch (err) {
     return {
       success: false,
@@ -691,10 +681,7 @@ async function updateActionAfterEmailSent(
     updateData.recovery_email_2_id = emailId;
   }
 
-  const { error } = await supabase
-    .from("abandoned_actions")
-    .update(updateData)
-    .eq("id", actionId);
+  const { error } = await supabase.from("abandoned_actions").update(updateData).eq("id", actionId);
 
   if (error) {
     console.error("Failed to update abandoned action after email:", error);
@@ -747,9 +734,7 @@ export async function getAbandonedAction(
 /**
  * Get all active abandoned actions for a user
  */
-export async function getUserAbandonedActions(
-  userId: string
-): Promise<AbandonedActionRecord[]> {
+export async function getUserAbandonedActions(userId: string): Promise<AbandonedActionRecord[]> {
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
@@ -848,9 +833,7 @@ export async function getAbandonedActionStats(organizationId: string): Promise<{
   // Calculate recovery rate (completed + recovered) / total
   const successfulOutcomes = stats.totalCompleted + stats.totalRecovered;
   stats.recoveryRate =
-    stats.totalStarted > 0
-      ? Math.round((successfulOutcomes / stats.totalStarted) * 100)
-      : 0;
+    stats.totalStarted > 0 ? Math.round((successfulOutcomes / stats.totalStarted) * 100) : 0;
 
   return stats;
 }

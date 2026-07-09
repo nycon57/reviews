@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, type RefObject } from "react";
 import { motion } from "framer-motion";
 import {
   Dialog,
@@ -31,12 +31,14 @@ interface SendReviewRequestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  restoreFocusRef?: RefObject<HTMLElement | null>;
 }
 
 export function SendReviewRequestDialog({
   open,
   onOpenChange,
   onSuccess,
+  restoreFocusRef,
 }: SendReviewRequestDialogProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -74,7 +76,14 @@ export function SendReviewRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+      <DialogContent
+        className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto"
+        onCloseAutoFocus={(event) => {
+          if (!restoreFocusRef?.current) return;
+          event.preventDefault();
+          restoreFocusRef.current.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Send Review Request</DialogTitle>
           <DialogDescription>

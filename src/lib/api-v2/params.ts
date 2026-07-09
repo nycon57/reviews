@@ -105,9 +105,7 @@ export function parseDateParam(
   return { ok: true, value: raw };
 }
 
-export function escapeLike(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
-}
+export { escapeLike } from "@/lib/sql/escape-like";
 
 export function paginateArray<T>(
   items: T[],

@@ -114,7 +114,7 @@ export function GamificationStatsCard({
   const getRankBadgeColor = (rank: number | null) => {
     if (!rank) return "bg-muted";
     if (rank === 1) return "bg-yellow-500";
-    if (rank <= 3) return "bg-gray-400 dark:bg-gray-500";
+    if (rank <= 3) return "bg-gray-600 dark:bg-gray-500";
     if (rank <= 10) return "bg-amber-600";
     return "bg-muted";
   };
@@ -214,6 +214,8 @@ export function GamificationStatsCard({
                     <Progress
                       value={stats.nextBadgeProgress.percentComplete}
                       className="h-1.5"
+                      aria-label={`${stats.nextBadgeProgress.badge.name} badge progress`}
+                      aria-valuetext={`${stats.nextBadgeProgress.percentComplete}% complete`}
                     />
                   </div>
                 </>
@@ -310,6 +312,8 @@ export function GamificationStatsCard({
                   <Progress
                     value={stats.nextBadgeProgress.percentComplete}
                     className="h-1.5 w-20 mx-auto"
+                    aria-label={`${stats.nextBadgeProgress.badge.name} badge progress`}
+                    aria-valuetext={`${stats.nextBadgeProgress.percentComplete}% complete`}
                   />
                 </>
               ) : (

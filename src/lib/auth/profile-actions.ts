@@ -14,7 +14,11 @@ import {
   type OrgFieldsInput,
   type ProfileResult,
 } from "./profile-schemas";
-import { writeProfileUpdate, writeAvatarUpload, writeBannerUpload } from "@/lib/users/profile-mutations";
+import {
+  writeProfileUpdate,
+  writeAvatarUpload,
+  writeBannerUpload,
+} from "@/lib/users/profile-mutations";
 import { validateUserSlug, generateUserSlug } from "@/lib/users/slug-utils";
 
 export async function updateProfile(formData: UpdateProfileInput): Promise<ProfileResult> {
@@ -55,9 +59,13 @@ export async function updateOwnOrgFields(formData: OrgFieldsInput): Promise<Prof
     .eq("id", user.id)
     .single();
 
-  const orgAccountType = (userData?.organizations as { account_type?: string } | null)?.account_type;
+  const orgAccountType = (userData?.organizations as { account_type?: string } | null)
+    ?.account_type;
   if (orgAccountType !== "individual") {
-    return { success: false, error: "Only individual account users can update these fields directly" };
+    return {
+      success: false,
+      error: "Only individual account users can update these fields directly",
+    };
   }
 
   return writeProfileUpdate(user.id, result.data);
@@ -91,10 +99,12 @@ export async function getUserProfile() {
   const supabase = createAdminClient();
   const { data: profile, error } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       *,
       organization:organizations(id, name, slug, logo_url, account_type)
-    `)
+    `
+    )
     .eq("id", user.id)
     .single();
 
@@ -360,6 +370,18 @@ export async function getSuggestedUserSlug(
   fullName: string,
   excludeUserId?: string
 ): Promise<{ slug: string }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { slug: "" };
+  }
+
+  const supabase = createAdminClient();
+  const { data: userData } = await supabase.from("users").select("role").eq("id", user.id).single();
+
+  if (excludeUserId && excludeUserId !== user.id && userData?.role !== "admin") {
+    return { slug: "" };
+  }
+
   const baseSlug = generateUserSlug(fullName);
   if (!baseSlug) {
     return { slug: "" };

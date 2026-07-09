@@ -427,7 +427,7 @@ export function AgentsAnalyticsDashboard({ data }: AgentsAnalyticsDashboardProps
                 />
               ) : (
                 <div className="space-y-4">
-                  <div className="h-[190px]">
+                  <div className="h-[190px]" aria-hidden="true">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie

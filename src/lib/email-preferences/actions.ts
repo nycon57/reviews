@@ -2,7 +2,11 @@
 
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
-import type { EmailPreferences, EmailPreferencesWithToken, CommunicationPreferencesWithToken } from "./types";
+import type {
+  EmailPreferences,
+  EmailPreferencesWithToken,
+  CommunicationPreferencesWithToken,
+} from "./types";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -20,20 +24,29 @@ const emailPreferencesSchema = z.object({
   email_frequency_mode: z.enum(["immediate", "daily", "weekly", "none"]).optional(),
   email_timezone: z.string().max(100).optional(),
   quiet_hours_enabled: z.boolean().optional(),
-  quiet_hours_start: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(),
-  quiet_hours_end: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(),
+  quiet_hours_start: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable()
+    .optional(),
+  quiet_hours_end: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable()
+    .optional(),
 });
 
 const tokenSchema = z.string().min(32).max(128);
-const userIdSchema = z.string().uuid();
 
-const resubscribeCategoriesSchema = z.object({
-  onboarding: z.boolean().optional(),
-  weekly_summary: z.boolean().optional(),
-  milestones: z.boolean().optional(),
-  product_updates: z.boolean().optional(),
-  marketing: z.boolean().optional(),
-}).optional();
+const resubscribeCategoriesSchema = z
+  .object({
+    onboarding: z.boolean().optional(),
+    weekly_summary: z.boolean().optional(),
+    milestones: z.boolean().optional(),
+    product_updates: z.boolean().optional(),
+    marketing: z.boolean().optional(),
+  })
+  .optional();
 
 // ============================================================================
 // Authenticated User Actions
@@ -376,128 +389,4 @@ export async function updateSmsConsentByToken(
   _optOut: boolean
 ): Promise<{ success: boolean; error?: string }> {
   return { success: true };
-}
-
-
-// ============================================================================
-// Admin/System Actions
-// ============================================================================
-
-/**
- * Generate email preference token for a user (admin use)
- * Used when sending emails to include unsubscribe links
- * NOTE: This is a server-only function called internally when sending emails
- */
-export async function generateEmailPreferenceTokenForUser(
-  userId: string
-): Promise<string | null> {
-  // Validate userId format with Zod
-  const userIdResult = userIdSchema.safeParse(userId);
-  if (!userIdResult.success) {
-    console.error("Invalid userId format for token generation");
-    return null;
-  }
-
-  const supabase = createUntypedAdminClient();
-
-  const { data, error } = await supabase.rpc("get_or_create_email_preference_token", {
-    p_user_id: userId,
-  });
-
-  if (error) {
-    console.error("Error generating email preference token:", error);
-    return null;
-  }
-
-  return data as string | null;
-}
-
-/**
- * Check if a user has unsubscribed from all emails
- * NOTE: This is a server-only function called internally when deciding to send emails
- */
-export async function isUserUnsubscribed(userId: string): Promise<boolean> {
-  // Validate userId format with Zod
-  const userIdResult = userIdSchema.safeParse(userId);
-  if (!userIdResult.success) {
-    console.error("Invalid userId format for subscription check");
-    return false;
-  }
-
-  const supabase = createUntypedAdminClient();
-
-  const { data, error } = await supabase
-    .from("notification_preferences")
-    .select("email_enabled, email_frequency_mode")
-    .eq("user_id", userId)
-    .single();
-
-  if (error && error.code !== "PGRST116") {
-    console.error("Error checking user subscription status:", error);
-    return false;
-  }
-
-  if (!data) {
-    return false; // No preferences = subscribed by default
-  }
-
-  return data.email_enabled === false || data.email_frequency_mode === "none";
-}
-
-/**
- * Check if a specific email category is enabled for a user
- * NOTE: This is a server-only function called internally when deciding to send emails
- */
-export async function isEmailCategoryEnabled(
-  userId: string,
-  category: keyof Pick<
-    EmailPreferences,
-    | "email_onboarding_enabled"
-    | "email_weekly_summary_enabled"
-    | "email_milestones_enabled"
-    | "email_product_updates_enabled"
-    | "email_marketing_enabled"
-  >
-): Promise<boolean> {
-  // Validate userId format with Zod
-  const userIdResult = userIdSchema.safeParse(userId);
-  if (!userIdResult.success) {
-    console.error("Invalid userId format for category check");
-    return true; // Default to enabled on invalid input
-  }
-
-  const supabase = createUntypedAdminClient();
-
-  const { data, error } = await supabase
-    .from("notification_preferences")
-    .select(
-      `
-      email_enabled,
-      email_onboarding_enabled,
-      email_weekly_summary_enabled,
-      email_milestones_enabled,
-      email_product_updates_enabled,
-      email_marketing_enabled
-    `
-    )
-    .eq("user_id", userId)
-    .single();
-
-  if (error && error.code !== "PGRST116") {
-    console.error("Error checking email category:", error);
-    return true; // Default to enabled on error
-  }
-
-  if (!data) {
-    // No preferences exist, return default values
-    return category !== "email_marketing_enabled"; // Marketing is off by default
-  }
-
-  // Master toggle must be on
-  if (data.email_enabled === false) {
-    return false;
-  }
-
-  const prefs = data as Record<string, boolean | null>;
-  return prefs[category] !== false;
 }

@@ -38,6 +38,7 @@ export function ReviewFiltersPanel() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            aria-label="Search reviews"
             placeholder="Search reviews by text, customer name..."
             value={state.filters.searchQuery}
             onChange={(e) => actions.dispatch({ type: "SET_SEARCH", value: e.target.value })}
@@ -50,6 +51,7 @@ export function ReviewFiltersPanel() {
                 actions.dispatch({ type: "SET_SEARCH", value: "" });
                 actions.handleFilterChange();
               }}
+              aria-label="Clear review search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
@@ -67,7 +69,7 @@ export function ReviewFiltersPanel() {
           value={state.filters.statusFilter}
           onValueChange={(v) => { actions.dispatch({ type: "SET_STATUS", value: v }); actions.handleFilterChange(); }}
         >
-          <SelectTrigger className="h-9 w-[150px]">
+          <SelectTrigger className="h-9 w-[150px]" aria-label="Filter reviews by status">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -83,7 +85,7 @@ export function ReviewFiltersPanel() {
           value={state.filters.sourceFilter}
           onValueChange={(v) => { actions.dispatch({ type: "SET_SOURCE", value: v }); actions.handleFilterChange(); }}
         >
-          <SelectTrigger className="h-9 w-[140px]">
+          <SelectTrigger className="h-9 w-[140px]" aria-label="Filter reviews by source">
             <SelectValue placeholder="Source" />
           </SelectTrigger>
           <SelectContent>
@@ -100,7 +102,7 @@ export function ReviewFiltersPanel() {
           value={state.filters.featuredFilter}
           onValueChange={(v) => { actions.dispatch({ type: "SET_FEATURED", value: v }); actions.handleFilterChange(); }}
         >
-          <SelectTrigger className="h-9 w-[140px]">
+          <SelectTrigger className="h-9 w-[140px]" aria-label="Filter featured reviews">
             <SelectValue placeholder="Featured" />
           </SelectTrigger>
           <SelectContent>
@@ -115,6 +117,7 @@ export function ReviewFiltersPanel() {
             <Button
               variant="outline"
               size="sm"
+              aria-label="Filter reviews by date range"
               className={cn(
                 "h-9 w-[220px] justify-start text-left font-normal",
                 !state.filters.dateRange && "text-muted-foreground"

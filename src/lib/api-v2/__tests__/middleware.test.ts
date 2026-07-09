@@ -53,6 +53,11 @@ describe("withOpenTier", () => {
     const response = await withOpenTier(handler)(request);
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("X-RateLimit-Limit")).toBe(String(OPEN_TIER_RATE_LIMIT));
+    expect(response.headers.get("X-RateLimit-Remaining")).toBe(
+      String(OPEN_TIER_RATE_LIMIT - 1)
+    );
+    expect(response.headers.get("X-RateLimit-Reset")).toMatch(/^\d+$/);
     expect(response.headers.get("X-RepWell-Source")).toBe(
       "repwell-public-api-v2"
     );
@@ -77,6 +82,9 @@ describe("withOpenTier", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("45");
+    expect(response.headers.get("X-RateLimit-Limit")).toBe(String(OPEN_TIER_RATE_LIMIT));
+    expect(response.headers.get("X-RateLimit-Remaining")).toBe("0");
+    expect(response.headers.get("X-RateLimit-Reset")).toMatch(/^\d+$/);
     await expect(response.json()).resolves.toEqual({
       error: "rate_limit_exceeded",
       retry_after: 45,
@@ -97,6 +105,8 @@ describe("withOpenTier", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("60");
+    expect(response.headers.get("X-RateLimit-Limit")).toBe(String(OPEN_TIER_RATE_LIMIT));
+    expect(response.headers.get("X-RateLimit-Remaining")).toBe("0");
     expect(handler).not.toHaveBeenCalled();
   });
 });

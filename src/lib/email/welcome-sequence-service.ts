@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Welcome Sequence Service
  *
@@ -225,17 +223,14 @@ async function logEmail(params: {
   return data.id;
 }
 
-async function getUserOnboardingStatus(
-  userId: string
-): Promise<UserOnboardingStatus | null> {
+async function getUserOnboardingStatus(userId: string): Promise<UserOnboardingStatus | null> {
   const supabase = createAdminClient();
 
   // Type assertion needed until types are regenerated after migration
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.rpc as any)(
-    "get_user_onboarding_status",
-    { p_user_id: userId }
-  );
+  const { data, error } = await (supabase.rpc as any)("get_user_onboarding_status", {
+    p_user_id: userId,
+  });
 
   if (error) {
     console.error("Failed to get user onboarding status:", error);
@@ -270,9 +265,7 @@ async function getUserProfileCompletionData(userId: string): Promise<{
   ];
 
   const completedFields = fields.filter((f) => f.value && f.value.trim() !== "");
-  const missingFields = fields
-    .filter((f) => !f.value || f.value.trim() === "")
-    .map((f) => f.name);
+  const missingFields = fields.filter((f) => !f.value || f.value.trim() === "").map((f) => f.name);
 
   const percent = Math.round((completedFields.length / fields.length) * 100);
 
@@ -459,9 +452,7 @@ export async function processWelcomeSequenceQueue(
         }
       } else {
         result.failed++;
-        result.errors.push(
-          `Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`
-        );
+        result.errors.push(`Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`);
       }
     } catch (err) {
       result.failed++;
@@ -535,9 +526,7 @@ async function processSequenceStep(
     return { success: true, action: "completed" };
   }
 
-  const stepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === nextStep
-  );
+  const stepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find((s) => s.step === nextStep);
 
   if (!stepConfig) {
     return { success: false, error: `Invalid step: ${nextStep}` };
@@ -545,8 +534,7 @@ async function processSequenceStep(
 
   // Check if step should be skipped
   if (stepConfig.canSkip && stepConfig.skipCondition && onboardingStatus) {
-    const shouldSkip =
-      onboardingStatus[stepConfig.skipCondition as keyof UserOnboardingStatus];
+    const shouldSkip = onboardingStatus[stepConfig.skipCondition as keyof UserOnboardingStatus];
 
     if (shouldSkip) {
       // Skip this step and move to next
@@ -571,12 +559,7 @@ async function processSequenceStep(
   }
 
   // Send the email
-  const sendResult = await sendWelcomeEmail(
-    sequence,
-    user,
-    stepConfig,
-    emailTypeSendResolver
-  );
+  const sendResult = await sendWelcomeEmail(sequence, user, stepConfig, emailTypeSendResolver);
 
   if (!sendResult.success) {
     return { success: false, error: sendResult.error };
@@ -747,8 +730,7 @@ async function sendWelcomeEmail(
 
     return { success: true, emailId: emailId || result.messageId, variant };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: user.email,
@@ -825,17 +807,14 @@ async function skipSequenceStep(
   ];
 
   // Calculate next email time using relative delay between steps
-  const currentStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step
-  );
-  const nextStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step + 1
-  );
+  const currentStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find((s) => s.step === step);
+  const nextStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find((s) => s.step === step + 1);
 
   // Calculate relative delay: next step's absolute delay minus current step's absolute delay
-  const nextEmailAt = nextStepConfig && currentStepConfig
-    ? addDays(new Date(), nextStepConfig.delayDays - currentStepConfig.delayDays)
-    : null;
+  const nextEmailAt =
+    nextStepConfig && currentStepConfig
+      ? addDays(new Date(), nextStepConfig.delayDays - currentStepConfig.delayDays)
+      : null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from as any)("email_sequences")
@@ -876,18 +855,15 @@ async function updateSequenceAfterSend(
   ];
 
   // Calculate next email time using relative delay between steps
-  const currentStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step
-  );
-  const nextStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step + 1
-  );
+  const currentStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find((s) => s.step === step);
+  const nextStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find((s) => s.step === step + 1);
 
   const isComplete = step >= WELCOME_SEQUENCE_CONFIG.totalSteps;
   // Calculate relative delay: next step's absolute delay minus current step's absolute delay
-  const nextEmailAt = nextStepConfig && currentStepConfig
-    ? addDays(new Date(), nextStepConfig.delayDays - currentStepConfig.delayDays)
-    : null;
+  const nextEmailAt =
+    nextStepConfig && currentStepConfig
+      ? addDays(new Date(), nextStepConfig.delayDays - currentStepConfig.delayDays)
+      : null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from as any)("email_sequences")

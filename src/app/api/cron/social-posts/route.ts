@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeScheduledPosts } from "@/lib/social-graphics/publish-actions";
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -9,10 +10,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await executeScheduledPosts();
-  if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: 500 });
-  }
+  return withCronHeartbeat("social-posts", async () => {
+    const result = await executeScheduledPosts();
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 500 });
+    }
 
-  return NextResponse.json({ published: result.data });
+    return NextResponse.json({ published: result.data });
+  });
 }

@@ -296,8 +296,9 @@ export function FloatingAvatarsHero({
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               {ctaButtons.map((button, index) => (
-                <Link key={button.href} href={button.href}>
-                  <Button
+                <Button
+                  key={button.href}
+                  asChild
                     size="lg"
                     variant={button.variant || (index === 0 ? "default" : "outline")}
                     className={cn(
@@ -305,9 +306,8 @@ export function FloatingAvatarsHero({
                       index === 0 && "shadow-lg shadow-repwell-teal-300/20"
                     )}
                   >
-                    {button.label}
-                  </Button>
-                </Link>
+                  <Link href={button.href}>{button.label}</Link>
+                </Button>
               ))}
             </motion.div>
           )}

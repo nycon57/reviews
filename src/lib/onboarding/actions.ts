@@ -74,8 +74,8 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResult> {
     // Individual accounts skip plan + payment and go straight to profile.
     status: ((org?.onboarding_status as string) ||
       (isIndividual ? "payment_complete" : "pending")) as OnboardingStatus,
-    selectedPlan: isIndividual ? "basic" : ((org?.selected_plan as string) || null),
-    selectedBillingCycle: isIndividual ? null : ((org?.selected_billing_cycle as string) || null),
+    selectedPlan: isIndividual ? "basic" : (org?.selected_plan as string) || null,
+    selectedBillingCycle: isIndividual ? null : (org?.selected_billing_cycle as string) || null,
     organizationId: userData.organization_id,
     shouldSkip: false,
   };
@@ -84,7 +84,11 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResult> {
 /**
  * Get the redirect path based on current onboarding status
  */
-export async function getOnboardingRedirect(): Promise<{ success: boolean; redirectTo?: string; error?: string }> {
+export async function getOnboardingRedirect(): Promise<{
+  success: boolean;
+  redirectTo?: string;
+  error?: string;
+}> {
   const statusResult = await getOnboardingStatus();
 
   if (!statusResult.success) {
@@ -171,14 +175,15 @@ export async function selectPlan(input: SelectPlanInput): Promise<ActionResult> 
 
   // Record the step completion (using type assertion for untyped table)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
-    .from("onboarding_steps")
-    .upsert({
+  await (adminClient as any).from("onboarding_steps").upsert(
+    {
       organization_id: userData.organization_id,
       step_name: "plan_selection",
       completed_at: new Date().toISOString(),
       data: { plan, billingCycle },
-    }, { onConflict: "organization_id,step_name" });
+    },
+    { onConflict: "organization_id,step_name" }
+  );
 
   revalidatePath("/onboarding");
 
@@ -193,7 +198,7 @@ export async function createOnboardingCheckout(): Promise<{
   success: boolean;
   sessionId?: string;
   url?: string;
-  error?: string
+  error?: string;
 }> {
   const user = await unifiedGetUser();
   const supabase = createAdminClient();
@@ -249,7 +254,7 @@ export async function createOnboardingCheckout(): Promise<{
 
   // Get price ID based on plan and billing cycle
   const billingCycle = (selectedBillingCycle || "month") as BillingCycle;
-  const tier = PRICING_TIERS.find(t => t.id === selectedPlan);
+  const tier = PRICING_TIERS.find((t) => t.id === selectedPlan);
 
   if (!tier) {
     return { success: false, error: "Invalid plan selected" };
@@ -258,13 +263,15 @@ export async function createOnboardingCheckout(): Promise<{
   // Get price ID from environment
   let priceId: string | null = null;
   if (selectedPlan === "basic") {
-    priceId = (billingCycle === "year"
-      ? process.env.STRIPE_BASIC_PRICE_YEARLY
-      : process.env.STRIPE_BASIC_PRICE_MONTHLY) ?? null;
+    priceId =
+      (billingCycle === "year"
+        ? process.env.STRIPE_BASIC_PRICE_YEARLY
+        : process.env.STRIPE_BASIC_PRICE_MONTHLY) ?? null;
   } else if (selectedPlan === "pro") {
-    priceId = (billingCycle === "year"
-      ? process.env.STRIPE_PRO_PRICE_YEARLY
-      : process.env.STRIPE_PRO_PRICE_MONTHLY) ?? null;
+    priceId =
+      (billingCycle === "year"
+        ? process.env.STRIPE_PRO_PRICE_YEARLY
+        : process.env.STRIPE_PRO_PRICE_MONTHLY) ?? null;
   }
 
   if (!priceId) {
@@ -375,14 +382,15 @@ export async function completePaymentStep(sessionId: string): Promise<ActionResu
 
     // Record the step completion (using type assertion for untyped table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminClient as any)
-      .from("onboarding_steps")
-      .upsert({
+    await (adminClient as any).from("onboarding_steps").upsert(
+      {
         organization_id: userData.organization_id,
         step_name: "payment",
         completed_at: new Date().toISOString(),
         data: { sessionId, subscriptionId: session.subscription },
-      }, { onConflict: "organization_id,step_name" });
+      },
+      { onConflict: "organization_id,step_name" }
+    );
 
     revalidatePath("/onboarding");
     return { success: true, redirectTo: "/onboarding/profile" };
@@ -432,7 +440,17 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
   }
 
   const adminClient = createAdminClient();
-  const { organizationName, industry, companySize, address, logoUrl, primaryColor, website, phone, companyEmail } = validated.data;
+  const {
+    organizationName,
+    industry,
+    companySize,
+    address,
+    logoUrl,
+    primaryColor,
+    website,
+    phone,
+    companyEmail,
+  } = validated.data;
 
   if (isIndividual) {
     // Individual path: update the organizations row (account_type stays
@@ -458,7 +476,7 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
       address.street,
       address.city,
       address.state,
-      address.zip,
+      address.zip
     );
 
     const { error: userUpdateError } = await adminClient
@@ -508,14 +526,15 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
 
   // Record the step completion (using type assertion for untyped table)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
-    .from("onboarding_steps")
-    .upsert({
+  await (adminClient as any).from("onboarding_steps").upsert(
+    {
       organization_id: orgId,
       step_name: "profile",
       completed_at: new Date().toISOString(),
       data: validated.data,
-    }, { onConflict: "organization_id,step_name" });
+    },
+    { onConflict: "organization_id,step_name" }
+  );
 
   revalidatePath("/onboarding");
 
@@ -565,13 +584,14 @@ export async function completeOnboarding(): Promise<ActionResult> {
 
   // Record the step completion (using type assertion for untyped table)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
-    .from("onboarding_steps")
-    .upsert({
+  await (adminClient as any).from("onboarding_steps").upsert(
+    {
       organization_id: orgId,
       step_name: "complete",
       completed_at: new Date().toISOString(),
-    }, { onConflict: "organization_id,step_name" });
+    },
+    { onConflict: "organization_id,step_name" }
+  );
 
   // Start org onboarding email sequence for enterprise admins
   if (!isIndividual && userData.role === "admin") {
@@ -604,6 +624,11 @@ export async function completeOnboarding(): Promise<ActionResult> {
  * Kept for backwards compatibility but now returns error
  */
 export async function skipPayment(): Promise<ActionResult> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
   return { success: false, error: "Payment required for all plans" };
 }
 
@@ -642,7 +667,10 @@ export async function uploadLogo(
   // Validate file type
   const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
   if (!allowedTypes.includes(file.type)) {
-    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, SVG, or WebP image." };
+    return {
+      success: false,
+      error: "Invalid file type. Please upload a JPG, PNG, SVG, or WebP image.",
+    };
   }
 
   // Validate file size (5MB max)
@@ -655,12 +683,10 @@ export async function uploadLogo(
   const fileName = `${userData.organization_id}/logo-${Date.now()}.${fileExt}`;
 
   // Upload to Supabase Storage
-  const { error: uploadError } = await supabase.storage
-    .from("logos")
-    .upload(fileName, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
+  const { error: uploadError } = await supabase.storage.from("logos").upload(fileName, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
 
   if (uploadError) {
     console.error("Upload error:", uploadError);
@@ -668,9 +694,9 @@ export async function uploadLogo(
   }
 
   // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from("logos")
-    .getPublicUrl(fileName);
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("logos").getPublicUrl(fileName);
 
   // Fetch old logo URL BEFORE updating (to properly clean up old files)
   const { data: orgData } = await supabase

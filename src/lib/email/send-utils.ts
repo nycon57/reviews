@@ -14,12 +14,9 @@
 import { render } from "@react-email/components";
 import type { ReactElement } from "react";
 import { getResendClient, emailConfig } from "./client";
-import { generateEmailPreferenceTokenForUser } from "../email-preferences/actions";
+import { generateEmailPreferenceTokenForUser } from "../email-preferences/system-actions";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
-import {
-  resolveEmailTypeSend,
-  type EmailTypeSendResolver,
-} from "@/lib/email-ab-testing/overrides";
+import { resolveEmailTypeSend, type EmailTypeSendResolver } from "@/lib/email-ab-testing/overrides";
 import type { EmailTemplate } from "./types";
 
 // =============================================================================
@@ -67,7 +64,7 @@ export interface EmailSendOptions {
    * winner's subject (email_type_overrides) or a running test's assigned variant
    * subject is swapped in, and the assigned variant ids are returned for logging.
    * Only the subject is swapped — preview text is already baked into the HTML.
-  */
+   */
   organizationId?: string;
   emailType?: EmailTemplate;
   emailTypeSendResolver?: EmailTypeSendResolver;
@@ -98,7 +95,8 @@ const EMAIL_SIZE_LIMIT = 102 * 1024; // 102KB
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
 
 /** Physical mailing address for CAN-SPAM compliance */
-export const COMPANY_MAILING_ADDRESS = "Repwell Inc., 123 Main Street, Suite 100, San Francisco, CA 94105";
+export const COMPANY_MAILING_ADDRESS =
+  "Repwell Inc., 123 Main Street, Suite 100, San Francisco, CA 94105";
 
 // =============================================================================
 // IDEMPOTENCY KEY GENERATORS
@@ -160,40 +158,28 @@ export function getMilestoneIdempotencyKey(
 /**
  * Generate deterministic idempotency key for welcome sequence
  */
-export function getWelcomeSequenceIdempotencyKey(
-  userId: string,
-  stepNumber: number
-): string {
+export function getWelcomeSequenceIdempotencyKey(userId: string, stepNumber: number): string {
   return `welcome-${userId}-step-${stepNumber}`;
 }
 
 /**
  * Generate deterministic idempotency key for weekly summary
  */
-export function getWeeklySummaryIdempotencyKey(
-  userId: string,
-  weekStartDate: string
-): string {
+export function getWeeklySummaryIdempotencyKey(userId: string, weekStartDate: string): string {
   return `weekly-summary-${userId}-${weekStartDate}`;
 }
 
 /**
  * Generate deterministic idempotency key for trial ending emails
  */
-export function getTrialEndingIdempotencyKey(
-  userId: string,
-  emailNumber: number
-): string {
+export function getTrialEndingIdempotencyKey(userId: string, emailNumber: number): string {
   return `trial-ending-${userId}-email-${emailNumber}`;
 }
 
 /**
  * Generate deterministic idempotency key for dunning emails
  */
-export function getDunningIdempotencyKey(
-  subscriptionId: string,
-  emailNumber: number
-): string {
+export function getDunningIdempotencyKey(subscriptionId: string, emailNumber: number): string {
   return `dunning-${subscriptionId}-email-${emailNumber}`;
 }
 
@@ -230,10 +216,7 @@ export function getReferralIdempotencyKey(
  * @param recipientEmail - Email address (fallback)
  * @returns Unsubscribe URL
  */
-export async function getUnsubscribeUrl(
-  userId?: string,
-  recipientEmail?: string
-): Promise<string> {
+export async function getUnsubscribeUrl(userId?: string, recipientEmail?: string): Promise<string> {
   // Prefer token-based unsubscribe for privacy
   if (userId) {
     try {
@@ -261,9 +244,7 @@ export async function getUnsubscribeUrl(
  * @param userId - User ID for token generation (preferred)
  * @returns Email preferences URL
  */
-export async function getEmailPreferencesUrl(
-  userId?: string
-): Promise<string> {
+export async function getEmailPreferencesUrl(userId?: string): Promise<string> {
   if (userId) {
     try {
       const token = await generateEmailPreferenceTokenForUser(userId);
@@ -357,31 +338,33 @@ function sleep(ms: number): Promise<void> {
  * Simple implementation that strips tags and decodes entities
  */
 function htmlToPlainText(html: string): string {
-  return html
-    // Remove style and script tags and their content
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-    // Replace <br> and </p> with newlines
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<\/div>/gi, "\n")
-    .replace(/<\/tr>/gi, "\n")
-    .replace(/<\/li>/gi, "\n")
-    // Replace links with text + URL
-    .replace(/<a[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, "$2 ($1)")
-    // Remove remaining HTML tags
-    .replace(/<[^>]+>/g, "")
-    // Decode HTML entities
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    // Clean up whitespace
-    .replace(/\n\s*\n\s*\n/g, "\n\n")
-    .replace(/[ \t]+/g, " ")
-    .trim();
+  return (
+    html
+      // Remove style and script tags and their content
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      // Replace <br> and </p> with newlines
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n\n")
+      .replace(/<\/div>/gi, "\n")
+      .replace(/<\/tr>/gi, "\n")
+      .replace(/<\/li>/gi, "\n")
+      // Replace links with text + URL
+      .replace(/<a[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, "$2 ($1)")
+      // Remove remaining HTML tags
+      .replace(/<[^>]+>/g, "")
+      // Decode HTML entities
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Clean up whitespace
+      .replace(/\n\s*\n\s*\n/g, "\n\n")
+      .replace(/[ \t]+/g, " ")
+      .trim()
+  );
 }
 
 // =============================================================================
@@ -513,11 +496,7 @@ export async function sendEmailWithReliability(
   // unsubscribe URL is supplied (e.g. an acquisition email whose human footer
   // and machine one-click must both hit the Contact suppression system).
   if (includeListUnsubscribe || listUnsubscribeUrl) {
-    const unsubscribeHeaders = await getListUnsubscribeHeaders(
-      userId,
-      to,
-      listUnsubscribeUrl
-    );
+    const unsubscribeHeaders = await getListUnsubscribeHeaders(userId, to, listUnsubscribeUrl);
     Object.assign(headers, unsubscribeHeaders);
   }
 
@@ -791,9 +770,7 @@ export const EMAIL_TEMPLATE_CATEGORIES: Record<string, EmailCategory> = {
 /**
  * Get the preference field for a category
  */
-export function getCategoryPreferenceField(
-  category: EmailCategory
-): string | null {
+export function getCategoryPreferenceField(category: EmailCategory): string | null {
   switch (category) {
     case "transactional":
       return null; // Always send
@@ -848,7 +825,7 @@ export async function shouldSendEmail(
   }
 
   // Dynamically import to avoid circular dependency
-  const { isEmailCategoryEnabled } = await import("../email-preferences/actions");
+  const { isEmailCategoryEnabled } = await import("../email-preferences/system-actions");
 
   // Check if the category is enabled for this user
   const isEnabled = await isEmailCategoryEnabled(
@@ -920,9 +897,7 @@ export interface SimpleSendOptions {
  * - Timeout handling
  * - Email size monitoring
  */
-export async function sendWithReliability(
-  options: SimpleSendOptions
-): Promise<EmailSendResult> {
+export async function sendWithReliability(options: SimpleSendOptions): Promise<EmailSendResult> {
   return sendEmailWithReliability({
     to: options.to,
     toName: options.toName,

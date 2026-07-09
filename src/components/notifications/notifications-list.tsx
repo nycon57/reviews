@@ -25,7 +25,7 @@ import {
   Tray as Inbox,
   Funnel as Filter,
 } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import { NOTIFICATION_TYPE_CONFIG, getNotificationTypeConfig } from "@/lib/notifications/config";
 import type { NotificationWithDetails, NotificationType } from "@/lib/notifications/types";
 import {
@@ -33,7 +33,7 @@ import {
   markNotificationsAsRead,
 } from "@/lib/notifications/actions";
 import { useArchivableNotifications } from "./use-archivable-notifications";
-import { formatDistanceToNow, format } from "date-fns";
+import { format } from "date-fns";
 
 interface NotificationsListProps {
   initialNotifications: NotificationWithDetails[];
@@ -249,7 +249,7 @@ export function NotificationsList({
                   setPage(1);
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label="Filter notifications">
                   <SelectValue placeholder="Filter notifications" />
                 </SelectTrigger>
                 <SelectContent>
@@ -325,6 +325,7 @@ export function NotificationsList({
                   id="select-all"
                   checked={selectedIds.size === displayedNotifications.length && displayedNotifications.length > 0}
                   onCheckedChange={toggleSelectAll}
+                  aria-label="Select all notifications"
                 />
                 <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
                   Select all
@@ -415,6 +416,7 @@ function NotificationRow({
           checked={selected}
           onCheckedChange={() => onToggleSelect()}
           onClick={(e) => e.stopPropagation()}
+          aria-label={`Select notification: ${notification.title}`}
         />
       </div>
 
@@ -443,7 +445,7 @@ function NotificationRow({
                 {typeLabel}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                {formatRelativeTime(notification.created_at)}
               </span>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(notification.created_at), "MMM d, yyyy h:mm a")}
@@ -464,6 +466,7 @@ function NotificationRow({
                   onMarkAsRead();
                 }}
                 title="Mark as read"
+                aria-label={`Mark notification as read: ${notification.title}`}
               >
                 <Check className="h-4 w-4" />
               </Button>
@@ -478,6 +481,7 @@ function NotificationRow({
                 onArchive();
               }}
               title="Archive"
+              aria-label={`Archive notification: ${notification.title}`}
             >
               <Archive className="h-4 w-4" />
             </Button>

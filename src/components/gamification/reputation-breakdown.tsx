@@ -207,6 +207,8 @@ export function ReputationBreakdownCard({
             <Progress
               value={component.normalized}
               className="h-2"
+              aria-label={`${component.label} reputation score progress`}
+              aria-valuetext={`${component.normalized}%`}
             />
           </div>
         ))}
@@ -240,7 +242,7 @@ const areaIcons = {
 
 const impactColors = {
   high: "bg-red-500/10 text-red-600 border-red-200",
-  medium: "bg-yellow-500/10 text-yellow-600 border-yellow-200",
+  medium: "bg-yellow-500/10 text-yellow-700 border-yellow-200",
   low: "bg-blue-500/10 text-blue-600 border-blue-200",
 };
 
@@ -347,7 +349,7 @@ export function ImprovementTipsCard({
                       className={cn(
                         "text-[10px] uppercase tracking-wider",
                         tip.impact === "high" && "border-red-300 text-red-600",
-                        tip.impact === "medium" && "border-yellow-300 text-yellow-600",
+                        tip.impact === "medium" && "border-yellow-300 text-yellow-700",
                         tip.impact === "low" && "border-blue-300 text-blue-600"
                       )}
                     >

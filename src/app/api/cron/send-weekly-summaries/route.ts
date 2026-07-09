@@ -1,3 +1,4 @@
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 /**
  * Weekly Summary Email Cron Job (S082)
  *
@@ -37,56 +38,56 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    console.log(
-      "[Weekly Summary Cron] Starting weekly summary email processing..."
-    );
+  return withCronHeartbeat("send-weekly-summaries", async () => {
+    try {
+      console.log("[Weekly Summary Cron] Starting weekly summary email processing...");
 
-    const results = await sendAllWeeklySummaries();
+      const results = await sendAllWeeklySummaries();
 
-    const totalSent = results.user.sent + results.manager.sent;
-    const totalFailed = results.user.failed + results.manager.failed;
-    const totalSkipped = results.user.skipped + results.manager.skipped;
-    const allErrors = [...results.user.errors, ...results.manager.errors];
+      const totalSent = results.user.sent + results.manager.sent;
+      const totalFailed = results.user.failed + results.manager.failed;
+      const totalSkipped = results.user.skipped + results.manager.skipped;
+      const allErrors = [...results.user.errors, ...results.manager.errors];
 
-    console.log(
-      `[Weekly Summary Cron] Completed - Sent: ${totalSent}, Failed: ${totalFailed}, Skipped: ${totalSkipped}`
-    );
+      console.log(
+        `[Weekly Summary Cron] Completed - Sent: ${totalSent}, Failed: ${totalFailed}, Skipped: ${totalSkipped}`
+      );
 
-    return NextResponse.json({
-      success: results.user.success && results.manager.success,
-      summary: {
-        totalSent,
-        totalFailed,
-        totalSkipped,
-      },
-      details: {
-        users: {
-          sent: results.user.sent,
-          failed: results.user.failed,
-          skipped: results.user.skipped,
+      return NextResponse.json({
+        success: results.user.success && results.manager.success,
+        summary: {
+          totalSent,
+          totalFailed,
+          totalSkipped,
         },
-        managers: {
-          sent: results.manager.sent,
-          failed: results.manager.failed,
-          skipped: results.manager.skipped,
+        details: {
+          users: {
+            sent: results.user.sent,
+            failed: results.user.failed,
+            skipped: results.user.skipped,
+          },
+          managers: {
+            sent: results.manager.sent,
+            failed: results.manager.failed,
+            skipped: results.manager.skipped,
+          },
         },
-      },
-      errors: allErrors.slice(0, 20), // Limit error details
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("[Weekly Summary Cron] Error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        errors: allErrors.slice(0, 20), // Limit error details
         timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+      });
+    } catch (error) {
+      console.error("[Weekly Summary Cron] Error:", error);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString(),
+        },
+        { status: 500 }
+      );
+    }
+  });
 }
 
 // Vercel Cron triggers this endpoint with a GET request (carrying the

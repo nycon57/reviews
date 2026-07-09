@@ -30,12 +30,12 @@ import {
   Copy,
   Link as LinkIcon,
 } from "@phosphor-icons/react";
-import { formatDistanceToNow } from "date-fns";
 import type { RecentReview } from "@/lib/dashboard";
 import { getUserRecentReviews } from "@/lib/dashboard";
 import { useToast } from "@/hooks/use-toast";
 import { ensureReviewSmartLink } from "@/lib/share-studio/actions";
 import { formatReviewSource } from "@/lib/reviews/source-labels";
+import { formatRelativeTime } from "@/lib/utils";
 import { AnimatedTransition, AnimatedList, AnimatedItem } from "@/components/motion";
 import {
   REVIEW_STATUS_FILTER_LABELS,
@@ -159,7 +159,7 @@ export function UserRecentReviews({
         </CardTitle>
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={handleFilterChange}>
-            <SelectTrigger className="h-8 w-[132px]">
+            <SelectTrigger className="h-8 w-[132px]" aria-label="Filter recent reviews by status">
               <Filter className="mr-1 h-3 w-3" />
               <SelectValue placeholder="All" />
             </SelectTrigger>
@@ -269,9 +269,7 @@ export function UserRecentReviews({
                     )}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-repwell-teal-300">
-                        {formatDistanceToNow(new Date(review.reviewDate), {
-                          addSuffix: true,
-                        })}
+                        {formatRelativeTime(review.reviewDate)}
                         {review.source !== "internal" && (
                           <span className="ml-2">via {formatReviewSource(review.source)}</span>
                         )}

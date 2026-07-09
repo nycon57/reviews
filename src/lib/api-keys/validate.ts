@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getClientIp } from '@/lib/api-v2/middleware';
 import { hashApiKey, isValidKeyFormat, generateRequestId } from './generate';
 import type {
   ApiKeyScope,
@@ -332,10 +333,7 @@ export function withApiAuth(
     };
 
     // Get request metadata for logging
-    const ipAddress =
-      request.headers.get('x-forwarded-for')?.split(',')[0] ||
-      request.headers.get('x-real-ip') ||
-      undefined;
+    const ipAddress = getClientIp(request) ?? undefined;
     const userAgent = request.headers.get('user-agent') || undefined;
 
     try {

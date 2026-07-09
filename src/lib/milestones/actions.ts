@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Milestone Tracking Service (S081)
  *
@@ -41,8 +39,7 @@ import {
   type EmailTypeSendResolver,
 } from "@/lib/email-ab-testing/overrides";
 
-const MILESTONE_APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
+const MILESTONE_APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
 
 // Helper to access milestone tables that may not be in generated types yet
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,10 +100,7 @@ async function getUserContext() {
 /**
  * Check if a milestone has already been achieved
  */
-async function hasMilestoneBeenAchieved(
-  userId: string,
-  milestoneKey: string
-): Promise<boolean> {
+async function hasMilestoneBeenAchieved(userId: string, milestoneKey: string): Promise<boolean> {
   const supabase = createAdminClient();
   const { data } = await fromTable(supabase, "user_milestones")
     .select("id")
@@ -690,9 +684,7 @@ export async function checkVideoMilestones(
 /**
  * Get all milestones for a user
  */
-export async function getUserMilestones(
-  userId?: string
-): Promise<ActionResult<MilestoneRecord[]>> {
+export async function getUserMilestones(userId?: string): Promise<ActionResult<MilestoneRecord[]>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
@@ -719,9 +711,7 @@ export async function getUserMilestones(
 /**
  * Get pending milestones that need email notifications
  */
-export async function getPendingMilestoneEmails(): Promise<
-  ActionResult<MilestoneRecord[]>
-> {
+export async function getPendingMilestoneEmails(): Promise<ActionResult<MilestoneRecord[]>> {
   const context = await getUserContext();
   if (!context || (context.role !== "admin" && context.role !== "manager")) {
     return { success: false, error: "Unauthorized" };
@@ -978,11 +968,7 @@ export async function checkAllMilestonesForReview(
   if (ratingImprovement.achieved) results.push(ratingImprovement);
 
   // Check NPS improvement
-  const npsImprovement = await checkNpsImprovementMilestone(
-    userId,
-    organizationId,
-    loanOfficerId
-  );
+  const npsImprovement = await checkNpsImprovementMilestone(userId, organizationId, loanOfficerId);
   if (npsImprovement.achieved) results.push(npsImprovement);
 
   return { success: true, data: results };
@@ -1130,11 +1116,7 @@ async function loadMilestoneEmailContext(
       .maybeSingle(),
     cachedOrgName !== undefined
       ? Promise.resolve({ data: { name: cachedOrgName } })
-      : supabase
-          .from("organizations")
-          .select("name")
-          .eq("id", record.organizationId)
-          .maybeSingle(),
+      : supabase.from("organizations").select("name").eq("id", record.organizationId).maybeSingle(),
     supabase
       .from("reviews")
       .select("id, customer_name, rating, review_date")
@@ -1154,10 +1136,7 @@ async function loadMilestoneEmailContext(
   };
 }
 
-function metadataNumber(
-  metadata: Record<string, unknown>,
-  ...keys: string[]
-): number | undefined {
+function metadataNumber(metadata: Record<string, unknown>, ...keys: string[]): number | undefined {
   for (const key of keys) {
     const value = metadata[key];
     if (typeof value === "number" && Number.isFinite(value)) {
@@ -1173,10 +1152,7 @@ function metadataNumber(
   return undefined;
 }
 
-function metadataString(
-  metadata: Record<string, unknown>,
-  ...keys: string[]
-): string | undefined {
+function metadataString(metadata: Record<string, unknown>, ...keys: string[]): string | undefined {
   for (const key of keys) {
     const value = metadata[key];
     if (typeof value === "string" && value.trim() !== "") {
@@ -1212,9 +1188,7 @@ function getLeaderboardAchievementType(
   return "entered_top_10";
 }
 
-function getPeriodType(
-  value: string | undefined
-): "monthly" | "quarterly" | "yearly" | "all_time" {
+function getPeriodType(value: string | undefined): "monthly" | "quarterly" | "yearly" | "all_time" {
   if (value === "monthly" || value === "quarterly" || value === "yearly") {
     return value;
   }
@@ -1224,11 +1198,7 @@ function getPeriodType(
 function getBadgeCategory(
   value: string | undefined
 ): "milestone" | "performance" | "streak" | "special" {
-  if (
-    value === "performance" ||
-    value === "streak" ||
-    value === "special"
-  ) {
+  if (value === "performance" || value === "streak" || value === "special") {
     return value;
   }
   return "milestone";
@@ -1237,20 +1207,13 @@ function getBadgeCategory(
 function getBadgeTier(
   value: string | undefined
 ): "bronze" | "silver" | "gold" | "platinum" | undefined {
-  if (
-    value === "bronze" ||
-    value === "silver" ||
-    value === "gold" ||
-    value === "platinum"
-  ) {
+  if (value === "bronze" || value === "silver" || value === "gold" || value === "platinum") {
     return value;
   }
   return undefined;
 }
 
-function getStreakType(
-  value: string | undefined
-): "response" | "review" | "rating" {
+function getStreakType(value: string | undefined): "response" | "review" | "rating" {
   if (value === "review" || value === "rating") {
     return value;
   }
@@ -1288,7 +1251,11 @@ function getProfileBenefits(completionPercent: number): string[] {
 }
 
 function getRatingPeriodDescription(record: MilestoneRecord): string {
-  const explicit = metadataString(record.milestoneMetadata, "periodDescription", "period_description");
+  const explicit = metadataString(
+    record.milestoneMetadata,
+    "periodDescription",
+    "period_description"
+  );
   if (explicit) {
     return explicit;
   }
@@ -1336,7 +1303,7 @@ async function loadLeaderboardPayload(
   const currentRank =
     record.milestoneValue ??
     metadataNumber(metadata, "currentRank", "current_rank") ??
-    ((higherRanked?.length || 0) + 1);
+    (higherRanked?.length || 0) + 1;
   const previousRank = metadataNumber(metadata, "previousRank", "previous_rank");
   const rankImprovement =
     metadataNumber(metadata, "rankImprovement", "rank_improvement") ??
@@ -1347,7 +1314,8 @@ async function loadLeaderboardPayload(
     previousRank,
     rankImprovement,
     totalParticipants: participantCount ?? currentRank,
-    reputationScore: metadataNumber(metadata, "reputationScore", "reputation_score") ?? reputationScore,
+    reputationScore:
+      metadataNumber(metadata, "reputationScore", "reputation_score") ?? reputationScore,
   };
 }
 
@@ -1387,15 +1355,13 @@ async function loadBadgePayload(
       .not("earned_at", "is", null),
   ]);
 
-  const badge = badgeResult.data as
-    | {
-        name?: string | null;
-        description?: string | null;
-        icon?: string | null;
-        category?: string | null;
-        tier?: string | null;
-      }
-    | null;
+  const badge = badgeResult.data as {
+    name?: string | null;
+    description?: string | null;
+    icon?: string | null;
+    category?: string | null;
+    tier?: string | null;
+  } | null;
 
   if (totalResult.count !== null && totalResult.count !== undefined) {
     runContext?.badgeCatalogCountsByOrgId.set(record.organizationId, totalResult.count);
@@ -1408,15 +1374,23 @@ async function loadBadgePayload(
       badge?.description ||
       "You've unlocked a new achievement.",
     badgeIcon: metadataString(metadata, "badgeIcon", "badge_icon") || badge?.icon || "award",
-    badgeCategory: getBadgeCategory(metadataString(metadata, "badgeCategory", "badge_category") || badge?.category || undefined),
-    badgeTier: getBadgeTier(metadataString(metadata, "badgeTier", "badge_tier") || badge?.tier || undefined),
+    badgeCategory: getBadgeCategory(
+      metadataString(metadata, "badgeCategory", "badge_category") || badge?.category || undefined
+    ),
+    badgeTier: getBadgeTier(
+      metadataString(metadata, "badgeTier", "badge_tier") || badge?.tier || undefined
+    ),
     totalBadgesEarned: earnedResult.count ?? 1,
     totalBadgesAvailable: totalResult.count ?? earnedResult.count ?? 1,
   };
 }
 
 async function countNpsResponses(record: MilestoneRecord): Promise<number> {
-  const metadataCount = metadataNumber(record.milestoneMetadata, "totalResponses", "total_responses");
+  const metadataCount = metadataNumber(
+    record.milestoneMetadata,
+    "totalResponses",
+    "total_responses"
+  );
   if (metadataCount !== undefined) {
     return metadataCount;
   }
@@ -1494,35 +1468,44 @@ export async function dispatchMilestoneEmail(
 
   switch (record.milestoneType) {
     case "first_review":
-      result = await sendFirstReviewMilestoneEmail({
-        ...base,
-        customerName: latestReview?.customer_name || "A customer",
-        reviewRating: latestReview?.rating ?? 5,
-        reviewDate: latestReview?.review_date || achievedAt,
-        nextMilestoneCount: 5,
-        viewReviewUrl: reviewUrl,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendFirstReviewMilestoneEmail(
+        {
+          ...base,
+          customerName: latestReview?.customer_name || "A customer",
+          reviewRating: latestReview?.rating ?? 5,
+          reviewDate: latestReview?.review_date || achievedAt,
+          nextMilestoneCount: 5,
+          viewReviewUrl: reviewUrl,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     case "review_milestone": {
       const reviewCount = record.milestoneValue ?? user.total_reviews ?? 0;
-      result = await sendReviewCountMilestoneEmail({
-        ...base,
-        reviewCount,
-        averageRating: user.average_rating ?? 0,
-        previousMilestone: getPreviousMilestone(reviewCount, REVIEW_MILESTONES) ?? undefined,
-        nextMilestone: getNextMilestone(reviewCount, REVIEW_MILESTONES) ?? undefined,
-        viewReviewsUrl: `${MILESTONE_APP_URL}/dashboard/reviews`,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendReviewCountMilestoneEmail(
+        {
+          ...base,
+          reviewCount,
+          averageRating: user.average_rating ?? 0,
+          previousMilestone: getPreviousMilestone(reviewCount, REVIEW_MILESTONES) ?? undefined,
+          nextMilestone: getNextMilestone(reviewCount, REVIEW_MILESTONES) ?? undefined,
+          viewReviewsUrl: `${MILESTONE_APP_URL}/dashboard/reviews`,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     }
     case "first_5_star":
-      result = await sendFirst5StarMilestoneEmail({
-        ...base,
-        customerName: latestReview?.customer_name || "A customer",
-        reviewDate: latestReview?.review_date || achievedAt,
-        totalReviews: user.total_reviews ?? 0,
-        viewReviewUrl: reviewUrl,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendFirst5StarMilestoneEmail(
+        {
+          ...base,
+          customerName: latestReview?.customer_name || "A customer",
+          reviewDate: latestReview?.review_date || achievedAt,
+          totalReviews: user.total_reviews ?? 0,
+          viewReviewUrl: reviewUrl,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     case "rating_improvement": {
       const previousRating =
@@ -1535,15 +1518,18 @@ export async function dispatchMilestoneEmail(
         metadataNumber(record.milestoneMetadata, "improvementAmount", "improvement") ??
         Math.max(0, currentRating - previousRating);
 
-      result = await sendRatingImprovementMilestoneEmail({
-        ...base,
-        previousRating,
-        currentRating,
-        improvementAmount,
-        totalReviews: user.total_reviews ?? 0,
-        periodDescription: getRatingPeriodDescription(record),
-        viewAnalyticsUrl: `${MILESTONE_APP_URL}/dashboard/analytics`,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendRatingImprovementMilestoneEmail(
+        {
+          ...base,
+          previousRating,
+          currentRating,
+          improvementAmount,
+          totalReviews: user.total_reviews ?? 0,
+          periodDescription: getRatingPeriodDescription(record),
+          viewAnalyticsUrl: `${MILESTONE_APP_URL}/dashboard/analytics`,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     }
     case "nps_improvement": {
@@ -1557,15 +1543,18 @@ export async function dispatchMilestoneEmail(
         metadataNumber(record.milestoneMetadata, "improvementAmount", "improvement") ??
         Math.max(0, currentNps - previousNps);
 
-      result = await sendNpsImprovementMilestoneEmail({
-        ...base,
-        previousNps,
-        currentNps,
-        improvementAmount,
-        totalResponses: await countNpsResponses(record),
-        npsCategory: getNpsCategory(currentNps),
-        viewAnalyticsUrl: `${MILESTONE_APP_URL}/dashboard/analytics`,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendNpsImprovementMilestoneEmail(
+        {
+          ...base,
+          previousNps,
+          currentNps,
+          improvementAmount,
+          totalResponses: await countNpsResponses(record),
+          npsCategory: getNpsCategory(currentNps),
+          viewAnalyticsUrl: `${MILESTONE_APP_URL}/dashboard/analytics`,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     }
     case "streak": {
@@ -1577,50 +1566,71 @@ export async function dispatchMilestoneEmail(
         metadataString(record.milestoneMetadata, "streakType", "streak_type")
       );
 
-      result = await sendStreakMilestoneEmail({
-        ...base,
-        streakDays,
-        streakType,
-        streakDescription: `${streakDays} days of ${streakType === "response" ? "responding to reviews" : `${streakType} activity`}`,
-        nextStreakDays: getNextMilestone(streakDays, STREAK_MILESTONES) ?? undefined,
-        viewStreakUrl: `${MILESTONE_APP_URL}/dashboard/analytics`,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendStreakMilestoneEmail(
+        {
+          ...base,
+          streakDays,
+          streakType,
+          streakDescription: `${streakDays} days of ${streakType === "response" ? "responding to reviews" : `${streakType} activity`}`,
+          nextStreakDays: getNextMilestone(streakDays, STREAK_MILESTONES) ?? undefined,
+          viewStreakUrl: `${MILESTONE_APP_URL}/dashboard/analytics`,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     }
     case "leaderboard_achievement": {
-      const leaderboard = await loadLeaderboardPayload(record, user.reputation_score ?? 0, runContext);
+      const leaderboard = await loadLeaderboardPayload(
+        record,
+        user.reputation_score ?? 0,
+        runContext
+      );
 
-      result = await sendLeaderboardMilestoneEmail({
-        ...base,
-        currentRank: leaderboard.currentRank,
-        previousRank: leaderboard.previousRank,
-        rankImprovement: leaderboard.rankImprovement,
-        totalParticipants: leaderboard.totalParticipants,
-        periodType: getPeriodType(
-          metadataString(record.milestoneMetadata, "periodType", "period_type")
-        ),
-        achievementType: getLeaderboardAchievementType(record),
-        reputationScore: leaderboard.reputationScore,
-        viewLeaderboardUrl: `${MILESTONE_APP_URL}/dashboard/analytics/leaderboard`,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendLeaderboardMilestoneEmail(
+        {
+          ...base,
+          currentRank: leaderboard.currentRank,
+          previousRank: leaderboard.previousRank,
+          rankImprovement: leaderboard.rankImprovement,
+          totalParticipants: leaderboard.totalParticipants,
+          periodType: getPeriodType(
+            metadataString(record.milestoneMetadata, "periodType", "period_type")
+          ),
+          achievementType: getLeaderboardAchievementType(record),
+          reputationScore: leaderboard.reputationScore,
+          viewLeaderboardUrl: `${MILESTONE_APP_URL}/dashboard/analytics/leaderboard`,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     }
     case "badge_earned": {
       const badge = await loadBadgePayload(record, runContext);
 
-      result = await sendBadgeEarnedMilestoneEmail({
-        ...base,
-        badgeName: badge.badgeName,
-        badgeDescription: badge.badgeDescription,
-        badgeIcon: badge.badgeIcon,
-        badgeCategory: badge.badgeCategory,
-        badgeTier: badge.badgeTier,
-        totalBadgesEarned: badge.totalBadgesEarned,
-        totalBadgesAvailable: badge.totalBadgesAvailable,
-        nextBadgeName: metadataString(record.milestoneMetadata, "nextBadgeName", "next_badge_name"),
-        nextBadgeProgress: metadataNumber(record.milestoneMetadata, "nextBadgeProgress", "next_badge_progress"),
-        viewBadgesUrl: `${MILESTONE_APP_URL}/dashboard/recognition`,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendBadgeEarnedMilestoneEmail(
+        {
+          ...base,
+          badgeName: badge.badgeName,
+          badgeDescription: badge.badgeDescription,
+          badgeIcon: badge.badgeIcon,
+          badgeCategory: badge.badgeCategory,
+          badgeTier: badge.badgeTier,
+          totalBadgesEarned: badge.totalBadgesEarned,
+          totalBadgesAvailable: badge.totalBadgesAvailable,
+          nextBadgeName: metadataString(
+            record.milestoneMetadata,
+            "nextBadgeName",
+            "next_badge_name"
+          ),
+          nextBadgeProgress: metadataNumber(
+            record.milestoneMetadata,
+            "nextBadgeProgress",
+            "next_badge_progress"
+          ),
+          viewBadgesUrl: `${MILESTONE_APP_URL}/dashboard/recognition`,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     }
     case "profile_completion": {
@@ -1629,45 +1639,60 @@ export async function dispatchMilestoneEmail(
         metadataNumber(record.milestoneMetadata, "completionPercent", "completion_percent") ??
         0;
 
-      result = await sendProfileCompletionMilestoneEmail({
-        ...base,
-        completionPercent,
-        previousPercent:
-          metadataNumber(record.milestoneMetadata, "previousPercent", "previous_percent") ??
-          getPreviousProfileMilestone(completionPercent),
-        missingFields: metadataStringArray(record.milestoneMetadata, "missingFields", "missing_fields"),
-        benefitsUnlocked:
-          metadataStringArray(record.milestoneMetadata, "benefitsUnlocked", "benefits_unlocked") ??
-          getProfileBenefits(completionPercent),
-        profileUrl: `${MILESTONE_APP_URL}/dashboard/settings`,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendProfileCompletionMilestoneEmail(
+        {
+          ...base,
+          completionPercent,
+          previousPercent:
+            metadataNumber(record.milestoneMetadata, "previousPercent", "previous_percent") ??
+            getPreviousProfileMilestone(completionPercent),
+          missingFields: metadataStringArray(
+            record.milestoneMetadata,
+            "missingFields",
+            "missing_fields"
+          ),
+          benefitsUnlocked:
+            metadataStringArray(
+              record.milestoneMetadata,
+              "benefitsUnlocked",
+              "benefits_unlocked"
+            ) ?? getProfileBenefits(completionPercent),
+          profileUrl: `${MILESTONE_APP_URL}/dashboard/settings`,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     }
     case "video_milestone": {
       const videoCount = await countVideoTestimonials(record);
 
-      result = await sendVideoMilestoneEmail({
-        ...base,
-        videoCount,
-        previousMilestone: getPreviousMilestone(videoCount - 1, VIDEO_MILESTONES) ?? undefined,
-        nextMilestone: getNextMilestone(videoCount, VIDEO_MILESTONES) ?? undefined,
-        latestVideoCustomerName: metadataString(
-          record.milestoneMetadata,
-          "latestVideoCustomerName",
-          "latest_video_customer_name"
-        ),
-        totalViewsCount: metadataNumber(record.milestoneMetadata, "totalViewsCount", "total_views_count"),
-        viewVideosUrl: `${MILESTONE_APP_URL}/dashboard/media`,
-      }, runContext?.emailTypeSendResolver);
+      result = await sendVideoMilestoneEmail(
+        {
+          ...base,
+          videoCount,
+          previousMilestone: getPreviousMilestone(videoCount - 1, VIDEO_MILESTONES) ?? undefined,
+          nextMilestone: getNextMilestone(videoCount, VIDEO_MILESTONES) ?? undefined,
+          latestVideoCustomerName: metadataString(
+            record.milestoneMetadata,
+            "latestVideoCustomerName",
+            "latest_video_customer_name"
+          ),
+          totalViewsCount: metadataNumber(
+            record.milestoneMetadata,
+            "totalViewsCount",
+            "total_views_count"
+          ),
+          viewVideosUrl: `${MILESTONE_APP_URL}/dashboard/media`,
+        },
+        runContext?.emailTypeSendResolver
+      );
       break;
     }
     default:
       return { status: "skipped" };
   }
 
-  return result?.success
-    ? { status: "sent", messageId: result.messageId }
-    : { status: "skipped" };
+  return result?.success ? { status: "sent", messageId: result.messageId } : { status: "skipped" };
 }
 
 /**
@@ -1677,9 +1702,7 @@ export async function dispatchMilestoneEmail(
  */
 export async function processPendingMilestoneEmails(
   limit = 50
-): Promise<
-  ActionResult<{ processed: number; sent: number; skipped: number; failed: number }>
-> {
+): Promise<ActionResult<{ processed: number; sent: number; skipped: number; failed: number }>> {
   const supabase = createAdminClient();
 
   const { data: pending, error } = await fromTable(supabase, "user_milestones")

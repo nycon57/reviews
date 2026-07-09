@@ -169,7 +169,7 @@ function SectionDivider({ section, isActive, collapsed }: SectionDividerProps) {
       {!collapsed ? (
         <>
           <div className="my-3 h-px bg-border" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-repwell-teal-400/70 dark:text-repwell-sage-100/50 px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-repwell-teal-400 dark:text-repwell-sage-100 px-3 py-2">
             {section.label}
           </span>
         </>
@@ -210,7 +210,7 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed, dynamic
         "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-out",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/30",
         isActive && !isProLocked
-          ? "bg-surface-soft text-repwell-teal-300"
+          ? "bg-surface-soft text-repwell-teal-500"
           : isProLocked
             ? "text-label/60 hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-400"
             : "text-label hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-500 dark:hover:text-foreground",
@@ -231,7 +231,7 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed, dynamic
       <span className={cn(
         "transition-colors duration-150",
         isActive && !isProLocked
-          ? "text-repwell-teal-300"
+          ? "text-repwell-teal-500"
           : isProLocked
             ? "text-label/60 group-hover:text-repwell-teal-400 dark:group-hover:text-muted-foreground"
             : "text-label group-hover:text-repwell-teal-500 dark:group-hover:text-foreground"

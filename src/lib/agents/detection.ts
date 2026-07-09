@@ -105,7 +105,12 @@ export const AGENT_BOT_RULES: BotRule[] = [
   },
 ];
 
-const GENERIC_BOT_PATTERN = /(bot|crawl|crawler|spider)/i;
+export const AI_CRAWLER_BOT_NAMES = AGENT_BOT_RULES.filter(
+  (rule) => rule.category === "agent" || rule.category === "llm"
+).map((rule) => rule.botName);
+
+const GENERIC_BOT_PATTERN =
+  /(bot|crawl|crawler|spider|slurp|facebookexternalhit|twitterbot|linkedinbot|whatsapp|prefetch|prerender|ia_archiver)/i;
 
 export function classifyAgentUserAgent(
   userAgent: string | null | undefined

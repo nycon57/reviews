@@ -401,6 +401,8 @@ function InteractiveMap({
                     key={prof.id}
                     position={[prof.latitude!, prof.longitude!]}
                     icon={icon}
+                    title={prof.full_name}
+                    alt={`${prof.full_name} location`}
                     eventHandlers={{
                       click: () => onSelectProfessional?.(prof.id),
                     }}

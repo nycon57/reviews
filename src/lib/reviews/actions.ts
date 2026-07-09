@@ -5,10 +5,7 @@ import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { Review, ReviewSource, ActionResult } from "./types";
-import {
-  publishReviewIfClean,
-  type PublishReviewScreening,
-} from "./publish";
+import { publishReviewIfClean, type PublishReviewScreening } from "./publish";
 
 // Get user's role and organization ID
 async function getUserContext() {
@@ -421,9 +418,7 @@ export async function getReviews(params?: {
 }
 
 // Get a single review by ID
-export async function getReviewById(
-  reviewId: string
-): Promise<ActionResult<Review>> {
+export async function getReviewById(reviewId: string): Promise<ActionResult<Review>> {
   const context = await requireManagerRole();
   if (!context) {
     return { success: false, error: "Unauthorized - Manager role required" };
@@ -633,6 +628,11 @@ const updateReviewTextSchema = z.object({
 export async function updateReviewText(
   input: z.infer<typeof updateReviewTextSchema>
 ): Promise<ActionResult> {
+  const context = await requireOrgUser();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
   const validated = updateReviewTextSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
@@ -704,8 +704,7 @@ export async function bulkApproveReviews(
   }
 
   const approved = publishResults.filter(
-    (result) =>
-      result.outcome === "published" || result.outcome === "already_published"
+    (result) => result.outcome === "published" || result.outcome === "already_published"
   ).length;
   const failed = reviewIds.length - approved;
 
@@ -895,17 +894,14 @@ export async function getReviewSummary(opts: {
   const averageRating =
     ratingsOnly.length > 0
       ? Math.round(
-          (ratingsOnly.reduce((sum, r) => sum + (r.rating as number), 0) /
-            ratingsOnly.length) *
-            10
+          (ratingsOnly.reduce((sum, r) => sum + (r.rating as number), 0) / ratingsOnly.length) * 10
         ) / 10
       : 0;
 
   const withResponse = reviews.filter(
     (r) => r.response_text && r.response_text.trim().length > 0
   ).length;
-  const responseRate =
-    totalReviews > 0 ? Math.round((withResponse / totalReviews) * 1000) / 10 : 0;
+  const responseRate = totalReviews > 0 ? Math.round((withResponse / totalReviews) * 1000) / 10 : 0;
 
   // NPS: 5-star mapping — 5 = promoter, 4 = passive, 1-3 = detractor
   let promoters = 0;
@@ -916,11 +912,7 @@ export async function getReviewSummary(opts: {
     else if (rating <= 3) detractors++;
   }
   const npsScore =
-    ratingsOnly.length > 0
-      ? Math.round(
-          ((promoters - detractors) / ratingsOnly.length) * 100
-        )
-      : 0;
+    ratingsOnly.length > 0 ? Math.round(((promoters - detractors) / ratingsOnly.length) * 100) : 0;
 
   return {
     success: true,

@@ -1,12 +1,5 @@
-"use server";
-
 import { createAdminClient } from "@/lib/supabase/admin";
-import type {
-  ChannelSendResult,
-  SequenceRecord,
-  SequenceStep,
-  EmailContext,
-} from "./types";
+import type { ChannelSendResult, SequenceRecord, SequenceStep, EmailContext } from "./types";
 
 /**
  * Route a sequence step to the correct channel and execute it.
@@ -15,7 +8,9 @@ import type {
 export async function routeStepToChannel(
   sequence: SequenceRecord,
   step: SequenceStep,
-  emailSender: (ctx: EmailContext) => Promise<{ success: boolean; emailId?: string; error?: string }>
+  emailSender: (
+    ctx: EmailContext
+  ) => Promise<{ success: boolean; emailId?: string; error?: string }>
 ): Promise<ChannelSendResult> {
   const supabase = createAdminClient();
 

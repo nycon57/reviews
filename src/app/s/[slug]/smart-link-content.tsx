@@ -603,7 +603,7 @@ export function SmartLinkContent({
               alt="RepWell"
               className="h-5 w-auto opacity-35 transition-opacity group-hover:opacity-60"
             />
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-repwell-teal-300/45 transition-colors group-hover:text-repwell-teal-400">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-repwell-teal-400 transition-colors group-hover:text-repwell-teal-500">
               Your reviews deserve this spotlight. Try RepWell free{" "}
               <ArrowRight className="h-3 w-3" weight="bold" />
             </span>

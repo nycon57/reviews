@@ -7,6 +7,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { requireCronSecretRequest } from "@/lib/auth/server-action-guards";
 import {
   getNPSMetrics,
   getCSATMetrics,
@@ -40,6 +41,7 @@ export interface GenerateReportForOrgParams {
   templateId: string;
   dateRange: ReportDateRange;
   filters?: ReportFilters;
+  shareToken?: string;
 }
 
 type ReportingUserContext = {
@@ -105,6 +107,45 @@ function getManageReportsError(context: ReportingUserContext): string | null {
   return null;
 }
 
+async function hasReportGenerationAccess({
+  organizationId,
+  templateId,
+  shareToken,
+}: {
+  organizationId: string;
+  templateId: string;
+  shareToken?: string;
+}): Promise<boolean> {
+  if (shareToken) {
+    const supabase = createAdminClient();
+    const { data: share } = await supabase
+      .from("report_shares")
+      .select("id, organization_id, template_id, expires_at")
+      .eq("share_token", shareToken)
+      .eq("organization_id", organizationId)
+      .eq("template_id", templateId)
+      .maybeSingle();
+
+    if (share && (!share.expires_at || new Date(share.expires_at) >= new Date())) {
+      return true;
+    }
+  }
+
+  try {
+    await requireCronSecretRequest();
+    return true;
+  } catch {
+    // Fall through to signed-in manager/admin validation.
+  }
+
+  const context = await getUserContext();
+  if (context?.organizationId === organizationId && !getManageReportsError(context)) {
+    return true;
+  }
+
+  return false;
+}
+
 async function getReportTemplateForOrg(
   organizationId: string,
   templateId: string
@@ -143,9 +184,7 @@ async function getReportTemplateForOrg(
 /**
  * Get a report template by ID
  */
-export async function getReportTemplate(
-  templateId: string
-): Promise<ActionResult<ReportTemplate>> {
+export async function getReportTemplate(templateId: string): Promise<ActionResult<ReportTemplate>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
@@ -212,7 +251,9 @@ async function generateExecutiveSummary(
   const periodLabel = `${format(dateRange.start, "MMM d, yyyy")} - ${format(dateRange.end, "MMM d, yyyy")}`;
 
   // Calculate previous period for comparison
-  const daysDiff = Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24));
+  const daysDiff = Math.ceil(
+    (dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24)
+  );
   const previousRange: DateRange = {
     start: subDays(dateRange.start, daysDiff),
     end: subDays(dateRange.end, daysDiff),
@@ -251,16 +292,15 @@ async function generateExecutiveSummary(
 /**
  * Generate team comparison data
  */
-async function generateTeamComparison(
-  organizationId: string
-): Promise<TeamComparisonRow[]> {
+async function generateTeamComparison(organizationId: string): Promise<TeamComparisonRow[]> {
   const supabase = createAdminClient();
   const analyticsContext = { organizationId };
 
   // Get all active users
   const { data: users } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       id,
       full_name,
       photo_url,
@@ -269,7 +309,8 @@ async function generateTeamComparison(
       total_reviews,
       nps_score,
       reputation_score
-    `)
+    `
+    )
     .eq("organization_id", organizationId)
     .eq("is_active", true)
     .order("reputation_score", { ascending: false });
@@ -307,8 +348,18 @@ export async function generateReportForOrg({
   templateId,
   dateRange,
   filters,
-}: GenerateReportForOrgParams
-): Promise<ActionResult<GeneratedReport>> {
+  shareToken,
+}: GenerateReportForOrgParams): Promise<ActionResult<GeneratedReport>> {
+  const hasAccess = await hasReportGenerationAccess({
+    organizationId,
+    templateId,
+    shareToken,
+  });
+
+  if (!hasAccess) {
+    return { success: false, error: "Unauthorized" };
+  }
+
   // Get template
   const templateResult = await getReportTemplateForOrg(organizationId, templateId);
   if (!templateResult.success || !templateResult.data) {
@@ -345,14 +396,22 @@ export async function generateReportForOrg({
 
   // Add sections based on config
   if (config.sections.includes("nps_breakdown")) {
-    const npsResult = await getNPSMetrics(filters?.userIds?.[0], analyticsDateRange, analyticsContext);
+    const npsResult = await getNPSMetrics(
+      filters?.userIds?.[0],
+      analyticsDateRange,
+      analyticsContext
+    );
     if (npsResult.success) {
       reportData.npsBreakdown = npsResult.data;
     }
   }
 
   if (config.sections.includes("csat_analysis")) {
-    const csatResult = await getCSATMetrics(filters?.userIds?.[0], analyticsDateRange, analyticsContext);
+    const csatResult = await getCSATMetrics(
+      filters?.userIds?.[0],
+      analyticsDateRange,
+      analyticsContext
+    );
     if (csatResult.success) {
       reportData.csatMetrics = csatResult.data;
     }
@@ -429,9 +488,9 @@ export async function generateReportForOrg({
     ]);
 
     reportData.trends = {
-      nps: npsTrend.data?.map(p => ({ date: p.date, value: p.value })) || [],
-      csat: csatTrend.data?.map(p => ({ date: p.date, value: p.value })) || [],
-      reviews: reviewsTrend.data?.map(p => ({ date: p.date, value: p.value })) || [],
+      nps: npsTrend.data?.map((p) => ({ date: p.date, value: p.value })) || [],
+      csat: csatTrend.data?.map((p) => ({ date: p.date, value: p.value })) || [],
+      reviews: reviewsTrend.data?.map((p) => ({ date: p.date, value: p.value })) || [],
     };
   }
 

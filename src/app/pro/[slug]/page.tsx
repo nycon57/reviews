@@ -8,6 +8,7 @@ import {
   generateProfilePageSchema,
 } from "@/lib/seo";
 import { logAgentVisit } from "@/lib/agents/detection";
+import { WebMcpClientRegistration } from "@/lib/webmcp/client-registration";
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import { ProProfileContent } from "./pro-profile-content";
 import { buildProfessionalBreadcrumbs } from "@/lib/directory/breadcrumb-utils";
@@ -97,6 +98,7 @@ export default async function LOProfilePage({ params }: PageProps) {
   return (
     <>
       <MultiSchemaStructuredData schemas={schemas} />
+      <WebMcpClientRegistration />
       <ProProfileContent
         professional={professional}
         organization={organization}

@@ -87,6 +87,15 @@ export async function handleSalesforceOAuthCallback(
       return { success: false, error: "OAuth session expired" };
     }
 
+    const context = await requireAdminRole();
+    if (!context) {
+      return { success: false, error: "Unauthorized - Admin role required" };
+    }
+
+    if (context.organizationId !== organizationId || context.userId !== _userId) {
+      return { success: false, error: "OAuth state does not match the current session" };
+    }
+
     // Exchange code for tokens
     const tokens = await exchangeCodeForTokens(code);
 

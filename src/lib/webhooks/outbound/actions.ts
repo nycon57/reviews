@@ -2,34 +2,42 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { ActionResult } from "@/lib/types/action-result";
 import { requireAdminAccess } from "@/lib/webhooks/actions";
+import { generateWebhookSecret } from "./service";
 import {
-  generateWebhookSecret,
-  isOutboundWebhookEventType,
   outboundWebhookSubscriptionInputSchema,
   type OutboundWebhookEventType,
-} from "@/lib/webhooks/outbound";
+} from "./types";
+import {
+  mapOutboundWebhookSubscriptionView,
+  type OutboundWebhookSubscriptionView,
+} from "./subscriptions";
 
-export interface ActionResult<T = void> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+export type OutboundWebhookEvent = OutboundWebhookEventType;
+export type OutboundWebhookSubscription = OutboundWebhookSubscriptionView;
 
-export interface OutboundWebhookSubscription {
+export interface OutboundWebhookDelivery {
   id: string;
-  target_url: string;
-  events: OutboundWebhookEventType[];
-  description: string | null;
-  source: string;
-  is_active: boolean;
-  last_delivery_at: string | null;
-  failure_count: number;
-  created_at: string;
-  updated_at: string;
+  eventId: string;
+  eventType: OutboundWebhookEvent;
+  status: string;
+  responseStatus: number | null;
+  attemptCount: number;
+  maxAttempts: number;
+  errorMessage: string | null;
+  createdAt: string;
+  lastAttemptAt: string | null;
+  deliveredAt: string | null;
 }
 
-export interface OutboundWebhookDeliverySummary {
+export interface CreateOutboundWebhookSubscriptionInput {
+  targetUrl: string;
+  events: OutboundWebhookEvent[];
+  description?: string;
+}
+
+function mapDeliveryRow(row: {
   id: string;
   event_type: string;
   event_id: string;
@@ -41,39 +49,23 @@ export interface OutboundWebhookDeliverySummary {
   created_at: string;
   last_attempt_at: string | null;
   delivered_at: string | null;
-}
-
-function normalizeEvents(events: string[]): OutboundWebhookEventType[] {
-  return events.filter(isOutboundWebhookEventType);
-}
-
-function mapSubscriptionRow(row: {
-  id: string;
-  target_url: string;
-  events: string[];
-  description: string | null;
-  source: string;
-  is_active: boolean;
-  last_delivery_at: string | null;
-  failure_count: number;
-  created_at: string;
-  updated_at: string;
-}): OutboundWebhookSubscription {
+}): OutboundWebhookDelivery {
   return {
     id: row.id,
-    target_url: row.target_url,
-    events: normalizeEvents(row.events),
-    description: row.description,
-    source: row.source,
-    is_active: row.is_active,
-    last_delivery_at: row.last_delivery_at,
-    failure_count: row.failure_count,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
+    eventId: row.event_id,
+    eventType: row.event_type as OutboundWebhookEvent,
+    status: row.status,
+    responseStatus: row.response_status,
+    attemptCount: row.attempt_count,
+    maxAttempts: row.max_attempts,
+    errorMessage: row.error_message,
+    createdAt: row.created_at,
+    lastAttemptAt: row.last_attempt_at,
+    deliveredAt: row.delivered_at,
   };
 }
 
-export async function listOutboundWebhookSubscriptions(): Promise<
+export async function listOutboundEndpoints(): Promise<
   ActionResult<OutboundWebhookSubscription[]>
 > {
   try {
@@ -95,7 +87,7 @@ export async function listOutboundWebhookSubscriptions(): Promise<
 
     return {
       success: true,
-      data: (data ?? []).map(mapSubscriptionRow),
+      data: (data ?? []).map(mapOutboundWebhookSubscriptionView),
     };
   } catch (error) {
     console.error("[outbound-webhooks] list subscriptions failed:", error);
@@ -103,16 +95,18 @@ export async function listOutboundWebhookSubscriptions(): Promise<
   }
 }
 
-export async function createOutboundWebhookSubscription(input: {
-  target_url: string;
-  events?: OutboundWebhookEventType[];
-  description?: string;
-}): Promise<ActionResult<OutboundWebhookSubscription & { secret: string }>> {
+export async function createOutboundEndpoint(
+  input: CreateOutboundWebhookSubscriptionInput
+): Promise<ActionResult<OutboundWebhookSubscription & { secret: string }>> {
   try {
     const auth = await requireAdminAccess();
     if (!auth.success) return { success: false, error: auth.error };
 
-    const parsed = outboundWebhookSubscriptionInputSchema.safeParse(input);
+    const parsed = outboundWebhookSubscriptionInputSchema.safeParse({
+      target_url: input.targetUrl,
+      events: input.events,
+      description: input.description,
+    });
     if (!parsed.success) {
       return {
         success: false,
@@ -146,7 +140,7 @@ export async function createOutboundWebhookSubscription(input: {
     return {
       success: true,
       data: {
-        ...mapSubscriptionRow(data),
+        ...mapOutboundWebhookSubscriptionView(data),
         secret,
       },
     };
@@ -156,7 +150,7 @@ export async function createOutboundWebhookSubscription(input: {
   }
 }
 
-export async function toggleOutboundWebhookSubscription(
+export async function toggleOutboundEndpoint(
   subscriptionId: string,
   isActive: boolean
 ): Promise<ActionResult> {
@@ -186,7 +180,7 @@ export async function toggleOutboundWebhookSubscription(
   }
 }
 
-export async function deleteOutboundWebhookSubscription(
+export async function deleteOutboundEndpoint(
   subscriptionId: string
 ): Promise<ActionResult> {
   try {
@@ -214,9 +208,9 @@ export async function deleteOutboundWebhookSubscription(
   }
 }
 
-export async function getRecentWebhookDeliveries(
+export async function listOutboundDeliveries(
   subscriptionId: string
-): Promise<ActionResult<OutboundWebhookDeliverySummary[]>> {
+): Promise<ActionResult<OutboundWebhookDelivery[]>> {
   try {
     const auth = await requireAdminAccess();
     if (!auth.success) return { success: false, error: auth.error };
@@ -253,7 +247,7 @@ export async function getRecentWebhookDeliveries(
 
     return {
       success: true,
-      data: data ?? [],
+      data: (data ?? []).map(mapDeliveryRow),
     };
   } catch (error) {
     console.error("[outbound-webhooks] recent deliveries failed:", error);

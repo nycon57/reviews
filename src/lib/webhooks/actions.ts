@@ -2,12 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
-import {
-  getNextRetryTime,
-  shouldRetry,
-  categorizeError,
-  DEFAULT_RETRY_CONFIG,
-} from "./retry";
+import { getNextRetryTime, shouldRetry, categorizeError, DEFAULT_RETRY_CONFIG } from "./retry";
 
 export interface WebhookLog {
   id: string;
@@ -83,8 +78,7 @@ function mapRowToWebhookLog(row: WebhookLogRow): WebhookLog {
 
 // Common admin authorization check
 export async function requireAdminAccess(): Promise<
-  | { success: true; organizationId: string; userId: string }
-  | { success: false; error: string }
+  { success: true; organizationId: string; userId: string } | { success: false; error: string }
 > {
   const user = await unifiedGetUser();
   if (!user) {
@@ -174,9 +168,7 @@ export async function getWebhookLogs(
       return { success: false, error: error.message };
     }
 
-    const logs = (data || []).map((row) =>
-      mapRowToWebhookLog(row as unknown as WebhookLogRow)
-    );
+    const logs = (data || []).map((row) => mapRowToWebhookLog(row as unknown as WebhookLogRow));
 
     return {
       success: true,
@@ -250,8 +242,7 @@ export async function getWebhookStats(
       }
 
       if (log.event_type) {
-        stats.byEventType[log.event_type] =
-          (stats.byEventType[log.event_type] || 0) + 1;
+        stats.byEventType[log.event_type] = (stats.byEventType[log.event_type] || 0) + 1;
       }
 
       if (log.processing_time_ms !== null) {
@@ -261,9 +252,7 @@ export async function getWebhookStats(
     }
 
     if (processedWithTime > 0) {
-      stats.avgProcessingTimeMs = Math.round(
-        totalProcessingTime / processedWithTime
-      );
+      stats.avgProcessingTimeMs = Math.round(totalProcessingTime / processedWithTime);
     }
 
     if (stats.total > 0) {
@@ -278,9 +267,7 @@ export async function getWebhookStats(
 }
 
 // Get a single webhook log with full details
-export async function getWebhookLogDetail(
-  logId: string
-): Promise<ActionResult<WebhookLog>> {
+export async function getWebhookLogDetail(logId: string): Promise<ActionResult<WebhookLog>> {
   try {
     const auth = await requireAdminAccess();
     if (!auth.success) {
@@ -375,10 +362,7 @@ export async function retryFailedQueueItem(
       };
     }
 
-    const nextRetryTime = getNextRetryTime(
-      currentRetryCount + 1,
-      DEFAULT_RETRY_CONFIG
-    );
+    const nextRetryTime = getNextRetryTime(currentRetryCount + 1, DEFAULT_RETRY_CONFIG);
 
     const adminSupabase = createAdminClient();
     const { error: updateError } = await adminSupabase
@@ -439,6 +423,9 @@ export async function scheduleRetryWithBackoff(
   queueItemId: string,
   errorMessage: string
 ): Promise<void> {
+  const auth = await requireAdminAccess();
+  if (!auth.success) return;
+
   const adminSupabase = createAdminClient();
 
   // Get current retry count
@@ -449,6 +436,10 @@ export async function scheduleRetryWithBackoff(
     .single();
 
   if (!queueItem) {
+    return;
+  }
+
+  if (queueItem.organization_id !== auth.organizationId) {
     return;
   }
 

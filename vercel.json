@@ -123,6 +123,10 @@
     {
       "path": "/api/cron/prune-rate-limit-windows",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/monitor-crons",
+      "schedule": "0 */2 * * *"
     }
   ]
 }

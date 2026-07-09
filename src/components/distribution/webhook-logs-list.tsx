@@ -7,7 +7,7 @@ import {
   WarningCircle as AlertCircle,
   Plugs as Webhook,
 } from "@phosphor-icons/react";
-import { formatDistanceToNow } from "date-fns";
+import { formatRelativeTime } from "@/lib/utils";
 
 interface WebhookLog {
   id: string;
@@ -102,7 +102,7 @@ export function WebhookLogsList() {
               <span className="font-medium font-mono text-sm">{log.event_type}</span>
             </div>
             <div className="text-xs text-muted-foreground">
-              {log.created_at && formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+              {log.created_at && formatRelativeTime(log.created_at)}
               {log.processing_time_ms && (
                 <span className="ml-2">({log.processing_time_ms}ms)</span>
               )}

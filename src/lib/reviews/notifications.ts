@@ -5,7 +5,7 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createNotification } from "@/lib/notifications/actions";
+import { createNotification } from "@/lib/notifications/system-actions";
 import { sendNewReviewNotificationEmail } from "@/lib/email";
 import { sendNegativeReviewAlertEnhancedEmail } from "@/lib/email/send";
 import type { Json } from "@/types/database.types";
@@ -49,11 +49,7 @@ export async function notifyReviewPublished(params: {
         .select("id, full_name, email")
         .eq("id", params.ownerUserId)
         .maybeSingle(),
-      supabase
-        .from("organizations")
-        .select("name")
-        .eq("id", params.organizationId)
-        .maybeSingle(),
+      supabase.from("organizations").select("name").eq("id", params.organizationId).maybeSingle(),
     ]);
     const orgName = org?.name || "your organization";
 
@@ -75,16 +71,12 @@ export async function notifyReviewPublished(params: {
       .from("notification_preferences")
       .select("user_id, email_enabled, email_new_review, email_negative_review")
       .in("user_id", recipientIds);
-    const prefsById = new Map(
-      (prefsRows || []).map((p) => [p.user_id as string, p])
-    );
+    const prefsById = new Map((prefsRows || []).map((p) => [p.user_id as string, p]));
     const emailAllowed = (userId: string, kind: "new" | "negative"): boolean => {
       const p = prefsById.get(userId);
       if (!p) return true;
       if (p.email_enabled === false) return false;
-      return kind === "negative"
-        ? p.email_negative_review !== false
-        : p.email_new_review !== false;
+      return kind === "negative" ? p.email_negative_review !== false : p.email_new_review !== false;
     };
 
     const metadata: Record<string, unknown> = {

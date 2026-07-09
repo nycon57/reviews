@@ -46,7 +46,7 @@ import {
   regenerateWebhookSecret,
   type WebhookConfig,
 } from "@/lib/distribution";
-import { formatDistanceToNow } from "date-fns";
+import { formatRelativeTime } from "@/lib/utils";
 
 export function WebhookConfigManager() {
   const [isPending, startTransition] = useTransition();
@@ -284,7 +284,7 @@ export function WebhookConfigManager() {
                     </Badge>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Created {formatDistanceToNow(new Date(config.createdAt), { addSuffix: true })}
+                    Created {formatRelativeTime(config.createdAt)}
                     {config.triggerCount > 0 && (
                       <span className="ml-2">
                         {config.triggerCount} trigger{config.triggerCount !== 1 && "s"}
@@ -292,7 +292,7 @@ export function WebhookConfigManager() {
                     )}
                     {config.lastTriggeredAt && (
                       <span className="ml-2">
-                        Last triggered {formatDistanceToNow(new Date(config.lastTriggeredAt), { addSuffix: true })}
+                        Last triggered {formatRelativeTime(config.lastTriggeredAt)}
                       </span>
                     )}
                   </p>

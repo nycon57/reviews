@@ -1615,6 +1615,25 @@ Create and rotate keys in [Workspace API Keys](/dashboard/organization?tab=api).
 | \`GET\` | \`/api/v2/companies/{id}\` | Keyed | Company detail with team roster summary |
 | \`GET\` | \`/api/v2/reviews\` | Keyed | Cross-professional approved review search by keyword, platform, rating, date, industry, and location |
 
+## Browser-agent tools (WebMCP)
+
+Public professional pages (\`/pro/{slug}\`) and organization pages (\`/org/{slug}\`) register read-only WebMCP tools when a browser exposes \`navigator.modelContext\`. Browsers without that API skip registration silently.
+
+Available tools:
+
+| Tool | Input | Data returned |
+|---|---|---|
+| \`searchProfessionals\` | \`name?\`, \`industry?\`, \`location?\`, \`min_rating?\` | Open-tier professional search results from \`/api/v2/professionals\` |
+| \`getProfessionalProfile\` | \`id\` | Open-tier professional profile summary fields |
+| \`getProfessionalReviews\` | \`id\`, \`page?\`, \`per_page?\` | Approved public review summaries, capped at 10 reviews per page |
+| \`getCompanyProfile\` | \`id\` | Public company profile summary fields |
+
+Security notes:
+- Client-side WebMCP tools never receive an API key.
+- Professional detail, professional reviews, and company detail use \`/api/webmcp/*\` server proxies so keyed v2 endpoints are not called from the browser.
+- The professional profile proxy intentionally returns only open-tier fields even though the shipped v2 profile endpoint is keyed.
+- Proxies require the server-only WebMCP internal API key env var and apply a 60 requests/minute per-origin limit using the \`webmcp-origin\` bucket. Provision a read-only scoped key. To rotate it, replace the Vercel environment variable and redeploy.
+
 ## curl example
 
 \`\`\`bash

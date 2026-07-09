@@ -1263,6 +1263,39 @@ export type Database = {
           },
         ]
       }
+      cron_heartbeats: {
+        Row: {
+          consecutive_failures: number
+          cron_name: string
+          last_duration_ms: number | null
+          last_run_at: string | null
+          last_status: string | null
+          last_success_at: string | null
+          last_summary: Json | null
+          updated_at: string
+        }
+        Insert: {
+          consecutive_failures?: number
+          cron_name: string
+          last_duration_ms?: number | null
+          last_run_at?: string | null
+          last_status?: string | null
+          last_success_at?: string | null
+          last_summary?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          consecutive_failures?: number
+          cron_name?: string
+          last_duration_ms?: number | null
+          last_run_at?: string | null
+          last_status?: string | null
+          last_success_at?: string | null
+          last_summary?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           created_at: string | null
@@ -10688,6 +10721,13 @@ export type Database = {
       mark_video_testimonial_submitted: {
         Args: { p_request_id: string }
         Returns: undefined
+      }
+      proof_link_referrer_summary: {
+        Args: { p_days?: number; p_limit?: number; p_link_id: string }
+        Returns: {
+          event_count: number
+          referrer: string
+        }[]
       }
       prune_proof_link_events: {
         Args: { retention_days?: number }

@@ -40,5 +40,5 @@ export default async function PublicSurveyPage({ params }: PageProps) {
     return <SurveyError message={result.error || "Survey not found"} />;
   }
 
-  return <PublicSurveyForm survey={result.data} />;
+  return <PublicSurveyForm key={result.data.token} survey={result.data} />;
 }

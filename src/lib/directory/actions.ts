@@ -164,6 +164,11 @@ function isEnterpriseAdmin(record: Record<string, unknown>): boolean {
   return org?.account_type === "enterprise";
 }
 
+async function requireDirectoryMaintenanceAccess(): Promise<boolean> {
+  const { isPlatformAdmin } = await import("@/lib/auth/actions");
+  return isPlatformAdmin();
+}
+
 /** Transform a raw DB record into a DirectoryProfessional */
 function transformRecord(
   record: Record<string, unknown>,
@@ -197,9 +202,7 @@ function transformRecord(
     ? { id: org.id, name: org.name, slug: org.slug, logo_url: org.logo_url, industry: null }
     : null;
 
-  const safeAddress = sanitizePublicAddress(
-    record.address as DirectoryProfessional["address"]
-  );
+  const safeAddress = sanitizePublicAddress(record.address as DirectoryProfessional["address"]);
 
   return {
     id: record.id as string,
@@ -222,7 +225,9 @@ function transformRecord(
     organization: effectiveOrg,
     branch_info: branchData,
     is_enterprise: org?.account_type === "enterprise",
-    is_pro: org?.account_type === "enterprise" || ["professional", "pro"].includes(org?.subscription_tier ?? ""),
+    is_pro:
+      org?.account_type === "enterprise" ||
+      ["professional", "pro"].includes(org?.subscription_tier ?? ""),
     distance_miles: distanceMiles,
   };
 }
@@ -248,11 +253,14 @@ export async function searchProfessionals(
       const radius = filters.radius || 50;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: radiusData, error: rpcError } = await (supabase.rpc as any)("search_professionals_by_radius", {
-        search_lat: filters.searchLat,
-        search_lng: filters.searchLng,
-        radius_miles: radius,
-      }) as { data: { user_id: string; distance_miles: number }[] | null; error: unknown };
+      const { data: radiusData, error: rpcError } = (await (supabase.rpc as any)(
+        "search_professionals_by_radius",
+        {
+          search_lat: filters.searchLat,
+          search_lng: filters.searchLng,
+          radius_miles: radius,
+        }
+      )) as { data: { user_id: string; distance_miles: number }[] | null; error: unknown };
 
       if (rpcError) {
         console.error("Radius search RPC error:", rpcError);
@@ -268,18 +276,20 @@ export async function searchProfessionals(
         }
 
         let radiusQuery = applyPublicProfessionalFilters(
-          supabase
-            .from("users")
-            .select(PROFESSIONAL_SELECT)
+          supabase.from("users").select(PROFESSIONAL_SELECT)
         ).in("id", radiusIds);
 
-        if (filters.organizationId) radiusQuery = radiusQuery.eq("organization_id", filters.organizationId);
+        if (filters.organizationId)
+          radiusQuery = radiusQuery.eq("organization_id", filters.organizationId);
         // Industry filtering handled at the page level via industryFilter prop
         if (filters.query?.trim()) {
           const searchTerm = `%${filters.query.trim().toLowerCase()}%`;
-          radiusQuery = radiusQuery.or(`full_name.ilike.${searchTerm},bio.ilike.${searchTerm},title.ilike.${searchTerm}`);
+          radiusQuery = radiusQuery.or(
+            `full_name.ilike.${searchTerm},bio.ilike.${searchTerm},title.ilike.${searchTerm}`
+          );
         }
-        if (filters.minRating && filters.minRating > 0) radiusQuery = radiusQuery.gte("average_rating", filters.minRating);
+        if (filters.minRating && filters.minRating > 0)
+          radiusQuery = radiusQuery.gte("average_rating", filters.minRating);
 
         const { data: radiusProfs } = await radiusQuery;
 
@@ -335,9 +345,7 @@ export async function searchProfessionals(
 
     // ---------- STANDARD ILIKE SEARCH (name/bio/title) ----------
     let query = applyPublicProfessionalFilters(
-      supabase
-        .from("users")
-        .select(PROFESSIONAL_SELECT, { count: "exact" })
+      supabase.from("users").select(PROFESSIONAL_SELECT, { count: "exact" })
     );
 
     if (filters.organizationId) {
@@ -346,7 +354,9 @@ export async function searchProfessionals(
 
     if (filters.query?.trim()) {
       const searchTerm = `%${filters.query.trim().toLowerCase()}%`;
-      query = query.or(`full_name.ilike.${searchTerm},bio.ilike.${searchTerm},title.ilike.${searchTerm}`);
+      query = query.or(
+        `full_name.ilike.${searchTerm},bio.ilike.${searchTerm},title.ilike.${searchTerm}`
+      );
     }
 
     if (filters.zip) {
@@ -404,7 +414,7 @@ export async function searchProfessionals(
       });
     }
 
-    const accurateCount = filters.bounds ? professionals.length : (count || 0);
+    const accurateCount = filters.bounds ? professionals.length : count || 0;
 
     const facets = await buildFacets(supabase);
 
@@ -425,9 +435,7 @@ export async function searchProfessionals(
 /** Build standard facets (states, specialties, languages) */
 async function buildFacets(supabase: ReturnType<typeof createAdminClient>) {
   const { data: stateData } = await applyPublicProfessionalFilters(
-    supabase
-      .from("users")
-      .select("address, organizations!inner(account_type)")
+    supabase.from("users").select("address, organizations!inner(account_type)")
   );
 
   const stateCounts = new Map<string, number>();
@@ -450,14 +458,9 @@ async function buildFacets(supabase: ReturnType<typeof createAdminClient>) {
 }
 
 /** @deprecated Use searchProfessionals instead */
-export async function searchLoanOfficers(
-  filters: SearchFilters,
-  page = 1,
-  pageSize = 20
-) {
+export async function searchLoanOfficers(filters: SearchFilters, page = 1, pageSize = 20) {
   return searchProfessionals(filters, page, pageSize);
 }
-
 
 /**
  * Update a professional's coordinates
@@ -468,12 +471,13 @@ export async function updateUserCoordinates(
   longitude: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!(await requireDirectoryMaintenanceAccess())) {
+      return { success: false, error: "Unauthorized" };
+    }
+
     const supabase = createAdminClient();
 
-    const { error } = await supabase
-      .from("users")
-      .update({ latitude, longitude })
-      .eq("id", id);
+    const { error } = await supabase.from("users").update({ latitude, longitude }).eq("id", id);
 
     if (error) {
       console.error("Update coordinates error:", error);
@@ -503,6 +507,10 @@ export async function updateLoanOfficerCoordinates(
 export async function batchGeocodeUsers(
   limit = 10
 ): Promise<{ success: boolean; processed: number; error?: string }> {
+  if (!(await requireDirectoryMaintenanceAccess())) {
+    return { success: false, processed: 0, error: "Unauthorized" };
+  }
+
   // Import geocoding at runtime to avoid circular dependencies
   const { geocodeAddressWithFallback } = await import("./geocoding");
 
@@ -538,12 +546,7 @@ export async function batchGeocodeUsers(
 
       if (!addr) continue;
 
-      const result = await geocodeAddressWithFallback(
-        addr.street,
-        addr.city,
-        addr.state,
-        addr.zip
-      );
+      const result = await geocodeAddressWithFallback(addr.street, addr.city, addr.state, addr.zip);
 
       if (result) {
         const { error: updateError } = await supabase
@@ -582,6 +585,10 @@ export async function batchGeocodeLoanOfficers(limit = 10) {
 export async function batchGeocodeBranches(
   limit = 10
 ): Promise<{ success: boolean; processed: number; error?: string }> {
+  if (!(await requireDirectoryMaintenanceAccess())) {
+    return { success: false, processed: 0, error: "Unauthorized" };
+  }
+
   // Import geocoding at runtime to avoid circular dependencies
   const { geocodeAddressWithFallback } = await import("./geocoding");
 
@@ -660,16 +667,14 @@ export async function getAvailableIndustries(): Promise<
 
     // Get all active professionals with their organization's industry
     const { data } = await applyPublicProfessionalFilters(
-      supabase
-        .from("users")
-        .select(
-          `
+      supabase.from("users").select(
+        `
           id,
           organizations!inner (
             industry
           )
         `
-        )
+      )
     );
 
     if (!data) return [];

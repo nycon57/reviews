@@ -23,7 +23,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Form,
@@ -138,7 +137,7 @@ export default function SignUpPage() {
   return (
     <Card>
       <CardHeader variant="plain" className="text-center">
-        <CardTitle className="text-2xl">Create an account</CardTitle>
+        <h1 className="text-2xl font-semibold leading-none tracking-tight text-heading-accent">Create an account</h1>
         <CardDescription>
           Get started with RepWell for your organization
         </CardDescription>
@@ -152,16 +151,16 @@ export default function SignUpPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
                       <Input
                         placeholder="John Doe"
                         className="pl-10"
                         {...field}
                       />
-                    </div>
-                  </FormControl>
+                    </FormControl>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -172,16 +171,16 @@ export default function SignUpPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Organization Name</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
                       <Input
                         placeholder="Acme Mortgage Co."
                         className="pl-10"
                         {...field}
                       />
-                    </div>
-                  </FormControl>
+                    </FormControl>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -192,17 +191,17 @@ export default function SignUpPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
                       <Input
                         type="email"
                         placeholder="you@example.com"
                         className="pl-10"
                         {...field}
                       />
-                    </div>
-                  </FormControl>
+                    </FormControl>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -213,17 +212,17 @@ export default function SignUpPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
                       <Input
                         type="password"
                         placeholder="Create a strong password"
                         className="pl-10"
                         {...field}
                       />
-                    </div>
-                  </FormControl>
+                    </FormControl>
+                  </div>
                   {password && <PasswordStrength password={password} />}
                   <FormMessage />
                 </FormItem>
@@ -231,11 +230,11 @@ export default function SignUpPage() {
             />
             <p className="text-xs text-muted-foreground">
               By signing up, you agree to our{" "}
-              <Link href="/terms" className="text-primary hover:underline">
+              <Link href="/terms" className="font-medium text-repwell-teal-400 underline">
                 Terms of Service
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="text-primary hover:underline">
+              <Link href="/privacy" className="font-medium text-repwell-teal-400 underline">
                 Privacy Policy
               </Link>
               .
@@ -256,7 +255,7 @@ export default function SignUpPage() {
       <CardFooter>
         <p className="w-full text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:underline">
+          <Link href="/login" className="font-medium text-repwell-teal-400 underline">
             Sign in
           </Link>
         </p>

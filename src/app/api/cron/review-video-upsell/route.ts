@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  sendReviewVideoUpsellEmails,
-  UPSELL_BATCH_LIMIT,
-} from "@/lib/video-testimonials/upsell";
+import { sendReviewVideoUpsellEmails, UPSELL_BATCH_LIMIT } from "@/lib/video-testimonials/upsell";
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 
 // Zod schema for query parameters
 const cronParamsSchema = z.object({
@@ -45,49 +43,51 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    // Validate and parse query params with Zod
-    const url = new URL(request.url);
-    const parseResult = cronParamsSchema.safeParse({
-      batch_size: url.searchParams.get("batch_size") ?? undefined,
-    });
+  return withCronHeartbeat("review-video-upsell", async () => {
+    try {
+      // Validate and parse query params with Zod
+      const url = new URL(request.url);
+      const parseResult = cronParamsSchema.safeParse({
+        batch_size: url.searchParams.get("batch_size") ?? undefined,
+      });
 
-    if (!parseResult.success) {
+      if (!parseResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parseResult.error.errors[0]?.message || "Invalid parameters",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const { batch_size: batchSize } = parseResult.data;
+
+      const result = await sendReviewVideoUpsellEmails(batchSize);
+
+      return NextResponse.json({
+        success: true,
+        processed: result.processed,
+        sent: result.sent,
+        skipped: result.skipped,
+        failed: result.failed,
+        errors: result.errors.slice(0, 10), // Limit error details returned
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Review video upsell cron job error:", error);
+
       return NextResponse.json(
         {
           success: false,
-          error: parseResult.error.errors[0]?.message || "Invalid parameters",
+          error: error instanceof Error ? error.message : "Unknown error",
           timestamp: new Date().toISOString(),
         },
-        { status: 400 }
+        { status: 500 }
       );
     }
-
-    const { batch_size: batchSize } = parseResult.data;
-
-    const result = await sendReviewVideoUpsellEmails(batchSize);
-
-    return NextResponse.json({
-      success: true,
-      processed: result.processed,
-      sent: result.sent,
-      skipped: result.skipped,
-      failed: result.failed,
-      errors: result.errors.slice(0, 10), // Limit error details returned
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Review video upsell cron job error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+  });
 }
 
 /**

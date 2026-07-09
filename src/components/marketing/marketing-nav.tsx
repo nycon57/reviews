@@ -39,6 +39,7 @@ export function MarketingNav() {
         <Link
           href="/"
           className="flex items-center transition-opacity hover:opacity-80"
+          aria-label="RepWell home"
         >
           <Image
             src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"

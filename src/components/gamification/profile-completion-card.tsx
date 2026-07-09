@@ -61,6 +61,7 @@ const milestoneIcons: Record<string, React.ElementType> = {
 
 interface ProfileCompletionCardProps {
   loanOfficerId?: string;
+  initialData?: ProfileCompletionScore | null;
   className?: string;
   showSections?: boolean;
   showMilestones?: boolean;
@@ -69,27 +70,34 @@ interface ProfileCompletionCardProps {
 
 export function ProfileCompletionCard({
   loanOfficerId,
+  initialData,
   className,
   showSections = true,
   showMilestones = true,
   showTips = true,
 }: ProfileCompletionCardProps) {
-  const [data, setData] = useState<ProfileCompletionScore | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [fetchedData, setFetchedData] = useState<ProfileCompletionScore | null>(null);
+  const [isLoading, setIsLoading] = useState(initialData === undefined);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isExpanded, setIsExpanded] = useState(false);
+  const data = initialData !== undefined ? initialData : fetchedData;
+  const loading = initialData !== undefined ? false : isLoading;
 
   useEffect(() => {
+    if (initialData !== undefined) {
+      return;
+    }
+
     async function loadData() {
       setIsLoading(true);
       const result = await getProfileCompletionScore(loanOfficerId);
       if (result.success && result.data) {
-        setData(result.data);
+        setFetchedData(result.data);
       }
       setIsLoading(false);
     }
     loadData();
-  }, [loanOfficerId]);
+  }, [loanOfficerId, initialData]);
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {
@@ -103,7 +111,7 @@ export function ProfileCompletionCard({
     });
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Card className={cn("shadow-soft", className)}>
         <CardHeader className="pb-4">

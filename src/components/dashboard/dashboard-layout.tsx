@@ -6,6 +6,7 @@ import { Header } from "./header";
 import { MobileNavTrigger } from "./mobile-nav";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { cn } from "@/lib/utils";
+import { setCookie } from "@/lib/utils/cookies";
 import { PermissionProvider } from "@/lib/permissions/context";
 import type { UserContext } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
@@ -94,12 +95,10 @@ export function DashboardLayout({
 
   const handleSidebarCollapsedChange = React.useCallback((collapsed: boolean) => {
     setSidebarCollapsed(collapsed);
-    document.cookie = [
-      `repwell_sidebar_collapsed=${collapsed ? "true" : "false"}`,
-      "Path=/dashboard",
-      "Max-Age=31536000",
-      "SameSite=Lax",
-    ].join("; ");
+    setCookie("repwell_sidebar_collapsed", collapsed ? "true" : "false", {
+      path: "/dashboard",
+      maxAge: 31536000,
+    });
   }, []);
 
   return (

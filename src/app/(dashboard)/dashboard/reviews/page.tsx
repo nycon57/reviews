@@ -27,7 +27,7 @@ import { DisputeQueue } from "@/components/reviews/dispute-queue";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { getAccessContext } from "@/lib/access";
 import { ShareStudioCards } from "@/components/dashboard/share-studio-cards";
-import { StatsRowSkeleton, ReviewListSkeleton } from "@/components/shared";
+import { ReviewsHubFallback } from "@/components/shared";
 
 // Dynamic import for heavy UnifiedContentHub component
 const UnifiedContentHub = dynamic(
@@ -57,17 +57,6 @@ type UserRole = "admin" | "manager" | "user";
 
 function isValidRole(role: unknown): role is UserRole {
   return typeof role === "string" && ALLOWED_ROLES.has(role as UserRole);
-}
-
-function ReviewsHubFallback() {
-  return (
-    <div className="space-y-6">
-      <StatsRowSkeleton />
-      <Skeleton className="h-10 w-80 max-w-full" />
-      <Skeleton className="h-12 w-full" />
-      <ReviewListSkeleton count={5} />
-    </div>
-  );
 }
 
 async function getUserRole(): Promise<UserRole> {

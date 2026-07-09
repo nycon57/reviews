@@ -1,16 +1,18 @@
 "use client";
 
-import { createElement, useMemo, useSyncExternalStore } from "react";
+import { createElement, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { X as XIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { SUPPORT_EMAIL } from "@/lib/brand";
 import { cn } from "@/lib/utils";
+import { setCookie } from "@/lib/utils/cookies";
 import { scaleIn, staggerContainer, staggerContainerDelayed, fadeInUp } from "@/lib/motion";
 import { getIconOrDefault } from "@/lib/icons/registry";
 
-const ACTIVATION_DISMISS_EVENT = "repwell:activation-checklist-dismissed";
+const ACTIVATION_DISMISSED_COOKIE = "repwell_activation_dismissed";
+const ACTIVATION_DISMISSED_MAX_AGE = 60 * 60 * 24 * 365;
 
 interface EmptyStateAction {
   label: string;
@@ -276,74 +278,30 @@ export interface WelcomeBannerStep {
 
 interface WelcomeBannerProps {
   userName?: string;
-  completionPercent?: number;
-  steps?: WelcomeBannerStep[];
-  userId?: string;
+  steps: WelcomeBannerStep[];
   className?: string;
 }
 
 export function WelcomeBanner({
   userName,
-  completionPercent,
   steps,
-  userId,
   className,
 }: WelcomeBannerProps) {
-  const resolvedSteps = useMemo(
-    () =>
-      steps ?? [
-        { id: "profile", label: "Complete your profile", href: "/dashboard/settings", done: false },
-        {
-          id: "review-request",
-          label: "Send your first review request",
-          href: "/dashboard/reviews?tab=requests",
-          done: false,
-        },
-        {
-          id: "review-source",
-          label: "Connect review sources",
-          href: "/dashboard/organization?tab=integrations",
-          done: false,
-        },
-      ],
-    [steps]
-  );
-  const completedSteps = resolvedSteps.filter((step) => step.done).length;
-  const progress =
-    completionPercent ?? Math.round((completedSteps / resolvedSteps.length) * 100);
-  const isComplete = completedSteps === resolvedSteps.length;
-  const storageKey = userId ? `repwell:activation-checklist-dismissed:${userId}` : null;
-  const isDismissed = useSyncExternalStore(
-    (onStoreChange) => {
-      if (!storageKey || typeof window === "undefined") {
-        return () => {};
-      }
+  const [dismissed, setDismissed] = useState(false);
+  const completedSteps = steps.filter((step) => step.done).length;
+  const progress = Math.round((completedSteps / steps.length) * 100);
+  const isComplete = completedSteps === steps.length;
 
-      const handleChange = () => onStoreChange();
-      window.addEventListener("storage", handleChange);
-      window.addEventListener(ACTIVATION_DISMISS_EVENT, handleChange);
-
-      return () => {
-        window.removeEventListener("storage", handleChange);
-        window.removeEventListener(ACTIVATION_DISMISS_EVENT, handleChange);
-      };
-    },
-    () =>
-      storageKey && typeof window !== "undefined"
-        ? window.localStorage.getItem(storageKey) === "true"
-        : false,
-    () => false
-  );
-
-  if (isComplete || isDismissed) {
+  if (isComplete || dismissed) {
     return null;
   }
 
   const handleDismiss = () => {
-    if (storageKey) {
-      window.localStorage.setItem(storageKey, "true");
-      window.dispatchEvent(new Event(ACTIVATION_DISMISS_EVENT));
-    }
+    setDismissed(true);
+    setCookie(ACTIVATION_DISMISSED_COOKIE, "1", {
+      path: "/dashboard",
+      maxAge: ACTIVATION_DISMISSED_MAX_AGE,
+    });
   };
 
   return (
@@ -386,7 +344,7 @@ export function WelcomeBanner({
             />
           </div>
           <span className="text-xs font-medium text-white/80">
-            {completedSteps} of {resolvedSteps.length} complete
+            {completedSteps} of {steps.length} complete
           </span>
         </div>
 
@@ -396,7 +354,7 @@ export function WelcomeBanner({
           initial="hidden"
           animate="visible"
         >
-          {resolvedSteps.map((step, i) => (
+          {steps.map((step, i) => (
             <motion.a
               key={step.id}
               href={step.href}

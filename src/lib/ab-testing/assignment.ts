@@ -1,6 +1,7 @@
 // Cookie-based A/B variant assignment (S131)
 // Deterministic: same visitor always gets the same variant per test
 
+import { setCookie } from "@/lib/utils/cookies";
 import type { ABVariant } from "./types";
 
 const COOKIE_PREFIX = "rw_ab_";
@@ -42,9 +43,9 @@ export function readVariantFromCookie(testId: string): ABVariant | null {
 function writeCookie(name: string, value: string): void {
   if (typeof document === "undefined") return;
 
-  const maxAge = COOKIE_MAX_AGE_DAYS * 24 * 60 * 60;
-  const secure = window.location.protocol === "https:" ? ";Secure" : "";
-  document.cookie = `${name}=${value};path=/;max-age=${maxAge};SameSite=Lax${secure}`;
+  setCookie(name, value, {
+    maxAge: COOKIE_MAX_AGE_DAYS * 24 * 60 * 60,
+  });
 }
 
 /**

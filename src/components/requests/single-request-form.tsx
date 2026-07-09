@@ -12,9 +12,8 @@ import {
 import { createSurveyAndQueue } from "@/lib/distribution/actions";
 import { createVideoTestimonialRequest } from "@/lib/video-testimonials/actions";
 import { EmailTemplatePicker } from "@/components/email-builder/email-template-picker";
+import { isValidEmail } from "@/lib/utils";
 import type { RequestType } from "@/lib/requests/bulk-request-types";
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface SingleRequestFormProps {
   requestType: RequestType;
@@ -56,7 +55,7 @@ export function SingleRequestForm({
 
     if (!trimmedEmail) {
       nextErrors.customerEmail = "Enter the customer's email address.";
-    } else if (!EMAIL_PATTERN.test(trimmedEmail)) {
+    } else if (!isValidEmail(trimmedEmail)) {
       nextErrors.customerEmail = "Enter a valid email address.";
     }
 
@@ -173,7 +172,7 @@ export function SingleRequestForm({
                 ...prev,
                 customerEmail: "Enter the customer's email address.",
               }));
-            } else if (!EMAIL_PATTERN.test(trimmedEmail)) {
+            } else if (!isValidEmail(trimmedEmail)) {
               setFieldErrors((prev) => ({
                 ...prev,
                 customerEmail: "Enter a valid email address.",

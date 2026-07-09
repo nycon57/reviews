@@ -100,7 +100,7 @@ export async function buildProfileOpenGraphImage(input: ProfileOpenGraphCardData
   const initials = getInitials(input.monogramSource || input.name) || "RW";
   const descriptor = input.descriptor || variantLabel(input.variant);
   const affiliation = input.affiliation || "Verified customer reviews";
-  const fonts = await loadOgFonts({ includeErstoria: true, excludeWoff2: true });
+  const fonts = await loadOgFonts({ includeErstoria: true });
   const hasInter = fonts.some((font) => font.name === "Inter");
   const hasErstoria = fonts.some((font) => font.name === "Erstoria");
   const bodyFontFamily = hasInter ? "Inter" : "Arial";

@@ -3,6 +3,7 @@
 import { useCallback, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { pushMergedSearchParams } from "@/lib/url/search-params";
 
 export interface UrlSyncedTabDef {
   value: string;
@@ -47,16 +48,12 @@ export function UrlSyncedTabs({
 
   const handleTabChange = useCallback(
     (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value === defaultTab) {
-        params.delete("tab");
-      } else {
-        params.set("tab", value);
-      }
-      const query = params.toString();
-      router.push(query ? `${basePath}?${query}` : basePath, {
-        scroll: false,
-      });
+      pushMergedSearchParams(
+        router,
+        searchParams,
+        { tab: value },
+        { basePath, defaults: { tab: defaultTab } }
+      );
     },
     [router, searchParams, basePath, defaultTab]
   );

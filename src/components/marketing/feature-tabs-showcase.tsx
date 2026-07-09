@@ -22,15 +22,12 @@ type ImageType = {
   alt: string;
 };
 
-type LayoutVariant = "single" | "floating" | "wide" | "grid";
-
 interface FeatureTab {
   icon: React.ComponentType<IconProps>;
   title: string;
   tabName: string;
   summary: string;
   bulletPoints?: string[];
-  layoutVariant: LayoutVariant;
   images: ImageType[];
   link?: {
     name: string;
@@ -58,7 +55,6 @@ const FEATURE_TABS: FeatureTab[] = [
       "Smart follow-up sequences that boost responses",
       "Customizable templates for your brand voice",
     ],
-    layoutVariant: "wide",
     images: [
       {
         src: "/images/product/reviews-hub.png",
@@ -81,7 +77,6 @@ const FEATURE_TABS: FeatureTab[] = [
       "Automated weekly and monthly reports",
       "Compare performance across team members",
     ],
-    layoutVariant: "wide",
     images: [
       {
         src: "/images/product/dashboard-home.png",
@@ -104,7 +99,6 @@ const FEATURE_TABS: FeatureTab[] = [
       "Key phrase extraction identifies themes",
       "AI-suggested response templates",
     ],
-    layoutVariant: "wide",
     images: [
       {
         src: "/images/product/analytics.png",
@@ -131,7 +125,6 @@ const FEATURE_TABS: FeatureTab[] = [
       "Video testimonial capture and editing",
       "Automated social media sharing",
     ],
-    layoutVariant: "wide",
     images: [
       {
         src: "/images/product/share-studio.png",
@@ -200,242 +193,47 @@ const imageVariants = {
 // Image layout components
 interface ImagesProps {
   images: ImageType[];
-  variant: LayoutVariant;
   overlayBadge?: FeatureTab["overlayBadge"];
 }
 
-function FeatureImages({ images, variant, overlayBadge }: ImagesProps) {
-  // Container ref for drag bounds
-  const containerRef = React.useRef<HTMLDivElement>(null);
+function FeatureImages({ images, overlayBadge }: ImagesProps) {
+  return (
+    <motion.div
+      variants={imageVariants}
+      className="relative h-full min-h-[400px] lg:min-h-[620px] xl:min-h-[700px]"
+    >
+      <div className="absolute top-1/2 left-[5%] -translate-y-1/2 w-[130%] aspect-video overflow-hidden rounded-2xl shadow-2xl">
+        <Image
+          src={images[0].src}
+          alt={images[0].alt}
+          fill
+          className="object-cover"
+          sizes="80vw"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-repwell-teal-500/30 via-transparent to-transparent" />
+      </div>
 
-  // Track which card is on top for z-index stacking
-  const [topCardIndex, setTopCardIndex] = React.useState<number | null>(null);
-
-  // Track which card is being dragged for opacity dimming
-  const [draggingIndex, setDraggingIndex] = React.useState<number | null>(null);
-
-  // Pile of photos layout - overlapping, intentional stacking
-  const pilePositions = [
-    { top: "12%", left: "8%", rotate: -6, zIndex: 4, scale: 1 },
-    { top: "8%", left: "28%", rotate: 4, zIndex: 3, scale: 0.95 },
-    { top: "32%", left: "18%", rotate: -3, zIndex: 2, scale: 0.92 },
-    { top: "28%", left: "38%", rotate: 7, zIndex: 1, scale: 0.88 },
-  ];
-
-  switch (variant) {
-    // Single full-bleed image on the right - fills container
-    case "single":
-      return (
+      {overlayBadge && (
         <motion.div
-          variants={imageVariants}
-          className="relative h-full min-h-[400px] lg:min-h-[620px] xl:min-h-[700px]"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="absolute bottom-8 right-8 bg-white/95 backdrop-blur-sm rounded-2xl px-5 py-4 shadow-xl"
         >
-          <div className="absolute inset-0 overflow-hidden rounded-2xl lg:rounded-l-2xl lg:rounded-r-none shadow-2xl">
-            <Image
-              src={images[0].src}
-              alt={images[0].alt}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-            />
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300">
+              <MessageSquare className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-repwell-teal-500">{overlayBadge.title}</p>
+              <p className="text-xs text-repwell-teal-400">{overlayBadge.subtitle}</p>
+            </div>
           </div>
         </motion.div>
-      );
-
-    // Pile of photos layout - stacked like scattered polaroids, draggable
-    case "floating":
-      return (
-        <motion.div
-          ref={containerRef}
-          variants={imageVariants}
-          className="relative h-full min-h-[400px] lg:min-h-[620px] xl:min-h-[700px]"
-        >
-          <div className="relative h-full w-full flex items-center justify-center">
-            {images.slice(0, 4).map((img, i) => {
-              const position = pilePositions[i];
-              const isOnTop = topCardIndex === i;
-              const isDragging = draggingIndex === i;
-              const isOtherDragging = draggingIndex !== null && draggingIndex !== i;
-
-              return (
-                <motion.div
-                  key={`pile-${i}`}
-                  drag
-                  dragConstraints={containerRef}
-                  dragElastic={0.1}
-                  dragMomentum={true}
-                  dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
-                  onDragStart={() => {
-                    setTopCardIndex(i);
-                    setDraggingIndex(i);
-                  }}
-                  onDragEnd={() => {
-                    setDraggingIndex(null);
-                  }}
-                  initial={{ opacity: 0, scale: 0.6, rotate: 0, y: 40 }}
-                  animate={{
-                    opacity: isOtherDragging ? 0.7 : 1,
-                    scale: position?.scale || 1,
-                    rotate: position?.rotate || 0,
-                    y: 0,
-                  }}
-                  whileDrag={{
-                    scale: 1.05,
-                    rotate: 0,
-                    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.35)",
-                  }}
-                  transition={{
-                    delay: 0.1 * (i + 1),
-                    duration: 0.6,
-                    type: "spring",
-                    stiffness: 120,
-                    damping: 14,
-                  }}
-                  style={{
-                    top: position?.top,
-                    left: position?.left,
-                    zIndex: isOnTop ? 10 : position?.zIndex,
-                    cursor: isDragging ? "grabbing" : "grab",
-                    touchAction: "none",
-                  }}
-                  className={cn(
-                    "absolute aspect-[3/4] w-[44%] lg:w-[38%] overflow-hidden rounded-lg bg-white p-2 shadow-2xl",
-                    "transition-shadow duration-200",
-                    isDragging && "ring-2 ring-repwell-teal-300/30"
-                  )}
-                >
-                  <div className="relative h-full w-full overflow-hidden rounded pointer-events-none">
-                    <Image
-                      src={img.src}
-                      alt={img.alt}
-                      fill
-                      className="object-cover"
-                      sizes="25vw"
-                      draggable={false}
-                    />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-      );
-
-    // Wide cinematic image that extends beyond container
-    case "wide":
-      return (
-        <motion.div
-          variants={imageVariants}
-          className="relative h-full min-h-[400px] lg:min-h-[620px] xl:min-h-[700px]"
-        >
-          <div className="absolute top-1/2 left-[5%] -translate-y-1/2 w-[130%] aspect-video overflow-hidden rounded-2xl shadow-2xl">
-            <Image
-              src={images[0].src}
-              alt={images[0].alt}
-              fill
-              className="object-cover"
-              sizes="80vw"
-              priority
-            />
-            {/* Gradient overlay for depth */}
-            <div className="absolute inset-0 bg-gradient-to-t from-repwell-teal-500/30 via-transparent to-transparent" />
-          </div>
-
-          {/* Floating badge (per-tab, optional) */}
-          {overlayBadge && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="absolute bottom-8 right-8 bg-white/95 backdrop-blur-sm rounded-2xl px-5 py-4 shadow-xl"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300">
-                  <MessageSquare className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-repwell-teal-500">{overlayBadge.title}</p>
-                  <p className="text-xs text-repwell-teal-400">{overlayBadge.subtitle}</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </motion.div>
-      );
-
-    // Grid layout with 2 small + 1 tall image
-    case "grid":
-    default:
-      return (
-        <motion.div
-          variants={imageVariants}
-          className="relative h-full min-h-[400px] lg:min-h-[620px] xl:min-h-[700px] pl-4 xl:pl-0"
-        >
-          <div className="grid h-full grid-cols-2 grid-rows-2 gap-4">
-            {/* Top left */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="col-start-1 col-end-2 row-start-1 row-end-2 overflow-hidden rounded-xl shadow-lg"
-            >
-              <div className="relative h-full w-full">
-                <Image
-                  src={images[0].src}
-                  alt={images[0].alt}
-                  fill
-                  className="object-cover"
-                  sizes="25vw"
-                />
-              </div>
-            </motion.div>
-
-            {/* Bottom left */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="col-start-1 col-end-2 row-start-2 row-end-3 overflow-hidden rounded-xl shadow-lg"
-            >
-              <div className="relative h-full w-full">
-                <Image
-                  src={images[1].src}
-                  alt={images[1].alt}
-                  fill
-                  className="object-cover"
-                  sizes="25vw"
-                />
-              </div>
-            </motion.div>
-
-            {/* Right tall */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="col-start-2 col-end-3 row-start-1 row-end-3 overflow-hidden rounded-l-xl shadow-xl"
-            >
-              <div className="relative h-full w-full">
-                <Image
-                  src={images[2].src}
-                  alt={images[2].alt}
-                  fill
-                  className="object-cover"
-                  sizes="25vw"
-                />
-                {/* Overlay with stat */}
-                <div className="absolute inset-0 bg-gradient-to-t from-repwell-teal-500/60 to-transparent" />
-                <div className="absolute bottom-6 left-6 text-white">
-                  <p className="font-display text-4xl font-bold">+300%</p>
-                  <p className="text-sm opacity-90">Review growth</p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-      );
-  }
+      )}
+    </motion.div>
+  );
 }
 
 interface FeatureTabsShowcaseProps {
@@ -607,7 +405,6 @@ export function FeatureTabsShowcase({
               <AnimatePresence mode="wait">
                 <FeatureImages
                   key={`images-${activeTab}`}
-                  variant={activeFeature.layoutVariant}
                   images={activeFeature.images}
                   overlayBadge={activeFeature.overlayBadge}
                 />

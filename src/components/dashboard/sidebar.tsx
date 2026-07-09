@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,11 +16,11 @@ import { TaskBadge } from "@/components/dashboard/task-badge";
 import { usePermissions } from "@/lib/permissions/context";
 import {
   useFilteredNav,
+  useNavIsActive,
   ICON_MAP,
   type FilteredNavItem,
   type FilteredNavSection,
 } from "@/lib/nav";
-import { isNavHrefActive } from "@/lib/nav/active";
 
 interface SidebarProps {
   className?: string;
@@ -29,24 +28,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, collapsed = false }: SidebarProps) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { shouldShowUpgradeCTA } = usePermissions();
   const { coreItems, sections, bottomItems } = useFilteredNav();
-
-  const allHrefs = React.useMemo(
-    () => [
-      ...coreItems.map((item) => item.href),
-      ...sections.flatMap((section) => section.items.map((item) => item.href)),
-      ...bottomItems.map((item) => item.href),
-    ],
-    [coreItems, sections, bottomItems]
-  );
-
-  const isActive = React.useCallback(
-    (href: string) => isNavHrefActive(href, pathname, searchParams, allHrefs),
-    [pathname, searchParams, allHrefs]
-  );
+  const isActive = useNavIsActive({ coreItems, sections, bottomItems });
 
   return (
     <aside

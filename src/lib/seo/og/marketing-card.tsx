@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { ImageResponse } from "next/og";
+import { BRAND_DOMAIN } from "@/lib/brand";
 import { loadOgFonts } from "./fonts";
 
 export const MARKETING_OG_SIZE = {
@@ -51,7 +52,7 @@ export async function buildMarketingOpenGraphImage({
   description = "Review management for client-facing teams.",
 }: MarketingOpenGraphCardData) {
   const [fonts, logo] = await Promise.all([
-    loadOgFonts({ includeErstoria: true, excludeWoff2: true }),
+    loadOgFonts({ includeErstoria: true }),
     loadBrandLogo(),
   ]);
   const hasInter = fonts.some((font) => font.name === "Inter");
@@ -224,7 +225,7 @@ export async function buildMarketingOpenGraphImage({
               background: BRAND.sage,
             }}
           />
-          repwell.ai
+          {BRAND_DOMAIN}
         </div>
       </div>
     </div>,

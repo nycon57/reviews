@@ -20,6 +20,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import type { CreateApiKeyResult } from '@/lib/api-keys/types';
+import { BRAND_DOMAIN } from '@/lib/brand';
 
 interface ApiKeyCreatedDialogProps {
   result: CreateApiKeyResult | null;
@@ -156,7 +157,7 @@ export function ApiKeyCreatedDialog({
             <code className="block text-xs bg-slate-900 text-slate-100 p-3 rounded-md overflow-x-auto">
               <span className="text-slate-400"># Using curl</span>
               <br />
-              curl -X GET &quot;https://api.repwell.com/v1/surveys&quot; \<br />
+              curl -X GET &quot;https://api.{BRAND_DOMAIN}/v1/surveys&quot; \<br />
               &nbsp;&nbsp;-H &quot;x-api-key: {result.rawKey.substring(0, 20)}...&quot;
             </code>
           </div>

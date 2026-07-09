@@ -102,17 +102,18 @@ function HeroSection({ config }: { config: SolutionPageConfig }) {
             {config.hero.description}
           </motion.p>
 
-          {/* Stat highlight */}
-          <motion.div variants={fadeInUp} className="mb-10">
-            <div className="inline-flex items-center gap-4 px-6 py-3 bg-repwell-sage-100/50 rounded-full">
-              <span className="font-display text-3xl font-bold text-repwell-teal-300">
-                {config.hero.stat.value}
-              </span>
-              <span className="font-sans text-sm text-repwell-teal-400">
-                {config.hero.stat.label}
-              </span>
-            </div>
-          </motion.div>
+          {config.hero.stat && (
+            <motion.div variants={fadeInUp} className="mb-10">
+              <div className="inline-flex items-center gap-4 px-6 py-3 bg-repwell-sage-100/50 rounded-full">
+                <span className="font-display text-3xl font-bold text-repwell-teal-300">
+                  {config.hero.stat.value}
+                </span>
+                <span className="font-sans text-sm text-repwell-teal-400">
+                  {config.hero.stat.label}
+                </span>
+              </div>
+            </motion.div>
+          )}
 
           {/* CTAs */}
           <motion.div

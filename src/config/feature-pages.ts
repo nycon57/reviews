@@ -18,7 +18,6 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
       "Turn happy customer feedback into public reviews with timely automated surveys and intelligent routing to the right channels.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
-    stat: { value: "Reviews", label: "More reviews collected" },
   },
 
   problems: [
@@ -27,14 +26,12 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
       title: "Manual Follow-Up Takes Forever",
       description:
         "You're spending hours each week chasing customers for reviews. Most never respond, and your time is wasted.",
-      stat: { value: "Insights", label: "hours/month wasted" },
     },
     {
       icon: "TrendingDown",
       title: "Low Response Rates",
       description:
         "Email requests get ignored. Phone calls feel pushy. Without the right timing and channel, feedback is easy to miss.",
-      stat: { value: "NPS", label: "typical response rate" },
     },
     {
       icon: "MessageSquareOff",
@@ -207,7 +204,6 @@ export const analyticsFeatureConfig: FeaturePageConfig = {
       "Track NPS, satisfaction trends, and team performance with live dashboards. Know exactly how customers feel and where to improve.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Demo",
-    stat: { value: "AI", label: "Feedback visibility" },
   },
 
   problems: [
@@ -222,7 +218,6 @@ export const analyticsFeatureConfig: FeaturePageConfig = {
       title: "Delayed Insights",
       description:
         "Monthly reports are stale by the time you see them. You need real-time visibility to act fast.",
-      stat: { value: "Insights", label: "days delayed" },
     },
     {
       icon: "Users",
@@ -395,7 +390,6 @@ export const aiInsightsFeatureConfig: FeaturePageConfig = {
       "Automatic sentiment analysis, key phrase extraction, and response suggestions. Turn raw feedback into actionable insights instantly.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See AI in Action",
-    stat: { value: "AI", label: "Sentiment insights" },
   },
 
   problems: [
@@ -410,7 +404,6 @@ export const aiInsightsFeatureConfig: FeaturePageConfig = {
       title: "Slow Analysis",
       description:
         "By the time you analyze feedback trends, the issues have already caused damage.",
-      stat: { value: "Hours", label: "to analyze manually" },
     },
     {
       icon: "MessageSquare",
@@ -581,7 +574,6 @@ export const amplificationFeatureConfig: FeaturePageConfig = {
       "Route positive reviews to Google and industry platforms. Share testimonials on social media. Turn happy customers into your marketing engine.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See How It Works",
-    stat: { value: "Reviews", label: "Review visibility" },
   },
 
   problems: [
@@ -768,7 +760,6 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       "Custom survey templates, automated distribution, and smart follow-ups. Capture the feedback you need with surveys customers actually complete.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Templates",
-    stat: { value: "NPS", label: "Survey workflows" },
   },
 
   problems: [
@@ -777,7 +768,6 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       title: "Low Completion Rates",
       description:
         "Long surveys with too many questions frustrate customers. They abandon halfway through or don't start at all.",
-      stat: { value: "Insights", label: "typical completion" },
     },
     {
       icon: "FileX",
@@ -804,7 +794,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       icon: "FileText",
       title: "Industry-Specific Templates",
       description:
-        "Pre-built templates for client services, real estate, insurance, and more. Proven questions that get actionable responses.",
+        "Pre-built templates for regulated services, real estate, insurance, and more. Proven questions that get actionable responses.",
     },
     {
       icon: "Settings",
@@ -875,7 +865,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       label: "Professionals",
       description: "Personal survey distribution and feedback",
       benefits: [
-        "Pre-built client services survey templates",
+        "Pre-built regulated-services survey templates",
         "Automatic sending after closings",
         "Personal branding on surveys",
         "Mobile-friendly completion",
@@ -954,7 +944,6 @@ export const testimonialsFeatureConfig: FeaturePageConfig = {
       "Request, collect, and publish video and written testimonials with ease. Turn happy customers into your best salespeople.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Examples",
-    stat: { value: "Convert", label: "Higher conversion with video" },
   },
 
   problems: [

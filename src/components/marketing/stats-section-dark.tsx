@@ -3,45 +3,21 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
-import { AnimatedCounter } from "./animated-counter";
 import { cn } from "@/lib/utils";
 
 interface Stat {
-  value: number | string;
-  suffix?: string;
-  prefix?: string;
+  value: string;
   label: string;
-  decimals?: number;
 }
 
 interface StatsSectionDarkProps {
   /** Optional heading above stats */
   heading?: string;
   /** Stats to display */
-  stats?: Stat[];
+  stats: Stat[];
   /** Additional className */
   className?: string;
 }
-
-// Default stats for RepWell
-const defaultStats: Stat[] = [
-  {
-    value: "AI",
-    label: "Powered Insights",
-  },
-  {
-    value: "NPS",
-    label: "Survey Workflows",
-  },
-  {
-    value: "GBP",
-    label: "Review Monitoring",
-  },
-  {
-    value: "Teams",
-    label: "Profile Management",
-  },
-];
 
 // Individual stat component with light text for dark background
 function DarkStat({ stat, index }: { stat: Stat; index: number }) {
@@ -54,17 +30,7 @@ function DarkStat({ stat, index }: { stat: Stat; index: number }) {
       className="text-center"
     >
       <div className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2">
-        {typeof stat.value === "number" ? (
-          <AnimatedCounter
-            value={stat.value}
-            prefix={stat.prefix || ""}
-            suffix={stat.suffix || ""}
-            decimals={stat.decimals || 0}
-            duration={2.5}
-          />
-        ) : (
-          stat.value
-        )}
+        {stat.value}
       </div>
       <div className="font-sans text-sm md:text-base text-repwell-sage-100/80">
         {stat.label}
@@ -75,7 +41,7 @@ function DarkStat({ stat, index }: { stat: Stat; index: number }) {
 
 export function StatsSectionDark({
   heading,
-  stats = defaultStats,
+  stats,
   className,
 }: StatsSectionDarkProps) {
   return (

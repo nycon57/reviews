@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 export default function AuthLayout({
   children,
@@ -13,7 +14,7 @@ export default function AuthLayout({
         <div className="container flex h-16 items-center">
           <Link href="/" className="flex items-center">
             <Image
-              src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+              src={BRAND_LOGO_URL}
               alt="RepWell"
               width={140}
               height={32}

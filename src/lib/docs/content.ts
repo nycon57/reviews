@@ -1,4 +1,5 @@
 // Documentation content structure
+import { SUPPORT_EMAIL } from "@/lib/brand";
 export interface DocSection {
   id: string;
   title: string;
@@ -70,7 +71,7 @@ RepWell helps you:
 If you need assistance:
 - Browse the documentation sections in the sidebar
 - Search for specific topics using the search bar
-- Contact support at support@repwell.ai
+- Contact support at ${SUPPORT_EMAIL}
         `,
       },
       {
@@ -1980,7 +1981,7 @@ Answers to frequently asked questions about RepWell.
 Yes, go to **Settings** > **Profile** > **Email** to update your email address. You'll need to verify the new email.
 
 ### How do I delete my account?
-Contact support at support@repwell.ai to request account deletion. Note that this action is permanent.
+Contact support at ${SUPPORT_EMAIL} to request account deletion. Note that this action is permanent.
 
 ## Surveys
 
@@ -2126,7 +2127,7 @@ Each survey link is single-use. If the customer needs to retake:
 ## Contact Support
 
 If you can't resolve your issue:
-- Email: support@repwell.ai
+- Email: ${SUPPORT_EMAIL}
 - Live chat: Available in-app
 - Phone: See contact page
         `,

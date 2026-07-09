@@ -19,7 +19,6 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
       "Stop leaving reviews on the table. RepWell's automation ensures every satisfied customer has the chance to share their experience on Google and beyond.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See How It Works",
-    stat: { value: "Reviews", label: "More reviews on average" },
   },
 
   challenges: [
@@ -28,14 +27,12 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
       title: "No Time for Manual Follow-Up",
       description:
         "You're too busy serving customers to chase them for reviews. Manual requests fall through the cracks.",
-      stat: { value: "Insights", label: "hours/month wasted" },
     },
     {
       icon: "TrendingDown",
       title: "Competitors Have More Reviews",
       description:
         "Other businesses in your market are building massive review profiles while you're stuck with a handful.",
-      stat: { value: "Reviews", label: "check reviews before buying" },
     },
     {
       icon: "MessageSquareOff",
@@ -138,10 +135,10 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
 
   industryApps: [
     {
-      industry: "client services",
-      slug: "client services",
-      application: "Automated surveys after closing maximize Zillow and Google reviews",
-      icon: "Home",
+      industry: "Financial Advisory",
+      slug: "financial-advisory",
+      application: "Automated post-engagement surveys help advisors collect timely Google reviews",
+      icon: "Briefcase",
     },
     {
       industry: "Real Estate",
@@ -225,7 +222,6 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
       "Scattered feedback across platforms makes reputation management impossible. RepWell brings everything together so you can protect and grow your brand.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Dashboard",
-    stat: { value: "Visible", label: "Reputation visibility" },
   },
 
   challenges: [
@@ -240,7 +236,6 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
       title: "Negative Reviews Slip Through",
       description:
         "Without monitoring, unhappy customers post publicly before you can address their concerns.",
-      stat: { value: "NPS", label: "Avg response time" },
     },
     {
       icon: "Clock",
@@ -343,10 +338,10 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
 
   industryApps: [
     {
-      industry: "client services",
-      slug: "client services",
-      application: "Monitor Zillow, Google, and internal surveys from one dashboard",
-      icon: "Home",
+      industry: "Financial Advisory",
+      slug: "financial-advisory",
+      application: "Monitor Google reviews and client feedback from one dashboard",
+      icon: "Briefcase",
     },
     {
       industry: "Healthcare",
@@ -430,7 +425,6 @@ export const customerIntelligenceSolutionConfig: SolutionPageConfig = {
       "Customer feedback is a goldmine of insights - if you can extract them. RepWell's AI analyzes every response to surface the patterns and opportunities you'd otherwise miss.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See AI in Action",
-    stat: { value: "AI", label: "AI insights" },
   },
 
   challenges: [
@@ -445,7 +439,6 @@ export const customerIntelligenceSolutionConfig: SolutionPageConfig = {
       title: "Analysis Takes Too Long",
       description:
         "By the time you spot trends in feedback, the issues have already caused damage.",
-      stat: { value: "Weeks", label: "typical analysis delay" },
     },
     {
       icon: "TrendingDown",
@@ -548,10 +541,10 @@ export const customerIntelligenceSolutionConfig: SolutionPageConfig = {
 
   industryApps: [
     {
-      industry: "client services",
-      slug: "client services",
-      application: "Identify communication gaps and process improvements from borrower feedback",
-      icon: "Home",
+      industry: "Financial Advisory",
+      slug: "financial-advisory",
+      application: "Identify communication gaps and process improvements from client feedback",
+      icon: "Briefcase",
     },
     {
       industry: "Healthcare",
@@ -635,7 +628,6 @@ export const teamPerformanceSolutionConfig: SolutionPageConfig = {
       "No more flying blind on team performance. RepWell's leaderboards and metrics create accountability, healthy competition, and a culture of customer excellence.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Leaderboards",
-    stat: { value: "Coaching", label: "Team performance improvement" },
   },
 
   challenges: [
@@ -650,7 +642,6 @@ export const teamPerformanceSolutionConfig: SolutionPageConfig = {
       title: "Accountability Gap",
       description:
         "Without metrics, customer experience becomes optional. Team members don't prioritize what isn't measured.",
-      stat: { value: "Visible", label: "visibility typically" },
     },
     {
       icon: "Target",
@@ -753,10 +744,10 @@ export const teamPerformanceSolutionConfig: SolutionPageConfig = {
 
   industryApps: [
     {
-      industry: "client services",
-      slug: "client services",
-      application: "team member leaderboards drive healthy competition and better borrower experiences",
-      icon: "Home",
+      industry: "Financial Advisory",
+      slug: "financial-advisory",
+      application: "Advisor leaderboards show coaching opportunities and service patterns",
+      icon: "Briefcase",
     },
     {
       industry: "Real Estate",

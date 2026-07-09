@@ -39,6 +39,12 @@ import { ImageUpload } from '@/components/shared/image-upload';
 import { EditSlugDialog } from '@/components/shared/edit-slug-dialog';
 import { updateProfileSchema, type UserProfileData } from '@/lib/auth/profile-schemas';
 import { Link as LinkIcon, PencilSimple } from "@phosphor-icons/react";
+import {
+  getIndustryConfig,
+  isValidIndustry,
+  type IndustryCredential,
+  type IndustryType,
+} from '@/lib/industry';
 
 type ProfileFormData = z.infer<typeof updateProfileSchema>;
 
@@ -64,14 +70,17 @@ interface ProfileFormProps {
   accountType?: 'individual' | 'enterprise';
 }
 
-function showsMortgageOrFinancialLicenseField(industry?: string | null): boolean {
+function getPrimaryIndustryCredential(
+  industry?: string | null,
+): IndustryCredential | null {
   const normalized = (industry || '').toLowerCase().replace(/[\s/-]+/g, '_');
 
-  return [
-    'mortgage',
-    'financial_services',
-    'banking',
-  ].some((value) => normalized === value || normalized.includes(value));
+  if (!isValidIndustry(normalized)) {
+    return null;
+  }
+
+  const config = getIndustryConfig(normalized as IndustryType);
+  return config.credentials[0] ?? null;
 }
 
 export function ProfileForm({
@@ -134,7 +143,8 @@ export function ProfileForm({
 
   const bioValue = watch('bio') || '';
   const timezoneValue = watch('timezone');
-  const showLicenseField = showsMortgageOrFinancialLicenseField(profileIndustry);
+  const primaryCredential = getPrimaryIndustryCredential(profileIndustry);
+  const showLicenseField = Boolean(primaryCredential);
 
   const onSubmit = async (data: ProfileFormData) => {
     setIsSubmitting(true);
@@ -374,18 +384,18 @@ export function ProfileForm({
                 <div className="space-y-2">
                   <Label htmlFor="nmlsId" className="text-sm font-medium flex items-center gap-2">
                     <IdentificationBadge className="h-3.5 w-3.5 text-muted-foreground" />
-                    License Number
+                    {primaryCredential?.label}
                   </Label>
                   <Input
                     id="nmlsId"
-                    placeholder="e.g., 123456"
+                    placeholder={primaryCredential?.placeholder}
                     {...register('nmlsId')}
                   />
                   {errors.nmlsId && (
                     <p className="text-xs text-destructive">{errors.nmlsId.message}</p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    Your professional license or NMLS ID
+                    {primaryCredential?.helpText}
                   </p>
                 </div>
               )}

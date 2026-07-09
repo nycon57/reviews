@@ -10,6 +10,7 @@ import { fadeIn } from "@/lib/motion";
 import { useAuth } from "@/hooks/use-auth";
 import { MobileMenu } from "./mobile-menu";
 import { MegaMenu } from "./mega-menu";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 export function MarketingNav() {
   const [isScrolled, setIsScrolled] = React.useState(false);
@@ -42,7 +43,7 @@ export function MarketingNav() {
           aria-label="RepWell home"
         >
           <Image
-            src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+            src={BRAND_LOGO_URL}
             alt="RepWell"
             width={140}
             height={32}

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
 import { footerNavigation } from "@/config/navigation";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 export function MarketingFooter() {
   const currentYear = new Date().getFullYear();
@@ -23,7 +24,7 @@ export function MarketingFooter() {
           <motion.div variants={fadeInUp} className="sm:col-span-2">
             <Link href="/" className="inline-block mb-5" aria-label="RepWell home">
               <Image
-                src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+                src={BRAND_LOGO_URL}
                 alt="RepWell"
                 width={140}
                 height={32}

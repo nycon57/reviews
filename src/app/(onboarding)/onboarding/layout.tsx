@@ -4,6 +4,7 @@ import Image from "next/image";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { OnboardingProgress } from "./onboarding-progress";
+import { BRAND_LOGO_URL, SUPPORT_EMAIL } from "@/lib/brand";
 
 export const metadata = {
   title: "Get Started | RepWell",
@@ -78,7 +79,7 @@ export default async function OnboardingLayout({ children }: OnboardingLayoutPro
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center">
               <Image
-                src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+                src={BRAND_LOGO_URL}
                 alt="RepWell"
                 width={120}
                 height={32}
@@ -111,8 +112,8 @@ export default async function OnboardingLayout({ children }: OnboardingLayoutPro
           </div>
           <p>
             Need help? Contact us at{" "}
-            <a href="mailto:support@repwell.ai" className="text-repwell-teal-300 hover:underline">
-              support@repwell.ai
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-repwell-teal-300 hover:underline">
+              {SUPPORT_EMAIL}
             </a>
           </p>
         </div>

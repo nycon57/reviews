@@ -34,26 +34,26 @@ import type {
   WidgetDetailAnalytics as DetailData,
   EnhancedAnalytics,
 } from "@/lib/widgets/analytics-actions";
-import { CHART_TOOLTIP_STYLE } from "@/components/analytics/chart-primitives";
+import { CHART_COLORS, CHART_TOOLTIP_STYLE } from "@/components/analytics/chart-primitives";
 import { getWidgetEventLevelCsvData } from "@/lib/widgets/analytics-actions";
 import { useToast } from "@/hooks/use-toast";
 
 const EVENT_COLORS: Record<string, string> = {
-  impression: "hsl(var(--chart-1))",
-  click_review: "hsl(var(--chart-2))",
-  click_cta: "hsl(var(--chart-4))",
-  click_write_review: "hsl(var(--chart-5))",
+  impression: CHART_COLORS[0],
+  click_review: CHART_COLORS[1],
+  click_cta: CHART_COLORS[3],
+  click_write_review: CHART_COLORS[4],
   video_play: "hsl(var(--warning))",
-  scroll_depth: "hsl(var(--chart-3))",
+  scroll_depth: CHART_COLORS[2],
   banner_dismiss: "hsl(var(--destructive))",
   banner_click: "hsl(var(--primary))",
-  carousel_navigate: "hsl(var(--chart-2) / 0.82)",
-  filter_change: "hsl(var(--chart-5) / 0.82)",
+  carousel_navigate: CHART_COLORS[1],
+  filter_change: CHART_COLORS[4],
 };
 
 const DETAIL_CHART_COLORS = {
-  impressions: "hsl(var(--chart-1))",
-  clicks: "hsl(var(--chart-2))",
+  impressions: CHART_COLORS[0],
+  clicks: CHART_COLORS[1],
 } as const;
 
 const EVENT_LABELS: Record<string, string> = {

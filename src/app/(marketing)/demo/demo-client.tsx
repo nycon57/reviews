@@ -571,7 +571,7 @@ export function DemoPageClient() {
               className="text-lg text-repwell-sage-100 mb-8 max-w-xl mx-auto"
             >
               Start your {MARKETING_TRIAL_FACTS.shortCopy} and experience
-              RepWell firsthand. A credit card is required to activate the trial.
+              RepWell firsthand. {MARKETING_TRIAL_FACTS.creditCardCopy}
             </motion.p>
             <motion.div
               variants={fadeInUp}

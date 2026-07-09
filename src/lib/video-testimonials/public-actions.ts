@@ -2,6 +2,7 @@
 
 import { after } from "next/server";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { requireCronSecretRequest } from "@/lib/auth/server-action-guards";
 import { z } from "zod";
 import { cache } from "react";
 import type { Json } from "@/types/database.types";
@@ -115,7 +116,12 @@ type UserData = {
   personal_website_url: string | null;
   zillow_profile_url: string | null;
 };
-type OrganizationData = { id: string; name: string; logo_url: string | null; primary_color: string | null };
+type OrganizationData = {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  primary_color: string | null;
+};
 type RequestSourceMetadata = {
   customer_display_name?: string;
   customer_relationship?: string;
@@ -265,7 +271,8 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
     const supabase = createAdminClient();
     const { data: request, error: requestError } = await supabase
       .from("video_testimonial_requests")
-      .select(`
+      .select(
+        `
         id, token, status, max_duration_seconds, prompt_text, expires_at,
         submitted_at, opened_at, customer_name, customer_email,
         user_id, organization_id,
@@ -275,7 +282,8 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
           instagram_url, twitter_url, personal_website_url, zillow_profile_url
         ),
         organizations!inner (id, name, logo_url, primary_color)
-      `)
+      `
+      )
       .eq("token", token)
       .single();
 
@@ -331,12 +339,13 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
           photoUrl: validateSafeUrl(professional.photo_url),
           title: professional.title,
           phone: professional.phone,
-          address: (professional.address as {
-            street?: string;
-            city?: string;
-            state?: string;
-            zip?: string;
-          } | null) || null,
+          address:
+            (professional.address as {
+              street?: string;
+              city?: string;
+              state?: string;
+              zip?: string;
+            } | null) || null,
           ctaText: professional.cta_button_text,
           ctaUrl: validateSafeUrl(professional.cta_button_url),
           linkedinUrl: validateSafeUrl(professional.linkedin_url),
@@ -373,7 +382,8 @@ export async function submitCustomerInfoAndConsent(
       return { success: false, error: validated.error.errors[0]?.message || "Validation failed" };
     }
 
-    const { token, customerInfo, consents, consentVersion, legalTextSnapshotHash, clientInfo } = validated.data;
+    const { token, customerInfo, consents, consentVersion, legalTextSnapshotHash, clientInfo } =
+      validated.data;
     const supabase = createAdminClient();
     const normalizedConsents = {
       nilConsent: consents.nilConsent === true || consents.videoRecordingConsent === true,
@@ -432,7 +442,10 @@ export async function submitCustomerInfoAndConsent(
 
     if (updateError || !updatedData) {
       console.error("Error updating video testimonial request:", updateError);
-      return { success: false, error: "Unable to save your information. The request may have been updated." };
+      return {
+        success: false,
+        error: "Unable to save your information. The request may have been updated.",
+      };
     }
 
     await recordConsentEvents({
@@ -493,14 +506,16 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
     const supabase = createAdminClient();
     const { data: video, error: videoError } = await supabase
       .from("video_testimonial_responses")
-      .select(`
+      .select(
+        `
         id, video_url, video_path, thumbnail_url, duration_seconds, transcription,
         ai_generated_text, key_phrases, sentiment_label, submitted_at, published_at,
         approval_status, user_id, organization_id,
         video_testimonial_requests!inner (customer_name, source_metadata),
         users!user_id (id, full_name, photo_url, title),
         organizations!inner (id, name, logo_url, primary_color)
-      `)
+      `
+      )
       .eq("id", videoId)
       .eq("approval_status", "published")
       .single();
@@ -518,7 +533,10 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
       return { success: false, error: "Failed to load video" };
     }
 
-    const request = video.video_testimonial_requests as unknown as { customer_name: string; source_metadata: RequestSourceMetadata };
+    const request = video.video_testimonial_requests as unknown as {
+      customer_name: string;
+      source_metadata: RequestSourceMetadata;
+    };
     const professional = video.users as unknown as UserData;
     const organization = video.organizations as unknown as OrganizationData;
 
@@ -571,16 +589,18 @@ async function trackVideoView(_videoId: string): Promise<void> {
  */
 export const getPublicVideoMetadata = cache(async function getPublicVideoMetadataImpl(
   videoId: string
-): Promise<ActionResult<{
-  title: string;
-  description: string;
-  customerName: string;
-  professionalName: string;
-  organizationName: string;
-  thumbnailUrl: string | null;
-  durationSeconds: number | null;
-  publishedAt: string | null;
-}>> {
+): Promise<
+  ActionResult<{
+    title: string;
+    description: string;
+    customerName: string;
+    professionalName: string;
+    organizationName: string;
+    thumbnailUrl: string | null;
+    durationSeconds: number | null;
+    publishedAt: string | null;
+  }>
+> {
   try {
     if (!videoId) {
       return { success: false, error: "Video ID is required" };
@@ -589,12 +609,14 @@ export const getPublicVideoMetadata = cache(async function getPublicVideoMetadat
     const supabase = createAdminClient();
     const { data: video, error: videoError } = await supabase
       .from("video_testimonial_responses")
-      .select(`
+      .select(
+        `
         id, thumbnail_url, duration_seconds, ai_generated_text, published_at, approval_status,
         video_testimonial_requests!inner (customer_name, source_metadata),
         users!user_id (full_name),
         organizations!inner (name)
-      `)
+      `
+      )
       .eq("id", videoId)
       .eq("approval_status", "published")
       .single();
@@ -603,13 +625,17 @@ export const getPublicVideoMetadata = cache(async function getPublicVideoMetadat
       return { success: false, error: "Video testimonial not found" };
     }
 
-    const request = video.video_testimonial_requests as unknown as { customer_name: string; source_metadata: { customer_display_name?: string } | null };
+    const request = video.video_testimonial_requests as unknown as {
+      customer_name: string;
+      source_metadata: { customer_display_name?: string } | null;
+    };
     const professional = video.users as unknown as { full_name: string };
     const organization = video.organizations as unknown as { name: string };
 
     const customerName = request.source_metadata?.customer_display_name || request.customer_name;
     const description = video.ai_generated_text
-      ? video.ai_generated_text.substring(0, 155) + (video.ai_generated_text.length > 155 ? "..." : "")
+      ? video.ai_generated_text.substring(0, 155) +
+        (video.ai_generated_text.length > 155 ? "..." : "")
       : `Watch ${customerName}'s video testimonial about their experience with ${professional.full_name} at ${organization.name}.`;
 
     return {
@@ -1065,7 +1091,7 @@ async function notifyVideoReadyForApproval(params: {
         owner_user_id: params.ownerUserId,
         created_at: now,
       } as Json,
-    }))
+    })),
   ];
 
   await supabase.from("notifications").insert(inAppRows);
@@ -1209,12 +1235,14 @@ export async function submitVideoTestimonial(
     // Get and validate request
     const { data: request, error: requestError } = await supabase
       .from("video_testimonial_requests")
-      .select(`
+      .select(
+        `
         id, status, organization_id, user_id, customer_name, customer_email,
         expires_at, submitted_at, source_metadata,
         users!user_id (full_name, email),
         organizations!inner(name)
-      `)
+      `
+      )
       .eq("token", token)
       .single();
 
@@ -1424,7 +1452,7 @@ export async function submitVideoTestimonial(
     // remains the retry backstop for anything this pass misses.
     after(async () => {
       try {
-        await processVideoTestimonialAIQueue(3);
+        await processVideoTestimonialAIQueueInternal(3);
       } catch (error) {
         console.error("Post-submit AI processing kick failed:", error);
       }
@@ -1536,8 +1564,7 @@ async function createCanonicalReviewForResponse(params: {
         text: params.reviewText,
         customer_name: params.customerName,
         customer_email:
-          (request as { customer_email?: string | null } | null)?.customer_email ??
-          null,
+          (request as { customer_email?: string | null } | null)?.customer_email ?? null,
         sentiment_score: response.sentiment_score,
         sentiment_label: response.sentiment_label,
         review_date: now,
@@ -1591,9 +1618,7 @@ async function createCanonicalReviewForResponse(params: {
  * Process a single video testimonial AI job
  * Called by background worker to transcribe video and generate review
  */
-export async function processVideoTestimonialAIJob(
-  job: AIProcessingJob
-): Promise<AIProcessingResult> {
+async function processVideoTestimonialAIJob(job: AIProcessingJob): Promise<AIProcessingResult> {
   const supabase = createAdminClient();
   const untypedSupabase = createUntypedAdminClient();
   const {
@@ -1637,9 +1662,8 @@ export async function processVideoTestimonialAIJob(
         provider: transcriptionResult.provider,
         model: transcriptionResult.model,
         created_at: new Date().toISOString(),
-        flagged_word_count: transcriptionResult.words.filter(
-          (word) => word.flagged_for_review
-        ).length,
+        flagged_word_count: transcriptionResult.words.filter((word) => word.flagged_for_review)
+          .length,
       } as Json;
 
       // Update transcription status
@@ -1655,9 +1679,7 @@ export async function processVideoTestimonialAIJob(
         .eq("id", responseId);
 
       if (transcriptionUpdateError) {
-        throw new Error(
-          `Failed to persist transcription: ${transcriptionUpdateError.message}`
-        );
+        throw new Error(`Failed to persist transcription: ${transcriptionUpdateError.message}`);
       }
 
       // Generate review from transcription
@@ -1794,14 +1816,13 @@ export async function processVideoTestimonialAIJob(
  * Get pending AI processing jobs
  * Returns video testimonial responses that need transcription/review generation
  */
-export async function getPendingAIProcessingJobs(
-  limit: number = 10
-): Promise<AIProcessingJob[]> {
+async function getPendingAIProcessingJobs(limit: number = 10): Promise<AIProcessingJob[]> {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("video_testimonial_responses")
-    .select(`
+    .select(
+      `
       id,
       request_id,
       organization_id,
@@ -1814,7 +1835,8 @@ export async function getPendingAIProcessingJobs(
         source_metadata,
         users!user_id (full_name, email)
       )
-    `)
+    `
+    )
     .eq("transcription_status", "pending")
     .order("created_at", { ascending: true })
     .limit(limit);
@@ -1842,10 +1864,7 @@ export async function getPendingAIProcessingJobs(
         if (signedUrlData?.signedUrl) {
           videoUrl = signedUrlData.signedUrl;
         } else {
-          console.error(
-            `Error creating signed URL for AI job ${row.id}:`,
-            signedUrlError
-          );
+          console.error(`Error creating signed URL for AI job ${row.id}:`, signedUrlError);
         }
       }
 
@@ -1869,6 +1888,18 @@ export async function getPendingAIProcessingJobs(
  * Called by cron job to process pending transcription/review jobs
  */
 export async function processVideoTestimonialAIQueue(
+  batchSize: number = 10
+): Promise<{ processed: number; failed: number; errors: string[] }> {
+  try {
+    await requireCronSecretRequest();
+  } catch {
+    return { processed: 0, failed: 0, errors: ["Unauthorized"] };
+  }
+
+  return processVideoTestimonialAIQueueInternal(batchSize);
+}
+
+async function processVideoTestimonialAIQueueInternal(
   batchSize: number = 10
 ): Promise<{ processed: number; failed: number; errors: string[] }> {
   const jobs = await getPendingAIProcessingJobs(batchSize);
@@ -1961,10 +1992,12 @@ export async function getShareKit(token: string): Promise<ActionResult<ShareKit>
     const supabase = createAdminClient();
     const { data: request, error: requestError } = await supabase
       .from("video_testimonial_requests")
-      .select(`
+      .select(
+        `
         id, organization_id, user_id, customer_name, source_metadata,
         users!user_id (full_name, google_place_id, zillow_profile_url)
-      `)
+      `
+      )
       .eq("token", token)
       .single();
 
@@ -1996,14 +2029,12 @@ export async function getShareKit(token: string): Promise<ActionResult<ShareKit>
     const professionalName = owner.full_name || "your professional";
 
     let smartLinkUrl: string | null = null;
-    const rating =
-      typeof response.customer_rating === "number" ? response.customer_rating : null;
+    const rating = typeof response.customer_rating === "number" ? response.customer_rating : null;
     const celebrationThreshold = await getCelebrationThreshold(request.organization_id);
     const approvedForPublicShare =
       ["approved", "published"].includes(String(response.approval_status ?? "")) ||
       (rating !== null && rating >= celebrationThreshold);
-    const smartLinkPendingApproval =
-      response.quarantined === true || !approvedForPublicShare;
+    const smartLinkPendingApproval = response.quarantined === true || !approvedForPublicShare;
 
     if (!smartLinkPendingApproval) {
       try {
@@ -2055,8 +2086,7 @@ export async function getShareKit(token: string): Promise<ActionResult<ShareKit>
     // Processing dead-ended (no speech, provider failure): serve a basic kit
     // with the fallback caption instead of leaving the customer polling.
     const processingFailed =
-      response.transcription_status === "failed" ||
-      response.ai_generation_status === "failed";
+      response.transcription_status === "failed" || response.ai_generation_status === "failed";
     if (processingFailed && !reviewReady) {
       return {
         success: true,
@@ -2185,10 +2215,7 @@ const privateFeedbackSchema = z.object({
  * Store low-path private feedback on the response and alert the professional.
  * Private feedback goes only to the professional; it is never published.
  */
-export async function submitPrivateFeedback(
-  token: string,
-  text: string
-): Promise<ActionResult> {
+export async function submitPrivateFeedback(token: string, text: string): Promise<ActionResult> {
   try {
     const parsed = privateFeedbackSchema.safeParse({ token, text });
     if (!parsed.success) {

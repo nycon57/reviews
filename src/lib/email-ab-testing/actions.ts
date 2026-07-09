@@ -39,10 +39,7 @@ import {
   mapDbTestToTs,
   mapDbResultToTs,
 } from "./types";
-import {
-  calculateStatisticalSignificance,
-  calculateConfidenceInterval,
-} from "./statistics";
+import { calculateStatisticalSignificance, calculateConfidenceInterval } from "./statistics";
 
 // ============================================================================
 // Helper Functions
@@ -82,9 +79,7 @@ async function getAdminContext() {
 /**
  * Create a new A/B test
  */
-export async function createABTest(
-  data: CreateABTestInput
-): Promise<ActionResult<ABTest>> {
+export async function createABTest(data: CreateABTestInput): Promise<ActionResult<ABTest>> {
   // Validate input
   const validated = createABTestSchema.safeParse(data);
   if (!validated.success) {
@@ -105,10 +100,7 @@ export async function createABTest(
   // Validate traffic split keys match variant IDs
   const variantIds = testData.variants.map((v) => v.id);
   const splitKeys = Object.keys(testData.trafficSplit);
-  if (
-    variantIds.length !== splitKeys.length ||
-    !variantIds.every((id) => splitKeys.includes(id))
-  ) {
+  if (variantIds.length !== splitKeys.length || !variantIds.every((id) => splitKeys.includes(id))) {
     return {
       success: false,
       error: "Traffic split must have one entry per variant",
@@ -323,9 +315,7 @@ export async function startABTest(id: string): Promise<ActionResult<ABTest>> {
 
   // Calculate end date based on duration
   const startedAt = new Date();
-  const endedAt = new Date(
-    startedAt.getTime() + existing.test_duration_hours * 60 * 60 * 1000
-  );
+  const endedAt = new Date(startedAt.getTime() + existing.test_duration_hours * 60 * 60 * 1000);
 
   // Update status to active
   const { data: updated, error } = await supabase
@@ -497,9 +487,7 @@ export async function getABTest(id: string): Promise<ActionResult<ABTest>> {
 /**
  * Get a single A/B test with results
  */
-export async function getABTestWithResults(
-  id: string
-): Promise<ActionResult<ABTestWithResults>> {
+export async function getABTestWithResults(id: string): Promise<ActionResult<ABTestWithResults>> {
   const context = await getAdminContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Admin access required" };
@@ -612,11 +600,7 @@ export async function getABTests(
 
   // Apply sorting
   const sortColumn =
-    f.sortBy === "createdAt"
-      ? "created_at"
-      : f.sortBy === "startedAt"
-        ? "started_at"
-        : f.sortBy;
+    f.sortBy === "createdAt" ? "created_at" : f.sortBy === "startedAt" ? "started_at" : f.sortBy;
   query = query.order(sortColumn || "created_at", {
     ascending: f.sortOrder === "asc",
   });
@@ -687,15 +671,10 @@ export async function getABTestAnalysis(testId: string): Promise<
   // Calculate confidence intervals for each variant
   const resultsWithCI = results.map((r) => {
     const metric = test.winning_metric as WinningMetric;
-    const successes =
-      metric === "open_rate" ? r.emailsOpened : r.emailsClicked;
+    const successes = metric === "open_rate" ? r.emailsOpened : r.emailsClicked;
     const trials = r.emailsDelivered;
 
-    const ci = calculateConfidenceInterval(
-      successes,
-      trials,
-      Number(test.confidence_level)
-    );
+    const ci = calculateConfidenceInterval(successes, trials, Number(test.confidence_level));
 
     return {
       ...r,
@@ -718,11 +697,8 @@ export async function getABTestAnalysis(testId: string): Promise<
 
       const metric = test.winning_metric as WinningMetric;
       const controlSuccesses =
-        metric === "open_rate"
-          ? controlResult.emailsOpened
-          : controlResult.emailsClicked;
-      const variantSuccesses =
-        metric === "open_rate" ? result.emailsOpened : result.emailsClicked;
+        metric === "open_rate" ? controlResult.emailsOpened : controlResult.emailsClicked;
+      const variantSuccesses = metric === "open_rate" ? result.emailsOpened : result.emailsClicked;
 
       const sig = calculateStatisticalSignificance(
         {
@@ -783,14 +759,11 @@ export async function getABTestSummary(): Promise<ActionResult<ABTestSummary>> {
   // Calculate average duration for completed tests
   const completedTests = allTests.filter((t) => t.started_at && t.ended_at);
   const totalDuration = completedTests.reduce((sum, t) => {
-    const duration =
-      new Date(t.ended_at!).getTime() - new Date(t.started_at!).getTime();
+    const duration = new Date(t.ended_at!).getTime() - new Date(t.started_at!).getTime();
     return sum + duration / (1000 * 60 * 60); // Convert to hours
   }, 0);
   const averageDuration =
-    completedTests.length > 0
-      ? Number((totalDuration / completedTests.length).toFixed(1))
-      : 0;
+    completedTests.length > 0 ? Number((totalDuration / completedTests.length).toFixed(1)) : 0;
 
   // Get total emails sent across all tests for this organization
   const testIds = allTests.map((t) => t.id);
@@ -803,10 +776,7 @@ export async function getABTestSummary(): Promise<ActionResult<ABTestSummary>> {
       .in("ab_test_id", testIds); // Filter by organization's tests only
 
     if (resultsSums) {
-      totalEmailsSent = resultsSums.reduce(
-        (sum, r) => sum + (r.emails_sent || 0),
-        0
-      );
+      totalEmailsSent = resultsSums.reduce((sum, r) => sum + (r.emails_sent || 0), 0);
     }
   }
 
@@ -832,9 +802,7 @@ export async function getABTestSummary(): Promise<ActionResult<ABTestSummary>> {
 /**
  * Manually declare a winner for an A/B test
  */
-export async function declareWinner(
-  data: DeclareWinnerInput
-): Promise<ActionResult<ABTest>> {
+export async function declareWinner(data: DeclareWinnerInput): Promise<ActionResult<ABTest>> {
   // Validate input
   const validated = declareWinnerSchema.safeParse(data);
   if (!validated.success) {
@@ -881,8 +849,7 @@ export async function declareWinner(
       winner_auto: autoWinner,
       winner_reason: reason || (autoWinner ? "Auto-declared by system" : "Manually declared"),
       status: test.status === "active" ? "completed" : test.status,
-      ended_at:
-        test.status === "active" ? new Date().toISOString() : undefined,
+      ended_at: test.status === "active" ? new Date().toISOString() : undefined,
     })
     .eq("id", testId)
     .select()
@@ -978,21 +945,19 @@ export async function applyWinnerToFuture(
   // Persist the effective override the send path reads. Upsert so re-applying a
   // corrected winner overwrites the prior one for this (org, email_type).
   const nowIso = new Date().toISOString();
-  const { error: overrideError } = await supabase
-    .from("email_type_overrides")
-    .upsert(
-      {
-        organization_id: context.organizationId,
-        email_type: test.email_type,
-        subject_line: subjectLine,
-        preview_text: previewText,
-        source_ab_test_id: test.id,
-        applied_at: nowIso,
-        applied_by: context.userId,
-        updated_at: nowIso,
-      },
-      { onConflict: "organization_id,email_type" }
-    );
+  const { error: overrideError } = await supabase.from("email_type_overrides").upsert(
+    {
+      organization_id: context.organizationId,
+      email_type: test.email_type,
+      subject_line: subjectLine,
+      preview_text: previewText,
+      source_ab_test_id: test.id,
+      applied_at: nowIso,
+      applied_by: context.userId,
+      updated_at: nowIso,
+    },
+    { onConflict: "organization_id,email_type" }
+  );
 
   if (overrideError) {
     if (isMissingSchema(overrideError)) {
@@ -1021,10 +986,7 @@ export async function applyWinnerToFuture(
   revalidatePath("/staff/email-ab-tests");
   revalidatePath(`/staff/email-ab-tests/${testId}`);
 
-  const applied = [
-    subjectLine ? "subject line" : null,
-    previewText ? "preview text" : null,
-  ]
+  const applied = [subjectLine ? "subject line" : null, previewText ? "preview text" : null]
     .filter(Boolean)
     .join(" and ");
 
@@ -1048,6 +1010,11 @@ export async function getActiveTestForEmailType(
   organizationId: string,
   emailType: string
 ): Promise<ActionResult<ABTest | null>> {
+  const context = await getAdminContext();
+  if (!context || context.organizationId !== organizationId) {
+    return { success: false, error: "Unauthorized - Admin access required" };
+  }
+
   const supabase = await getSupabaseForABTesting();
 
   const { data: test, error } = await supabase
@@ -1070,4 +1037,3 @@ export async function getActiveTestForEmailType(
     data: test ? mapDbTestToTs(test) : null,
   };
 }
-

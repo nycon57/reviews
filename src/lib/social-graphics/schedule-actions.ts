@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { requireCronSecretRequest } from "@/lib/auth/server-action-guards";
 import { revalidatePath } from "next/cache";
 import { getTemplate } from "./templates";
 import type {
@@ -69,9 +70,7 @@ export async function setSchedule(params: {
 }
 
 /** Remove a schedule from a graphic */
-export async function removeSchedule(
-  graphicId: string
-): Promise<ActionResult<void>> {
+export async function removeSchedule(graphicId: string): Promise<ActionResult<void>> {
   const user = await unifiedGetUser();
   if (!user) return { success: false, error: "Not authenticated" };
 
@@ -107,6 +106,12 @@ export async function executeScheduledGeneration(
   organizationId: string,
   graphic: SocialProofGraphic
 ): Promise<ActionResult<SocialProofGraphic>> {
+  try {
+    await requireCronSecretRequest();
+  } catch {
+    return { success: false, error: "Unauthorized" };
+  }
+
   const supabase = createAdminClient();
   const templateId = graphic.template_id as TemplateId | null;
   if (!templateId) {
@@ -177,8 +182,7 @@ export async function executeScheduledGeneration(
     .eq("id", organizationId)
     .single();
 
-  const canvasSize: CanvasSize =
-    (graphic.canvas_size as unknown as CanvasSize) ?? DEFAULT_CANVAS;
+  const canvasSize: CanvasSize = (graphic.canvas_size as unknown as CanvasSize) ?? DEFAULT_CANVAS;
 
   const elements = template.generate({
     canvasSize,

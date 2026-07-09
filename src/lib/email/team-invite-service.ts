@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Team Member Invite Sequence Service
  *
@@ -418,22 +416,13 @@ export async function sendTeamInviteWelcomeEmail(
     dashboardUrl,
     profileUrl,
     // Role-specific URLs
-    reviewsUrl:
-      invitation.role === "user"
-        ? `${baseUrl}/dashboard/reviews`
-        : undefined,
+    reviewsUrl: invitation.role === "user" ? `${baseUrl}/dashboard/reviews` : undefined,
     leaderboardUrl:
-      invitation.role === "user"
-        ? `${baseUrl}/dashboard/analytics/leaderboard`
-        : undefined,
+      invitation.role === "user" ? `${baseUrl}/dashboard/analytics/leaderboard` : undefined,
     teamAnalyticsUrl:
-      invitation.role === "manager"
-        ? `${baseUrl}/dashboard/analytics/team`
-        : undefined,
+      invitation.role === "manager" ? `${baseUrl}/dashboard/analytics/team` : undefined,
     teamManagementUrl:
-      invitation.role === "manager"
-        ? `${baseUrl}/dashboard/settings/team`
-        : undefined,
+      invitation.role === "manager" ? `${baseUrl}/dashboard/settings/team` : undefined,
   };
 
   const emailContent = getTeamInvite4WelcomeEmail(data);
@@ -491,9 +480,7 @@ export async function sendTeamInviteWelcomeEmail(
  * Process the team invite reminder queue
  * Called by cron job every hour
  */
-export async function processTeamInviteQueue(
-  batchSize: number = 50
-): Promise<QueueProcessResult> {
+export async function processTeamInviteQueue(batchSize: number = 50): Promise<QueueProcessResult> {
   const supabase = createAdminClient();
   const result: QueueProcessResult = {
     processed: 0,
@@ -668,8 +655,7 @@ export async function getInviteFunnelStats(
   }
 
   const totalInvites = invitations.length;
-  const acceptanceRate =
-    totalInvites > 0 ? Math.round((accepted / totalInvites) * 100) : 0;
+  const acceptanceRate = totalInvites > 0 ? Math.round((accepted / totalInvites) * 100) : 0;
 
   return {
     totalInvites,

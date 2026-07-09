@@ -29,7 +29,11 @@ import {
   type EmailBrandingConfig,
 } from "./types";
 import { adminProfileSchema, type AdminProfileInput } from "@/lib/auth/profile-schemas";
-import { writeProfileUpdate, writeAvatarUpload, writeBannerUpload } from "@/lib/users/profile-mutations";
+import {
+  writeProfileUpdate,
+  writeAvatarUpload,
+  writeBannerUpload,
+} from "@/lib/users/profile-mutations";
 import { validateOrgSlug, generateUserSlug, generateUniqueUserSlug } from "@/lib/users/slug-utils";
 import { deriveEmailBrandingConfig } from "./email-branding";
 import crypto from "crypto";
@@ -66,21 +70,19 @@ async function writeImpersonationAuditLog({
   if (!organizationId) return;
 
   const supabase = createAdminClient();
-  const { error } = await (supabase as any)
-    .from("organization_audit_logs")
-    .insert({
-      organization_id: organizationId,
-      user_id: impersonatorUserId,
-      action,
-      entity_type: "user_session",
-      entity_id: entityId,
-      new_values: {
-        impersonator_user_id: impersonatorUserId,
-        impersonated_user_id: impersonatedUserId,
-        reason: reason ?? null,
-        source: IMPERSONATION_SOURCE,
-      },
-    });
+  const { error } = await (supabase as any).from("organization_audit_logs").insert({
+    organization_id: organizationId,
+    user_id: impersonatorUserId,
+    action,
+    entity_type: "user_session",
+    entity_id: entityId,
+    new_values: {
+      impersonator_user_id: impersonatorUserId,
+      impersonated_user_id: impersonatedUserId,
+      reason: reason ?? null,
+      source: IMPERSONATION_SOURCE,
+    },
+  });
 
   if (error) {
     console.error("[Impersonation] Failed to write audit log:", error);
@@ -103,13 +105,14 @@ function transformDbOrganization(row: Tables<"organizations">): Organization {
     font_family: row.font_family ?? "Inter",
     company_email: row.company_email ?? null,
     company_phone: row.company_phone ?? null,
-    company_address: row.company_address as Organization["company_address"] ?? null,
+    company_address: (row.company_address as Organization["company_address"]) ?? null,
     timezone: row.timezone ?? "America/New_York",
     date_format: row.date_format ?? DEFAULT_DATE_FORMAT,
     billing_email: row.billing_email ?? null,
-    billing_address: row.billing_address as Organization["billing_address"] ?? null,
+    billing_address: (row.billing_address as Organization["billing_address"]) ?? null,
     mission_statement: row.mission_statement ?? null,
-    headquarters_address: row.headquarters_address as Organization["headquarters_address"] ?? null,
+    headquarters_address:
+      (row.headquarters_address as Organization["headquarters_address"]) ?? null,
     industry: row.industry ?? null,
     subscription_tier: (row.subscription_tier as SubscriptionTier) ?? "basic",
     subscription_status: (row.subscription_status as SubscriptionStatus) ?? "active",
@@ -137,7 +140,7 @@ function transformDbOrganization(row: Tables<"organizations">): Organization {
 // Get current user's organization
 export async function getCurrentOrganization(): Promise<{
   organization: Organization | null;
-  error: string | null
+  error: string | null;
 }> {
   const user = await unifiedGetUser();
   if (!user) {
@@ -206,8 +209,13 @@ export async function updateOrganizationSettings(
   // Clean empty strings to null for optional URL/email/uuid fields
   const cleanedData = { ...validated.data };
   const nullableFields = [
-    "website_url", "email", "linkedin_url", "facebook_url",
-    "instagram_url", "twitter_url", "headquarters_branch_id",
+    "website_url",
+    "email",
+    "linkedin_url",
+    "facebook_url",
+    "instagram_url",
+    "twitter_url",
+    "headquarters_branch_id",
     "company_email",
   ] as const;
   for (const key of nullableFields) {
@@ -299,12 +307,7 @@ export async function updateOrganizationBranding(
   return { success: true, error: null };
 }
 
-const LOGO_ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/svg+xml",
-];
+const LOGO_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
 
 // Upload organization logo
 export async function uploadOrganizationLogo(
@@ -337,7 +340,10 @@ export async function uploadOrganizationLogo(
   }
 
   if (!LOGO_ALLOWED_TYPES.includes(file.type)) {
-    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, WebP, or SVG image." };
+    return {
+      success: false,
+      error: "Invalid file type. Please upload a JPG, PNG, WebP, or SVG image.",
+    };
   }
 
   if (file.size > 5 * 1024 * 1024) {
@@ -850,7 +856,9 @@ export async function getOrganizationMembers(): Promise<{
   // Get members (expanded SELECT for profile completion calc)
   const { data: members, error } = await supabase
     .from("users")
-    .select("id, email, full_name, avatar_url, slug, role, is_active, last_login_at, created_at, photo_url, bio, nmls_id, phone, title, branch_id, address, linkedin_url, zillow_profile_url, google_place_id")
+    .select(
+      "id, email, full_name, avatar_url, slug, role, is_active, last_login_at, created_at, photo_url, bio, nmls_id, phone, title, branch_id, address, linkedin_url, zillow_profile_url, google_place_id"
+    )
     .eq("organization_id", userData.organization_id)
     .order("created_at", { ascending: false });
 
@@ -874,7 +882,14 @@ export async function getOrganizationMembers(): Promise<{
       ["bio", !!(r.bio && typeof r.bio === "string" && r.bio.length >= 50)],
       ["nmls_id", !!r.nmls_id],
       ["branch_id", !!r.branch_id],
-      ["address", !!(r.address && typeof r.address === "object" && Object.keys(r.address as object).length > 0)],
+      [
+        "address",
+        !!(
+          r.address &&
+          typeof r.address === "object" &&
+          Object.keys(r.address as object).length > 0
+        ),
+      ],
       ["linkedin_url", !!r.linkedin_url],
       ["zillow_profile_url", !!r.zillow_profile_url],
       ["google_place_id", !!r.google_place_id],
@@ -924,13 +939,15 @@ export async function updateMemberRole(
   // Get user's organization, role, and account type
   const { data: userData } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       organization_id,
       role,
       organizations (
         account_type
       )
-    `)
+    `
+    )
     .eq("id", user.id)
     .single();
 
@@ -1310,18 +1327,34 @@ export async function getOrganizationStats(): Promise<{
   if (error) {
     // If function doesn't exist, calculate manually
     const [users, los, reviews, surveys, activeSurveys, pendingReviews] = await Promise.all([
-      supabase.from("users").select("id", { count: "exact", head: true })
-        .eq("organization_id", userData.organization_id).eq("is_active", true),
-      supabase.from("users").select("id", { count: "exact", head: true })
-        .eq("organization_id", userData.organization_id).eq("is_active", true),
-      supabase.from("reviews").select("id", { count: "exact", head: true })
+      supabase
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", userData.organization_id)
+        .eq("is_active", true),
+      supabase
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", userData.organization_id)
+        .eq("is_active", true),
+      supabase
+        .from("reviews")
+        .select("id", { count: "exact", head: true })
         .eq("organization_id", userData.organization_id),
-      supabase.from("surveys").select("id", { count: "exact", head: true })
+      supabase
+        .from("surveys")
+        .select("id", { count: "exact", head: true })
         .eq("organization_id", userData.organization_id),
-      supabase.from("surveys").select("id", { count: "exact", head: true })
-        .eq("organization_id", userData.organization_id).in("status", ["pending", "sent"]),
-      supabase.from("reviews").select("id", { count: "exact", head: true })
-        .eq("organization_id", userData.organization_id).eq("status", "pending"),
+      supabase
+        .from("surveys")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", userData.organization_id)
+        .in("status", ["pending", "sent"]),
+      supabase
+        .from("reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", userData.organization_id)
+        .eq("status", "pending"),
     ]);
 
     return {
@@ -1339,7 +1372,7 @@ export async function getOrganizationStats(): Promise<{
 
   return {
     stats: stats as OrganizationStats,
-    error: null
+    error: null,
   };
 }
 
@@ -1405,7 +1438,10 @@ export async function startUserImpersonation(
     (currentSessionPayload as any)?.session?.impersonated_by ??
     null;
   if (impersonatedByField) {
-    return { success: false, error: "Cannot start impersonation while impersonating another user." };
+    return {
+      success: false,
+      error: "Cannot start impersonation while impersonating another user.",
+    };
   }
 
   const supabase = createAdminClient();
@@ -1414,14 +1450,16 @@ export async function startUserImpersonation(
 
   const { data: actorRaw, error: actorError } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       id,
       organization_id,
       role,
       organizations (
         account_type
       )
-    `)
+    `
+    )
     .eq("id", actor.id)
     .single();
 
@@ -1437,8 +1475,7 @@ export async function startUserImpersonation(
   }
 
   const actorIsEnterpriseAdmin =
-    actorProfile.role === "admin" &&
-    actorProfile.organizations?.account_type === "enterprise";
+    actorProfile.role === "admin" && actorProfile.organizations?.account_type === "enterprise";
 
   if (!actorIsEnterpriseAdmin) {
     await writeImpersonationAuditLog({
@@ -1555,21 +1592,20 @@ export async function stopUserImpersonation(): Promise<{
       headers: requestHeaders,
     });
 
-    const currentSession = (sessionPayload as {
-      session?: {
-        impersonatedBy?: string | null;
-        impersonated_by?: string | null;
-      } | null;
-      user?: { id?: string | null } | null;
-    } | null)?.session;
+    const currentSession = (
+      sessionPayload as {
+        session?: {
+          impersonatedBy?: string | null;
+          impersonated_by?: string | null;
+        } | null;
+        user?: { id?: string | null } | null;
+      } | null
+    )?.session;
 
     const impersonatorUserId =
-      currentSession?.impersonatedBy ??
-      currentSession?.impersonated_by ??
-      null;
+      currentSession?.impersonatedBy ?? currentSession?.impersonated_by ?? null;
     const impersonatedUserId =
-      (sessionPayload as { user?: { id?: string | null } | null } | null)?.user?.id ??
-      null;
+      (sessionPayload as { user?: { id?: string | null } | null } | null)?.user?.id ?? null;
 
     if (!impersonatorUserId) {
       return { success: true, error: null };
@@ -1628,11 +1664,7 @@ export async function isOrganizationAdmin(): Promise<boolean> {
 
   const supabase = createAdminClient();
 
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  const { data: userData } = await supabase.from("users").select("role").eq("id", user.id).single();
 
   return userData?.role === "admin";
 }
@@ -1880,6 +1912,26 @@ export async function getSuggestedOrgSlug(
   name: string,
   excludeOrgId?: string
 ): Promise<{ slug: string }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { slug: "" };
+  }
+
+  const supabase = createAdminClient();
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id || userData.role !== "admin") {
+    return { slug: "" };
+  }
+
+  if (excludeOrgId && excludeOrgId !== userData.organization_id) {
+    return { slug: "" };
+  }
+
   const baseSlug = generateUserSlug(name); // Reuse the same slug generation logic
   if (!baseSlug) {
     return { slug: "" };

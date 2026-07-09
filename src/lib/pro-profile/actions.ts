@@ -14,7 +14,7 @@ import type {
 } from "@/lib/email/types";
 import { publishReviewIfClean } from "@/lib/reviews/publish";
 import { generateVerificationToken } from "@/lib/reviews/verification";
-import { routeNewFlag } from "@/lib/reviews/flag-actions";
+import { routeNewFlag } from "@/lib/reviews/flag-routing";
 
 // Schema definitions
 const submitPublicReviewSchema = z.object({
@@ -171,9 +171,7 @@ export async function submitPublicReview(
       publishWhenClean: false,
       screening: {
         mode: "compute",
-        text: validated.title
-          ? `${validated.text}\n${validated.title}`
-          : validated.text,
+        text: validated.title ? `${validated.text}\n${validated.title}` : validated.text,
         customerName: validated.customerName || null,
       },
     });
@@ -228,9 +226,7 @@ export async function submitReferral(
     // Fetch professional with expanded fields for email template
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select(
-        "id, organization_id, full_name, title, photo_url, email, phone, slug"
-      )
+      .select("id, organization_id, full_name, title, photo_url, email, phone, slug")
       .eq("id", validated.loanOfficerId)
       .eq("is_active", true)
       .single();
@@ -242,7 +238,6 @@ export async function submitReferral(
     if (!user.organization_id) {
       return { success: false, error: "Professional not associated with an organization" };
     }
-
 
     // Fetch organization name
     const { data: org } = await supabase
@@ -316,11 +311,9 @@ export async function submitReferral(
     };
 
     // Send email — don't fail the referral if email fails
-    sendProfileReferralIntroductionEmail(emailData, referral.id).catch(
-      (err) => {
-        console.error("Failed to send referral introduction email:", err);
-      }
-    );
+    sendProfileReferralIntroductionEmail(emailData, referral.id).catch((err) => {
+      console.error("Failed to send referral introduction email:", err);
+    });
 
     return { success: true, data: { id: referral.id } };
   } catch (error) {
@@ -335,9 +328,7 @@ export async function submitReferral(
 /**
  * Flag a review for moderation
  */
-export async function flagReview(
-  input: z.infer<typeof flagReviewSchema>
-): Promise<ActionResult> {
+export async function flagReview(input: z.infer<typeof flagReviewSchema>): Promise<ActionResult> {
   try {
     const validated = flagReviewSchema.parse(input);
     const supabase = createAdminClient();

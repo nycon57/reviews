@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Re-engagement Sequence Service
  *
@@ -217,10 +215,7 @@ async function logEmail(params: {
   return data.id;
 }
 
-async function getMissedReviewsCount(
-  userId: string,
-  sinceDate: string
-): Promise<number> {
+async function getMissedReviewsCount(userId: string, sinceDate: string): Promise<number> {
   const supabase = createAdminClient();
 
   const { count, error } = await supabase
@@ -292,7 +287,8 @@ export async function detectInactiveUsersAndStartSequences(): Promise<DetectionR
   // and don't already have an active re-engagement sequence
   const { data: inactiveUsers, error } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       id,
       email,
       full_name,
@@ -300,7 +296,8 @@ export async function detectInactiveUsersAndStartSequences(): Promise<DetectionR
       last_login_at,
       receive_notifications,
       organizations!inner(name, subscription_status)
-    `)
+    `
+    )
     .not("last_login_at", "is", null)
     .lte("last_login_at", sevenDaysAgo.toISOString())
     .eq("is_active", true)
@@ -339,10 +336,7 @@ export async function detectInactiveUsersAndStartSequences(): Promise<DetectionR
       }
 
       // Calculate days inactive
-      const daysInactive = daysBetween(
-        new Date(),
-        new Date(user.last_login_at!)
-      );
+      const daysInactive = daysBetween(new Date(), new Date(user.last_login_at!));
 
       // Only start sequence for users inactive 7+ days
       if (daysInactive < 7) {
@@ -498,13 +492,15 @@ export async function processReengagementSequenceQueue(
 
   // OPTIMISTIC LOCKING: Immediately mark fetched sequences as "processing"
   // This prevents concurrent cron job instances from processing the same sequences
-  const sequenceIds = (sequences as SequenceRecord[]).map(s => s.id);
+  const sequenceIds = (sequences as SequenceRecord[]).map((s) => s.id);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: lockedSequences, error: lockError } = await (supabase.from as any)("email_sequences")
+  const { data: lockedSequences, error: lockError } = await (supabase.from as any)(
+    "email_sequences"
+  )
     .update({
       status: "processing",
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
     .in("id", sequenceIds)
     .eq("status", "active") // Only lock if still active (optimistic lock check)
@@ -517,7 +513,7 @@ export async function processReengagementSequenceQueue(
 
   // Filter sequences to only process those we successfully locked
   const lockedIds = new Set((lockedSequences || []).map((s: { id: string }) => s.id));
-  const sequencesToProcess = (sequences as SequenceRecord[]).filter(s => lockedIds.has(s.id));
+  const sequencesToProcess = (sequences as SequenceRecord[]).filter((s) => lockedIds.has(s.id));
 
   if (sequencesToProcess.length === 0) {
     // All sequences were already taken by another process
@@ -545,9 +541,7 @@ export async function processReengagementSequenceQueue(
         }
       } else {
         result.failed++;
-        result.errors.push(
-          `Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`
-        );
+        result.errors.push(`Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`);
         // Reset status back to "active" so it can be retried
         await resetSequenceToActive(supabase, sequence.id);
       }
@@ -567,12 +561,15 @@ export async function processReengagementSequenceQueue(
 /**
  * Helper to reset a sequence status back to "active" after processing lock
  */
-async function resetSequenceToActive(supabase: ReturnType<typeof createAdminClient>, sequenceId: string): Promise<void> {
+async function resetSequenceToActive(
+  supabase: ReturnType<typeof createAdminClient>,
+  sequenceId: string
+): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase.from as any)("email_sequences")
     .update({
       status: "active",
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
     .eq("id", sequenceId)
     .eq("status", "processing"); // Only reset if still in processing state
@@ -620,7 +617,12 @@ async function processSequenceStep(
   const sequenceStartedAt = new Date(sequence.metadata.sequenceStartedAt);
 
   if (lastLoginAt && lastLoginAt > sequenceStartedAt) {
-    await updateSequenceStatus(sequence.id, "exited", "user_returned", "login_after_sequence_start");
+    await updateSequenceStatus(
+      sequence.id,
+      "exited",
+      "user_returned",
+      "login_after_sequence_start"
+    );
     return { success: true, action: "exited" };
   }
 
@@ -633,19 +635,14 @@ async function processSequenceStep(
     return { success: true, action: "completed" };
   }
 
-  const stepConfig = REENGAGEMENT_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === nextStep
-  );
+  const stepConfig = REENGAGEMENT_SEQUENCE_CONFIG.schedule.find((s) => s.step === nextStep);
 
   if (!stepConfig) {
     return { success: false, error: `Invalid step: ${nextStep}` };
   }
 
   // Check if user has been inactive long enough for this step
-  const daysInactive = daysBetween(
-    new Date(),
-    new Date(sequence.metadata.lastActiveAt)
-  );
+  const daysInactive = daysBetween(new Date(), new Date(sequence.metadata.lastActiveAt));
 
   if (daysInactive < stepConfig.daysInactive) {
     // Not time yet for this step, schedule for later
@@ -664,24 +661,14 @@ async function processSequenceStep(
   }
 
   // Send the email
-  const sendResult = await sendReengagementEmail(
-    sequence,
-    user,
-    stepConfig,
-    emailTypeSendResolver
-  );
+  const sendResult = await sendReengagementEmail(sequence, user, stepConfig, emailTypeSendResolver);
 
   if (!sendResult.success) {
     return { success: false, error: sendResult.error };
   }
 
   // Update sequence after successful send
-  await updateSequenceAfterSend(
-    sequence,
-    nextStep,
-    sendResult.emailId!,
-    stepConfig.templateName
-  );
+  await updateSequenceAfterSend(sequence, nextStep, sendResult.emailId!, stepConfig.templateName);
 
   return { success: true, action: "sent" };
 }
@@ -704,16 +691,10 @@ async function sendReengagementEmail(
   const dashboardUrl = `${baseUrl}/dashboard`;
   const staySubscribedUrl = `${baseUrl}/api/email/stay-subscribed?email=${encodeURIComponent(user.email)}&sequence=${sequence.id}`;
 
-  const daysInactive = daysBetween(
-    new Date(),
-    new Date(sequence.metadata.lastActiveAt)
-  );
+  const daysInactive = daysBetween(new Date(), new Date(sequence.metadata.lastActiveAt));
 
   // Get missed reviews count
-  const missedReviewsCount = await getMissedReviewsCount(
-    user.id,
-    sequence.metadata.lastActiveAt
-  );
+  const missedReviewsCount = await getMissedReviewsCount(user.id, sequence.metadata.lastActiveAt);
 
   const baseData = {
     toEmail: user.email,
@@ -764,9 +745,10 @@ async function sendReengagementEmail(
         incentiveMessage: sequence.metadata.isPaidUser
           ? "Your premium features are still available and waiting for you"
           : undefined,
-        urgencyMessage: missedReviewsCount > 0
-          ? `You have ${missedReviewsCount} review${missedReviewsCount === 1 ? "" : "s"} that could use your response. Your clients are waiting to hear from you.`
-          : "Your online reputation needs attention. Come back and see how you're doing.",
+        urgencyMessage:
+          missedReviewsCount > 0
+            ? `You have ${missedReviewsCount} review${missedReviewsCount === 1 ? "" : "s"} that could use your response. Your clients are waiting to hear from you.`
+            : "Your online reputation needs attention. Come back and see how you're doing.",
       };
       emailContent = getReengagement3LastChanceEmail(data);
       break;
@@ -845,8 +827,7 @@ async function sendReengagementEmail(
 
     return { success: true, emailId: emailId || result.messageId };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: user.email,
@@ -925,12 +906,8 @@ async function updateSequenceAfterSend(
   ];
 
   // Calculate next email time based on next step's days inactive requirement
-  const currentStepConfig = REENGAGEMENT_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step
-  );
-  const nextStepConfig = REENGAGEMENT_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step + 1
-  );
+  const currentStepConfig = REENGAGEMENT_SEQUENCE_CONFIG.schedule.find((s) => s.step === step);
+  const nextStepConfig = REENGAGEMENT_SEQUENCE_CONFIG.schedule.find((s) => s.step === step + 1);
 
   const isComplete = step >= REENGAGEMENT_SEQUENCE_CONFIG.totalSteps;
 

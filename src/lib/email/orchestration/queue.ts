@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Email Sequence Orchestration Engine - Queue Management
  *
@@ -127,9 +125,7 @@ export async function fetchAndLockSequences(
   }
 
   // Return only sequences we successfully locked
-  const lockedIds = new Set(
-    (lockedSequences || []).map((s: { id: string }) => s.id)
-  );
+  const lockedIds = new Set((lockedSequences || []).map((s: { id: string }) => s.id));
   return (sequences as SequenceRecord[]).filter((s) => lockedIds.has(s.id));
 }
 
@@ -154,7 +150,9 @@ export async function resetSequenceToActive(sequenceId: string): Promise<void> {
  */
 export async function processSequenceQueue(
   definition: SequenceDefinition,
-  emailSender: (ctx: EmailContext) => Promise<{ success: boolean; emailId?: string; error?: string }>,
+  emailSender: (
+    ctx: EmailContext
+  ) => Promise<{ success: boolean; emailId?: string; error?: string }>,
   batchSize: number = 50
 ): Promise<QueueProcessResult> {
   const result: QueueProcessResult = {
@@ -201,9 +199,7 @@ export async function processSequenceQueue(
         }
       } else {
         result.failed++;
-        result.errors.push(
-          `Sequence ${sequence.id}: ${stepResult.error || "Unknown error"}`
-        );
+        result.errors.push(`Sequence ${sequence.id}: ${stepResult.error || "Unknown error"}`);
         // Reset to active so it can be retried
         await resetSequenceToActive(sequence.id);
       }
@@ -225,7 +221,10 @@ export async function processSequenceQueue(
  */
 export async function processAllSequenceQueues(
   definitions: Map<SequenceType, SequenceDefinition>,
-  emailSenders: Map<SequenceType, (ctx: EmailContext) => Promise<{ success: boolean; emailId?: string; error?: string }>>,
+  emailSenders: Map<
+    SequenceType,
+    (ctx: EmailContext) => Promise<{ success: boolean; emailId?: string; error?: string }>
+  >,
   batchSize: number = 50
 ): Promise<Map<SequenceType, QueueProcessResult>> {
   const results = new Map<SequenceType, QueueProcessResult>();
@@ -468,9 +467,7 @@ export async function cancelUserSequences(
 /**
  * Get queue statistics using database aggregation for efficiency
  */
-export async function getQueueStats(
-  sequenceType?: SequenceType
-): Promise<{
+export async function getQueueStats(sequenceType?: SequenceType): Promise<{
   active: number;
   paused: number;
   processing: number;
@@ -574,9 +571,7 @@ export async function getUserSequences(
 /**
  * Get sequence by ID
  */
-export async function getSequenceById(
-  sequenceId: string
-): Promise<SequenceRecord | null> {
+export async function getSequenceById(sequenceId: string): Promise<SequenceRecord | null> {
   const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -599,9 +594,7 @@ export async function getSequenceById(
 /**
  * Reset stuck processing sequences (for recovery from crashes)
  */
-export async function resetStuckSequences(
-  olderThanMinutes: number = 30
-): Promise<number> {
+export async function resetStuckSequences(olderThanMinutes: number = 30): Promise<number> {
   const supabase = createAdminClient();
   const threshold = new Date(Date.now() - olderThanMinutes * 60 * 1000);
 

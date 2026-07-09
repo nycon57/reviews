@@ -200,9 +200,7 @@ export async function signInWithBetterAuth(formData: SignInInput): Promise<AuthR
 /**
  * Sign in with magic link using Better Auth
  */
-export async function signInWithMagicLinkBetterAuth(
-  formData: MagicLinkInput
-): Promise<AuthResult> {
+export async function signInWithMagicLinkBetterAuth(formData: MagicLinkInput): Promise<AuthResult> {
   // Validate input
   const result = magicLinkSchema.safeParse(formData);
   if (!result.success) {
@@ -214,17 +212,14 @@ export async function signInWithMagicLinkBetterAuth(
   try {
     // Call the magic link endpoint directly
     const appUrl = getTrustedAppUrl();
-    const response = await fetch(
-      `${appUrl}/api/auth/sign-in/magic-link`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          callbackURL: "/dashboard",
-        }),
-      }
-    );
+    const response = await fetch(`${appUrl}/api/auth/sign-in/magic-link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        callbackURL: "/dashboard",
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to send magic link");
@@ -246,9 +241,7 @@ export async function signInWithMagicLinkBetterAuth(
  * Request password reset using Better Auth
  * Note: Better Auth's forgetPassword endpoint is at POST /api/auth/forget-password
  */
-export async function resetPasswordBetterAuth(
-  formData: ResetPasswordInput
-): Promise<AuthResult> {
+export async function resetPasswordBetterAuth(formData: ResetPasswordInput): Promise<AuthResult> {
   // Validate input
   const result = resetPasswordSchema.safeParse(formData);
   if (!result.success) {
@@ -326,10 +319,13 @@ export async function updatePasswordBetterAuth(
  */
 export async function signOutBetterAuth(): Promise<void> {
   try {
-    const headersList = await headers();
-    await auth.api.signOut({
-      headers: headersList,
-    });
+    const session = await getSessionBetterAuth();
+    if (session?.user) {
+      const headersList = await headers();
+      await auth.api.signOut({
+        headers: headersList,
+      });
+    }
   } catch (error) {
     console.error("Sign out error:", error);
   }
@@ -369,10 +365,12 @@ export async function getUserWithProfileBetterAuth() {
   const supabaseAdmin = createAdminClient();
   const { data: profile } = await supabaseAdmin
     .from("users")
-    .select(`
+    .select(
+      `
       *,
       organization:organizations(*)
-    `)
+    `
+    )
     .eq("id", session.user.id)
     .single();
 
@@ -391,17 +389,14 @@ export async function resendVerificationEmailBetterAuth(): Promise<AuthResult> {
 
     // Call the send verification email endpoint directly
     const appUrl = getTrustedAppUrl();
-    const response = await fetch(
-      `${appUrl}/api/auth/send-verification-email`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: session.user.email,
-          callbackURL: "/dashboard",
-        }),
-      }
-    );
+    const response = await fetch(`${appUrl}/api/auth/send-verification-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: session.user.email,
+        callbackURL: "/dashboard",
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to send verification email");
@@ -428,10 +423,12 @@ export async function checkAdminAccessBetterAuth(): Promise<boolean> {
   const supabaseAdmin = createAdminClient();
   const { data: userData } = await supabaseAdmin
     .from("users")
-    .select(`
+    .select(
+      `
       role,
       organization:organizations!inner(account_type)
-    `)
+    `
+    )
     .eq("id", session.user.id)
     .single();
 

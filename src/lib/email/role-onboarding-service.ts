@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Role-Based Feature Onboarding Sequence Service
  *
@@ -590,9 +588,7 @@ export async function processRoleOnboardingSequenceQueue(
         }
       } else {
         result.failed++;
-        result.errors.push(
-          `Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`
-        );
+        result.errors.push(`Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`);
       }
     } catch (err) {
       result.failed++;

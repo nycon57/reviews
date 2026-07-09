@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Trial Ending Sequence Service
  *
@@ -229,13 +227,8 @@ function addDays(date: Date, days: number): Date {
   return result;
 }
 
-function calculateNextEmailTime(
-  trialEndsAt: string,
-  nextStep: number
-): Date | null {
-  const nextStepConfig = TRIAL_ENDING_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === nextStep
-  );
+function calculateNextEmailTime(trialEndsAt: string, nextStep: number): Date | null {
+  const nextStepConfig = TRIAL_ENDING_SEQUENCE_CONFIG.schedule.find((s) => s.step === nextStep);
   if (!nextStepConfig) return null;
 
   const trialEndDate = new Date(trialEndsAt);
@@ -302,9 +295,7 @@ async function logEmail(params: {
  * Get usage statistics for the trial period
  * Uses Promise.all to parallelize independent database queries
  */
-async function getTrialUsageStats(
-  organizationId: string
-): Promise<TrialUsageStats> {
+async function getTrialUsageStats(organizationId: string): Promise<TrialUsageStats> {
   const supabase = createAdminClient();
 
   // Run all independent queries in parallel for better performance
@@ -377,12 +368,11 @@ async function getTrialUsageStats(
   const org = orgResult.data;
 
   const surveyResponseRate =
-    surveysSent && surveysSent > 0
-      ? Math.round(((surveyResponses || 0) / surveysSent) * 100)
-      : 0;
+    surveysSent && surveysSent > 0 ? Math.round(((surveyResponses || 0) / surveysSent) * 100) : 0;
 
   const customBrandingConfigured = !!(
-    org?.logo_url || (org?.primary_color && org.primary_color !== "#52796f")
+    org?.logo_url ||
+    (org?.primary_color && org.primary_color !== "#52796f")
   );
 
   return {
@@ -409,18 +399,13 @@ async function hasUserUpgraded(organizationId: string): Promise<boolean> {
     .eq("id", organizationId)
     .single();
 
-  return (
-    org?.subscription_status === "active" &&
-    org?.subscription_tier !== "trial"
-  );
+  return org?.subscription_status === "active" && org?.subscription_tier !== "trial";
 }
 
 /**
  * Get trial information for an organization
  */
-async function getTrialInfo(
-  organizationId: string
-): Promise<{
+async function getTrialInfo(organizationId: string): Promise<{
   trialEndsAt: string | null;
   daysRemaining: number;
   isInGracePeriod: boolean;
@@ -440,24 +425,17 @@ async function getTrialInfo(
 
   const trialEndsAt = new Date(org.trial_ends_at);
   const now = new Date();
-  const daysRemaining = Math.ceil(
-    (trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const daysRemaining = Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
   // Grace period is after trial ends
-  const gracePeriodEndsAt = addDays(
-    trialEndsAt,
-    TRIAL_ENDING_SEQUENCE_CONFIG.gracePeriodDays
-  );
+  const gracePeriodEndsAt = addDays(trialEndsAt, TRIAL_ENDING_SEQUENCE_CONFIG.gracePeriodDays);
   const isInGracePeriod = daysRemaining < 0 && now < gracePeriodEndsAt;
 
   return {
     trialEndsAt: org.trial_ends_at,
     daysRemaining,
     isInGracePeriod,
-    gracePeriodEndsAt: isInGracePeriod
-      ? gracePeriodEndsAt.toISOString()
-      : null,
+    gracePeriodEndsAt: isInGracePeriod ? gracePeriodEndsAt.toISOString() : null,
   };
 }
 
@@ -624,9 +602,7 @@ export async function startTrialEndingSequence(
 
   // Check for existing active sequence
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: existingSequence } = await (supabase.from as any)(
-    "email_sequences"
-  )
+  const { data: existingSequence } = await (supabase.from as any)("email_sequences")
     .select("id")
     .eq("user_id", adminUserId)
     .eq("sequence_type", "trial_ending")
@@ -650,9 +626,7 @@ export async function startTrialEndingSequence(
 
   // Create the sequence record
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sequence, error: insertError } = await (supabase.from as any)(
-    "email_sequences"
-  )
+  const { data: sequence, error: insertError } = await (supabase.from as any)("email_sequences")
     .insert({
       user_id: adminUserId,
       organization_id: organizationId,
@@ -706,9 +680,7 @@ export async function processTrialEndingSequenceQueue(
   const now = new Date().toISOString();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sequences, error } = await (supabase.from as any)(
-    "email_sequences"
-  )
+  const { data: sequences, error } = await (supabase.from as any)("email_sequences")
     .select("*")
     .eq("sequence_type", "trial_ending")
     .eq("status", "active")
@@ -730,10 +702,7 @@ export async function processTrialEndingSequenceQueue(
   // Process each sequence
   for (const sequence of sequences as TrialSequenceRecord[]) {
     try {
-      const processResult = await processTrialSequenceStep(
-        sequence,
-        emailTypeSendResolver
-      );
+      const processResult = await processTrialSequenceStep(sequence, emailTypeSendResolver);
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -745,9 +714,7 @@ export async function processTrialEndingSequenceQueue(
         }
       } else {
         result.failed++;
-        result.errors.push(
-          `Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`
-        );
+        result.errors.push(`Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`);
       }
     } catch (err) {
       result.failed++;
@@ -786,34 +753,21 @@ async function processTrialSequenceStep(
 
   // Check if user still wants notifications
   if (user.receive_notifications === false) {
-    await updateTrialSequenceStatus(
-      sequence.id,
-      "cancelled",
-      "user_disabled_notifications"
-    );
+    await updateTrialSequenceStatus(sequence.id, "cancelled", "user_disabled_notifications");
     return { success: true, action: "exited" };
   }
 
   // Check if email is unsubscribed
   const unsubscribed = await isEmailUnsubscribed(user.email);
   if (unsubscribed) {
-    await updateTrialSequenceStatus(
-      sequence.id,
-      "cancelled",
-      "email_unsubscribed"
-    );
+    await updateTrialSequenceStatus(sequence.id, "cancelled", "email_unsubscribed");
     return { success: true, action: "exited" };
   }
 
   // Check if user has upgraded (exit condition)
   const upgraded = await hasUserUpgraded(sequence.organization_id);
   if (upgraded) {
-    await updateTrialSequenceStatus(
-      sequence.id,
-      "exited",
-      "user_upgraded",
-      "has_upgraded"
-    );
+    await updateTrialSequenceStatus(sequence.id, "exited", "user_upgraded", "has_upgraded");
     return { success: true, action: "exited" };
   }
 
@@ -829,11 +783,7 @@ async function processTrialSequenceStep(
     TRIAL_ENDING_SEQUENCE_CONFIG.gracePeriodDays
   );
   if (new Date() > gracePeriodEnd) {
-    await updateTrialSequenceStatus(
-      sequence.id,
-      "completed",
-      "trial_fully_expired"
-    );
+    await updateTrialSequenceStatus(sequence.id, "completed", "trial_fully_expired");
     return { success: true, action: "completed" };
   }
 
@@ -846,9 +796,7 @@ async function processTrialSequenceStep(
     return { success: true, action: "completed" };
   }
 
-  const stepConfig = TRIAL_ENDING_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === nextStep
-  );
+  const stepConfig = TRIAL_ENDING_SEQUENCE_CONFIG.schedule.find((s) => s.step === nextStep);
 
   if (!stepConfig) {
     return { success: false, error: `Invalid step: ${nextStep}` };
@@ -973,17 +921,14 @@ async function sendTrialEndingEmail(
     }
 
     case 3: {
-      const messageVariant =
-        sequence.ab_test_assignments.email_3 || assignABTestVariant();
+      const messageVariant = sequence.ab_test_assignments.email_3 || assignABTestVariant();
       variant = messageVariant;
 
       const data: TrialEnding3FinalReminderEmailData = {
         ...baseData,
         usageStats,
         pricing: DEFAULT_PRICING,
-        specialOffer: generateSpecialOffer(
-          sequence.metadata.isHighValueProspect || false
-        ),
+        specialOffer: generateSpecialOffer(sequence.metadata.isHighValueProspect || false),
         messageVariant: messageVariant as "urgency" | "value",
       };
       emailContent = getTrialEnding3FinalReminderEmail(data);
@@ -1099,8 +1044,7 @@ async function sendTrialEndingEmail(
 
     return { success: true, emailId: emailId || result.messageId, variant };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: user.email,
@@ -1176,10 +1120,7 @@ async function updateTrialSequenceAfterSend(
   ];
 
   const isComplete = step >= TRIAL_ENDING_SEQUENCE_CONFIG.totalSteps;
-  const nextEmailAt = calculateNextEmailTime(
-    sequence.metadata.trialEndsAt,
-    step + 1
-  );
+  const nextEmailAt = calculateNextEmailTime(sequence.metadata.trialEndsAt, step + 1);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from as any)("email_sequences")
@@ -1251,18 +1192,14 @@ export async function resumeTrialEndingSequence(
 /**
  * Get trial ending sequence status for an organization
  */
-export async function getTrialEndingSequenceStatus(
-  organizationId: string
-): Promise<{
+export async function getTrialEndingSequenceStatus(organizationId: string): Promise<{
   hasSequence: boolean;
   sequence?: TrialSequenceRecord;
 }> {
   const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sequence, error } = await (supabase.from as any)(
-    "email_sequences"
-  )
+  const { data: sequence, error } = await (supabase.from as any)("email_sequences")
     .select("*")
     .eq("organization_id", organizationId)
     .eq("sequence_type", "trial_ending")

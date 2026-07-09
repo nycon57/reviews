@@ -3,13 +3,7 @@
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
-import type {
-  UserTask,
-  TaskFilter,
-  TasksResult,
-  TaskCandidate,
-  TaskType,
-} from "./types";
+import type { UserTask, TaskFilter, TasksResult, TaskCandidate, TaskType } from "./types";
 import {
   checkUnrespondedReviews,
   checkPendingResponseCount,
@@ -126,9 +120,7 @@ export async function getPendingTaskCount(): Promise<number> {
 // Write actions
 // ============================================================================
 
-export async function completeTask(
-  taskId: string
-): Promise<{ success: boolean; error?: string }> {
+export async function completeTask(taskId: string): Promise<{ success: boolean; error?: string }> {
   const user = await unifiedGetUser();
   if (!user) return { success: false, error: "Not authenticated" };
 
@@ -153,9 +145,7 @@ export async function completeTask(
   return { success: true };
 }
 
-export async function dismissTask(
-  taskId: string
-): Promise<{ success: boolean; error?: string }> {
+export async function dismissTask(taskId: string): Promise<{ success: boolean; error?: string }> {
   const user = await unifiedGetUser();
   if (!user) return { success: false, error: "Not authenticated" };
 
@@ -220,7 +210,19 @@ export async function generateTasksForUser(
   orgId: string,
   isPro: boolean
 ): Promise<void> {
-  const supabase = createUntypedAdminClient();
+  const user = await unifiedGetUser();
+  if (!user || user.id !== userId) return;
+
+  const authClient = createUntypedAdminClient();
+  const { data: userData } = await authClient
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (userData?.organization_id !== orgId) return;
+
+  const supabase = authClient;
 
   // Throttle: skip if last task was created <5min ago
   const { data: recentTask } = await supabase

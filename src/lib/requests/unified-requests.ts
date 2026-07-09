@@ -5,6 +5,7 @@ import {
   getVideoTestimonialRequests,
   getVideoTestimonialRequestStats,
 } from "@/lib/video-testimonials/actions";
+import { getAccessContext } from "@/lib/access";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { computeAttention } from "@/lib/requests/funnel-logic";
 
@@ -87,12 +88,15 @@ function normalizeSurveyStatus(status: string): string {
 // Server Actions
 // ============================================================================
 
-export async function getUnifiedRequests(
-  filters: UnifiedRequestFilters = {}
-): Promise<{
+export async function getUnifiedRequests(filters: UnifiedRequestFilters = {}): Promise<{
   requests: UnifiedRequest[];
   total: number;
 }> {
+  const ctx = await getAccessContext();
+  if (!ctx) {
+    return { requests: [], total: 0 };
+  }
+
   const { type, status, loanOfficerId, search, page = 1, pageSize = 25 } = filters;
 
   // Determine which data sources to query
@@ -100,21 +104,16 @@ export async function getUnifiedRequests(
   const fetchVideos = !type || type === "video";
 
   // Map unified status back to source-specific status for filtering
-  const surveyStatus = status === "completed" ? "completed" : status === "opened" ? undefined : status;
+  const surveyStatus =
+    status === "completed" ? "completed" : status === "opened" ? undefined : status;
   const videoStatus =
-    status === "completed"
-      ? "submitted"
-      : status === "opened"
-        ? "opened"
-        : status;
+    status === "completed" ? "submitted" : status === "opened" ? "opened" : status;
 
   // When merging two sources with client-side sort, we need enough rows
   // from each to fill the requested page. Fetch page * pageSize from each
   // source (worst case: all merged rows come from one source). Use a higher
   // limit when search is active since client-side filtering reduces results.
-  const fetchLimit = search
-    ? Math.max(page * pageSize * 4, 200)
-    : Math.max(page * pageSize, 50);
+  const fetchLimit = search ? Math.max(page * pageSize * 4, 200) : Math.max(page * pageSize, 50);
 
   const [surveyResult, videoResult] = await Promise.all([
     fetchSurveys
@@ -198,9 +197,7 @@ export async function getUnifiedRequests(
     );
   }
 
-  merged.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const total = merged.length;
 
@@ -287,10 +284,7 @@ async function fetchSurveyMeta(surveyIds: string[]): Promise<Map<string, SurveyM
     .in("id", surveyIds);
   if (withHeld.error) {
     // 42703 = undefined_column: held_reason not deployed yet. Retry without it.
-    const fallback = await supabase
-      .from("surveys")
-      .select("id, opened_at")
-      .in("id", surveyIds);
+    const fallback = await supabase.from("surveys").select("id, opened_at").in("id", surveyIds);
     rows = (fallback.data ?? []) as typeof rows;
   } else {
     rows = (withHeld.data ?? []) as typeof rows;
@@ -384,13 +378,25 @@ async function resolvePublishedVideos(
 }
 
 export async function getUnifiedRequestStats(): Promise<UnifiedRequestStats> {
+  const ctx = await getAccessContext();
+  if (!ctx) {
+    return {
+      total: 0,
+      pending: 0,
+      sent: 0,
+      completed: 0,
+      expired: 0,
+      byType: { survey: 0, video: 0 },
+    };
+  }
+
   const [surveyResult, videoResult] = await Promise.all([
     getSurveysForDistribution({ page: 1, pageSize: 500 }),
     getVideoTestimonialRequestStats(),
   ]);
 
   // Count survey statuses from the raw data
-  const surveys = surveyResult?.success ? surveyResult.data?.surveys ?? [] : [];
+  const surveys = surveyResult?.success ? (surveyResult.data?.surveys ?? []) : [];
   const surveyStats = {
     total: surveys.length,
     pending: surveys.filter((s) => s.status === "pending").length,

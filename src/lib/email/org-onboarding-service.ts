@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Organization Onboarding Sequence Service
  *
@@ -158,13 +156,8 @@ function addDays(date: Date, days: number): Date {
  * Calculate the next email time based on sequence start and step configuration.
  * Uses absolute delay from sequence start to prevent timing drift.
  */
-function calculateNextEmailTime(
-  sequenceStartedAt: string,
-  nextStep: number
-): Date | null {
-  const nextStepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === nextStep
-  );
+function calculateNextEmailTime(sequenceStartedAt: string, nextStep: number): Date | null {
+  const nextStepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find((s) => s.step === nextStep);
   if (!nextStepConfig) return null;
 
   const sequenceStartTime = new Date(sequenceStartedAt);
@@ -230,9 +223,7 @@ async function logEmail(params: {
 /**
  * Get organization onboarding status (branding, team, integrations, billing)
  */
-async function getOrgOnboardingStatus(
-  organizationId: string
-): Promise<OrgOnboardingStatus | null> {
+async function getOrgOnboardingStatus(organizationId: string): Promise<OrgOnboardingStatus | null> {
   const supabase = createAdminClient();
 
   // Get organization data
@@ -506,10 +497,7 @@ export async function processOrgOnboardingSequenceQueue(
   // Process each sequence
   for (const sequence of sequences as OrgSequenceRecord[]) {
     try {
-      const processResult = await processOrgSequenceStep(
-        sequence,
-        emailTypeSendResolver
-      );
+      const processResult = await processOrgSequenceStep(sequence, emailTypeSendResolver);
 
       if (processResult.success) {
         if (processResult.action === "sent") {
@@ -521,9 +509,7 @@ export async function processOrgOnboardingSequenceQueue(
         }
       } else {
         result.failed++;
-        result.errors.push(
-          `Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`
-        );
+        result.errors.push(`Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`);
       }
     } catch (err) {
       result.failed++;
@@ -599,9 +585,7 @@ async function processOrgSequenceStep(
     return { success: true, action: "completed" };
   }
 
-  const stepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === nextStep
-  );
+  const stepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find((s) => s.step === nextStep);
 
   if (!stepConfig) {
     return { success: false, error: `Invalid step: ${nextStep}` };
@@ -832,8 +816,7 @@ async function sendOrgOnboardingEmail(
 
     return { success: true, emailId: emailId || result.messageId };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     await logEmail({
       toEmail: user.email,
@@ -901,10 +884,7 @@ async function skipOrgSequenceStep(
   const supabase = createAdminClient();
   const now = new Date().toISOString();
 
-  const skippedSteps = [
-    ...sequence.skipped_steps,
-    { step, reason, skipped_at: now },
-  ];
+  const skippedSteps = [...sequence.skipped_steps, { step, reason, skipped_at: now }];
 
   const nextEmailAt = calculateNextEmailTime(sequence.started_at, step + 1);
 

@@ -308,6 +308,18 @@ export async function handleSocialOAuthCallback(
       return { success: false, error: "OAuth session expired" };
     }
 
+    const context = await requireManagerRole();
+    if (!context) {
+      return { success: false, error: "Unauthorized - Manager role required" };
+    }
+
+    if (
+      context.organizationId !== stateData.organizationId ||
+      context.userId !== stateData.userId
+    ) {
+      return { success: false, error: "OAuth state does not match the current session" };
+    }
+
     const codeVerifier =
       platform === "twitter" ? await consumeTwitterPkceVerifier(state) : undefined;
 
@@ -316,11 +328,7 @@ export async function handleSocialOAuthCallback(
     }
 
     // Exchange code for tokens
-    const tokens = await exchangeCodeForTokens(
-      platform,
-      code,
-      codeVerifier ?? undefined
-    );
+    const tokens = await exchangeCodeForTokens(platform, code, codeVerifier ?? undefined);
 
     // Get user info
     const userInfo = await getUserInfo(platform, tokens.accessToken);

@@ -1,6 +1,7 @@
 "use server";
 
 import { createChatCompletion, isAIEnabled } from "@/lib/ai/client";
+import { getAuthenticatedUserResult } from "@/lib/auth/server-action-guards";
 import { PLATFORM_CHAR_LIMITS, type ActionResult, type SocialPlatform } from "./types";
 
 export async function generateCaption(input: {
@@ -10,6 +11,11 @@ export async function generateCaption(input: {
   platform?: string;
   orgName?: string;
 }): Promise<ActionResult<string>> {
+  const auth = await getAuthenticatedUserResult();
+  if (!auth.success) {
+    return { success: false, error: auth.error };
+  }
+
   if (!isAIEnabled()) {
     return { success: false, error: "AI features are not enabled" };
   }

@@ -21,6 +21,11 @@
       "permission": "VIEW_SHARE_STUDIO"
     },
     {
+      "title": "Social Graphics",
+      "route": "/dashboard/social-graphics",
+      "permission": "VIEW_SHARE_STUDIO"
+    },
+    {
       "title": "Tasks",
       "route": "/dashboard/tasks",
       "permission": "VIEW_TASKS"
@@ -39,6 +44,11 @@
       "title": "Analytics",
       "route": "/dashboard/analytics",
       "permission": "VIEW_ANALYTICS"
+    },
+    {
+      "title": "Reports",
+      "route": "/dashboard/reports",
+      "permission": "VIEW_REPORTS"
     },
     {
       "title": "Trends",
@@ -190,10 +200,12 @@
     "/dashboard/reviews",
     "/dashboard/reviews?tab=contacts",
     "/dashboard/share-studio",
+    "/dashboard/social-graphics",
     "/dashboard/tasks",
     "/dashboard/campaigns",
     "/dashboard/recognition",
     "/dashboard/analytics",
+    "/dashboard/reports",
     "/dashboard/analytics/trends",
     "/dashboard/analytics/leaderboard",
     "/dashboard/analytics/agents",

@@ -35,6 +35,7 @@ interface DashboardLayoutProps {
     expiresAt?: string | null;
   } | null;
   onSignOut?: () => void;
+  initialSidebarCollapsed?: boolean;
 }
 
 export function DashboardLayout({
@@ -43,8 +44,9 @@ export function DashboardLayout({
   userContext,
   impersonation,
   onSignOut,
+  initialSidebarCollapsed = false,
 }: DashboardLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(initialSidebarCollapsed);
   const [isStoppingImpersonation, startStopTransition] = React.useTransition();
   const router = useRouter();
   const { toast } = useToast();
@@ -90,6 +92,16 @@ export function DashboardLayout({
     });
   }, [router, toast]);
 
+  const handleSidebarCollapsedChange = React.useCallback((collapsed: boolean) => {
+    setSidebarCollapsed(collapsed);
+    document.cookie = [
+      `repwell_sidebar_collapsed=${collapsed ? "true" : "false"}`,
+      "Path=/dashboard",
+      "Max-Age=31536000",
+      "SameSite=Lax",
+    ].join("; ");
+  }, []);
+
   return (
     <PermissionProvider userContext={userContext || null}>
       <div className="flex h-dvh overflow-hidden bg-background">
@@ -111,7 +123,7 @@ export function DashboardLayout({
             isStoppingImpersonation={isStoppingImpersonation}
             mobileMenuTrigger={<MobileNavTrigger />}
             sidebarCollapsed={sidebarCollapsed}
-            onSidebarCollapsedChange={setSidebarCollapsed}
+            onSidebarCollapsedChange={handleSidebarCollapsedChange}
           />
 
           {impersonation?.active && (

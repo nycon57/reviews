@@ -59,6 +59,13 @@ export const NAV_CONFIG: NavConfig = {
       isNew: true,
     },
     {
+      title: "Social Graphics",
+      href: "/dashboard/social-graphics",
+      icon: "Images",
+      permission: PERMISSIONS.VIEW_SHARE_STUDIO,
+      isNew: true,
+    },
+    {
       title: "Tasks",
       href: "/dashboard/tasks",
       icon: "ClipboardText",
@@ -90,6 +97,12 @@ export const NAV_CONFIG: NavConfig = {
           href: "/dashboard/analytics",
           icon: "ChartBar",
           permission: PERMISSIONS.VIEW_ANALYTICS,
+        },
+        {
+          title: "Reports",
+          href: "/dashboard/reports",
+          icon: "FileText",
+          permission: PERMISSIONS.VIEW_REPORTS,
         },
         {
           title: "Trends",

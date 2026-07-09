@@ -1,13 +1,16 @@
 "use client";
 
-import { createElement } from "react";
+import { createElement, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { X as XIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { SUPPORT_EMAIL } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { scaleIn, staggerContainer, staggerContainerDelayed, fadeInUp } from "@/lib/motion";
 import { getIconOrDefault } from "@/lib/icons/registry";
+
+const ACTIVATION_DISMISS_EVENT = "repwell:activation-checklist-dismissed";
 
 interface EmptyStateAction {
   label: string;
@@ -264,22 +267,84 @@ export function EmptyStateCard({
 }
 
 // Welcome banner for new users
+export interface WelcomeBannerStep {
+  id: string;
+  label: string;
+  href: string;
+  done: boolean;
+}
+
 interface WelcomeBannerProps {
   userName?: string;
   completionPercent?: number;
+  steps?: WelcomeBannerStep[];
+  userId?: string;
   className?: string;
 }
 
 export function WelcomeBanner({
   userName,
-  completionPercent = 0,
+  completionPercent,
+  steps,
+  userId,
   className,
 }: WelcomeBannerProps) {
-  const steps = [
-    { label: "Complete your profile", href: "/dashboard/settings", done: completionPercent > 25 },
-    { label: "Send your first review request", href: "/dashboard/reviews?tab=requests", done: false },
-    { label: "Connect review sources", href: "/dashboard/organization?tab=integrations", done: false },
-  ];
+  const resolvedSteps = useMemo(
+    () =>
+      steps ?? [
+        { id: "profile", label: "Complete your profile", href: "/dashboard/settings", done: false },
+        {
+          id: "review-request",
+          label: "Send your first review request",
+          href: "/dashboard/reviews?tab=requests",
+          done: false,
+        },
+        {
+          id: "review-source",
+          label: "Connect review sources",
+          href: "/dashboard/organization?tab=integrations",
+          done: false,
+        },
+      ],
+    [steps]
+  );
+  const completedSteps = resolvedSteps.filter((step) => step.done).length;
+  const progress =
+    completionPercent ?? Math.round((completedSteps / resolvedSteps.length) * 100);
+  const isComplete = completedSteps === resolvedSteps.length;
+  const storageKey = userId ? `repwell:activation-checklist-dismissed:${userId}` : null;
+  const isDismissed = useSyncExternalStore(
+    (onStoreChange) => {
+      if (!storageKey || typeof window === "undefined") {
+        return () => {};
+      }
+
+      const handleChange = () => onStoreChange();
+      window.addEventListener("storage", handleChange);
+      window.addEventListener(ACTIVATION_DISMISS_EVENT, handleChange);
+
+      return () => {
+        window.removeEventListener("storage", handleChange);
+        window.removeEventListener(ACTIVATION_DISMISS_EVENT, handleChange);
+      };
+    },
+    () =>
+      storageKey && typeof window !== "undefined"
+        ? window.localStorage.getItem(storageKey) === "true"
+        : false,
+    () => false
+  );
+
+  if (isComplete || isDismissed) {
+    return null;
+  }
+
+  const handleDismiss = () => {
+    if (storageKey) {
+      window.localStorage.setItem(storageKey, "true");
+      window.dispatchEvent(new Event(ACTIVATION_DISMISS_EVENT));
+    }
+  };
 
   return (
     <div
@@ -288,6 +353,15 @@ export function WelcomeBanner({
         className
       )}
     >
+      <button
+        type="button"
+        onClick={handleDismiss}
+        className="absolute right-3 top-3 z-10 rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        aria-label="Dismiss setup checklist"
+      >
+        <XIcon className="h-4 w-4" />
+      </button>
+
       {/* Background decoration */}
       <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 opacity-10">
         <svg viewBox="0 0 200 200" className="h-full w-full">
@@ -298,11 +372,23 @@ export function WelcomeBanner({
 
       <div className="relative">
         <h2 className="text-xl font-semibold">
-          Welcome{userName ? `, ${userName}` : " to RepWell"}! 🎉
+          Welcome{userName ? `, ${userName}` : " to RepWell"}
         </h2>
         <p className="mt-1 text-repwell-sage-100/90 text-sm">
-          Let&apos;s get you set up to start collecting reviews and growing your reputation.
+          Finish these setup steps to start collecting reviews and growing your reputation.
         </p>
+
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/20">
+            <div
+              className="h-full rounded-full bg-white transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-xs font-medium text-white/80">
+            {completedSteps} of {resolvedSteps.length} complete
+          </span>
+        </div>
 
         <motion.div
           className="mt-5 flex flex-wrap gap-3"
@@ -310,9 +396,9 @@ export function WelcomeBanner({
           initial="hidden"
           animate="visible"
         >
-          {steps.map((step, i) => (
+          {resolvedSteps.map((step, i) => (
             <motion.a
-              key={i}
+              key={step.id}
               href={step.href}
               variants={fadeInUp}
               className={cn(

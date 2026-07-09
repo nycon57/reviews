@@ -10,10 +10,12 @@ Regenerated for ADR 0007 from `src/proxy.ts`, `src/lib/nav/config.ts`, and the p
 | /dashboard/reviews | nav | auth | `getAccessContext` | VIEW_REVIEWS | Y | Y | Y | Y | By account |
 | /dashboard/reviews?tab=contacts | nav | auth | `getAccessContext` (Contacts tab gated by `SEND_SURVEY`) | VIEW_REVIEWS | Y | Y | Y | Y | By account |
 | /dashboard/share-studio | nav, proxy | roles admin/manager for enterprise accounts | `checkPageAccess({ minRole: "manager" })` | VIEW_SHARE_STUDIO | Y | Y | Y | N | By account |
+| /dashboard/social-graphics | nav | auth | `checkPageAccess({ minRole: "manager" })` | VIEW_SHARE_STUDIO | Y | Y | Y | N | By account |
 | /dashboard/tasks | nav | auth | `checkPageAccess({})` | VIEW_TASKS | Y | Y | Y | Y | By account |
 | /dashboard/campaigns | nav, proxy | `requiresEnterprise`, roles admin/manager | `requireEnterpriseManager` | VIEW_CAMPAIGNS | N | Y | Y | N | By account |
 | /dashboard/recognition | nav, proxy | `requiresEnterprise` | `requireEnterprise` | VIEW_RECOGNITION | N | Y | Y | Y | By account |
 | /dashboard/analytics | nav | auth | `getAccessContext` | VIEW_ANALYTICS | Y | Y | Y | Y | By account |
+| /dashboard/reports | nav | auth | manager/admin role check | VIEW_REPORTS | Y | Y | Y | N | By account |
 | /dashboard/analytics/trends | nav | auth | `getAccessContext` | VIEW_TRENDS | Y | Y | Y | Y | By account |
 | /dashboard/analytics/leaderboard | nav, proxy | `requiresEnterprise` | `requireEnterprise` | VIEW_LEADERBOARD | N | Y | Y | Y | By account |
 | /dashboard/analytics/agents | nav | auth | `requireEnterpriseManager` | VIEW_TEAM | N | Y | Y | N | By account |
@@ -41,9 +43,9 @@ Regenerated for ADR 0007 from `src/proxy.ts`, `src/lib/nav/config.ts`, and the p
 
 | Persona | Effective access |
 |---|---|
-| Individual owner | Core dashboard, Reviews, Contacts, Share Studio, Tasks, Analytics/Trends, Surveys, Widgets, Workspace, Media, Settings, Help. AI Insights and Website Analytics only when Pro. No enterprise manager areas (Campaigns, People, Team overview, EX Surveys, Recognition) or staff tools. |
-| Enterprise admin | All core dashboard areas, enterprise manager areas (Campaigns, People, Share Studio, Team overview, EX Surveys, Approvals), Workspace, Media, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No staff tools unless separately flagged `is_platform_admin`. |
-| Enterprise manager | Core dashboard, Campaigns, People, Share Studio, Team overview, EX Surveys, Approvals, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No Workspace or Media (org-admin only), or staff tools. |
+| Individual owner | Core dashboard, Reviews, Contacts, Share Studio, Social Graphics, Reports, Tasks, Analytics/Trends, Surveys, Widgets, Workspace, Media, Settings, Help. AI Insights and Website Analytics only when Pro. No enterprise manager areas (Campaigns, People, Team overview, EX Surveys, Recognition) or staff tools. |
+| Enterprise admin | All core dashboard areas, enterprise manager areas (Campaigns, People, Share Studio, Social Graphics, Reports, Team overview, EX Surveys, Approvals), Workspace, Media, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No staff tools unless separately flagged `is_platform_admin`. |
+| Enterprise manager | Core dashboard, Campaigns, People, Share Studio, Social Graphics, Reports, Team overview, EX Surveys, Approvals, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No Workspace or Media (org-admin only), or staff tools. |
 | Enterprise user | Core dashboard, Reviews, Contacts, Tasks, Recognition, Analytics/Trends/Leaderboard, Surveys, Widgets, Settings, Help. No Share Studio, enterprise manager areas, Workspace, Media, or staff tools. |
 | Platform staff | `/staff/*` only by the staff flag. Dashboard access is still determined by that user's account type, role, and tier. |
 
@@ -62,3 +64,5 @@ Regenerated for ADR 0007 from `src/proxy.ts`, `src/lib/nav/config.ts`, and the p
 - `/dashboard/surveys` and `/dashboard/widgets` use `getAccessContext`, matching their broad nav permissions.
 - `/dashboard/media` uses `requireIndividualOrEnterpriseAdmin` so direct URL access matches nav discoverability (`VIEW_ORGANIZATION`).
 - `/dashboard/share-studio` uses `checkPageAccess({ minRole: "manager" })`, which admits individual accounts and requires enterprise manager/admin role; proxy mirrors that with an `allowedRoles` row and no `requiresEnterprise` flag.
+- `/dashboard/social-graphics` follows Share Studio discoverability and page access (`VIEW_SHARE_STUDIO` plus `checkPageAccess({ minRole: "manager" })`).
+- `/dashboard/reports` uses a page-level manager/admin role check and nav permission `VIEW_REPORTS`; there is no proxy row.

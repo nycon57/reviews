@@ -11,6 +11,7 @@ export interface UrlSyncedTabDef {
    *  server pages can define tabs without crossing the client boundary with
    *  component references. */
   icon?: ReactNode;
+  badge?: ReactNode;
 }
 
 interface UrlSyncedTabsProps {
@@ -79,6 +80,7 @@ export function UrlSyncedTabs({
           >
             {tab.icon}
             {tab.label}
+            {tab.badge}
           </TabsTrigger>
         ))}
       </TabsList>

@@ -3,9 +3,14 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import * as PhosphorIcons from "@phosphor-icons/react";
-import { CheckCircle, type IconProps } from "@phosphor-icons/react";
+import { CheckCircle, type Icon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+
+/** Names of the icon components in the Phosphor namespace (excludes IconContext, SSR). */
+type PhosphorIconName = {
+  [K in keyof typeof PhosphorIcons]: (typeof PhosphorIcons)[K] extends Icon ? K : never;
+}[keyof typeof PhosphorIcons];
 
 interface Guarantee {
   /** Icon name (Lucide icon) */
@@ -58,9 +63,12 @@ const itemVariants = {
 /**
  * Get Phosphor icon component by name
  */
-function getIconByName(name: string): React.ComponentType<IconProps> {
-  const icons = PhosphorIcons as unknown as Record<string, React.ComponentType<IconProps>>;
-  return icons[name] || PhosphorIcons.Shield;
+function getIconByName(name: string): Icon {
+  // SAFETY: `icon` holds a Phosphor export name chosen by the caller. Names that are
+  // not exported resolve to undefined at runtime, which the `??` below replaces with
+  // the Shield fallback.
+  const icon = PhosphorIcons[name as PhosphorIconName];
+  return icon ?? PhosphorIcons.Shield;
 }
 
 export function GuaranteeSection({

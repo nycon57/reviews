@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   createUntypedAdminClientMock,
@@ -112,6 +112,10 @@ function createSupabaseClient(responses: QueryResponse[], rpcResponses: QueryRes
   };
 }
 
+const PINNED_NOW = new Date("2026-07-08T12:00:00Z");
+const daysAgo = (days: number) => new Date(PINNED_NOW.getTime() - days * 86_400_000);
+const eventDateDaysAgo = (days: number) => daysAgo(days).toISOString().slice(0, 10);
+
 const managerProfile = {
   id: "user-1",
   organization_id: "org-1",
@@ -131,6 +135,17 @@ function mockAccessContext() {
 }
 
 describe("Share Studio hub actions", () => {
+  // The analytics window is computed from the real clock; pin it so the
+  // fixture dates below (derived from PINNED_NOW) always fall inside it.
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(PINNED_NOW);
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     unifiedGetUserMock.mockResolvedValue({ id: "user-1", email: "manager@example.com" });
@@ -148,7 +163,7 @@ describe("Share Studio hub actions", () => {
             destination_url: "https://example.com",
             published: true,
             archived_at: null,
-            created_at: "2026-07-01T12:00:00Z",
+            created_at: daysAgo(7).toISOString(),
             proof_items: {
               id: "item-1",
               source_type: "review",
@@ -168,13 +183,13 @@ describe("Share Studio hub actions", () => {
             proof_link_id: "link-1",
             event_type: "view",
             event_count: 7,
-            event_date: "2026-07-07",
+            event_date: eventDateDaysAgo(1),
           },
           {
             proof_link_id: "link-1",
             event_type: "click",
             event_count: 2,
-            event_date: "2026-07-07",
+            event_date: eventDateDaysAgo(1),
           },
         ],
         error: null,
@@ -231,7 +246,7 @@ describe("Share Studio hub actions", () => {
           destination_url: null,
           published: true,
           archived_at: null,
-          created_at: "2026-07-01T12:00:00Z",
+          created_at: daysAgo(7).toISOString(),
           proof_items: {
             id: "item-1",
             source_type: "review",
@@ -249,13 +264,13 @@ describe("Share Studio hub actions", () => {
             proof_link_id: "link-1",
             event_type: "view",
             event_count: 10,
-            event_date: "2026-07-07",
+            event_date: eventDateDaysAgo(1),
           },
           {
             proof_link_id: "link-1",
             event_type: "click",
             event_count: 3,
-            event_date: "2026-07-07",
+            event_date: eventDateDaysAgo(1),
           },
         ],
         error: null,

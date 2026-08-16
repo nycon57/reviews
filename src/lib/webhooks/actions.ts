@@ -168,7 +168,7 @@ export async function getWebhookLogs(
       return { success: false, error: error.message };
     }
 
-    const logs = (data || []).map((row) => mapRowToWebhookLog(row as unknown as WebhookLogRow));
+    const logs = (data || []).map(mapRowToWebhookLog);
 
     return {
       success: true,
@@ -305,7 +305,7 @@ export async function getWebhookLogDetail(logId: string): Promise<ActionResult<W
 
     return {
       success: true,
-      data: mapRowToWebhookLog(data as unknown as WebhookLogRow),
+      data: mapRowToWebhookLog(data),
     };
   } catch (error) {
     console.error("Error fetching webhook log detail:", error);

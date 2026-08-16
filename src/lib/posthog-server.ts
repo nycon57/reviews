@@ -1,7 +1,10 @@
 import { PostHog } from "posthog-node";
 
+/** The slice of the PostHog client this module actually calls. */
+type PostHogEventClient = Pick<PostHog, "captureImmediate" | "identifyImmediate">;
+
 let posthogClient: PostHog | null = null;
-let noopPostHogClient: PostHog | null = null;
+let noopPostHogClient: PostHogEventClient | null = null;
 
 type PostHogProperties = Record<string, unknown>;
 type PostHogGroups = Record<string, string | number>;
@@ -14,7 +17,7 @@ interface CapturePostHogEventInput {
   logContext?: string;
 }
 
-export function getPostHogClient(): PostHog {
+export function getPostHogClient(): PostHogEventClient {
   const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
 
   if (!projectToken) {
@@ -22,7 +25,7 @@ export function getPostHogClient(): PostHog {
       noopPostHogClient = {
         captureImmediate: async () => undefined,
         identifyImmediate: async () => undefined,
-      } as unknown as PostHog;
+      };
     }
 
     return noopPostHogClient;

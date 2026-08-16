@@ -28,7 +28,7 @@ function createSupabaseMock(plan: Record<string, Result[]>) {
     }
     builder.maybeSingle = vi.fn(() => Promise.resolve(next(table)));
     builder.single = vi.fn(() => Promise.resolve(next(table)));
-    builder.then = (resolve: (v: Result) => unknown, reject?: (e: unknown) => unknown) =>
+    builder.then = (resolve: (v: Result) => void, reject?: (e: unknown) => void) =>
       Promise.resolve(next(table)).then(resolve, reject);
     return builder;
   }

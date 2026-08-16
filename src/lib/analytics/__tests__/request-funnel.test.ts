@@ -25,7 +25,7 @@ function createSupabaseMock(plan: Record<string, Result[]>) {
     for (const m of ["select", "eq", "in", "gte", "not"]) {
       builder[m] = vi.fn(() => builder);
     }
-    builder.then = (resolve: (v: Result) => unknown, reject?: (e: unknown) => unknown) =>
+    builder.then = (resolve: (v: Result) => void, reject?: (e: unknown) => void) =>
       Promise.resolve(next(table)).then(resolve, reject);
     return builder;
   }

@@ -146,7 +146,7 @@ export async function sendReviewResponseConfirmationEmail(params: {
     return { sent: false, reason: "review_not_found", error };
   }
 
-  const review = data as unknown as ReviewResponseConfirmationRow;
+  const review = data;
   if (!isReviewLive(review)) {
     return { sent: false, reason: "review_not_published" };
   }

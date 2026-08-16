@@ -1,4 +1,5 @@
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { toOneEmbed } from "@/lib/supabase/to-one-embed";
 import type { CreateNotificationParams, Notification } from "./types";
 
 function isValidSlackWebhookUrl(url: string): boolean {
@@ -185,16 +186,23 @@ export async function sendSlackNotification(
   }
 }
 
-export async function getPendingDigestNotifications(userId: string): Promise<
-  Array<{
-    notification_id: string;
-    type: string;
-    title: string;
-    message: string;
-    action_url: string | null;
-    created_at: string;
-  }>
-> {
+/** Notification columns joined into the digest queue. */
+export interface DigestNotification {
+  type: string;
+  title: string;
+  message: string;
+  action_url: string | null;
+  created_at: string;
+}
+
+/** A queued notification, flattened for digest rendering. */
+export interface PendingDigestNotification extends DigestNotification {
+  notification_id: string;
+}
+
+export async function getPendingDigestNotifications(
+  userId: string
+): Promise<PendingDigestNotification[]> {
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
@@ -215,13 +223,7 @@ export async function getPendingDigestNotifications(userId: string): Promise<
   }
 
   return (data || []).map((item) => {
-    const notification = item.notifications as unknown as {
-      type: string;
-      title: string;
-      message: string;
-      action_url: string | null;
-      created_at: string;
-    };
+    const notification = toOneEmbed<DigestNotification>(item.notifications);
     return {
       notification_id: item.notification_id as string,
       type: notification.type,
@@ -262,15 +264,20 @@ export async function markDigestSent(
   return { success: true };
 }
 
-export async function getUsersNeedingDigest(): Promise<
-  Array<{
-    user_id: string;
-    email: string;
-    full_name: string | null;
-    digest_frequency: string;
-    digest_timezone: string;
-  }>
-> {
+/** User columns joined onto a digest-enabled notification preference row. */
+export interface DigestRecipientUser {
+  email: string;
+  full_name: string | null;
+}
+
+/** A user due for a digest email, with their delivery preferences. */
+export interface DigestRecipient extends DigestRecipientUser {
+  user_id: string;
+  digest_frequency: string;
+  digest_timezone: string;
+}
+
+export async function getUsersNeedingDigest(): Promise<DigestRecipient[]> {
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
@@ -292,7 +299,7 @@ export async function getUsersNeedingDigest(): Promise<
   }
 
   return (data || []).map((item) => {
-    const user = item.users as unknown as { email: string; full_name: string | null };
+    const user = toOneEmbed<DigestRecipientUser>(item.users);
     return {
       user_id: item.user_id as string,
       email: user.email,

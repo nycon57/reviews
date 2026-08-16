@@ -441,7 +441,7 @@ export async function searchProfessionalsV2(
   }
 
   return {
-    data: (data as unknown as UserWithOrganization[]).map(toProfessionalSummary),
+    data: data.map(toProfessionalSummary),
     total: count ?? 0,
   };
 }
@@ -455,7 +455,7 @@ async function getVisibleProfessional(id: string): Promise<UserWithOrganization 
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as unknown as UserWithOrganization;
+  return data;
 }
 
 function buildRatingDistribution(
@@ -522,7 +522,7 @@ async function getApprovedReviewsForProfessional(
     throw new Error("Failed to fetch reviews");
   }
 
-  return sortReviews(data as unknown as ReviewRow[], options?.sortBy ?? "date_desc");
+  return sortReviews(data, options?.sortBy ?? "date_desc");
 }
 
 export async function getProfessionalDetailV2(
@@ -710,7 +710,7 @@ export async function searchReviewsV2(
     throw new Error("Failed to search reviews");
   }
 
-  const mapped = (data as unknown as ReviewWithProfessional[]).flatMap((review) => {
+  const mapped = data.flatMap((review) => {
     const professional = getEmbeddedProfessional(review);
     if (!professional) return [];
     const organization = getEmbeddedOrganization(professional);
@@ -875,7 +875,7 @@ async function loadCompanyDetailRollups(
   }
 
   const professionalsByOrg = new Map<string, UserRow[]>();
-  for (const professional of professionals as unknown as UserRow[]) {
+  for (const professional of professionals) {
     if (!professional.organization_id) continue;
     const existing = professionalsByOrg.get(professional.organization_id) ?? [];
     existing.push(professional);
@@ -883,7 +883,7 @@ async function loadCompanyDetailRollups(
   }
 
   const reviewsByOrg = new Map<string, ReviewRow[]>();
-  for (const review of reviews as unknown as ReviewRow[]) {
+  for (const review of reviews) {
     const existing = reviewsByOrg.get(review.organization_id) ?? [];
     existing.push(review);
     reviewsByOrg.set(review.organization_id, existing);
@@ -927,7 +927,7 @@ export async function listCompaniesV2(
   }
 
   return {
-    data: (data as unknown as OrganizationReviewRollupRow[]).map(toCompanySummary),
+    data: data.map(toCompanySummary),
     total: count ?? 0,
   };
 }
@@ -942,6 +942,6 @@ export async function getCompanyDetailV2(id: string): Promise<CompanyDetail | nu
 
   if (error || !data) return null;
 
-  const [rollup] = await loadCompanyDetailRollups([data as unknown as OrganizationRow]);
+  const [rollup] = await loadCompanyDetailRollups([data]);
   return rollup ?? null;
 }

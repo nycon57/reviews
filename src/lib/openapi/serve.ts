@@ -8,7 +8,7 @@ const OPENAPI_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
 } as const;
 
-export function serveOpenApiSpec(generator: () => unknown, label = "OpenAPI") {
+export function serveOpenApiSpec<Spec>(generator: () => Spec, label = "OpenAPI") {
   return {
     async GET() {
       try {

@@ -96,22 +96,18 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const loanOfficer = survey.users as unknown as {
-        id: string;
-        full_name: string;
-        photo_url: string | null;
-      };
-      const organization = survey.organizations as unknown as {
-        id: string;
-        name: string;
-        logo_url: string | null;
-      };
+      const loanOfficer = survey.users;
+      const organization = survey.organizations;
+
+      if (!loanOfficer) {
+        return NextResponse.json({ error: "Survey owner not found" }, { status: 404 });
+      }
 
       const result = await sendSurveyInvitationEmail({
         toEmail: survey.customer_email,
         toName: survey.customer_name,
         customerName: survey.customer_name,
-        loanOfficerName: loanOfficer.full_name,
+        loanOfficerName: loanOfficer.full_name ?? "",
         loanOfficerPhotoUrl: loanOfficer.photo_url ?? undefined,
         organizationName: organization.name,
         organizationLogoUrl: organization.logo_url ?? undefined,
@@ -169,18 +165,18 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const loanOfficer = survey.users as unknown as {
-        full_name: string;
-      };
-      const organization = survey.organizations as unknown as {
-        name: string;
-      };
+      const loanOfficer = survey.users;
+      const organization = survey.organizations;
+
+      if (!loanOfficer) {
+        return NextResponse.json({ error: "Survey owner not found" }, { status: 404 });
+      }
 
       const result = await sendSurveyReminderEmail({
         toEmail: survey.customer_email,
         toName: survey.customer_name,
         customerName: survey.customer_name,
-        loanOfficerName: loanOfficer.full_name,
+        loanOfficerName: loanOfficer.full_name ?? "",
         organizationName: organization.name,
         surveyUrl: `${emailConfig.baseUrl}/survey/${survey.token}`,
         reminderNumber,
@@ -236,12 +232,11 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const loanOfficer = review.users as unknown as {
-        id: string;
-        full_name: string;
-        email: string;
-        receive_notifications: boolean;
-      };
+      const loanOfficer = review.users;
+
+      if (!loanOfficer) {
+        return NextResponse.json({ error: "Review owner not found" }, { status: 404 });
+      }
 
       // Check if loan officer wants notifications
       if (!loanOfficer.receive_notifications) {
@@ -253,8 +248,8 @@ export async function POST(request: NextRequest) {
 
       const result = await sendNewReviewNotificationEmail({
         toEmail: loanOfficer.email,
-        toName: loanOfficer.full_name,
-        loanOfficerName: loanOfficer.full_name,
+        toName: loanOfficer.full_name ?? "",
+        loanOfficerName: loanOfficer.full_name ?? "",
         customerName: review.customer_name || "A customer",
         rating: review.rating,
         reviewText: review.text ?? undefined,

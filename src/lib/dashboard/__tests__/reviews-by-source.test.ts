@@ -16,7 +16,7 @@ function createQueryBuilder(result: Result) {
     builder[method] = vi.fn(() => builder);
   }
   builder.single = vi.fn(() => Promise.resolve(result));
-  builder.then = (resolve: (value: Result) => unknown, reject?: (error: unknown) => unknown) =>
+  builder.then = (resolve: (value: Result) => void, reject?: (error: unknown) => void) =>
     Promise.resolve(result).then(resolve, reject);
   return builder;
 }

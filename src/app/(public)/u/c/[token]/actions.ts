@@ -113,7 +113,10 @@ export async function getContactByUnsubscribeToken(
     return { success: false, error: GENERIC_INVALID };
   }
 
-  const row = data as unknown as ContactTokenRow;
+  // SAFETY: the select above names exactly the ContactTokenRow columns, and the
+  // untyped client cannot type them because `contacts` is not in the generated
+  // schema; `organizations` is declared object-or-array to match PostgREST.
+  const row = data as ContactTokenRow;
   const org = firstOrg(row.organizations);
   const suppressed = await isEmailSuppressed(supabase, row.id);
 

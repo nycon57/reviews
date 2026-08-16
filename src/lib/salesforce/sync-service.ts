@@ -10,7 +10,6 @@ import {
   refreshAccessToken,
 } from "./client";
 import type { ActionResult, SalesforceSyncLog } from "./types";
-import type { Json } from "@/types/database.types";
 
 type SalesforceObjectType = "contacts" | "accounts" | "opportunities";
 type SalesforceSyncType = "full" | "incremental" | "manual";
@@ -364,7 +363,7 @@ export async function syncSalesforceConnection({
                   customer_email: contact.Email,
                   customer_name: contact.Name,
                   customer_phone: contact.Phone || contact.MobilePhone,
-                  salesforce_data: contact as unknown as Json,
+                  salesforce_data: { ...contact },
                   last_synced_at: new Date().toISOString(),
                   sync_status: "synced",
                 })
@@ -379,7 +378,7 @@ export async function syncSalesforceConnection({
                 customer_email: contact.Email,
                 customer_name: contact.Name,
                 customer_phone: contact.Phone || contact.MobilePhone,
-                salesforce_data: contact as unknown as Json,
+                salesforce_data: { ...contact },
               });
               recordsCreated++;
             }
@@ -423,7 +422,7 @@ export async function syncSalesforceConnection({
                   opportunity_stage: opp.StageName,
                   opportunity_amount: opp.Amount,
                   close_date: opp.CloseDate,
-                  salesforce_data: opp as unknown as Json,
+                  salesforce_data: { ...opp },
                   last_synced_at: new Date().toISOString(),
                 })
                 .eq("id", existing.id);
@@ -456,7 +455,7 @@ export async function syncSalesforceConnection({
                   opportunity_stage: opp.StageName,
                   opportunity_amount: opp.Amount,
                   close_date: opp.CloseDate,
-                  salesforce_data: opp as unknown as Json,
+                  salesforce_data: { ...opp },
                 })
                 .select("id")
                 .single();

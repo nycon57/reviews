@@ -389,20 +389,30 @@ export function AssetCreatorModal({
           ? Math.max(0, Math.round(parseFloat(clipTweaks.trimEndSec) * 1000))
           : undefined;
 
-        const result = await queueClipRenderJob(sourceId, {
+        const clipOptions: Parameters<typeof queueClipRenderJob>[1] = {
           format,
           framing: clipTweaks.framing,
           showCaptions: clipTweaks.showCaptions,
           showIntro: clipTweaks.showIntro,
           showOutro: clipTweaks.showOutro,
-          ...(clipTweaks.music !== "off" ? { musicTrackId: clipTweaks.music } : {}),
-          ...(trimStartMs !== undefined ? { trimStartMs } : {}),
-          ...(trimEndMs !== undefined ? { trimEndMs } : {}),
-          ...(clipTweaks.correctedTranscript &&
+        };
+        if (clipTweaks.music !== "off") {
+          clipOptions.musicTrackId = clipTweaks.music;
+        }
+        if (trimStartMs !== undefined) {
+          clipOptions.trimStartMs = trimStartMs;
+        }
+        if (trimEndMs !== undefined) {
+          clipOptions.trimEndMs = trimEndMs;
+        }
+        if (
+          clipTweaks.correctedTranscript &&
           clipTweaks.correctedTranscript.trim() !== (clipSource?.transcript ?? "").trim()
-            ? { correctedTranscript: clipTweaks.correctedTranscript.trim() }
-            : {}),
-        });
+        ) {
+          clipOptions.correctedTranscript = clipTweaks.correctedTranscript.trim();
+        }
+
+        const result = await queueClipRenderJob(sourceId, clipOptions);
 
         if (result.success && result.jobId) {
           setClipJob({

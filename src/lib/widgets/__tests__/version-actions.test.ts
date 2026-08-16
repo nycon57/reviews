@@ -66,7 +66,7 @@ function createMockQueryChain(finalResult: {
   // Terminal methods return the final result
   chain.single.mockResolvedValue(finalResult);
   chain.maybeSingle.mockResolvedValue(finalResult);
-  chain.then.mockImplementation((resolve: (value: unknown) => unknown) =>
+  chain.then.mockImplementation((resolve: (value: unknown) => void) =>
     Promise.resolve(finalResult).then(resolve)
   );
 

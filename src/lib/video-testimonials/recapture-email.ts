@@ -47,26 +47,6 @@ export interface RecaptureSweepResult {
   errors: string[];
 }
 
-interface RecaptureCandidate {
-  id: string;
-  organization_id: string;
-  customer_rating: number | null;
-  ai_generated_text: string | null;
-  video_testimonial_requests: {
-    customer_name: string;
-    customer_email: string;
-  } | null;
-  users: {
-    id: string;
-    full_name: string | null;
-    google_place_id: string | null;
-    zillow_profile_url: string | null;
-  } | null;
-  organizations: {
-    name: string;
-  } | null;
-}
-
 // =============================================================================
 // HTML HELPERS
 // =============================================================================
@@ -272,7 +252,7 @@ export async function sendVideoReviewRecaptureEmails(
     return result;
   }
 
-  const rows = (candidates ?? []) as unknown as RecaptureCandidate[];
+  const rows = candidates ?? [];
 
   for (const row of rows) {
     result.processed++;

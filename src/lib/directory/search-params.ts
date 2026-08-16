@@ -77,8 +77,8 @@ export function buildDirectorySearchRequest(
     minRating: parseFloatParam(params.rating),
     sortBy: parseSortParam(params.sort),
     sortOrder: "desc",
-    ...(industry ? { industry } : {}),
   };
+  if (industry) filters.industry = industry;
 
   const page = parseIntParam(params.page, 1);
   const pageSize = DIRECTORY_PAGE_SIZE;

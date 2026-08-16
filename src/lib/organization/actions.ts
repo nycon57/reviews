@@ -520,7 +520,7 @@ export async function uploadOrganizationAvatar(
     .select("avatar_url")
     .eq("id", userData.organization_id)
     .single();
-  const oldAvatarUrl = (orgData as unknown as Record<string, unknown>)?.avatar_url as string | null;
+  const oldAvatarUrl = orgData?.avatar_url;
 
   const fileExt = file.name.split(".").pop() || "jpg";
   const fileName = `${userData.organization_id}/avatar-${Date.now()}.${fileExt}`;
@@ -607,7 +607,7 @@ export async function removeOrganizationAvatar(): Promise<{
     .select("avatar_url")
     .eq("id", userData.organization_id)
     .single();
-  const oldAvatarUrl = (orgData as unknown as Record<string, unknown>)?.avatar_url as string | null;
+  const oldAvatarUrl = orgData?.avatar_url;
 
   const { error: dbError } = await supabase
     .from("organizations")
@@ -675,7 +675,7 @@ export async function uploadOrganizationBanner(
     .select("banner_url")
     .eq("id", userData.organization_id)
     .single();
-  const oldBannerUrl = (orgData as unknown as Record<string, unknown>)?.banner_url as string | null;
+  const oldBannerUrl = orgData?.banner_url;
 
   const fileExt = file.name.split(".").pop() || "jpg";
   const fileName = `${userData.organization_id}/banner-${Date.now()}.${fileExt}`;
@@ -761,7 +761,7 @@ export async function removeOrganizationBanner(): Promise<{
     .select("banner_url")
     .eq("id", userData.organization_id)
     .single();
-  const oldBannerUrl = (orgData as unknown as Record<string, unknown>)?.banner_url as string | null;
+  const oldBannerUrl = orgData?.banner_url;
 
   const { error: dbError } = await supabase
     .from("organizations")

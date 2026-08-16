@@ -13,74 +13,13 @@ import {
   type UpdateSurveyTemplateInput,
   type SurveyTemplate,
   type Question,
-  type SurveyBranding,
-  type ThankYouConfig,
 } from "@/types/survey.types";
+import { toSurveyTemplate } from "./row-parsers";
 
 export interface ActionResult<T = void> {
   success: boolean;
   data?: T;
   error?: string;
-}
-
-/**
- * Normalize a raw question row from the DB into the expected Question shape.
- * Handles legacy seed data that uses `question` instead of `title`,
- * `star_rating` instead of `rating`, and lacks `order`/`config`.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizeQuestion(raw: any, index: number): Question {
-  const title = raw.title || raw.question || raw.text || "";
-  const order = raw.order ?? index;
-  const required = raw.required ?? true;
-  const description = raw.description;
-  const id = raw.id || `q-${index}`;
-
-  // Normalize legacy type names
-  let type: string = raw.type || "text";
-  if (type === "star_rating") type = "rating";
-  if (type === "single_choice") type = "multiple_choice";
-
-  switch (type) {
-    case "rating":
-      return {
-        id, type: "rating", title, description, required, order,
-        config: raw.config ?? {
-          maxRating: raw.scale?.max ?? 5,
-          labels: { low: "Poor", high: "Excellent" },
-        },
-      };
-    case "nps":
-      return {
-        id, type: "nps", title, description, required, order,
-        config: raw.config ?? {
-          labels: { detractor: "Not at all likely", passive: "Neutral", promoter: "Extremely likely" },
-        },
-      };
-    case "multiple_choice":
-      return {
-        id, type: "multiple_choice", title, description, required, order,
-        config: raw.config ?? {
-          options: (raw.options || []).map((opt: string, i: number) => ({
-            id: `opt-${i}`, label: opt, value: opt.toLowerCase().replace(/\s+/g, "_"),
-          })),
-          allowMultiple: type === "multiple_choice" && raw.type === "multiple_choice",
-          allowOther: false,
-        },
-      };
-    default: // text
-      return {
-        id, type: "text", title, description, required, order,
-        config: raw.config ?? { multiline: true, placeholder: "Enter your response..." },
-      };
-  }
-}
-
-/** Normalize an array of raw question rows from the DB. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizeQuestions(raw: any): Question[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.map((q, i) => normalizeQuestion(q, i));
 }
 
 async function requireSurveyAccess(): Promise<ActionResult | null> {
@@ -134,16 +73,7 @@ export async function getSurveyTemplates(): Promise<ActionResult<SurveyTemplate[
     }
 
     // Transform database rows to SurveyTemplate type
-    const templates: SurveyTemplate[] = (data || []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description || undefined,
-      questions: normalizeQuestions(row.questions),
-      branding: row.branding as unknown as SurveyBranding | undefined,
-      thankYouConfig: row.thank_you_config as unknown as ThankYouConfig | undefined,
-      isActive: row.is_active ?? true,
-      isDefault: row.is_default ?? false,
-    }));
+    const templates: SurveyTemplate[] = (data || []).map(toSurveyTemplate);
 
     return { success: true, data: templates };
   } catch (error) {
@@ -182,16 +112,7 @@ export async function getSurveyTemplate(id: string): Promise<ActionResult<Survey
       return { success: false, error: "Survey template not found" };
     }
 
-    const template: SurveyTemplate = {
-      id: data.id,
-      name: data.name,
-      description: data.description || undefined,
-      questions: normalizeQuestions(data.questions),
-      branding: data.branding as unknown as SurveyBranding | undefined,
-      thankYouConfig: data.thank_you_config as unknown as ThankYouConfig | undefined,
-      isActive: data.is_active ?? true,
-      isDefault: data.is_default ?? false,
-    };
+    const template: SurveyTemplate = toSurveyTemplate(data);
 
     return { success: true, data: template };
   } catch (error) {
@@ -249,16 +170,7 @@ export async function createSurveyTemplate(
 
     revalidatePath("/dashboard/surveys");
 
-    const template: SurveyTemplate = {
-      id: data.id,
-      name: data.name,
-      description: data.description || undefined,
-      questions: normalizeQuestions(data.questions),
-      branding: data.branding as unknown as SurveyBranding | undefined,
-      thankYouConfig: data.thank_you_config as unknown as ThankYouConfig | undefined,
-      isActive: data.is_active ?? true,
-      isDefault: data.is_default ?? false,
-    };
+    const template: SurveyTemplate = toSurveyTemplate(data);
 
     return { success: true, data: template };
   } catch (error) {
@@ -312,16 +224,7 @@ export async function updateSurveyTemplate(
     revalidatePath("/dashboard/surveys");
     revalidatePath(`/dashboard/surveys/${validated.data.id}`);
 
-    const template: SurveyTemplate = {
-      id: data.id,
-      name: data.name,
-      description: data.description || undefined,
-      questions: normalizeQuestions(data.questions),
-      branding: data.branding as unknown as SurveyBranding | undefined,
-      thankYouConfig: data.thank_you_config as unknown as ThankYouConfig | undefined,
-      isActive: data.is_active ?? true,
-      isDefault: data.is_default ?? false,
-    };
+    const template: SurveyTemplate = toSurveyTemplate(data);
 
     return { success: true, data: template };
   } catch (error) {
@@ -427,16 +330,7 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
 
     revalidatePath("/dashboard/surveys");
 
-    const template: SurveyTemplate = {
-      id: data.id,
-      name: data.name,
-      description: data.description || undefined,
-      questions: normalizeQuestions(data.questions),
-      branding: data.branding as unknown as SurveyBranding | undefined,
-      thankYouConfig: data.thank_you_config as unknown as ThankYouConfig | undefined,
-      isActive: data.is_active ?? true,
-      isDefault: data.is_default ?? false,
-    };
+    const template: SurveyTemplate = toSurveyTemplate(data);
 
     return { success: true, data: template };
   } catch (error) {

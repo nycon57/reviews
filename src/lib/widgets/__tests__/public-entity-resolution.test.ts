@@ -26,7 +26,7 @@ function createMockQueryChain(finalResult: {
   chain.eq = vi.fn().mockImplementation(returnChain);
   chain.or = vi.fn().mockImplementation(returnChain);
   chain.maybeSingle = vi.fn().mockResolvedValue(finalResult);
-  chain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+  chain.then = vi.fn().mockImplementation((resolve: (v: unknown) => void) =>
     Promise.resolve(finalResult).then(resolve)
   );
 

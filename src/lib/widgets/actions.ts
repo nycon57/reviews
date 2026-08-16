@@ -13,7 +13,6 @@ import {
   type WidgetConfigJson,
   widgetConfigJsonSchema,
 } from "./schemas";
-import type { Json } from "@/types/database.types";
 import { sanitizeCustomCSS } from "@/embed/core/css-sanitizer";
 import { getBaseUrl } from "@/lib/seo";
 import { getBranchPublicPath } from "@/lib/branches/utils";
@@ -54,7 +53,7 @@ async function createVersionSnapshotInternal(
     const { error } = await (supabase as any).from("widget_config_versions").insert({
       widget_config_id: widgetConfigId,
       version: widgetData.version ?? 1,
-      config: currentConfig as unknown as Json,
+      config: currentConfig,
       name: widgetData.name,
       status: widgetData.status,
       allowed_domains: widgetData.allowed_domains ?? [],
@@ -184,7 +183,7 @@ export async function updateWidget(
     };
 
     if (validated.data.config !== undefined)
-      updatePayload.config = mergedConfig as unknown as Json;
+      updatePayload.config = mergedConfig;
     if (validated.data.allowed_domains !== undefined)
       updatePayload.allowed_domains = validated.data.allowed_domains;
     if (validated.data.enable_structured_data !== undefined)

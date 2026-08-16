@@ -153,7 +153,10 @@ export async function getReviewFlags(params?: {
     query = query.in("status", ["dismissed", "actioned"]);
   }
 
-  const { data, error } = await query;
+  // The untyped admin client cannot infer this select, and PostgREST returns the
+  // many-to-one `review`/`flagged_by` embeds as objects rather than the arrays its
+  // generic inference assumes, so the row shape is declared here.
+  const { data, error } = await query.returns<FlagRow[]>();
 
   if (error) {
     console.error("Error fetching review flags:", error);
@@ -162,7 +165,7 @@ export async function getReviewFlags(params?: {
 
   return {
     success: true,
-    data: { flags: ((data ?? []) as unknown as FlagRow[]).map(mapFlagRow) },
+    data: { flags: (data ?? []).map(mapFlagRow) },
   };
 }
 

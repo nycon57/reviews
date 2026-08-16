@@ -98,12 +98,11 @@ export function EmailBuilderPage({
     }
     // Already in Waypoint editor format
     if (isEditorFormat(doc)) {
-      resetDocument(doc as unknown as TReaderDocument);
+      resetDocument(doc);
     }
     // System B (EmailDocument) format → convert to editor format
     else if (isEmailDocumentFormat(doc)) {
-      const converted = emailDocumentToEditorDocument(doc);
-      resetDocument(converted as unknown as TReaderDocument);
+      resetDocument(emailDocumentToEditorDocument(doc));
     }
     // Unknown format
     else {
@@ -118,9 +117,9 @@ export function EmailBuilderPage({
     try {
       const editorDoc = useEditorDocumentStore.getState().document;
       // Convert Waypoint format → System B for rendering/storage
-      const docToSave = isEditorFormat(editorDoc)
-        ? editorDocumentToEmailDocument(editorDoc as Record<string, { type: string; data: Record<string, unknown> }>)
-        : (editorDoc as unknown as EmailDocument);
+      const docToSave = isEmailDocumentFormat(editorDoc)
+        ? editorDoc
+        : editorDocumentToEmailDocument(editorDoc);
 
       if (templateId) {
         await updateTemplate(templateId, {
@@ -319,9 +318,9 @@ export function EmailBuilderPage({
             <SendTestEmailDialog
               getDocument={() => {
                 const editorDoc = useEditorDocumentStore.getState().document;
-                return isEditorFormat(editorDoc)
-                  ? editorDocumentToEmailDocument(editorDoc as Record<string, { type: string; data: Record<string, unknown> }>)
-                  : (editorDoc as unknown as EmailDocument);
+                return isEmailDocumentFormat(editorDoc)
+                  ? editorDoc
+                  : editorDocumentToEmailDocument(editorDoc);
               }}
               subject={subject}
               onSaveFirst={handleSave}

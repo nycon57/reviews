@@ -359,7 +359,7 @@ async function getRecipients(
   }
 
   return users.map((user) => {
-    const org = user.organizations as unknown as { id: string; name: string };
+    const org = user.organizations;
     return {
       userId: user.id,
       email: user.email,

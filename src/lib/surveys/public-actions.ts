@@ -3,11 +3,11 @@
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { after } from "next/server";
 import { z } from "zod";
-import type {
-  Question,
-  SurveyBranding,
-  ThankYouConfig,
-} from "@/types/survey.types";
+import {
+  normalizeBranding,
+  normalizeQuestions,
+  normalizeThankYouConfig,
+} from "./row-parsers";
 import { publishReviewIfClean } from "@/lib/reviews/publish";
 import { analyzeNewReview } from "@/lib/ai/actions";
 import { emitWebhookEvent } from "@/lib/webhooks/outbound";
@@ -92,15 +92,7 @@ export async function getSurveyByToken(
     }
 
     // Check if template is active
-    const template = survey.survey_templates as unknown as {
-      id: string;
-      name: string;
-      description: string | null;
-      questions: Question[];
-      branding: SurveyBranding | null;
-      thank_you_config: ThankYouConfig | null;
-      is_active: boolean;
-    };
+    const template = survey.survey_templates;
 
     if (!template.is_active) {
       return { success: false, error: "This survey is no longer available" };
@@ -114,19 +106,10 @@ export async function getSurveyByToken(
         .eq("id", survey.id);
     }
 
-    const loanOfficer = survey.users as unknown as {
-      id: string;
-      full_name: string;
-      photo_url: string | null;
-      title: string | null;
-    };
-
-    const organization = survey.organizations as unknown as {
-      id: string;
-      name: string;
-      logo_url: string | null;
-      primary_color: string | null;
-    };
+    // `organizations` is an inner join so it is always present; `users` is not, because a
+    // survey can be sent without an assigned professional.
+    const loanOfficer = survey.users;
+    const organization = survey.organizations;
 
     // Transform to PublicSurvey format
     const publicSurvey: PublicSurvey = {
@@ -138,10 +121,10 @@ export async function getSurveyByToken(
       expiresAt: survey.expires_at,
       completedAt: survey.completed_at,
       loanOfficer: {
-        id: loanOfficer.id,
-        fullName: loanOfficer.full_name,
-        photoUrl: loanOfficer.photo_url,
-        title: loanOfficer.title,
+        id: loanOfficer?.id ?? "",
+        fullName: loanOfficer?.full_name ?? "",
+        photoUrl: loanOfficer?.photo_url ?? null,
+        title: loanOfficer?.title ?? null,
       },
       organization: {
         id: organization.id,
@@ -153,10 +136,10 @@ export async function getSurveyByToken(
         id: template.id,
         name: template.name,
         description: template.description || undefined,
-        questions: template.questions || [],
-        branding: template.branding || undefined,
-        thankYouConfig: template.thank_you_config || undefined,
-        isActive: template.is_active,
+        questions: normalizeQuestions(template.questions),
+        branding: normalizeBranding(template.branding),
+        thankYouConfig: normalizeThankYouConfig(template.thank_you_config),
+        isActive: template.is_active ?? true,
         isDefault: false,
       },
     };
@@ -366,9 +349,7 @@ export async function submitSurveyResponse(
     }
 
     // Determine if we should show review redirect
-    const thankYouConfig = (survey.survey_templates as unknown as {
-      thank_you_config: ThankYouConfig | null;
-    }).thank_you_config;
+    const thankYouConfig = normalizeThankYouConfig(survey.survey_templates.thank_you_config);
 
     let showReviewRedirect = false;
     if (thankYouConfig?.showReviewRedirect && thankYouConfig.reviewRedirectRating) {
@@ -386,9 +367,7 @@ export async function submitSurveyResponse(
     // Deep link the promoter to Google's write-a-review flow for this
     // professional. Only surfaced when we are already showing the redirect
     // and the professional has a Google place id on file.
-    const professional = survey.users as unknown as {
-      google_place_id: string | null;
-    } | null;
+    const professional = survey.users;
     const googleReviewUrl = showReviewRedirect
       ? buildGoogleWriteReviewUrl(professional?.google_place_id)
       : null;

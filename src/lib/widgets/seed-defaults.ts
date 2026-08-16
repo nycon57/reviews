@@ -1,5 +1,4 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Json } from "@/types/database.types";
 import type { WidgetType } from "./types";
 import { WIDGET_TYPE_LABELS } from "./constants";
 
@@ -57,7 +56,7 @@ export async function seedDefaultWidgets(
       widget_type: w.type,
       entity_type: "organization" as const,
       entity_id: null,
-      config: {} as unknown as Json,
+      config: {},
       allowed_domains: [] as string[],
       enable_structured_data: true,
       structured_data_type: "LocalBusiness",
@@ -81,7 +80,7 @@ export async function seedDefaultWidgets(
     const snapshots = inserted.map((w) => ({
       widget_config_id: w.id,
       version: 1,
-      config: (w.config ?? {}) as unknown as Json,
+      config: w.config ?? {},
       name: w.name,
       status: w.status,
       allowed_domains: w.allowed_domains ?? [],

@@ -10,7 +10,6 @@ import type {
   ReviewForGraphic,
   SocialProofGraphic,
 } from "./types";
-import type { Json } from "@/types/database.types";
 
 /** Batch generate graphics: one per review using a single template */
 export async function batchGenerateFromReviews(
@@ -78,8 +77,8 @@ export async function batchGenerateFromReviews(
       organization_id: orgId,
       created_by: user.id,
       name: `${template.metadata.name} - ${review.customerName ?? "Review"}`,
-      canvas_size: input.canvasSize as unknown as Json,
-      elements: elements as unknown as Json,
+      canvas_size: input.canvasSize,
+      elements,
       template_id: input.templateId,
       review_ids: [row.id],
     };

@@ -136,22 +136,23 @@ export function ThemeProvider({
     applyTheme(resolvedTheme, attribute, enableColorScheme, disableTransitionOnChange);
   }, [attribute, disableTransitionOnChange, enableColorScheme, resolvedTheme]);
 
-  const setTheme = React.useCallback<React.Dispatch<React.SetStateAction<Theme>>>(
-    (value) => {
-      setThemeState((currentTheme) => {
-        const nextTheme = typeof value === "function" ? value(currentTheme) : value;
+  // Persist only explicit choices; first-visit storage stays untouched until
+  // the user picks a theme. Gating on intent (not first-render detection)
+  // survives StrictMode's double-invoked mount effect.
+  const userChangedTheme = React.useRef(false);
+  const setTheme = React.useCallback<React.Dispatch<React.SetStateAction<Theme>>>((value) => {
+    userChangedTheme.current = true;
+    setThemeState(value);
+  }, []);
 
-        try {
-          window.localStorage.setItem(storageKey, nextTheme);
-        } catch {
-          // Ignore storage access failures; the in-memory theme still updates.
-        }
-
-        return nextTheme;
-      });
-    },
-    [storageKey]
-  );
+  React.useEffect(() => {
+    if (!userChangedTheme.current) return;
+    try {
+      window.localStorage.setItem(storageKey, theme);
+    } catch {
+      // Ignore storage access failures; the in-memory theme still updates.
+    }
+  }, [storageKey, theme]);
 
   const contextValue = React.useMemo<ThemeContextValue>(
     () => ({

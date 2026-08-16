@@ -743,7 +743,8 @@ export async function exportAndRecordReportForOrg({
       filename,
       mimeType,
       exportRecord: mapReportExportRow(exportRecord),
-      ...(encoding ? { encoding } : {}),
+      // Binary formats set an encoding; text formats leave it undefined, which serializes away.
+      encoding,
     },
   };
 }

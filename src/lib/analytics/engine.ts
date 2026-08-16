@@ -128,7 +128,7 @@ export async function getNPSMetrics(
 
   // Filter by user or organization
   const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { user_id: string; organization_id: string };
+    const survey = r.surveys;
     if (loanOfficerId) {
       return survey.user_id === loanOfficerId;
     }
@@ -182,7 +182,7 @@ export async function getCSATMetrics(
 
   // Filter by user or organization
   const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { user_id: string; organization_id: string };
+    const survey = r.surveys;
     if (loanOfficerId) {
       return survey.user_id === loanOfficerId;
     }
@@ -539,7 +539,7 @@ export async function getNPSTrendData(
   }
 
   const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { user_id: string; organization_id: string };
+    const survey = r.surveys;
     if (loanOfficerId) {
       return survey.user_id === loanOfficerId;
     }
@@ -594,7 +594,7 @@ export async function getCSATTrendData(
   }
 
   const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { user_id: string; organization_id: string };
+    const survey = r.surveys;
     if (loanOfficerId) {
       return survey.user_id === loanOfficerId;
     }
@@ -795,6 +795,24 @@ async function cacheMetrics(
 }
 
 /**
+ * A `metrics_snapshots` row as this module writes and reads it.
+ *
+ * `period_type` is a text column constrained to PeriodType, and `metrics` is a
+ * jsonb column written only by {@link cacheMetrics}; the generated schema types
+ * both as bare `string`/`Json`, so the contract is restated here.
+ */
+interface MetricsSnapshotRow {
+  id: string;
+  organization_id: string;
+  user_id: string | null;
+  period_type: PeriodType;
+  period_start: string;
+  period_end: string;
+  metrics: MetricsSnapshot;
+  computed_at: string | null;
+}
+
+/**
  * Get cached metrics from the metrics_snapshots table
  */
 async function getCachedMetrics(
@@ -823,7 +841,7 @@ async function getCachedMetrics(
     query = query.is("user_id", null);
   }
 
-  const { data, error } = await query.single();
+  const { data, error } = await query.single().returns<MetricsSnapshotRow>();
 
   if (error) {
     if (error.code === "PGRST116") {
@@ -840,10 +858,10 @@ async function getCachedMetrics(
       id: data.id,
       organizationId: data.organization_id,
       userId: data.user_id,
-      periodType: data.period_type as PeriodType,
+      periodType: data.period_type,
       periodStart: new Date(data.period_start),
       periodEnd: new Date(data.period_end),
-      metrics: data.metrics as unknown as MetricsSnapshot,
+      metrics: data.metrics,
       computedAt: new Date(data.computed_at || Date.now()),
     },
   };

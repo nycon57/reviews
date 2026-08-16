@@ -10,6 +10,16 @@ import type { Database } from "@/types/database.types";
 type WebhookDelivery = Database["public"]["Tables"]["webhook_deliveries"]["Row"];
 type WebhookSubscription =
   Database["public"]["Tables"]["webhook_subscriptions"]["Row"];
+type WebhookServiceSupabase = NonNullable<
+  Parameters<typeof emitWebhookEvent>[1]
+>["supabase"];
+
+function asServiceSupabase<TDouble>(double: TDouble): WebhookServiceSupabase {
+  // SAFETY: the doubles below implement every `from(table)` branch the outbound
+  // webhook service reaches for in these tests and throw on any other table, so
+  // an unimplemented client member cannot be hit at runtime.
+  return double as WebhookServiceSupabase;
+}
 
 function thenable<T>(response: T) {
   const query = {
@@ -21,7 +31,7 @@ function thenable<T>(response: T) {
     limit: vi.fn(() => query),
     maybeSingle: vi.fn(() => Promise.resolve(response)),
     single: vi.fn(() => Promise.resolve(response)),
-    then: (resolve: (value: T) => unknown, reject?: (reason: unknown) => unknown) =>
+    then: (resolve: (value: T) => void, reject?: (reason: unknown) => void) =>
       Promise.resolve(response).then(resolve, reject),
   };
   return query;
@@ -36,7 +46,7 @@ describe("outbound webhook service", () => {
       { id: "sub_3", events: ["contact.created"] },
     ];
 
-    const supabase = {
+    const supabase = asServiceSupabase({
       from: vi.fn((table: string) => {
         if (table === "webhook_subscriptions") {
           return thenable({ data: subscriptions, error: null });
@@ -53,7 +63,7 @@ describe("outbound webhook service", () => {
 
         throw new Error(`Unexpected table ${table}`);
       }),
-    } as unknown as NonNullable<Parameters<typeof emitWebhookEvent>[1]>["supabase"];
+    });
 
     const result = await emitWebhookEvent(
       {
@@ -255,7 +265,7 @@ function createQueueSupabase(params: {
     webhook_subscriptions: [],
   };
 
-  const client = {
+  const client = asServiceSupabase({
     from: vi.fn((table: string) => {
       if (table === "webhook_deliveries") {
         return {
@@ -288,7 +298,7 @@ function createQueueSupabase(params: {
               select: vi.fn(() => ({
                 maybeSingle: vi.fn(() => Promise.resolve({ data: claimed, error: null })),
               })),
-              then: (resolve: (value: { error: null }) => unknown) =>
+              then: (resolve: (value: { error: null }) => void) =>
                 Promise.resolve({ error: null }).then(resolve),
             };
             return updateQuery;
@@ -317,9 +327,7 @@ function createQueueSupabase(params: {
 
       throw new Error(`Unexpected table ${table}`);
     }),
-  } as unknown as NonNullable<
-    Parameters<typeof processWebhookDeliveryQueue>[1]
-  >["supabase"];
+  });
 
   return { supabase: client, updates };
 }

@@ -5,14 +5,36 @@ import { unifiedGetUser } from "@/lib/auth/actions";
 import { requireCronSecretRequest } from "@/lib/auth/server-action-guards";
 import { revalidatePath } from "next/cache";
 import { getTemplate } from "./templates";
+import { parseCanvasSize } from "./types";
 import type {
   ActionResult,
+  CanvasElement,
   CanvasSize,
   ReviewForGraphic,
   SocialProofGraphic,
   TemplateId,
 } from "./types";
 import type { Json } from "@/types/database.types";
+
+/**
+ * Structural copy of `T`. Interfaces gain no implicit index signature, which is the only reason
+ * `Json` rejects them even when every field is plain data.
+ */
+type JsonRecord<T> = { [K in keyof T]: T[K] };
+
+/** Widen a canvas size for its `jsonb` column. */
+function canvasSizeToJson(size: CanvasSize): Json {
+  // SAFETY: `CanvasSize` holds only numbers and an optional string, so the value is already
+  // valid JSON at runtime; the assertion re-describes the same object without reinterpreting it.
+  return size as JsonRecord<CanvasSize>;
+}
+
+/** Widen a rendered element list for its `jsonb` column. */
+function elementsToJson(elements: CanvasElement[]): Json {
+  // SAFETY: `CanvasElement` is plain layout data produced by the templates — strings, numbers,
+  // booleans and nested plain objects — so the array is already valid JSON at runtime.
+  return elements as JsonRecord<CanvasElement>[];
+}
 
 const GRAPHICS_PATH = "/dashboard/social-graphics";
 const DEFAULT_CANVAS: CanvasSize = {
@@ -55,8 +77,8 @@ export async function setSchedule(params: {
       organization_id: orgId,
       created_by: user.id,
       name: `Review of the Week (${template.metadata.name})`,
-      canvas_size: params.canvasSize as unknown as Json,
-      elements: [] as unknown as Json,
+      canvas_size: canvasSizeToJson(params.canvasSize),
+      elements: [],
       template_id: params.templateId,
       schedule_cron: params.cronExpression,
     })
@@ -182,7 +204,8 @@ export async function executeScheduledGeneration(
     .eq("id", organizationId)
     .single();
 
-  const canvasSize: CanvasSize = (graphic.canvas_size as unknown as CanvasSize) ?? DEFAULT_CANVAS;
+  const canvasSize: CanvasSize =
+    graphic.canvas_size === null ? DEFAULT_CANVAS : parseCanvasSize(graphic.canvas_size);
 
   const elements = template.generate({
     canvasSize,
@@ -197,8 +220,8 @@ export async function executeScheduledGeneration(
       organization_id: organizationId,
       created_by: graphic.created_by,
       name: `Review of the Week - ${review.customerName ?? "Review"}`,
-      canvas_size: canvasSize as unknown as Json,
-      elements: elements as unknown as Json,
+      canvas_size: canvasSizeToJson(canvasSize),
+      elements: elementsToJson(elements),
       template_id: templateId,
       review_ids: [review.id],
     })

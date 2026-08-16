@@ -59,7 +59,7 @@ function createSupabaseMock() {
     }
     builder.maybeSingle = vi.fn(() => Promise.resolve(resolveTable(table, state, true)));
     builder.single = vi.fn(() => Promise.resolve(resolveTable(table, state, true)));
-    builder.then = (resolve: (value: unknown) => unknown, reject?: (error: unknown) => unknown) =>
+    builder.then = (resolve: (value: unknown) => void, reject?: (error: unknown) => void) =>
       Promise.resolve(resolveTable(table, state, false)).then(resolve, reject);
     return builder;
   }

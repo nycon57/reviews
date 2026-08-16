@@ -60,7 +60,7 @@ function createMockQueryChain(finalResult: {
   chain.single = vi.fn().mockResolvedValue(finalResult);
   chain.maybeSingle = vi.fn().mockResolvedValue(finalResult);
   // Make chain thenable so `await chain` resolves to finalResult
-  chain.then = vi.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
+  chain.then = vi.fn().mockImplementation((resolve: (v: unknown) => void) =>
     Promise.resolve(finalResult).then(resolve)
   );
 

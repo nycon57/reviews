@@ -2,12 +2,21 @@
 
 import { webMcpToolSchemas, type WebMcpToolName } from "./schemas";
 
+/** A parsed JSON response body, handed to the WebMCP host verbatim. */
+type JsonBody =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonBody[]
+  | { [key: string]: JsonBody };
+
 type ModelContextTool = (typeof webMcpToolSchemas)[number] & {
   annotations: {
     readOnlyHint: true;
     untrustedContentHint: true;
   };
-  execute: (input: unknown) => Promise<unknown>;
+  execute: (input: unknown) => Promise<JsonBody>;
 };
 
 type WebMcpModelContext = {
@@ -18,16 +27,20 @@ type WebMcpModelContext = {
   provideContext?: (context: { tools: ModelContextTool[] }) => void | Promise<void>;
 };
 
-type ModelContextHost = {
-  modelContext?: WebMcpModelContext;
-};
+// WebMCP is a draft browser API, so `modelContext` is absent from lib.dom. Agents
+// expose it on either navigator or document depending on the implementation.
+declare global {
+  interface Navigator {
+    modelContext?: WebMcpModelContext;
+  }
+  interface Document {
+    modelContext?: WebMcpModelContext;
+  }
+}
 
 function getModelContext(): WebMcpModelContext | null {
-  const navigatorContext = (globalThis.navigator as unknown as ModelContextHost)
-    ?.modelContext;
-  const documentContext = (globalThis.document as unknown as ModelContextHost)
-    ?.modelContext;
-  const modelContext = navigatorContext ?? documentContext;
+  const modelContext =
+    globalThis.navigator?.modelContext ?? globalThis.document?.modelContext;
 
   if (!modelContext) return null;
   if (
@@ -71,7 +84,7 @@ function appendString(params: URLSearchParams, name: string, value: string | nul
   if (value) params.set(name, value);
 }
 
-async function fetchJson(path: string): Promise<unknown> {
+async function fetchJson(path: string): Promise<JsonBody> {
   const response = await fetch(path, {
     headers: {
       Accept: "application/json",
@@ -93,7 +106,7 @@ async function fetchJson(path: string): Promise<unknown> {
   return body;
 }
 
-const executors: Record<WebMcpToolName, (input: unknown) => Promise<unknown>> = {
+const executors: Record<WebMcpToolName, (input: unknown) => Promise<JsonBody>> = {
   searchProfessionals: async (input) => {
     const record = inputRecord(input);
     const params = new URLSearchParams();

@@ -228,19 +228,10 @@ export async function getPendingReviews(params?: {
   }
 
   const reviews: Review[] = (data || []).map((row) => {
-    const loanOfficer = row.users as unknown as {
-      id: string;
-      full_name: string;
-      email: string;
-      avatar_url: string | null;
-    };
-
-    const surveyResponse = row.survey_responses as unknown as {
-      id: string;
-      overall_rating: number | null;
-      nps_score: number | null;
-      testimonial_text: string | null;
-    } | null;
+    // The select embeds both relations, so PostgREST already types them precisely; a review
+    // whose user_id is null simply carries no loan officer.
+    const loanOfficer = row.users;
+    const surveyResponse = row.survey_responses;
 
     return {
       id: row.id,
@@ -260,12 +251,14 @@ export async function getPendingReviews(params?: {
       publishedAt: row.published_at,
       reviewDate: row.review_date,
       createdAt: row.created_at!,
-      loanOfficer: {
-        id: loanOfficer.id,
-        fullName: loanOfficer.full_name,
-        email: loanOfficer.email,
-        avatarUrl: loanOfficer.avatar_url,
-      },
+      loanOfficer: loanOfficer
+        ? {
+            id: loanOfficer.id,
+            fullName: loanOfficer.full_name ?? "",
+            email: loanOfficer.email,
+            avatarUrl: loanOfficer.avatar_url,
+          }
+        : undefined,
       surveyResponse: surveyResponse
         ? {
             id: surveyResponse.id,
@@ -362,19 +355,10 @@ export async function getReviews(params?: {
   }
 
   const reviews: Review[] = (data || []).map((row) => {
-    const loanOfficer = row.users as unknown as {
-      id: string;
-      full_name: string;
-      email: string;
-      avatar_url: string | null;
-    };
-
-    const surveyResponse = row.survey_responses as unknown as {
-      id: string;
-      overall_rating: number | null;
-      nps_score: number | null;
-      testimonial_text: string | null;
-    } | null;
+    // The select embeds both relations, so PostgREST already types them precisely; a review
+    // whose user_id is null simply carries no loan officer.
+    const loanOfficer = row.users;
+    const surveyResponse = row.survey_responses;
 
     return {
       id: row.id,
@@ -394,12 +378,14 @@ export async function getReviews(params?: {
       publishedAt: row.published_at,
       reviewDate: row.review_date,
       createdAt: row.created_at!,
-      loanOfficer: {
-        id: loanOfficer.id,
-        fullName: loanOfficer.full_name,
-        email: loanOfficer.email,
-        avatarUrl: loanOfficer.avatar_url,
-      },
+      loanOfficer: loanOfficer
+        ? {
+            id: loanOfficer.id,
+            fullName: loanOfficer.full_name ?? "",
+            email: loanOfficer.email,
+            avatarUrl: loanOfficer.avatar_url,
+          }
+        : undefined,
       surveyResponse: surveyResponse
         ? {
             id: surveyResponse.id,
@@ -469,19 +455,10 @@ export async function getReviewById(reviewId: string): Promise<ActionResult<Revi
     return { success: false, error: "Review not found" };
   }
 
-  const loanOfficer = data.users as unknown as {
-    id: string;
-    full_name: string;
-    email: string;
-    avatar_url: string | null;
-  };
-
-  const surveyResponse = data.survey_responses as unknown as {
-    id: string;
-    overall_rating: number | null;
-    nps_score: number | null;
-    testimonial_text: string | null;
-  } | null;
+  // The select embeds both relations, so PostgREST already types them precisely; a review
+  // whose user_id is null simply carries no loan officer.
+  const loanOfficer = data.users;
+  const surveyResponse = data.survey_responses;
 
   const review: Review = {
     id: data.id,
@@ -501,12 +478,14 @@ export async function getReviewById(reviewId: string): Promise<ActionResult<Revi
     publishedAt: data.published_at,
     reviewDate: data.review_date,
     createdAt: data.created_at!,
-    loanOfficer: {
-      id: loanOfficer.id,
-      fullName: loanOfficer.full_name,
-      email: loanOfficer.email,
-      avatarUrl: loanOfficer.avatar_url,
-    },
+    loanOfficer: loanOfficer
+      ? {
+          id: loanOfficer.id,
+          fullName: loanOfficer.full_name ?? "",
+          email: loanOfficer.email,
+          avatarUrl: loanOfficer.avatar_url,
+        }
+      : undefined,
     surveyResponse: surveyResponse
       ? {
           id: surveyResponse.id,

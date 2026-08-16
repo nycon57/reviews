@@ -163,6 +163,10 @@ export async function generateReviewFromTestimonial(
     }
 
     // Extract context from related data
+    // NOTE: the generated database types have no `loan_officers` relation on
+    // video_testimonial_requests, so supabase-js infers SelectQueryError here.
+    // The double assertion papers over that schema-types gap; it can only be
+    // removed once db:types knows the relation (regenerate or fix the FK).
     const request = response.video_testimonial_requests as unknown as {
       customer_name: string | null;
       customer_email: string | null;

@@ -390,7 +390,7 @@ export async function queueClipRenderJob(
       organizationId: context.organizationId,
       videoResponseId,
       actorUserId: context.userId,
-      options: clipOptions as unknown as Record<string, unknown>,
+      options: { ...clipOptions },
       idempotent: false,
     });
 

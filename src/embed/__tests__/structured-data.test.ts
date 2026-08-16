@@ -265,14 +265,14 @@ describe("AggregateRating schema", () => {
     const profile = makeProfile({ average_rating: 4.0, total_reviews: 3 });
 
     const result = buildJsonLdFromWidget(config, reviews, profile);
-    const agg = result.aggregateRating as unknown as Record<string, unknown>;
+    const agg = result.aggregateRating;
 
     expect(agg).toBeDefined();
-    expect(agg["@type"]).toBe("AggregateRating");
-    expect(agg.ratingValue).toBe("4.0");
-    expect(agg.reviewCount).toBe(3);
-    expect(agg.bestRating).toBe("5");
-    expect(agg.worstRating).toBe("1");
+    expect(agg?.["@type"]).toBe("AggregateRating");
+    expect(agg?.ratingValue).toBe("4.0");
+    expect(agg?.reviewCount).toBe(3);
+    expect(agg?.bestRating).toBe("5");
+    expect(agg?.worstRating).toBe("1");
   });
 
   it("omits aggregateRating when there are no reviews and no profile rating", async () => {
@@ -301,14 +301,14 @@ describe("Review schema snippets", () => {
     const profile = makeProfile({ average_rating: 5.0, total_reviews: 1 });
 
     const result = buildJsonLdFromWidget(config, reviews, profile);
-    const reviewArr = result.review as unknown as Record<string, unknown>[];
+    const reviewArr = result.review ?? [];
 
     expect(reviewArr).toHaveLength(1);
     const r = reviewArr[0];
     expect(r["@type"]).toBe("Review");
-    expect((r.author as Record<string, unknown>).name).toBe("Alice");
+    expect(r.author.name).toBe("Alice");
     expect(r.datePublished).toBe("2025-03-15");
-    expect((r.reviewRating as Record<string, unknown>).ratingValue).toBe(5);
+    expect(r.reviewRating.ratingValue).toBe(5);
     expect(r.reviewBody).toBe("Great service!");
   });
 
@@ -320,9 +320,9 @@ describe("Review schema snippets", () => {
     const profile = makeProfile({ average_rating: 5.0, total_reviews: 1 });
 
     const result = buildJsonLdFromWidget(config, reviews, profile);
-    const reviewArr = result.review as unknown as Record<string, unknown>[];
+    const reviewArr = result.review ?? [];
 
-    expect((reviewArr[0].reviewBody as string).length).toBe(200);
+    expect(reviewArr[0].reviewBody.length).toBe(200);
   });
 
   it("limits review snippets to 10", async () => {
@@ -334,7 +334,7 @@ describe("Review schema snippets", () => {
     const profile = makeProfile({ average_rating: 5.0, total_reviews: 15 });
 
     const result = buildJsonLdFromWidget(config, reviews, profile);
-    const reviewArr = result.review as unknown as Record<string, unknown>[];
+    const reviewArr = result.review ?? [];
 
     expect(reviewArr).toHaveLength(10);
   });
@@ -346,8 +346,8 @@ describe("Review schema snippets", () => {
     const profile = makeProfile({ average_rating: 5.0, total_reviews: 1 });
 
     const result = buildJsonLdFromWidget(config, reviews, profile);
-    const reviewArr = result.review as unknown as Record<string, unknown>[];
-    const author = reviewArr[0].author as Record<string, unknown>;
+    const reviewArr = result.review ?? [];
+    const author = reviewArr[0].author;
 
     expect(author.name).toBe("Anonymous");
   });

@@ -67,6 +67,10 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
     // Get composition props based on request type
     const inputProps = await getInputProps(request);
 
+    // Remotion serializes composition props as an open record; the props unions are
+    // plain JSON data, so a spread gives the index signature interfaces lack.
+    const compositionProps: Record<string, unknown> = { ...inputProps };
+
     // Get bundled app
     const bundleLocation = await getBundledApp();
 
@@ -77,7 +81,7 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
     const composition = await selectComposition({
       serveUrl: bundleLocation,
       id: compositionId,
-      inputProps: inputProps as unknown as Record<string, unknown>,
+      inputProps: compositionProps,
     });
 
     // Determine output path
@@ -87,14 +91,13 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
     const outputPath = path.join("/tmp", outputFileName);
 
     // Render the output
-    const propsAsRecord = inputProps as unknown as Record<string, unknown>;
     if (request.compositionType === "video-thumbnail") {
       // Render a still image for thumbnails
       await renderStill({
         composition,
         serveUrl: bundleLocation,
         output: outputPath,
-        inputProps: propsAsRecord,
+        inputProps: compositionProps,
         imageFormat: "png",
       });
     } else {
@@ -104,7 +107,7 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
         serveUrl: bundleLocation,
         codec: "h264",
         outputLocation: outputPath,
-        inputProps: propsAsRecord,
+        inputProps: compositionProps,
         // Performance options
         concurrency: 2,
         // Quality settings
@@ -225,7 +228,11 @@ async function getVideoTestimonialProps(
     throw new Error(`Video response not found: ${request.videoResponseId}`);
   }
 
-  // Cast to allow accessing properties that may not be in generated types
+  // NOTE: this select asks for customer_first_name/customer_last_name/
+  // customer_relationship, none of which exist on video_testimonial_requests in the
+  // generated schema (it has customer_name), so PostgREST rejects the query and the
+  // `!response` guard above throws. The double assertion is what hides that; it can
+  // only be removed once the select matches the real columns.
   const req = response.video_testimonial_requests as unknown as {
     customer_first_name: string | null;
     customer_last_name: string | null;
@@ -237,9 +244,7 @@ async function getVideoTestimonialProps(
   const professional = req.users;
   const customerName = [req.customer_first_name, req.customer_last_name].filter(Boolean).join(" ") || "Valued Customer";
 
-  const wordTimestampData = parseWordTimestampData(
-    (response as unknown as Record<string, unknown>).word_timestamps
-  );
+  const wordTimestampData = parseWordTimestampData(response.word_timestamps);
   const captions =
     wordTimestampData?.segments.length && wordTimestampData.segments.length > 0
       ? wordTimestampData.segments

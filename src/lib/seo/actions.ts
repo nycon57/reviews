@@ -298,16 +298,7 @@ export const getPublicLOProfile = cache(async function getPublicLOProfile(
     const photoUrl = user.avatar_url || user.photo_url;
 
     // Single path (ADR 0006): the org is embedded via organizations!inner.
-    type OrgInfo = {
-      id: string;
-      name: string;
-      logo_url: string | null;
-      domain: string | null;
-      slug: string | null;
-      account_type: string | null;
-      subscription_tier: string | null;
-    };
-    const organization = (user.organizations as unknown as OrgInfo | null) ?? null;
+    const organization = user.organizations;
     const isIndividual = organization?.account_type === "individual";
 
     // Fetch published reviews (user_id references users table)
@@ -1191,6 +1182,31 @@ export interface PublicOrganizationOgCardData {
   >;
 }
 
+/** The organization columns the public profile page reads. */
+type PublicOrganizationRow = {
+  id: string;
+  name: string;
+  slug: string;
+  domain: string | null;
+  logo_url: string | null;
+  avatar_url: string | null;
+  banner_url: string | null;
+  primary_color: string | null;
+  description: string | null;
+  mission_statement: string | null;
+  headquarters_address: { street?: string; city?: string; state?: string; zip?: string } | null;
+  phone: string | null;
+  email: string | null;
+  website_url: string | null;
+  linkedin_url: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  twitter_url: string | null;
+  headquarters_branch_id: string | null;
+  account_type: string | null;
+  subscription_tier: string | null;
+};
+
 /**
  * Get a public Organization profile by slug
  */
@@ -1233,39 +1249,19 @@ export const getPublicOrganizationProfile = cache(async function getPublicOrgani
       .eq("slug", slug)
       .single();
 
-    const orgData = orgDataRaw as unknown as Record<string, unknown> | null;
+    // SAFETY: `description` is a real column the generated schema is missing, so supabase-js
+    // cannot type this select at all. PublicOrganizationRow names exactly the columns requested
+    // above, and `.single()` already rejected the empty and multi-row cases.
+    const organization = orgDataRaw as PublicOrganizationRow | null;
 
-    if (orgError || !orgData) {
+    if (orgError || !organization) {
       return { success: false, error: "Organization not found" };
     }
 
     // Individual orgs never get a public page
-    if ((orgData as { account_type: string | null }).account_type === "individual") {
+    if (organization.account_type === "individual") {
       return { success: false, error: "Organization not found" };
     }
-
-    // Cast to expected type
-    const organization = orgData as {
-      id: string;
-      name: string;
-      slug: string;
-      domain: string | null;
-      logo_url: string | null;
-      avatar_url: string | null;
-      banner_url: string | null;
-      primary_color: string | null;
-      description: string | null;
-      mission_statement: string | null;
-      headquarters_address: { street?: string; city?: string; state?: string; zip?: string } | null;
-      phone: string | null;
-      email: string | null;
-      website_url: string | null;
-      linkedin_url: string | null;
-      facebook_url: string | null;
-      instagram_url: string | null;
-      twitter_url: string | null;
-      headquarters_branch_id: string | null;
-    };
 
     // Fetch HQ branch if set
     let hqBranch: PublicOrgHQBranch | null = null;
@@ -1473,8 +1469,10 @@ export const getPublicOrganizationProfile = cache(async function getPublicOrgani
           total_members: b.total_members,
         })),
         featuredProfessionals: allProfessionals.map((professional) => {
-          const orgIsEnterprise = (orgData as { account_type?: string }).account_type === "enterprise";
-          const orgIsPro = orgIsEnterprise || ["professional", "pro"].includes(String((orgData as { subscription_tier?: string | null }).subscription_tier ?? ""));
+          const orgIsEnterprise = organization.account_type === "enterprise";
+          const orgIsPro =
+            orgIsEnterprise ||
+            ["professional", "pro"].includes(String(organization.subscription_tier ?? ""));
           return {
             id: professional.id,
             slug: professional.slug,

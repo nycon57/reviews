@@ -72,8 +72,8 @@ function createSupabaseMock(plan: Record<string, Result[]>) {
       return Promise.resolve(next(table));
     });
     builder.then = (
-      resolve: (v: Result) => unknown,
-      reject?: (e: unknown) => unknown
+      resolve: (v: Result) => void,
+      reject?: (e: unknown) => void
     ) => Promise.resolve(next(table)).then(resolve, reject);
     return builder;
   }

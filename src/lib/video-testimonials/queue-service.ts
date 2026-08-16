@@ -226,6 +226,14 @@ async function cancelQueueItem(
 }
 
 /**
+ * PostgREST returns a to-one embed (`organizations!inner (...)`) as a single object, but without
+ * generated table types the client widens it to an array. Normalise both shapes to the object.
+ */
+function firstEmbedded<T>(embed: T | T[]): T {
+  return Array.isArray(embed) ? embed[0] : embed;
+}
+
+/**
  * Get video testimonial request details for sending
  */
 export async function getVideoTestimonialRequestForSending(
@@ -281,11 +289,7 @@ export async function getVideoTestimonialRequestForSending(
     return null;
   }
 
-  const organization = request.organizations as unknown as {
-    id: string;
-    name: string;
-    logo_url: string | null;
-  };
+  const organization = firstEmbedded(request.organizations);
 
   return {
     id: request.id,

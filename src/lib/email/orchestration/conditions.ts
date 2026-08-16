@@ -19,6 +19,16 @@ import type {
 // Field Value Extraction
 // ============================================================================
 
+/** A value reachable in a ConditionContext by dot path, as compared by evaluateOperator. */
+export type ConditionFieldValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | ConditionFieldValue[]
+  | { [key: string]: ConditionFieldValue };
+
 /**
  * Extract a value from a nested object using dot notation
  * e.g., "user.profile_completed" -> context.user.profile_completed
@@ -26,7 +36,7 @@ import type {
 export function getFieldValue(
   context: ConditionContext,
   fieldPath: string
-): unknown {
+): ConditionFieldValue {
   const parts = fieldPath.split(".");
   let value: unknown = context;
 
@@ -41,7 +51,10 @@ export function getFieldValue(
     }
   }
 
-  return value;
+  // SAFETY: the walk above stops at the first non-object, so `value` is either a
+  // leaf of a ConditionContext record (user/organization/metadata/eventData hold
+  // JSON-derived values) or one of those records itself.
+  return value as ConditionFieldValue;
 }
 
 // ============================================================================

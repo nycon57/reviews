@@ -377,9 +377,12 @@ export async function syncReviewToSalesforce(
         .single();
 
       if (surveyResponse?.surveys) {
-        const surveySourceMetadata = (
-          surveyResponse.surveys as unknown as { source_metadata: Record<string, unknown> | null }
-        ).source_metadata;
+        // `surveys` is a to-one embed: PostgREST returns one object, but the untyped client
+        // widens it to an array, so normalise both shapes.
+        const survey = Array.isArray(surveyResponse.surveys)
+          ? surveyResponse.surveys[0]
+          : surveyResponse.surveys;
+        const surveySourceMetadata = survey?.source_metadata;
         if (surveySourceMetadata?.salesforce_contact_id) {
           salesforceContactId = surveySourceMetadata.salesforce_contact_id as string;
           salesforceAccountId = surveySourceMetadata.salesforce_account_id as string | undefined;

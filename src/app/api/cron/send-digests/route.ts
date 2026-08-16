@@ -126,12 +126,11 @@ export async function POST(request: NextRequest) {
           }
 
           // Extract the notifications from the queue join
+          // `notifications` is a to-one embed: PostgREST returns one object per row, but the
+          // untyped client widens it to an array, so flatMap normalises both shapes.
           const notifications: DigestNotification[] = queuedNotifications
-            .map((q) => {
-              const notif = q.notifications as unknown as DigestNotification | null;
-              return notif;
-            })
-            .filter((n): n is DigestNotification => n !== null);
+            .flatMap((q) => q.notifications)
+            .filter((n) => n !== null);
 
           if (notifications.length === 0) {
             continue;

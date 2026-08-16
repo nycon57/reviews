@@ -11,7 +11,7 @@ export const OUTBOUND_WEBHOOK_EVENTS = [
 
 export type OutboundWebhookEventType = (typeof OUTBOUND_WEBHOOK_EVENTS)[number];
 
-export interface ReviewWebhookData {
+export type ReviewWebhookData = {
   review_id: string;
   rating: number;
   text: string | null;
@@ -25,13 +25,13 @@ export interface ReviewWebhookData {
   public_url: string | null;
 }
 
-export interface ReviewRespondedWebhookData {
+export type ReviewRespondedWebhookData = {
   review_id: string;
   response_text: string;
   responded_at: string;
 }
 
-export interface SurveyCompletedWebhookData {
+export type SurveyCompletedWebhookData = {
   survey_id: string;
   contact_id: string | null;
   completed_at: string;
@@ -39,7 +39,7 @@ export interface SurveyCompletedWebhookData {
   nps: number | null;
 }
 
-export interface ContactCreatedWebhookData {
+export type ContactCreatedWebhookData = {
   contact_id: string;
   full_name: string | null;
   email: string | null;
@@ -58,7 +58,7 @@ export type OutboundWebhookDataByType = {
 export type OutboundWebhookData<T extends OutboundWebhookEventType> =
   OutboundWebhookDataByType[T];
 
-export interface OutboundWebhookEnvelope<T extends OutboundWebhookEventType> {
+export type OutboundWebhookEnvelope<T extends OutboundWebhookEventType> = {
   id: string;
   type: T;
   created_at: string;

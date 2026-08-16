@@ -7,6 +7,7 @@ import { previewTemplate } from "@/lib/email-builder/actions";
 import {
   editorDocumentToEmailDocument,
   isEditorFormat,
+  isEmailDocumentFormat,
 } from "@/lib/email-builder/document-converter";
 import type { EmailDocument } from "@/lib/email-builder/types";
 
@@ -23,11 +24,15 @@ export function HtmlPanel({ document }: HtmlPanelProps) {
   const renderHtml = useCallback(async () => {
     setLoading(true);
     try {
-      const emailDoc = isEditorFormat(document)
-        ? editorDocumentToEmailDocument(
-            document as Record<string, { type: string; data: Record<string, unknown> }>
-          )
-        : (document as unknown as EmailDocument);
+      // The store hands over an opaque record, so pick the format before rendering it.
+      let emailDoc: EmailDocument;
+      if (isEditorFormat(document)) {
+        emailDoc = editorDocumentToEmailDocument(document);
+      } else if (isEmailDocumentFormat(document)) {
+        emailDoc = document;
+      } else {
+        throw new Error("Unrecognized email document format");
+      }
 
       const result = await previewTemplate(emailDoc);
       setHtml(result.html);

@@ -199,7 +199,7 @@ export async function getBranches(
     }
 
     const branches = (data || []).map((row) =>
-      mapRowToBranch(row as unknown as BranchRow)
+      mapRowToBranch(row)
     );
 
     return { success: true, data: branches };
@@ -234,7 +234,7 @@ export async function getBranch(id: string): Promise<ActionResult<Branch>> {
 
     return {
       success: true,
-      data: mapRowToBranch(data as unknown as BranchRow),
+      data: mapRowToBranch(data),
     };
   } catch (error) {
     console.error('Error fetching branch:', error);
@@ -280,7 +280,7 @@ export async function getBranchWithTeamMembers(
       console.error('Error fetching team members:', teamError);
     }
 
-    const branch = mapRowToBranch(branchData as unknown as BranchRow);
+    const branch = mapRowToBranch(branchData);
     const teamMembers = (teamData || []).map((m) => ({
       id: m.id,
       fullName: m.full_name || 'Unknown',
@@ -424,7 +424,7 @@ export async function createBranch(
 
     return {
       success: true,
-      data: mapRowToBranch(data as unknown as BranchRow),
+      data: mapRowToBranch(data),
     };
   } catch (error) {
     console.error('Error creating branch:', error);
@@ -550,7 +550,7 @@ export async function updateBranch(
 
     return {
       success: true,
-      data: mapRowToBranch(data as unknown as BranchRow),
+      data: mapRowToBranch(data),
     };
   } catch (error) {
     console.error('Error updating branch:', error);
@@ -983,7 +983,7 @@ export async function updateBranchHours(
     const { error } = await supabase
       .from('branches')
       .update({
-        hours_of_operation: hours as unknown as Json,
+        hours_of_operation: hours,
         updated_at: new Date().toISOString(),
       })
       .eq('id', branchId)

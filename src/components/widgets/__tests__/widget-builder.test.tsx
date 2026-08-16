@@ -79,9 +79,17 @@ describe("WidgetBuilder", () => {
   });
 
   it("saves widget changes without sending hidden SEO editor fields", async () => {
-    const widget = {
+    const widget: WidgetConfig = {
       id: "123e4567-e89b-12d3-a456-426614174000",
       widget_id: "widget-123",
+      name: "Widget 123",
+      organization_id: "223e4567-e89b-12d3-a456-426614174000",
+      created_by: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+      status: "active",
+      ab_test_group: null,
+      parent_widget_id: null,
       widget_type: "lo_review",
       entity_type: "user",
       entity_id: null,
@@ -102,7 +110,7 @@ describe("WidgetBuilder", () => {
       enable_structured_data: true,
       structured_data_type: "FinancialService",
       version: 3,
-    } as unknown as WidgetConfig;
+    };
 
     await act(async () => {
       root.render(<WidgetBuilder widget={widget} />);

@@ -59,7 +59,7 @@ function createMockQueryChain(finalResult: {
   chain.order = vi.fn().mockImplementation(returnChain);
   chain.range = vi.fn().mockImplementation(returnChain);
   chain.limit = vi.fn().mockImplementation(returnChain);
-  chain.then = vi.fn().mockImplementation((resolve: (value: unknown) => unknown) =>
+  chain.then = vi.fn().mockImplementation((resolve: (value: unknown) => void) =>
     Promise.resolve(finalResult).then(resolve)
   );
 

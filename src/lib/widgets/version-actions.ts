@@ -112,7 +112,7 @@ async function backfillCurrentSnapshot(
   const { error } = await versionsTable(supabase).insert({
     widget_config_id: widget.id,
     version,
-    config: (widget.config ?? {}) as unknown as Json,
+    config: widget.config ?? {},
     name: widget.name,
     status: widget.status,
     allowed_domains: widget.allowed_domains ?? [],
@@ -192,7 +192,7 @@ export async function createVersionSnapshot(
       .insert({
         widget_config_id: widgetConfigId,
         version: newVersion,
-        config: currentConfig as unknown as Json,
+        config: currentConfig,
         name: widget.name,
         status: widget.status,
         allowed_domains: widget.allowed_domains ?? [],

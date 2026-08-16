@@ -34,6 +34,22 @@ import type {
 } from "./types";
 import { format, subDays } from "date-fns";
 
+
+/**
+ * `report_templates.config` is a jsonb column, while `ReportTemplateConfig` is declared as an
+ * interface — TypeScript will not structurally match the two in either direction. This module is
+ * the only reader and writer of that column, so both conversions live here.
+ */
+function toConfigColumn(config: ReportTemplateConfig): Json {
+  return { ...config };
+}
+
+function readConfigColumn<T>(value: Json): T {
+  // SAFETY: engine.ts is the only writer of report_templates.config (see toConfigColumn above),
+  // so every stored row holds a ReportTemplateConfig written by this module.
+  return value as T;
+}
+
 const ANALYTICS_CHUNK_SIZE = 5;
 
 export interface GenerateReportForOrgParams {
@@ -172,7 +188,7 @@ async function getReportTemplateForOrg(
       name: data.name,
       description: data.description,
       templateType: data.template_type as ReportTemplateType,
-      config: data.config as unknown as ReportTemplateConfig,
+      config: readConfigColumn<ReportTemplateConfig>(data.config),
       isDefault: data.is_default ?? false,
       createdBy: data.created_by,
       createdAt: new Date(data.created_at!),
@@ -221,7 +237,7 @@ export async function getReportTemplates(): Promise<ActionResult<ReportTemplate[
     name: d.name,
     description: d.description,
     templateType: d.template_type as ReportTemplateType,
-    config: d.config as unknown as ReportTemplateConfig,
+    config: readConfigColumn<ReportTemplateConfig>(d.config),
     isDefault: d.is_default ?? false,
     createdBy: d.created_by,
     createdAt: new Date(d.created_at!),
@@ -557,7 +573,7 @@ export async function initializeDefaultTemplates(options?: {
       name: t.name,
       description: t.description,
       template_type: t.templateType,
-      config: t.config as unknown as Json,
+      config: toConfigColumn(t.config),
       is_default: t.isDefault,
       created_by: context.userId,
     })),

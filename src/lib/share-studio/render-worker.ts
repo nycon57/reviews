@@ -11,6 +11,7 @@ import { renderStillWithSatori } from "@/lib/share-studio/satori-renderer";
 import {
   renderClipForResponse,
   type ClipRenderOptions,
+  type ClipRenderOutcome,
 } from "@/lib/share-studio/clip-renderer";
 
 const RENDER_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
@@ -208,7 +209,7 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
   let height = 0;
   let durationSeconds: number | undefined;
   let contentType = "image/png";
-  let appliedOptions: Record<string, unknown> | null = null;
+  let appliedOptions: ClipRenderOutcome["appliedOptions"] | null = null;
 
   const composition =
     typeof payload.composition === "string" ? payload.composition : null;
@@ -237,7 +238,7 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
     height = clipResult.height;
     durationSeconds = clipResult.durationSeconds;
     contentType = "video/mp4";
-    appliedOptions = clipResult.appliedOptions as unknown as Record<string, unknown>;
+    appliedOptions = clipResult.appliedOptions;
   } else if (assetType === "video") {
     const videoResult = await withTimeout(
       renderShareStudioVideo({
@@ -282,6 +283,15 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
     contentType,
   });
 
+  // Only record the keys this render actually produced: `composition` is absent for
+  // non-composited assets and `applied_options` only exists for clip renders.
+  const metadata: Record<string, unknown> = {
+    requested_format: requestedFormat,
+    payload,
+  };
+  if (composition) metadata.composition = composition;
+  if (appliedOptions) metadata.applied_options = appliedOptions;
+
   const { data: asset, error: assetError } = await supabase
     .from("proof_assets")
     .insert({
@@ -296,12 +306,7 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
       width,
       height,
       duration_seconds: durationSeconds ?? null,
-      metadata: {
-        requested_format: requestedFormat,
-        payload,
-        ...(composition ? { composition } : {}),
-        ...(appliedOptions ? { applied_options: appliedOptions } : {}),
-      },
+      metadata,
     })
     .select("*")
     .single();

@@ -57,11 +57,21 @@ function applyMergeFields(
   return result;
 }
 
+/** A JSON-shaped value inside a block's `data` payload. */
+type MergeFieldValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | MergeFieldValue[]
+  | { [key: string]: MergeFieldValue };
+
 function replaceInValue(
-  value: unknown,
+  value: MergeFieldValue,
   pattern: RegExp,
   values: Record<string, string>
-): unknown {
+): MergeFieldValue {
   if (typeof value === "string") {
     return value.replace(pattern, (match, key: string) => values[key] ?? match);
   }
@@ -69,7 +79,7 @@ function replaceInValue(
     return value.map((v) => replaceInValue(v, pattern, values));
   }
   if (value && typeof value === "object") {
-    const obj: Record<string, unknown> = {};
+    const obj: Record<string, MergeFieldValue> = {};
     for (const [k, v] of Object.entries(value)) {
       obj[k] = replaceInValue(v, pattern, values);
     }

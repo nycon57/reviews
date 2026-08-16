@@ -5,6 +5,7 @@ import {
   type TemplateBinding,
   type TemplateLayer,
 } from "@/lib/share-studio/template-types";
+import type { Json } from "@/types/database.types";
 
 interface OrganizationBrandSource {
   primary_color?: string | null;
@@ -52,7 +53,8 @@ export function resolveBrandTokens(source?: OrganizationBrandSource | null): Bra
   };
 }
 
-function getPathValue(obj: Record<string, unknown>, path: string): unknown {
+/** Walk a dotted binding path through a proof snapshot. Missing segments yield undefined. */
+function getPathValue(obj: Record<string, unknown>, path: string): Json | undefined {
   const parts = path.split(".").filter(Boolean);
   let current: unknown = obj;
 
@@ -61,13 +63,15 @@ function getPathValue(obj: Record<string, unknown>, path: string): unknown {
     current = (current as Record<string, unknown>)[part];
   }
 
-  return current;
+  // SAFETY: proof snapshots are the jsonb `source_snapshot` column read back out, so every
+  // value the walk above can land on is a JSON leaf or container.
+  return current as Json | undefined;
 }
 
 function applyBindingTransform(
-  value: unknown,
+  value: Json | undefined,
   binding?: TemplateBinding
-): unknown {
+): Json | undefined {
   if (!binding) return value;
   if (value === undefined || value === null) return binding.fallback;
 

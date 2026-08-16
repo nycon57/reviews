@@ -14,6 +14,17 @@ import type {
 } from "./types";
 import type { Json } from "@/types/database.types";
 
+/**
+ * Canvas types are declared as interfaces, so TypeScript will not structurally match them to the
+ * `Json` column type even though they hold nothing but JSON data. The conversion lives here rather
+ * than at each insert site. Counterpart to `parseCanvasSize` / `parseElements` in `./types`.
+ */
+function toJsonColumn<T>(value: T): Json {
+  // SAFETY: canvas sizes and elements are plain serialisable data — numbers, strings and nested
+  // object/array literals built in this codebase, never functions, class instances, or cycles.
+  return value as Json;
+}
+
 const DEFAULT_CANVAS: CanvasSize = { width: 1080, height: 1080, name: "Instagram Post" };
 
 /** Fetch a review and its LO data for graphic generation */
@@ -135,8 +146,8 @@ export async function autoGenerateFromReview(
       organization_id: orgId,
       created_by: user.id,
       name: graphicName,
-      canvas_size: canvasSize as unknown as Json,
-      elements: elements as unknown as Json,
+      canvas_size: toJsonColumn(canvasSize),
+      elements: toJsonColumn(elements),
       template_id: templateId,
       review_ids: [input.reviewId],
     })

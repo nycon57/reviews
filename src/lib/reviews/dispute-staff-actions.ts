@@ -69,6 +69,15 @@ interface StaffDisputeRow {
   } | null;
 }
 
+/**
+ * PostgREST returns a single object for a to-one embed, but with no generated relationship
+ * metadata supabase-js widens those embeds to arrays. Normalize both shapes to the one row.
+ */
+function toOneEmbed<T>(embed: T | T[] | null | undefined): T | null {
+  if (embed === null || embed === undefined) return null;
+  return Array.isArray(embed) ? (embed[0] ?? null) : embed;
+}
+
 async function requirePlatformAdminUserId(): Promise<string> {
   const user = await unifiedGetUser();
   if (!user) {
@@ -178,7 +187,22 @@ export async function getOpenIndividualDisputes(): Promise<
     return { success: false, error: "Failed to fetch staff disputes" };
   }
 
-  const disputes = ((data ?? []) as unknown as StaffDisputeRow[])
+  const disputes = (data ?? [])
+    .map(
+      (row): StaffDisputeRow => ({
+        id: row.id,
+        review_id: row.review_id,
+        organization_id: row.organization_id,
+        reason: row.reason,
+        details: row.details,
+        reporter_name: row.reporter_name,
+        reporter_email: row.reporter_email,
+        created_at: row.created_at,
+        organization: toOneEmbed(row.organization),
+        review: toOneEmbed(row.review),
+        flagged_by: toOneEmbed(row.flagged_by),
+      })
+    )
     .filter((row) => row.organization?.account_type !== "enterprise")
     .map(mapStaffDispute);
 

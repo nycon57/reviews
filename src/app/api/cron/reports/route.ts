@@ -70,7 +70,10 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const reports = scheduledReports as unknown as ScheduledReportRow[];
+      // SAFETY: `scheduled_reports` is not in the generated schema, so the row
+      // shape below mirrors the migration that created the table plus the
+      // `organizations!inner (name)` join selected above.
+      const reports = scheduledReports as ScheduledReportRow[];
       const results: Array<{ reportId: string; success: boolean; error?: string }> = [];
 
       for (const scheduledReport of reports) {

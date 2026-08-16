@@ -5,6 +5,7 @@ import type { SurveyInvitationEmailData, SurveyReminderEmailData } from "@/lib/e
 import { guardAcquisitionSend } from "@/lib/contacts/send-guard";
 import { resolveContactUnsubscribeUrl } from "@/lib/contacts/tokens";
 import { TIER_LIMITS, type SubscriptionTier } from "@/lib/organization/types";
+import { toOneEmbed } from "@/lib/supabase/to-one-embed";
 
 export interface QueueItem {
   id: string;
@@ -12,6 +13,21 @@ export interface QueueItem {
   organization_id: string;
   type: "initial" | "reminder_3day" | "reminder_7day";
   scheduled_at: string;
+}
+
+/** Loan officer joined onto a survey for invitation and reminder sends. */
+export interface SurveyLoanOfficer {
+  id: string;
+  full_name: string;
+  email: string;
+  photo_url: string | null;
+}
+
+/** Organization joined onto a survey for invitation and reminder branding. */
+export interface SurveyOrganization {
+  id: string;
+  name: string;
+  logo_url: string | null;
 }
 
 export interface SurveyWithDetails {
@@ -28,17 +44,8 @@ export interface SurveyWithDetails {
   expires_at: string | null;
   transaction_type: string | null;
   source_metadata: Record<string, unknown> | null;
-  loan_officer: {
-    id: string;
-    full_name: string;
-    email: string;
-    photo_url: string | null;
-  };
-  organization: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-  };
+  loan_officer: SurveyLoanOfficer;
+  organization: SurveyOrganization;
 }
 
 // Check if organization is within rate limits
@@ -183,18 +190,8 @@ export async function getSurveyForSending(surveyId: string): Promise<SurveyWithD
     return null;
   }
 
-  const loanOfficer = survey.users as unknown as {
-    id: string;
-    full_name: string;
-    email: string;
-    photo_url: string | null;
-  };
-
-  const organization = survey.organizations as unknown as {
-    id: string;
-    name: string;
-    logo_url: string | null;
-  };
+  const loanOfficer = toOneEmbed<SurveyLoanOfficer>(survey.users);
+  const organization = toOneEmbed<SurveyOrganization>(survey.organizations);
 
   return {
     id: survey.id,

@@ -137,7 +137,7 @@ export async function getWebsiteAnalytics(
     };
 
     data.forEach((d) => {
-      const sources = (d.traffic_sources as unknown as Record<string, number>) || {};
+      const sources: Record<string, number> = d.traffic_sources || {};
       Object.entries(sources).forEach(([key, value]) => {
         if (key in trafficSources) {
           trafficSources[key as keyof TrafficSourceBreakdown] += value;
@@ -148,7 +148,7 @@ export async function getWebsiteAnalytics(
     // Aggregate device breakdown
     const deviceBreakdown: DeviceBreakdown = { desktop: 0, mobile: 0, tablet: 0 };
     data.forEach((d) => {
-      const devices = (d.device_breakdown as unknown as Record<string, number>) || {};
+      const devices: Record<string, number> = d.device_breakdown || {};
       Object.entries(devices).forEach(([key, value]) => {
         if (key in deviceBreakdown) {
           deviceBreakdown[key as keyof DeviceBreakdown] += value;
@@ -159,7 +159,7 @@ export async function getWebsiteAnalytics(
     // Aggregate geographic data
     const geoMap = new Map<string, number>();
     data.forEach((d) => {
-      const geo = (d.geographic_data as unknown as Record<string, number>) || {};
+      const geo: Record<string, number> = d.geographic_data || {};
       Object.entries(geo).forEach(([country, visitors]) => {
         geoMap.set(country, (geoMap.get(country) || 0) + visitors);
       });
@@ -200,7 +200,7 @@ export async function getWebsiteAnalytics(
     // Aggregate search queries
     const queryMap = new Map<string, SearchQueryData>();
     data.forEach((d) => {
-      const queries = (d.search_queries as unknown as SearchQueryData[]) || [];
+      const queries: SearchQueryData[] = d.search_queries || [];
       queries.forEach((q) => {
         const existing = queryMap.get(q.query) || {
           query: q.query,
@@ -384,7 +384,7 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
     let pagesHealthy = 0;
 
     latestAudits.forEach((audit) => {
-      const issues = (audit.issues as unknown as SEOIssue[]) || [];
+      const issues: SEOIssue[] = audit.issues || [];
       const hasErrors = issues.some((i) => i.type === "error");
       const hasWarnings = issues.some((i) => i.type === "warning");
 
@@ -402,8 +402,8 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
     const allRecommendations: SEORecommendation[] = [];
 
     latestAudits.forEach((audit) => {
-      const issues = (audit.issues as unknown as SEOIssue[]) || [];
-      const recommendations = (audit.recommendations as unknown as SEORecommendation[]) || [];
+      const issues: SEOIssue[] = audit.issues || [];
+      const recommendations: SEORecommendation[] = audit.recommendations || [];
       allIssues.push(...issues);
       allRecommendations.push(...recommendations);
     });
@@ -518,8 +518,8 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
         readingTimeMinutes: audit.reading_time_minutes || 0,
         contentFreshnessDays: audit.content_freshness_days,
       },
-      issues: (audit.issues as unknown as SEOIssue[]) || [],
-      recommendations: (audit.recommendations as unknown as SEORecommendation[]) || [],
+      issues: audit.issues || [],
+      recommendations: audit.recommendations || [],
       auditedAt: audit.audited_at,
     }));
 
@@ -664,8 +664,8 @@ export async function getPageSEOAudit(
           readingTimeMinutes: audit.reading_time_minutes || 0,
           contentFreshnessDays: audit.content_freshness_days,
         },
-        issues: (audit.issues as unknown as SEOIssue[]) || [],
-        recommendations: (audit.recommendations as unknown as SEORecommendation[]) || [],
+        issues: audit.issues || [],
+        recommendations: audit.recommendations || [],
         auditedAt: audit.audited_at,
       },
     };
@@ -710,12 +710,9 @@ export async function recordAnalytics(data: {
 
     if (existing) {
       // Update existing record
-      const trafficSources = (existing.traffic_sources || {}) as unknown as Record<string, number>;
-      const deviceBreakdown = (existing.device_breakdown || {}) as unknown as Record<
-        string,
-        number
-      >;
-      const geographicData = (existing.geographic_data || {}) as unknown as Record<string, number>;
+      const trafficSources: Record<string, number> = existing.traffic_sources || {};
+      const deviceBreakdown: Record<string, number> = existing.device_breakdown || {};
+      const geographicData: Record<string, number> = existing.geographic_data || {};
 
       if (data.trafficSource) {
         trafficSources[data.trafficSource] = (trafficSources[data.trafficSource] || 0) + 1;

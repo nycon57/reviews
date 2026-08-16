@@ -11,6 +11,17 @@ import type {
 } from "./types";
 import type { Json } from "@/types/database.types";
 
+/**
+ * Canvas types are declared as interfaces, so TypeScript will not structurally match them to the
+ * `Json` column type even though they hold nothing but JSON data. The conversion lives here rather
+ * than at each insert site. Counterpart to `parseCanvasSize` / `parseElements` in `./types`.
+ */
+function toJsonColumn<T>(value: T): Json {
+  // SAFETY: canvas sizes and elements are plain serialisable data — numbers, strings and nested
+  // object/array literals built in this codebase, never functions, class instances, or cycles.
+  return value as Json;
+}
+
 const GRAPHICS_PATH = "/dashboard/social-graphics";
 
 // ── Auth Helper ──────────────────────────────────────────────────────────
@@ -102,8 +113,8 @@ export async function createGraphic(params: {
       organization_id: ctx.data.organizationId,
       created_by: ctx.data.userId,
       name: params.name,
-      canvas_size: params.canvasSize as unknown as Json,
-      elements: params.elements as unknown as Json,
+      canvas_size: toJsonColumn(params.canvasSize),
+      elements: toJsonColumn(params.elements),
       template_id: params.templateId ?? null,
       review_ids: params.reviewIds ?? null,
     })
@@ -133,9 +144,9 @@ export async function updateGraphic(
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (params.name !== undefined) updateData.name = params.name;
   if (params.canvasSize !== undefined)
-    updateData.canvas_size = params.canvasSize as unknown as Json;
+    updateData.canvas_size = toJsonColumn(params.canvasSize);
   if (params.elements !== undefined)
-    updateData.elements = params.elements as unknown as Json;
+    updateData.elements = toJsonColumn(params.elements);
   if (params.scheduleCron !== undefined)
     updateData.schedule_cron = params.scheduleCron;
   if (params.templateId !== undefined)

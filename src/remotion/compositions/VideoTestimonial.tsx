@@ -376,18 +376,23 @@ const CustomerInfoChip: React.FC<{
     extrapolateRight: "clamp",
   });
 
+  const containerStyle: React.CSSProperties = {
+    padding: "0 24px",
+    opacity,
+    display: "flex",
+    justifyContent: "center",
+  };
+
+  // Pinned to the bottom of the frame only when the caller supplies an offset.
+  if (bottom) {
+    containerStyle.position = "absolute";
+    containerStyle.bottom = bottom;
+    containerStyle.left = 0;
+    containerStyle.right = 0;
+  }
+
   return (
-    <div
-      style={{
-        ...(bottom
-          ? { position: "absolute" as const, bottom, left: 0, right: 0 }
-          : {}),
-        padding: "0 24px",
-        opacity,
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
+    <div style={containerStyle}>
       <div
         style={{
           background: withOpacity(REPWELL_COLORS.teal[500], 0.9),

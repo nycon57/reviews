@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ReactFlowProvider, type ReactFlowInstance } from "@xyflow/react";
+import { ReactFlowProvider } from "@xyflow/react";
 import { useToast } from "@/hooks/use-toast";
 import type { CampaignStatus, CampaignWorkflow } from "@/lib/campaigns/types";
 import {
@@ -12,7 +12,7 @@ import {
   updateCampaign,
 } from "@/lib/campaigns/actions";
 import { NodePalette } from "./node-palette";
-import { WorkflowCanvas } from "./canvas";
+import { WorkflowCanvas, type WorkflowFlowInstance } from "./canvas";
 import { PropertiesPanel } from "./properties-panel";
 import { WorkflowToolbar } from "./toolbar";
 import { MobileTimeline } from "./mobile-timeline";
@@ -87,7 +87,7 @@ export function WorkflowBuilder({
     null
   );
 
-  const flowRef = useRef<ReactFlowInstance | null>(null);
+  const flowRef = useRef<WorkflowFlowInstance | null>(null);
 
   const selectedNode = useMemo(
     () => nodes.find((node) => node.id === selectedNodeId) || null,
@@ -148,7 +148,7 @@ export function WorkflowBuilder({
         const updated = await updateCampaign(initialCampaign.id, {
           name: trimmedName,
           sequenceDefinition,
-          canvasMetadata: canvasMetadata as unknown as Record<string, unknown>,
+          canvasMetadata: { ...canvasMetadata },
         });
 
         setCampaignName(updated.name);

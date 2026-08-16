@@ -154,14 +154,23 @@ const PROFESSIONAL_SELECT = `
   )
 ` as const;
 
+/** Base query for professionals eligible to appear in the public directory. */
+function publicProfessionalsQuery(supabase: ReturnType<typeof createAdminClient>) {
+  return applyPublicProfessionalFilters(supabase.from("users").select(PROFESSIONAL_SELECT));
+}
+
+/** Row shape PROFESSIONAL_SELECT returns, derived so it tracks the select string. */
+type ProfessionalRow = NonNullable<
+  Awaited<ReturnType<typeof publicProfessionalsQuery>>["data"]
+>[number];
+
 /**
  * Enterprise admins are org account managers — hide from directory.
  * Individual admins ARE the professionals themselves — keep them.
  */
-function isEnterpriseAdmin(record: Record<string, unknown>): boolean {
+function isEnterpriseAdmin(record: ProfessionalRow): boolean {
   if (record.role !== "admin") return false;
-  const org = record.organizations as { account_type?: string } | null;
-  return org?.account_type === "enterprise";
+  return record.organizations?.account_type === "enterprise";
 }
 
 async function requireDirectoryMaintenanceAccess(): Promise<boolean> {
@@ -171,59 +180,56 @@ async function requireDirectoryMaintenanceAccess(): Promise<boolean> {
 
 /** Transform a raw DB record into a DirectoryProfessional */
 function transformRecord(
-  record: Record<string, unknown>,
+  record: ProfessionalRow,
   distanceMiles?: number
 ): DirectoryProfessional {
-  const org = record.organizations as {
-    id: string;
-    name: string;
-    slug: string;
-    logo_url: string | null;
-    account_type: string | null;
-    subscription_tier: string | null;
-  } | null;
-  const branchData = record.branches as {
-    id: string;
-    name: string;
-    latitude: number | null;
-    longitude: number | null;
-    address: {
-      street?: string;
-      city?: string;
-      state?: string;
-      postal_code?: string;
-    } | null;
-  } | null;
+  const org = record.organizations;
+  const branchData = record.branches;
 
-  const effectiveLatitude = branchData?.latitude ?? (record.latitude as number | null);
-  const effectiveLongitude = branchData?.longitude ?? (record.longitude as number | null);
+  const branchInfo: DirectoryProfessional["branch_info"] = branchData
+    ? {
+        ...branchData,
+        // SAFETY: `branches.address` is a jsonb column, so the generated type is
+        // `Json`. Consumers read only the optional street/city/state/postal_code
+        // strings the branch editor writes, and tolerate any of them missing.
+        address: branchData.address as NonNullable<
+          DirectoryProfessional["branch_info"]
+        >["address"],
+      }
+    : null;
+
+  const effectiveLatitude = branchData?.latitude ?? record.latitude;
+  const effectiveLongitude = branchData?.longitude ?? record.longitude;
 
   const effectiveOrg = org
     ? { id: org.id, name: org.name, slug: org.slug, logo_url: org.logo_url, industry: null }
     : null;
 
+  // SAFETY: `users.address` is a jsonb column, so the generated type is `Json`.
+  // sanitizePublicAddress reads only optional city/state and returns null when
+  // neither is present, so a differently shaped payload degrades to null.
   const safeAddress = sanitizePublicAddress(record.address as DirectoryProfessional["address"]);
 
   return {
-    id: record.id as string,
-    slug: record.slug as string | null,
-    full_name: (record.full_name as string) || "Unknown",
-    title: record.title as string | null,
-    bio: record.bio as string | null,
-    photo_url: record.photo_url as string | null,
+    id: record.id,
+    slug: record.slug,
+    full_name: record.full_name || "Unknown",
+    title: record.title,
+    bio: record.bio,
+    photo_url: record.photo_url,
     email: null,
     phone: null,
-    branch: record.branch as string | null,
-    branch_id: record.branch_id as string | null,
-    nmls_id: record.nmls_id as string | null,
+    branch: record.branch,
+    branch_id: record.branch_id,
+    nmls_id: record.nmls_id,
     address: safeAddress,
-    linkedin_url: record.linkedin_url as string | null,
-    average_rating: record.average_rating as number | null,
-    total_reviews: record.total_reviews as number | null,
+    linkedin_url: record.linkedin_url,
+    average_rating: record.average_rating,
+    total_reviews: record.total_reviews,
     latitude: effectiveLatitude,
     longitude: effectiveLongitude,
     organization: effectiveOrg,
-    branch_info: branchData,
+    branch_info: branchInfo,
     is_enterprise: org?.account_type === "enterprise",
     is_pro:
       org?.account_type === "enterprise" ||
@@ -275,9 +281,7 @@ export async function searchProfessionals(
           distanceMap.set(r.user_id, r.distance_miles);
         }
 
-        let radiusQuery = applyPublicProfessionalFilters(
-          supabase.from("users").select(PROFESSIONAL_SELECT)
-        ).in("id", radiusIds);
+        let radiusQuery = publicProfessionalsQuery(supabase).in("id", radiusIds);
 
         if (filters.organizationId)
           radiusQuery = radiusQuery.eq("organization_id", filters.organizationId);
@@ -294,11 +298,8 @@ export async function searchProfessionals(
         const { data: radiusProfs } = await radiusQuery;
 
         const professionals = (radiusProfs || [])
-          .filter((r) => !isEnterpriseAdmin(r as unknown as Record<string, unknown>))
-          .map((r) => {
-            const id = (r as unknown as Record<string, unknown>).id as string;
-            return transformRecord(r as unknown as Record<string, unknown>, distanceMap.get(id));
-          })
+          .filter((r) => !isEnterpriseAdmin(r))
+          .map((r) => transformRecord(r, distanceMap.get(r.id)))
           .sort((a, b) => {
             const sort = filters.sortBy || "distance";
             if (sort === "rating") return (b.average_rating ?? 0) - (a.average_rating ?? 0);
@@ -398,8 +399,8 @@ export async function searchProfessionals(
     }
 
     let professionals: DirectoryProfessional[] = (data || [])
-      .filter((r) => !isEnterpriseAdmin(r as unknown as Record<string, unknown>))
-      .map((r) => transformRecord(r as unknown as Record<string, unknown>));
+      .filter((r) => !isEnterpriseAdmin(r))
+      .map((r) => transformRecord(r));
 
     // Apply geographic bounds filter post-fetch using effective coordinates
     if (filters.bounds) {
@@ -682,9 +683,13 @@ export async function getAvailableIndustries(): Promise<
     // Count by industry
     const industryCounts = new Map<IndustryType, number>();
     for (const record of data) {
-      const org = record.organizations as unknown as { industry: IndustryType | null } | null;
-      if (org?.industry) {
-        industryCounts.set(org.industry, (industryCounts.get(org.industry) || 0) + 1);
+      const value = record.organizations?.industry;
+      if (value) {
+        // SAFETY: `organizations.industry` is text in the generated types, but the
+        // `organizations_industry_check` constraint (migration 20240101000032)
+        // restricts stored values to exactly the IndustryType union.
+        const industry = value as IndustryType;
+        industryCounts.set(industry, (industryCounts.get(industry) || 0) + 1);
       }
     }
 

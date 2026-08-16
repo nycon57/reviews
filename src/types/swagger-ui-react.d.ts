@@ -1,6 +1,25 @@
 declare module "swagger-ui-react" {
   import { ComponentType } from "react";
 
+  /** The outgoing "try it out" request Swagger UI hands to requestInterceptor. */
+  interface SwaggerRequest {
+    url: string;
+    method: string;
+    headers: Record<string, string>;
+    body?: string;
+    credentials?: RequestCredentials;
+  }
+
+  /** The response Swagger UI hands to responseInterceptor before rendering it. */
+  interface SwaggerResponse {
+    ok: boolean;
+    status: number;
+    statusText: string;
+    url: string;
+    headers: Record<string, string>;
+    text?: string;
+  }
+
   interface SwaggerUIProps {
     url?: string;
     spec?: object;
@@ -18,8 +37,8 @@ declare module "swagger-ui-react" {
     tryItOutEnabled?: boolean;
     validatorUrl?: string | null;
     onComplete?: () => void;
-    requestInterceptor?: (req: object) => object;
-    responseInterceptor?: (res: object) => object;
+    requestInterceptor?: (req: SwaggerRequest) => SwaggerRequest;
+    responseInterceptor?: (res: SwaggerResponse) => SwaggerResponse;
     persistAuthorization?: boolean;
   }
 

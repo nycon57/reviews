@@ -289,6 +289,20 @@ describe("renderError", () => {
 
 // ── Lazy loader tests ───────────────────────────────────────────────
 
+/** Build a real IntersectionObserverEntry for `target`, sized from the element itself. */
+function intersectionEntry(target: Element, isIntersecting: boolean): IntersectionObserverEntry {
+  const rect = target.getBoundingClientRect();
+  return {
+    boundingClientRect: rect,
+    intersectionRatio: isIntersecting ? 1 : 0,
+    intersectionRect: rect,
+    isIntersecting,
+    rootBounds: null,
+    target,
+    time: 0,
+  };
+}
+
 describe("lazy-loader", () => {
   let intersectionCb: IntersectionObserverCallback;
   let mockObserve: ReturnType<typeof vi.fn>;
@@ -324,7 +338,7 @@ describe("lazy-loader", () => {
     expect(mockObserve).toHaveBeenCalledWith(el);
 
     intersectionCb(
-      [{ isIntersecting: true, target: el } as unknown as IntersectionObserverEntry],
+      [intersectionEntry(el, true)],
       {} as IntersectionObserver
     );
     expect(cb).toHaveBeenCalledOnce();
@@ -342,7 +356,7 @@ describe("lazy-loader", () => {
 
     // Only el1 intersects
     intersectionCb(
-      [{ isIntersecting: true, target: el1 } as unknown as IntersectionObserverEntry],
+      [intersectionEntry(el1, true)],
       {} as IntersectionObserver
     );
     expect(cb1).toHaveBeenCalledOnce();
@@ -350,7 +364,7 @@ describe("lazy-loader", () => {
 
     // Now el2 intersects
     intersectionCb(
-      [{ isIntersecting: true, target: el2 } as unknown as IntersectionObserverEntry],
+      [intersectionEntry(el2, true)],
       {} as IntersectionObserver
     );
     expect(cb2).toHaveBeenCalledOnce();
@@ -363,7 +377,7 @@ describe("lazy-loader", () => {
 
     observe(el, cb);
     intersectionCb(
-      [{ isIntersecting: false, target: el } as unknown as IntersectionObserverEntry],
+      [intersectionEntry(el, false)],
       {} as IntersectionObserver
     );
     expect(cb).not.toHaveBeenCalled();

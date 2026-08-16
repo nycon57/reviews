@@ -60,6 +60,8 @@ interface SequenceRecord {
     step: number;
     email_id: string;
     sent_at: string;
+    /** Absent on rows written before the template name was recorded. */
+    template?: string;
     variant?: string;
   }>;
   ab_test_assignments: Record<string, "A" | "B">;
@@ -843,16 +845,17 @@ async function updateSequenceAfterSend(
 ): Promise<void> {
   const supabase = createAdminClient();
 
-  const stepsCompleted = [
-    ...sequence.steps_completed,
-    {
-      step,
-      email_id: emailId,
-      sent_at: new Date().toISOString(),
-      template: templateName,
-      ...(variant ? { variant } : {}),
-    },
-  ];
+  const completedStep: (typeof sequence.steps_completed)[number] = {
+    step,
+    email_id: emailId,
+    sent_at: new Date().toISOString(),
+    template: templateName,
+  };
+  if (variant) {
+    completedStep.variant = variant;
+  }
+
+  const stepsCompleted = [...sequence.steps_completed, completedStep];
 
   // Calculate next email time using relative delay between steps
   const currentStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find((s) => s.step === step);

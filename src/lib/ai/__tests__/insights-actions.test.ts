@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -24,8 +24,15 @@ import { getAIInsightsData } from "../insights-actions";
 
 type Result = { data?: unknown; error?: unknown };
 
+// The "past month" window starts at the 1st of the previous month
+// (subtractMonths anchors to day 1), so whether daysAgo(45) falls inside it
+// depends on today's date. Pin the clock so the fixtures keep their intended
+// meaning: 5d/10d inside the month window, 45d outside it, 240d outside the
+// 6-month dataset window.
+const PINNED_NOW = new Date("2026-08-10T12:00:00Z");
+
 function daysAgo(days: number): string {
-  const date = new Date();
+  const date = new Date(PINNED_NOW);
   date.setDate(date.getDate() - days);
   return date.toISOString();
 }
@@ -37,7 +44,7 @@ function createQueryBuilder(result: Result) {
     builder[method] = vi.fn(() => builder);
   }
   builder.single = vi.fn(() => Promise.resolve(result));
-  builder.then = (resolve: (value: Result) => unknown, reject?: (error: unknown) => unknown) =>
+  builder.then = (resolve: (value: Result) => void, reject?: (error: unknown) => void) =>
     Promise.resolve(result).then(resolve, reject);
   return builder;
 }
@@ -68,6 +75,15 @@ beforeEach(() => {
 });
 
 describe("getAIInsightsData", () => {
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(PINNED_NOW);
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   it("derives all review-backed sections from one reviews dataset", async () => {
     (unifiedGetUser as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "user-1" });
 

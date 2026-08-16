@@ -33,6 +33,8 @@ interface MobileMenuProps {
   className?: string;
 }
 
+type PhosphorExport = (typeof PhosphorIcons)[keyof typeof PhosphorIcons];
+
 // Dynamic icon component
 function DynamicIcon({
   name,
@@ -41,12 +43,12 @@ function DynamicIcon({
   name: string;
   className?: string;
 }) {
-  const IconComponent = (
-    PhosphorIcons as unknown as Record<
-      string,
-      React.ComponentType<{ className?: string }>
-    >
-  )[name];
+  const icons: Record<string, PhosphorExport> = PhosphorIcons;
+  // SAFETY: `name` comes from nav config that only ever names glyph exports, and every glyph in
+  // this namespace is a component accepting a className. An unmatched name renders nothing.
+  const IconComponent = icons[name] as
+    | React.ComponentType<{ className?: string }>
+    | undefined;
   if (!IconComponent) return null;
   return <IconComponent className={className} />;
 }

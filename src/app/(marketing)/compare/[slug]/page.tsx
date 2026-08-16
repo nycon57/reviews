@@ -41,6 +41,31 @@ export async function generateMetadata({
   const canonicalUrl = config.seo.canonicalUrl ?? `${baseUrl}/compare/${slug}`;
   const ogImage = config.seo.ogImage;
 
+  const openGraph: NonNullable<Metadata["openGraph"]> = {
+    title: config.seo.title,
+    description: config.seo.description,
+    url: canonicalUrl,
+    type: "website",
+  };
+
+  const twitter: NonNullable<Metadata["twitter"]> = {
+    card: config.seo.twitterCard ?? "summary_large_image",
+    title: config.seo.title,
+    description: config.seo.description,
+  };
+
+  if (ogImage) {
+    openGraph.images = [
+      {
+        url: ogImage,
+        width: 1200,
+        height: 630,
+        alt: `${config.competitorName} alternative comparison on RepWell`,
+      },
+    ];
+    twitter.images = [ogImage];
+  }
+
   return {
     title: config.seo.title,
     description: config.seo.description,
@@ -48,30 +73,8 @@ export async function generateMetadata({
     alternates: {
       canonical: canonicalUrl,
     },
-    openGraph: {
-      title: config.seo.title,
-      description: config.seo.description,
-      url: canonicalUrl,
-      type: "website",
-      ...(ogImage
-        ? {
-            images: [
-              {
-                url: ogImage,
-                width: 1200,
-                height: 630,
-                alt: `${config.competitorName} alternative comparison on RepWell`,
-              },
-            ],
-          }
-        : {}),
-    },
-    twitter: {
-      card: config.seo.twitterCard ?? "summary_large_image",
-      title: config.seo.title,
-      description: config.seo.description,
-      ...(ogImage ? { images: [ogImage] } : {}),
-    },
+    openGraph,
+    twitter,
   };
 }
 

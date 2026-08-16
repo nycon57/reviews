@@ -25,9 +25,9 @@ type WindowWithIdle = typeof globalThis & {
 };
 
 function hasSupportedModelContext(): boolean {
-  const navigatorContext = (globalThis.navigator as unknown as ModelContextHost)
+  const navigatorContext = (globalThis.navigator as typeof globalThis.navigator & ModelContextHost)
     ?.modelContext;
-  const documentContext = (globalThis.document as unknown as ModelContextHost)
+  const documentContext = (globalThis.document as typeof globalThis.document & ModelContextHost)
     ?.modelContext;
   const modelContext = navigatorContext ?? documentContext;
 

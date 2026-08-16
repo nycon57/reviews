@@ -479,7 +479,9 @@ export async function renderClipForResponse(
 
   const result = await renderComposition({
     compositionId: compositionIdForFormat(format),
-    inputProps: props as unknown as Record<string, unknown>,
+    // Spread copy: the render backend takes an open input-prop bag, which a
+    // declared interface cannot satisfy directly.
+    inputProps: { ...props },
     outputName: `clip-${responseId.slice(0, 8)}`,
   });
 

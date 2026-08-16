@@ -95,7 +95,7 @@ export function useSwitchingFrom(): UseSwitchingFromReturn {
       if (!competitor) return;
 
       // Push to dataLayer if present (Google Tag Manager / GA4)
-      const win = window as unknown as { dataLayer?: Record<string, unknown>[] };
+      const win = window as typeof window & { dataLayer?: Record<string, unknown>[] };
       if (Array.isArray(win.dataLayer)) {
         win.dataLayer.push({
           event: "cta_click",

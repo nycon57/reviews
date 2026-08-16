@@ -82,7 +82,7 @@ const rateLimitSchema = {
   },
 };
 
-function paginatedSchema(itemSchema: unknown): unknown {
+function paginatedSchema(itemSchema: unknown) {
   return {
     type: "object",
     required: ["data", "total", "page", "per_page", "total_pages"],

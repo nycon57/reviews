@@ -97,39 +97,20 @@ function sanitizeSignedPath(path: string): string {
  * Returns null when the user is not publicly visible or has no name.
  */
 async function fetchLandingContact(
-  supabase: ReturnType<typeof createUntypedAdminClient>,
   professionalId: string,
   slug: string
 ): Promise<SmartLinkProfessionalContact | null> {
-  // Minimal builder shape: the untyped admin client's self-referential
-  // builder type exceeds TS instantiation depth inside the filter helper.
-  type ContactRow = {
-    id: string;
-    full_name: string | null;
-    phone: string | null;
-    address: SmartLinkProfessionalContact["address"];
-    cta_button_text: string | null;
-    cta_button_url: string | null;
-    linkedin_url: string | null;
-    facebook_url: string | null;
-    instagram_url: string | null;
-    twitter_url: string | null;
-    personal_website_url: string | null;
-    zillow_profile_url: string | null;
-  };
-  type ContactQuery = {
-    eq(column: string, value: unknown): ContactQuery;
-    neq(column: string, value: unknown): ContactQuery;
-    is(column: string, value: boolean | null): ContactQuery;
-    maybeSingle(): Promise<{ data: ContactRow | null }>;
-  };
+  // Typed client: `users` is in the generated schema, and the untyped client's
+  // self-referential builder type exceeds TS instantiation depth inside the
+  // public-visibility filter helper.
+  const supabase = createAdminClient();
 
   try {
     const contactQuery = supabase
       .from("users")
       .select(
         "id, full_name, phone, address, cta_button_text, cta_button_url, linkedin_url, facebook_url, instagram_url, twitter_url, personal_website_url, zillow_profile_url, organizations!inner(account_type)"
-      ) as unknown as ContactQuery;
+      );
 
     const { data: contactRow } = await applyPublicProfessionalFilters(contactQuery)
       .eq("id", professionalId)
@@ -137,11 +118,16 @@ async function fetchLandingContact(
 
     if (!contactRow?.full_name) return null;
 
+    // SAFETY: `users.address` is a Json column the profile form only ever writes
+    // as a {street, city, state, zip} object, which is the shape the contact
+    // card reads; the column type cannot express that.
+    const address = (contactRow.address as SmartLinkProfessionalContact["address"]) ?? null;
+
     return {
       id: String(contactRow.id),
       fullName: contactRow.full_name,
       phone: contactRow.phone,
-      address: contactRow.address ?? null,
+      address,
       ctaText: contactRow.cta_button_text,
       ctaUrl: contactRow.cta_button_url,
       linkedinUrl: contactRow.linkedin_url,
@@ -246,7 +232,7 @@ export default async function SmartLinkPage({ params }: RouteParams) {
   // branch resolves its own professional from the response row.)
   const landingContactPromise =
     sourceType !== "video_testimonial" && presenterUserId
-      ? fetchLandingContact(supabase, String(presenterUserId), slug)
+      ? fetchLandingContact(String(presenterUserId), slug)
       : null;
 
   if (presenterUserId) {
@@ -420,11 +406,7 @@ export default async function SmartLinkPage({ params }: RouteParams) {
       presenterUserId;
 
     if (videoProfessionalId) {
-      landingContact = await fetchLandingContact(
-        supabase,
-        String(videoProfessionalId),
-        slug
-      );
+      landingContact = await fetchLandingContact(String(videoProfessionalId), slug);
     }
 
     const videoSchema = generateVideoObjectSchema({

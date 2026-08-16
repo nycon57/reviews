@@ -163,7 +163,7 @@ export async function emitWebhookEvent<T extends OutboundWebhookEventType>(
         subscription_id: subscription.id,
         event_type: params.type,
         event_id: eventId,
-        payload: envelope as unknown as Json,
+        payload: envelope,
         status: "pending",
         scheduled_at: createdAt,
       }));
@@ -251,7 +251,7 @@ async function getDueDeliveries(
     return [];
   }
 
-  return (data ?? []) as unknown as DeliveryWithSubscription[];
+  return data ?? [];
 }
 
 async function resetStuckDeliveries(

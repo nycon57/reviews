@@ -21,6 +21,28 @@ export interface PublicWidgetConfig {
   ab_test_config: unknown;
 }
 
+/** Decoded payload of the opaque `getPublicReviews` pagination cursor. */
+interface ReviewCursor {
+  id: string;
+  review_date: string;
+  rating: number;
+  /** Only carried when the widget sorts featured reviews first. */
+  featured?: boolean;
+}
+
+/** Columns selected by `getPublicReviews`; `user` is joined only for branch widgets. */
+interface PublicReviewRow {
+  id: string;
+  customer_name: string | null;
+  rating: number;
+  text: string | null;
+  review_date: string;
+  source: string;
+  customer_location: string | null;
+  featured: boolean | null;
+  user?: { full_name: string | null } | null;
+}
+
 export interface PublicReview {
   id: string;
   reviewer_name: string | null;
@@ -91,10 +113,10 @@ export async function getPublicWidgetConfig(
     query = query.eq("status", "active");
   }
 
-  const { data, error } = await query.maybeSingle();
+  const { data, error } = await query.maybeSingle().returns<PublicWidgetConfig>();
 
   if (error || !data) return null;
-  return data as unknown as PublicWidgetConfig;
+  return data;
 }
 
 /**
@@ -523,7 +545,7 @@ export async function getPublicReviews(
 
   query = query.limit(limit + 1);
 
-  const { data, error } = await query;
+  const { data, error } = await query.returns<PublicReviewRow[]>();
   if (error || !data) {
     return { reviews: [], nextCursor: null };
   }
@@ -531,34 +553,34 @@ export async function getPublicReviews(
   const hasMore = data.length > limit;
   const items = hasMore ? data.slice(0, limit) : data;
 
-  const reviews: PublicReview[] = (items as unknown as Record<string, unknown>[]).map((row) => {
+  const reviews: PublicReview[] = items.map((row) => {
     return {
-      id: row.id as string,
-      reviewer_name: row.customer_name as string | null,
-      rating: row.rating as number,
-      text: row.text as string | null,
-      review_date: row.review_date as string,
-      source: row.source as string,
+      id: row.id,
+      reviewer_name: row.customer_name,
+      rating: row.rating,
+      text: row.text,
+      review_date: row.review_date,
+      source: row.source,
       avatar_url: null,
-      featured: (row.featured as boolean) ?? false,
+      featured: row.featured ?? false,
       loan_type: null,
       first_time_homebuyer: null,
-      loan_officer_name: (row.user as { full_name: string } | null)?.full_name ?? null,
+      loan_officer_name: row.user?.full_name ?? null,
     };
   });
 
   let nextCursor: string | null = null;
   if (hasMore) {
-    const lastItem = items[items.length - 1] as unknown as Record<string, unknown>;
-    nextCursor = Buffer.from(
-      JSON.stringify({
-        id: lastItem.id,
-        review_date: lastItem.review_date,
-        rating: lastItem.rating,
-        ...(filters?.sortOrder === "featured" ? { featured: lastItem.featured ?? false } : {}),
-      }),
-      "utf-8"
-    ).toString("base64url");
+    const lastItem = items[items.length - 1];
+    const cursorPayload: ReviewCursor = {
+      id: lastItem.id,
+      review_date: lastItem.review_date,
+      rating: lastItem.rating,
+    };
+    if (filters?.sortOrder === "featured") {
+      cursorPayload.featured = lastItem.featured ?? false;
+    }
+    nextCursor = Buffer.from(JSON.stringify(cursorPayload), "utf-8").toString("base64url");
   }
 
   return { reviews, nextCursor };
@@ -644,6 +666,22 @@ export interface PublicVideoTestimonial {
   transcript: { start: number; end: number; text: string }[] | null;
 }
 
+/** Columns selected by `getVideoTestimonials`, including the inner request join. */
+interface VideoTestimonialRow {
+  id: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  transcription: string | null;
+  approval_status: string | null;
+  request_id: string | null;
+  video_testimonial_requests: {
+    customer_name: string | null;
+    user_id: string | null;
+    transaction_type: string | null;
+  } | null;
+}
+
 export async function getVideoTestimonials(
   organizationId: string,
   entityId: string | null,
@@ -675,15 +713,15 @@ export async function getVideoTestimonials(
     query = query.in("user_id", userIds);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await query.returns<VideoTestimonialRow[]>();
   if (error || !data) return [];
 
-  return (data as unknown as Record<string, unknown>[]).map((row) => {
-    const request = row.video_testimonial_requests as Record<string, unknown> | null;
+  return data.map((row) => {
+    const request = row.video_testimonial_requests;
 
     // Parse transcription JSON into timed segments if available
     let transcript: { start: number; end: number; text: string }[] | null = null;
-    if (row.transcription && typeof row.transcription === "string") {
+    if (row.transcription) {
       try {
         const parsed = JSON.parse(row.transcription);
         if (Array.isArray(parsed)) {
@@ -691,18 +729,18 @@ export async function getVideoTestimonials(
         }
       } catch {
         // Plain text transcription — wrap as single segment
-        transcript = [{ start: 0, end: (row.duration_seconds as number) ?? 60, text: row.transcription as string }];
+        transcript = [{ start: 0, end: row.duration_seconds ?? 60, text: row.transcription }];
       }
     }
 
     return {
-      id: row.id as string,
-      video_url: row.video_url as string,
-      poster_url: (row.thumbnail_url as string | null) ?? null,
-      reviewer_name: (request?.customer_name as string | null) ?? null,
-      reviewer_title: (request?.transaction_type as string | null) ?? null,
+      id: row.id,
+      video_url: row.video_url,
+      poster_url: row.thumbnail_url ?? null,
+      reviewer_name: request?.customer_name ?? null,
+      reviewer_title: request?.transaction_type ?? null,
       rating: 5, // Video testimonials are pre-approved positive reviews
-      duration: (row.duration_seconds as number | null) ?? null,
+      duration: row.duration_seconds ?? null,
       transcript,
     };
   });

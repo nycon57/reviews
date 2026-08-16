@@ -101,7 +101,18 @@ export function createEmployeeImportConfig(): CsvImportConfig {
     import: async (_mappedRows, validation) => {
       const validRows = validation.rows
         .filter((r) => r.status !== "error")
-        .map((r) => r.data as unknown as EmployeeCSVRow);
+        .map((r) => {
+          // SAFETY: the wizard hands back the rows applyMappings produced above, so
+          // every value is a trimmed string keyed by EMPLOYEE_CSV_FIELDS. validate()
+          // marks a row "error" unless email and full_name are non-empty, so the
+          // fallbacks below cannot be reached for a row that survived the filter.
+          const data = r.data as Partial<EmployeeCSVRow>;
+          return {
+            ...data,
+            email: data.email ?? "",
+            full_name: data.full_name ?? "",
+          };
+        });
 
       const result = await bulkImportEmployees(validRows);
       if (result.success && result.data) {

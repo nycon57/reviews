@@ -131,6 +131,11 @@ function getTrustedAuthOrigins(request?: Request) {
   return STATIC_TRUSTED_AUTH_ORIGINS;
 }
 
+// Outside production BETTER_AUTH_SECRET may be unset (see above); leave `secret` off
+// the options entirely in that case rather than passing it as undefined.
+const secretOption: { secret?: string } = {};
+if (CONFIGURED_BETTER_AUTH_SECRET) secretOption.secret = CONFIGURED_BETTER_AUTH_SECRET;
+
 /**
  * Better Auth configuration for RepWell
  *
@@ -140,7 +145,7 @@ function getTrustedAuthOrigins(request?: Request) {
  * - New tables: sessions, accounts, verifications (created by migration)
  */
 export const auth = betterAuth({
-  ...(CONFIGURED_BETTER_AUTH_SECRET ? { secret: CONFIGURED_BETTER_AUTH_SECRET } : {}),
+  ...secretOption,
 
   baseURL: {
     allowedHosts: LOCAL_AUTH_HOSTS,

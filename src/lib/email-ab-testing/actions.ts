@@ -16,7 +16,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getSupabaseForABTesting(): SupabaseClient<any, any, any> {
-  return createAdminClient() as unknown as SupabaseClient<any, any, any>;
+  // SAFETY: same runtime client, only the schema generic is dropped — the A/B
+  // testing tables exist in the database but not yet in the generated types, so
+  // the typed client would reject every table name used in this module.
+  return createAdminClient() as SupabaseClient<any, any, any>;
 }
 import type {
   ActionResult,

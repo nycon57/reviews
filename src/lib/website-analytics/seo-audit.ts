@@ -11,6 +11,18 @@ import type { ActionResult } from "@/lib/reviews/types";
 import type { SEOAuditResult, SEOIssue, SEORecommendation } from "./types";
 import type { Json } from "@/types/database.types";
 
+
+/**
+ * `website_seo_audits.issues` / `.recommendations` are jsonb columns. `SEOIssue` and
+ * `SEORecommendation` are declared as interfaces, which TypeScript will not structurally match to
+ * `Json`, so the conversion lives here instead of at the insert site.
+ */
+function toJsonColumn<T>(value: T): Json {
+  // SAFETY: issues and recommendations are plain data literals built by generateIssues /
+  // generateRecommendations in this module — strings, numbers and nested literals only.
+  return value as Json;
+}
+
 /**
  * Get user context
  */
@@ -624,8 +636,8 @@ export async function runPageSEOAudit(pageUrl: string): Promise<ActionResult<SEO
       structured_data_valid: true,
       word_count: content.wordCount,
       reading_time_minutes: content.readingTimeMinutes,
-      issues: issues as unknown as Json,
-      recommendations: recommendations as unknown as Json,
+      issues: toJsonColumn(issues),
+      recommendations: toJsonColumn(recommendations),
       audit_type: "manual",
       audited_at: new Date().toISOString(),
     };

@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import {
+  createAdminClient,
+  createUntypedAdminClient,
+  type UntypedSupabaseClient,
+} from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { queueClipRender } from "@/lib/share-studio/service";
 import { getCelebrationThreshold } from "@/lib/reviews/asset-kit";
@@ -168,8 +172,10 @@ async function createAuditLogEntry(
   }
 ): Promise<void> {
   try {
-    // Cast to any as organization_audit_logs table is not in generated types yet
-    await (supabase as unknown as { from: (table: string) => { insert: (data: Record<string, unknown>) => Promise<unknown> } })
+    // SAFETY: organization_audit_logs is not in the generated Database types yet, so the same
+    // admin connection is re-viewed through the untyped client surface rather than swapped for a
+    // different one.
+    await (supabase as UntypedSupabaseClient)
       .from("organization_audit_logs")
       .insert({
         organization_id: params.organizationId,
@@ -1200,10 +1206,7 @@ export async function getVideoTestimonialQueue(params?: {
     }
 
     const items: VideoTestimonialQueueItem[] = (data || []).map((item) => {
-      const request = item.video_testimonial_requests as unknown as {
-        customer_name: string;
-        customer_email: string;
-      };
+      const request = item.video_testimonial_requests;
 
       return {
         id: item.id,
@@ -1528,10 +1531,7 @@ export async function getVideoTestimonialResponses(params?: {
 
     const responses: VideoTestimonialResponse[] = await Promise.all(
       (data || []).map(async (res) => {
-        const request = res.video_testimonial_requests as unknown as {
-          customer_name: string;
-          customer_email: string;
-        };
+        const request = res.video_testimonial_requests;
         let videoPreviewUrl: string | null = null;
         if (res.video_path) {
           const { data: signedPreview } = await supabase.storage
@@ -1655,10 +1655,7 @@ export async function getVideoTestimonialResponse(
       return { success: false, error: "Video not found" };
     }
 
-    const request = res.video_testimonial_requests as unknown as {
-      customer_name: string;
-      customer_email: string;
-    };
+    const request = res.video_testimonial_requests;
 
     const response: VideoTestimonialResponse = {
       id: res.id,
@@ -1941,7 +1938,7 @@ export async function updateVideoApprovalStatus(
     });
 
     // Send notification to user for relevant actions
-    const request = existing.video_testimonial_requests as unknown as { customer_name: string };
+    const request = existing.video_testimonial_requests;
 
     if (existing.user_id && ["approve", "reject", "request_changes"].includes(action)) {
       const notificationTitles: Record<string, string> = {
@@ -1960,7 +1957,9 @@ export async function updateVideoApprovalStatus(
 
       // Create in-app notification (don't block on failure)
       try {
-        await (adminSupabase as unknown as { from: (table: string) => { insert: (data: Record<string, unknown>) => Promise<unknown> } })
+        // SAFETY: the notifications table is not in the generated Database types yet; this is the
+        // same admin connection viewed through the untyped client surface.
+        await (adminSupabase as UntypedSupabaseClient)
           .from("notifications")
           .insert({
             user_id: existing.user_id,
@@ -2484,10 +2483,7 @@ export async function getVideosPendingApproval(params?: {
     });
 
     const responses: VideoTestimonialResponse[] = (data || []).map((res) => {
-      const request = res.video_testimonial_requests as unknown as {
-        customer_name: string;
-        customer_email: string;
-      };
+      const request = res.video_testimonial_requests;
 
       return {
         id: res.id,

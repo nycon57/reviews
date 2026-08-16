@@ -100,34 +100,24 @@ const createUploadUrlsSchema = z.object({
 // Type Helpers
 // ============================================================================
 
-type UserData = {
-  id: string;
-  full_name: string;
-  photo_url: string | null;
-  title: string | null;
-  phone: string | null;
-  address: Json | null;
-  cta_button_text: string | null;
-  cta_button_url: string | null;
-  linkedin_url: string | null;
-  facebook_url: string | null;
-  instagram_url: string | null;
-  twitter_url: string | null;
-  personal_website_url: string | null;
-  zillow_profile_url: string | null;
-};
-type OrganizationData = {
-  id: string;
-  name: string;
-  logo_url: string | null;
-  primary_color: string | null;
-};
 type RequestSourceMetadata = {
   customer_display_name?: string;
   customer_relationship?: string;
   customer_rating?: number;
   share_caption?: string;
 } | null;
+
+/**
+ * Reads the `source_metadata` JSON column into the shape this module writes. Rows holding
+ * any other JSON shape read back as absent metadata rather than as a lying object type.
+ */
+function readSourceMetadata(value: Json | null | undefined): RequestSourceMetadata {
+  if (!(value instanceof Object) || Array.isArray(value)) return null;
+  // SAFETY: the guard above leaves only JSON objects, and every writer of
+  // video_testimonial_requests.source_metadata stores this shape; each field is optional, so a
+  // row missing any of them still satisfies the type.
+  return value as RequestSourceMetadata;
+}
 
 type ConsentType =
   | "name_image_likeness_voice"
@@ -318,8 +308,8 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
         .eq("id", request.id);
     }
 
-    const professional = request.users as unknown as UserData;
-    const organization = request.organizations as unknown as OrganizationData;
+    const professional = request.users;
+    const organization = request.organizations;
 
     return {
       success: true,
@@ -335,7 +325,7 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
         customerEmail: request.customer_email,
         professional: {
           id: professional.id,
-          fullName: professional.full_name,
+          fullName: professional.full_name ?? "",
           photoUrl: validateSafeUrl(professional.photo_url),
           title: professional.title,
           phone: professional.phone,
@@ -533,12 +523,10 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
       return { success: false, error: "Failed to load video" };
     }
 
-    const request = video.video_testimonial_requests as unknown as {
-      customer_name: string;
-      source_metadata: RequestSourceMetadata;
-    };
-    const professional = video.users as unknown as UserData;
-    const organization = video.organizations as unknown as OrganizationData;
+    const request = video.video_testimonial_requests;
+    const sourceMetadata = readSourceMetadata(request.source_metadata);
+    const professional = video.users;
+    const organization = video.organizations;
 
     trackVideoView(videoId).catch(console.error);
 
@@ -556,12 +544,12 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
         submittedAt: video.submitted_at,
         publishedAt: video.published_at,
         customer: {
-          displayName: request.source_metadata?.customer_display_name || request.customer_name,
-          relationship: request.source_metadata?.customer_relationship || null,
+          displayName: sourceMetadata?.customer_display_name || request.customer_name,
+          relationship: sourceMetadata?.customer_relationship || null,
         },
         professional: {
           id: professional.id,
-          fullName: professional.full_name,
+          fullName: professional.full_name ?? "",
           photoUrl: validateSafeUrl(professional.photo_url),
           title: professional.title,
         },
@@ -625,26 +613,24 @@ export const getPublicVideoMetadata = cache(async function getPublicVideoMetadat
       return { success: false, error: "Video testimonial not found" };
     }
 
-    const request = video.video_testimonial_requests as unknown as {
-      customer_name: string;
-      source_metadata: { customer_display_name?: string } | null;
-    };
-    const professional = video.users as unknown as { full_name: string };
-    const organization = video.organizations as unknown as { name: string };
+    const request = video.video_testimonial_requests;
+    const organization = video.organizations;
 
-    const customerName = request.source_metadata?.customer_display_name || request.customer_name;
+    const customerName =
+      readSourceMetadata(request.source_metadata)?.customer_display_name || request.customer_name;
+    const professionalName = video.users.full_name ?? "";
     const description = video.ai_generated_text
       ? video.ai_generated_text.substring(0, 155) +
         (video.ai_generated_text.length > 155 ? "..." : "")
-      : `Watch ${customerName}'s video testimonial about their experience with ${professional.full_name} at ${organization.name}.`;
+      : `Watch ${customerName}'s video testimonial about their experience with ${professionalName} at ${organization.name}.`;
 
     return {
       success: true,
       data: {
-        title: `${customerName}'s Experience with ${professional.full_name}`,
+        title: `${customerName}'s Experience with ${professionalName}`,
         description,
         customerName,
-        professionalName: professional.full_name,
+        professionalName,
         organizationName: organization.name,
         thumbnailUrl: validateSafeUrl(video.thumbnail_url),
         durationSeconds: video.duration_seconds,
@@ -1320,7 +1306,7 @@ export async function submitVideoTestimonial(
 
     // Copy the customer rating captured at consent time onto the response and
     // quarantine low-path submissions (ADR 0001: distribution gate, not retention).
-    const sourceMetadata = request.source_metadata as RequestSourceMetadata;
+    const sourceMetadata = readSourceMetadata(request.source_metadata);
     const customerRating =
       typeof sourceMetadata?.customer_rating === "number" ? sourceMetadata.customer_rating : null;
     const celebrationThreshold = await getCelebrationThreshold(request.organization_id);
@@ -1423,8 +1409,8 @@ export async function submitVideoTestimonial(
       return { success: false, error: "This video testimonial has already been submitted" };
     }
 
-    const owner = request.users as unknown as { full_name: string | null; email: string | null };
-    const organization = request.organizations as unknown as { name: string };
+    const owner = request.users;
+    const organization = request.organizations;
     await notifyVideoSubmitted({
       responseId: response.id,
       requestId: request.id,
@@ -1848,11 +1834,7 @@ async function getPendingAIProcessingJobs(limit: number = 10): Promise<AIProcess
 
   return Promise.all(
     data.map(async (row) => {
-      const request = row.video_testimonial_requests as unknown as {
-        customer_name: string;
-        source_metadata: { customer_display_name?: string } | null;
-        users: { full_name: string; email: string | null };
-      };
+      const request = row.video_testimonial_requests;
 
       // The bucket is private, so the stored public URL is not fetchable by
       // transcription providers. Mint a fresh signed URL from the storage path.
@@ -1876,8 +1858,10 @@ async function getPendingAIProcessingJobs(limit: number = 10): Promise<AIProcess
         ownerEmail: request.users.email,
         videoUrl,
         durationSeconds: row.duration_seconds,
-        customerName: request.source_metadata?.customer_display_name || request.customer_name,
-        ownerName: request.users.full_name,
+        customerName:
+          readSourceMetadata(request.source_metadata)?.customer_display_name ||
+          request.customer_name,
+        ownerName: request.users.full_name ?? "",
       };
     })
   );
@@ -2019,12 +2003,8 @@ export async function getShareKit(token: string): Promise<ActionResult<ShareKit>
       return { success: false, error: "Video testimonial response not found" };
     }
 
-    const owner = request.users as unknown as {
-      full_name: string | null;
-      google_place_id: string | null;
-      zillow_profile_url: string | null;
-    };
-    const sourceMetadata = request.source_metadata as RequestSourceMetadata;
+    const owner = request.users;
+    const sourceMetadata = readSourceMetadata(request.source_metadata);
     const customerName = sourceMetadata?.customer_display_name || request.customer_name;
     const professionalName = owner.full_name || "your professional";
 
@@ -2258,7 +2238,7 @@ export async function submitPrivateFeedback(token: string, text: string): Promis
       return { success: false, error: "Failed to save your feedback" };
     }
 
-    const sourceMetadata = request.source_metadata as RequestSourceMetadata;
+    const sourceMetadata = readSourceMetadata(request.source_metadata);
     const customerName = sourceMetadata?.customer_display_name || request.customer_name;
     const now = new Date().toISOString();
     const { error: notifyError } = await supabase.from("notifications").insert({

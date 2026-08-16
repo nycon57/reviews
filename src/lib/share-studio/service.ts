@@ -484,6 +484,10 @@ export async function createProofItem(input: CreateProofItemInput): Promise<Reco
 
   const built = await buildProofItemSnapshot(input);
 
+  // Carry the source snapshot's payload forward, tagging it with the template when one was chosen.
+  const customPayload = { ...(built.content.custom_payload || {}) };
+  if (input.templateId) customPayload.template_id = input.templateId;
+
   const itemPayload = {
     organization_id: input.organizationId,
     created_by: input.createdBy ?? null,
@@ -498,10 +502,7 @@ export async function createProofItem(input: CreateProofItemInput): Promise<Reco
     rating: input.rating ?? built.content.rating,
     source_platform: built.content.source_platform,
     source_review_date: built.content.source_review_date,
-    custom_payload: {
-      ...(built.content.custom_payload || {}),
-      ...(input.templateId ? { template_id: input.templateId } : {}),
-    },
+    custom_payload: customPayload,
     status: "approved",
     approval_required: false,
     approved_at: new Date().toISOString(),

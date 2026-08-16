@@ -128,12 +128,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   // Blog posts
-  const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    ...(post.date ? { lastModified: post.date } : {}),
-    changeFrequency: "weekly" as const,
-    priority: 0.65,
-  }));
+  const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => {
+    const entry: MetadataRoute.Sitemap[number] = {
+      url: `${baseUrl}/blog/${post.slug}`,
+      changeFrequency: "weekly",
+      priority: 0.65,
+    };
+    if (post.date) entry.lastModified = post.date;
+    return entry;
+  });
 
   // Industry landing pages
   const industryLandingPages = toSitemapEntries(getAllIndustryPageSlugs(), "for", 0.75);

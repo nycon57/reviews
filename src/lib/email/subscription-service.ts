@@ -297,7 +297,7 @@ async function getUserAndOrganization(
     return null;
   }
 
-  const org = adminUser.organizations as unknown as OrganizationInfo;
+  const org = adminUser.organizations;
 
   return {
     user: {

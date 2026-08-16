@@ -105,7 +105,7 @@ export async function assignRunningTestVariant(
     .eq("organization_id", organizationId)
     .eq("email_type", emailType)
     .eq("status", "active")
-    .in("test_type", SUPPORTED_TEST_TYPES as unknown as string[])
+    .in("test_type", [...SUPPORTED_TEST_TYPES])
     .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();

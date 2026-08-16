@@ -141,12 +141,7 @@ export async function getTextApprovalData(
     }
 
     // Get the response (should be single)
-    const responses = request.video_testimonial_responses as unknown as Array<{
-      id: string;
-      ai_generated_text: string | null;
-      ai_generation_status: string | null;
-      consent_version: string | null;
-    }>;
+    const responses = request.video_testimonial_responses;
 
     const response = responses?.[0];
 
@@ -171,18 +166,9 @@ export async function getTextApprovalData(
       return { success: false, error: "Review has already been submitted" };
     }
 
-    const loanOfficer = request.users as unknown as {
-      id: string;
-      full_name: string;
-      google_place_id: string | null;
-    };
+    const loanOfficer = request.users;
 
-    const organization = request.organizations as unknown as {
-      id: string;
-      name: string;
-      logo_url: string | null;
-      primary_color: string | null;
-    };
+    const organization = request.organizations;
 
     return {
       success: true,
@@ -190,7 +176,7 @@ export async function getTextApprovalData(
         responseId: response.id,
         aiGeneratedText: response.ai_generated_text,
         customerName: request.customer_name,
-        loanOfficerName: loanOfficer.full_name,
+        loanOfficerName: loanOfficer.full_name ?? "",
         organizationName: organization.name,
         organizationLogoUrl: validateSafeUrl(organization.logo_url),
         organizationPrimaryColor: validateHexColor(organization.primary_color),
@@ -249,11 +235,7 @@ export async function submitApprovedText(
       return { success: false, error: "Response not found" };
     }
 
-    const request = response.video_testimonial_requests as unknown as {
-      token: string;
-      status: string;
-      expires_at: string | null;
-    };
+    const request = response.video_testimonial_requests;
 
     // Verify token matches
     if (request.token !== token) {
@@ -366,14 +348,7 @@ export async function regenerateReviewText(
       return { success: false, error: "Response not found" };
     }
 
-    const request = response.video_testimonial_requests as unknown as {
-      token: string;
-      status: string;
-      expires_at: string | null;
-      customer_name: string;
-      users: { full_name: string } | null;
-      organizations: { name: string } | null;
-    };
+    const request = response.video_testimonial_requests;
 
     // Verify token matches
     if (request.token !== token) {

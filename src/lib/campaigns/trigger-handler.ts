@@ -3,6 +3,7 @@ import "server-only";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import type { TriggerEvent, TriggerContext } from "@/lib/email/orchestration/types";
 import { startCampaignForUser } from "./campaign-engine";
+import type { Json } from "@/types/database.types";
 
 // ============================================================================
 // Event triggers
@@ -319,7 +320,8 @@ function evaluateBasicConditions(
   return true;
 }
 
-function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+/** Walk a dotted condition field through the trigger payload. Missing segments yield undefined. */
+function getNestedValue(obj: Record<string, unknown>, path: string): Json | undefined {
   const parts = path.split(".");
   let current: unknown = obj;
 
@@ -330,7 +332,9 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
     current = (current as Record<string, unknown>)[part];
   }
 
-  return current;
+  // SAFETY: the payload is assembled from the trigger context and the event's jsonb data, so
+  // every value reachable by this walk is a JSON leaf or container.
+  return current as Json | undefined;
 }
 
 function shouldFireSchedule(schedule: string): boolean {

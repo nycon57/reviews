@@ -99,7 +99,10 @@ export async function getOpenFlagForAdjudication(
     return { error: "Dispute not found" };
   }
 
-  const flag = data as unknown as OpenFlagForAdjudication;
+  // `organization` is a to-one embed: PostgREST returns a single object, but the untyped client
+  // widens it to an array, so normalise both shapes before reading account_type.
+  const organization = (Array.isArray(data.organization) ? data.organization[0] : data.organization) ?? null;
+  const flag: OpenFlagForAdjudication = { ...data, organization };
   if (flag.status !== "pending") {
     return { error: "This dispute has already been resolved" };
   }

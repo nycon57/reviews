@@ -69,7 +69,7 @@ export function mapOutboundWebhookSubscriptionView(
 ): OutboundWebhookSubscriptionView {
   const subscription = mapOutboundWebhookSubscriptionRow(row);
 
-  return {
+  const view: OutboundWebhookSubscriptionView = {
     id: subscription.id,
     targetUrl: subscription.target_url,
     events: subscription.events,
@@ -80,6 +80,12 @@ export function mapOutboundWebhookSubscriptionView(
     lastDeliveryAt: subscription.last_delivery_at,
     createdAt: subscription.created_at,
     updatedAt: subscription.updated_at,
-    ...(row.secret ? { secret: row.secret } : {}),
   };
+
+  // The secret is only ever returned on creation and rotation.
+  if (row.secret) {
+    view.secret = row.secret;
+  }
+
+  return view;
 }

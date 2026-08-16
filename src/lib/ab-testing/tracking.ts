@@ -3,6 +3,18 @@
 
 import type { ABTestEvent, ABVariant } from "./types";
 
+/** One push onto the Google Tag Manager dataLayer: an event name plus flat event properties. */
+interface DataLayerPush {
+  event: string;
+  [key: string]: string | undefined;
+}
+
+declare global {
+  interface Window {
+    dataLayer?: DataLayerPush[];
+  }
+}
+
 const STORAGE_KEY = "rw_ab_events";
 const MAX_STORED_EVENTS = 1000;
 
@@ -30,9 +42,8 @@ export function trackABEvent(
   };
 
   // Push to GTM dataLayer
-  const win = window as unknown as { dataLayer?: Record<string, unknown>[] };
-  if (Array.isArray(win.dataLayer)) {
-    win.dataLayer.push({
+  if (Array.isArray(window.dataLayer)) {
+    window.dataLayer.push({
       event: "ab_test_event",
       ab_test_id: testId,
       ab_variant: variant,

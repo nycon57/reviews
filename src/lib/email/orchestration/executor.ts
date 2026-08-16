@@ -11,6 +11,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import type {
+  CompletedStep,
   SequenceDefinition,
   SequenceRecord,
   SequenceStep,
@@ -160,16 +161,15 @@ export async function updateSequenceAfterSend(
 ): Promise<void> {
   const supabase = createAdminClient();
 
-  const stepsCompleted = [
-    ...sequence.steps_completed,
-    {
-      step,
-      email_id: emailId,
-      sent_at: new Date().toISOString(),
-      template: templateName,
-      ...(variant ? { variant } : {}),
-    },
-  ];
+  const completedStep: CompletedStep = {
+    step,
+    email_id: emailId,
+    sent_at: new Date().toISOString(),
+    template: templateName,
+  };
+  if (variant) completedStep.variant = variant;
+
+  const stepsCompleted = [...sequence.steps_completed, completedStep];
 
   const isComplete = step >= sequence.total_steps;
 

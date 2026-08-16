@@ -18,7 +18,6 @@ import { adminClient, magicLinkClient } from "better-auth/client/plugins";
  * @see https://better-auth.com/docs/concepts/client
  */
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   plugins: [
     // Admin operations (impersonation, user management)
     adminClient(),

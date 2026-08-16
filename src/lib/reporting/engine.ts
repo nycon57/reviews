@@ -7,6 +7,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { requireCronSecretRequest } from "@/lib/auth/server-action-guards";
 import {
   getNPSMetrics,
   getCSATMetrics,
@@ -33,10 +34,64 @@ import type {
 } from "./types";
 import { format, subDays } from "date-fns";
 
+
+/**
+ * `report_templates.config` is a jsonb column, while `ReportTemplateConfig` is declared as an
+ * interface — TypeScript will not structurally match the two in either direction. This module is
+ * the only reader and writer of that column, so both conversions live here.
+ */
+function toConfigColumn(config: ReportTemplateConfig): Json {
+  return { ...config };
+}
+
+function readConfigColumn<T>(value: Json): T {
+  // SAFETY: engine.ts is the only writer of report_templates.config (see toConfigColumn above),
+  // so every stored row holds a ReportTemplateConfig written by this module.
+  return value as T;
+}
+
+const ANALYTICS_CHUNK_SIZE = 5;
+
+export interface GenerateReportForOrgParams {
+  organizationId: string;
+  templateId: string;
+  dateRange: ReportDateRange;
+  filters?: ReportFilters;
+  shareToken?: string;
+}
+
+type ReportingUserContext = {
+  userId: string;
+  organizationId: string;
+  role: string | null;
+};
+
+async function mapInChunks<T, R>(
+  items: T[],
+  chunkSize: number,
+  mapper: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize);
+    const chunkResults = await Promise.all(
+      chunk.map((item, chunkIndex) => mapper(item, i + chunkIndex))
+    );
+    results.push(...chunkResults);
+  }
+
+  return results;
+}
+
+function isPresent<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
+
 /**
  * Get user context for report operations
  */
-async function getUserContext() {
+async function getUserContext(): Promise<ReportingUserContext | null> {
   const user = await unifiedGetUser();
   if (!user) {
     return null;
@@ -60,24 +115,64 @@ async function getUserContext() {
   };
 }
 
-/**
- * Get a report template by ID
- */
-export async function getReportTemplate(
-  templateId: string
-): Promise<ActionResult<ReportTemplate>> {
-  const context = await getUserContext();
-  if (!context) {
-    return { success: false, error: "Unauthorized" };
+function getManageReportsError(context: ReportingUserContext): string | null {
+  if (context.role !== "manager" && context.role !== "admin") {
+    return "Only managers and admins can generate reports";
   }
 
+  return null;
+}
+
+async function hasReportGenerationAccess({
+  organizationId,
+  templateId,
+  shareToken,
+}: {
+  organizationId: string;
+  templateId: string;
+  shareToken?: string;
+}): Promise<boolean> {
+  if (shareToken) {
+    const supabase = createAdminClient();
+    const { data: share } = await supabase
+      .from("report_shares")
+      .select("id, organization_id, template_id, expires_at")
+      .eq("share_token", shareToken)
+      .eq("organization_id", organizationId)
+      .eq("template_id", templateId)
+      .maybeSingle();
+
+    if (share && (!share.expires_at || new Date(share.expires_at) >= new Date())) {
+      return true;
+    }
+  }
+
+  try {
+    await requireCronSecretRequest();
+    return true;
+  } catch {
+    // Fall through to signed-in manager/admin validation.
+  }
+
+  const context = await getUserContext();
+  if (context?.organizationId === organizationId && !getManageReportsError(context)) {
+    return true;
+  }
+
+  return false;
+}
+
+async function getReportTemplateForOrg(
+  organizationId: string,
+  templateId: string
+): Promise<ActionResult<ReportTemplate>> {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("report_templates")
     .select("*")
     .eq("id", templateId)
-    .eq("organization_id", context.organizationId)
+    .eq("organization_id", organizationId)
     .single();
 
   if (error) {
@@ -93,13 +188,25 @@ export async function getReportTemplate(
       name: data.name,
       description: data.description,
       templateType: data.template_type as ReportTemplateType,
-      config: data.config as unknown as ReportTemplateConfig,
+      config: readConfigColumn<ReportTemplateConfig>(data.config),
       isDefault: data.is_default ?? false,
       createdBy: data.created_by,
       createdAt: new Date(data.created_at!),
       updatedAt: new Date(data.updated_at!),
     },
   };
+}
+
+/**
+ * Get a report template by ID
+ */
+export async function getReportTemplate(templateId: string): Promise<ActionResult<ReportTemplate>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  return getReportTemplateForOrg(context.organizationId, templateId);
 }
 
 /**
@@ -130,7 +237,7 @@ export async function getReportTemplates(): Promise<ActionResult<ReportTemplate[
     name: d.name,
     description: d.description,
     templateType: d.template_type as ReportTemplateType,
-    config: d.config as unknown as ReportTemplateConfig,
+    config: readConfigColumn<ReportTemplateConfig>(d.config),
     isDefault: d.is_default ?? false,
     createdBy: d.created_by,
     createdAt: new Date(d.created_at!),
@@ -145,43 +252,52 @@ export async function getReportTemplates(): Promise<ActionResult<ReportTemplate[
  */
 async function generateExecutiveSummary(
   dateRange: DateRange,
-  filters?: ReportFilters
+  filters: ReportFilters | undefined,
+  organizationId: string
 ): Promise<ExecutiveSummary> {
+  const analyticsContext = { organizationId };
+
   const [nps, csat, responseRate, velocity] = await Promise.all([
-    getNPSMetrics(filters?.userIds?.[0], dateRange),
-    getCSATMetrics(filters?.userIds?.[0], dateRange),
-    getResponseRateMetrics(filters?.userIds?.[0], dateRange),
-    getReviewVelocityMetrics(filters?.userIds?.[0], dateRange),
+    getNPSMetrics(filters?.userIds?.[0], dateRange, analyticsContext),
+    getCSATMetrics(filters?.userIds?.[0], dateRange, analyticsContext),
+    getResponseRateMetrics(filters?.userIds?.[0], dateRange, analyticsContext),
+    getReviewVelocityMetrics(filters?.userIds?.[0], dateRange, analyticsContext),
   ]);
 
   const periodLabel = `${format(dateRange.start, "MMM d, yyyy")} - ${format(dateRange.end, "MMM d, yyyy")}`;
 
   // Calculate previous period for comparison
-  const daysDiff = Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24));
+  const daysDiff = Math.ceil(
+    (dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24)
+  );
   const previousRange: DateRange = {
     start: subDays(dateRange.start, daysDiff),
     end: subDays(dateRange.end, daysDiff),
   };
 
-  const [prevNps, prevCsat] = await Promise.all([
-    getNPSMetrics(filters?.userIds?.[0], previousRange),
-    getCSATMetrics(filters?.userIds?.[0], previousRange),
+  const [prevNps, prevCsat, prevVelocity] = await Promise.all([
+    getNPSMetrics(filters?.userIds?.[0], previousRange, analyticsContext),
+    getCSATMetrics(filters?.userIds?.[0], previousRange, analyticsContext),
+    getReviewVelocityMetrics(filters?.userIds?.[0], previousRange, analyticsContext),
   ]);
+
+  const currentReviews = velocity.data?.totalReviews || 0;
+  const previousReviews = prevVelocity.data?.totalReviews || 0;
 
   return {
     periodLabel,
-    totalReviews: velocity.data?.totalReviews || 0,
+    totalReviews: currentReviews,
     averageRating: csat.data?.averageRating || 0,
     npsScore: nps.data?.score || 0,
     csatScore: csat.data?.score || 0,
     responseRate: responseRate.data?.rate || 0,
     reviewVelocity: velocity.data?.reviewsPerMonth || 0,
     comparisonPeriod: {
-      totalReviews: 0, // Would need previous period data
+      totalReviews: previousReviews,
       averageRating: prevCsat.data?.averageRating || 0,
       npsScore: prevNps.data?.score || 0,
       csatScore: prevCsat.data?.score || 0,
-      reviewsChange: 0,
+      reviewsChange: currentReviews - previousReviews,
       ratingChange: (csat.data?.averageRating || 0) - (prevCsat.data?.averageRating || 0),
       npsChange: (nps.data?.score || 0) - (prevNps.data?.score || 0),
       csatChange: (csat.data?.score || 0) - (prevCsat.data?.score || 0),
@@ -192,16 +308,15 @@ async function generateExecutiveSummary(
 /**
  * Generate team comparison data
  */
-async function generateTeamComparison(
-  dateRange: DateRange,
-  organizationId: string
-): Promise<TeamComparisonRow[]> {
+async function generateTeamComparison(organizationId: string): Promise<TeamComparisonRow[]> {
   const supabase = createAdminClient();
+  const analyticsContext = { organizationId };
 
   // Get all active users
   const { data: users } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       id,
       full_name,
       photo_url,
@@ -210,7 +325,8 @@ async function generateTeamComparison(
       total_reviews,
       nps_score,
       reputation_score
-    `)
+    `
+    )
     .eq("organization_id", organizationId)
     .eq("is_active", true)
     .order("reputation_score", { ascending: false });
@@ -219,14 +335,11 @@ async function generateTeamComparison(
     return [];
   }
 
-  const comparisonData: TeamComparisonRow[] = [];
-
-  for (let i = 0; i < users.length; i++) {
-    const user = users[i];
-    const analyticsResult = await getUserAnalytics(user.id, "monthly");
+  return mapInChunks(users, ANALYTICS_CHUNK_SIZE, async (user, index) => {
+    const analyticsResult = await getUserAnalytics(user.id, "monthly", analyticsContext);
     const analytics = analyticsResult.data;
 
-    comparisonData.push({
+    return {
       userId: user.id,
       name: user.full_name || "Unknown",
       photoUrl: user.photo_url,
@@ -238,28 +351,33 @@ async function generateTeamComparison(
       responseRate: analytics?.responseRate?.rate || 0,
       reputationScore: user.reputation_score || 0,
       performanceStatus: analytics?.performanceStatus || "good",
-      rank: i + 1,
-    });
-  }
-
-  return comparisonData;
+      rank: index + 1,
+    };
+  });
 }
 
 /**
- * Generate a complete report
+ * Generate a complete report for a trusted organization context.
  */
-export async function generateReport(
-  templateId: string,
-  dateRange: ReportDateRange,
-  filters?: ReportFilters
-): Promise<ActionResult<GeneratedReport>> {
-  const context = await getUserContext();
-  if (!context) {
+export async function generateReportForOrg({
+  organizationId,
+  templateId,
+  dateRange,
+  filters,
+  shareToken,
+}: GenerateReportForOrgParams): Promise<ActionResult<GeneratedReport>> {
+  const hasAccess = await hasReportGenerationAccess({
+    organizationId,
+    templateId,
+    shareToken,
+  });
+
+  if (!hasAccess) {
     return { success: false, error: "Unauthorized" };
   }
 
   // Get template
-  const templateResult = await getReportTemplate(templateId);
+  const templateResult = await getReportTemplateForOrg(organizationId, templateId);
   if (!templateResult.success || !templateResult.data) {
     return { success: false, error: "Template not found" };
   }
@@ -273,7 +391,11 @@ export async function generateReport(
   };
 
   // Generate executive summary
-  const executiveSummary = await generateExecutiveSummary(analyticsDateRange, filters);
+  const executiveSummary = await generateExecutiveSummary(
+    analyticsDateRange,
+    filters,
+    organizationId
+  );
 
   // Build report data based on configured sections
   const reportData: GeneratedReport = {
@@ -286,63 +408,89 @@ export async function generateReport(
     executiveSummary,
   };
 
+  const analyticsContext = { organizationId };
+
   // Add sections based on config
   if (config.sections.includes("nps_breakdown")) {
-    const npsResult = await getNPSMetrics(filters?.userIds?.[0], analyticsDateRange);
+    const npsResult = await getNPSMetrics(
+      filters?.userIds?.[0],
+      analyticsDateRange,
+      analyticsContext
+    );
     if (npsResult.success) {
       reportData.npsBreakdown = npsResult.data;
     }
   }
 
   if (config.sections.includes("csat_analysis")) {
-    const csatResult = await getCSATMetrics(filters?.userIds?.[0], analyticsDateRange);
+    const csatResult = await getCSATMetrics(
+      filters?.userIds?.[0],
+      analyticsDateRange,
+      analyticsContext
+    );
     if (csatResult.success) {
       reportData.csatMetrics = csatResult.data;
     }
   }
 
   if (config.sections.includes("response_rates")) {
-    const responseResult = await getResponseRateMetrics(filters?.userIds?.[0], analyticsDateRange);
+    const responseResult = await getResponseRateMetrics(
+      filters?.userIds?.[0],
+      analyticsDateRange,
+      analyticsContext
+    );
     if (responseResult.success) {
       reportData.responseRateMetrics = responseResult.data;
     }
   }
 
   if (config.sections.includes("review_velocity")) {
-    const velocityResult = await getReviewVelocityMetrics(filters?.userIds?.[0], analyticsDateRange);
+    const velocityResult = await getReviewVelocityMetrics(
+      filters?.userIds?.[0],
+      analyticsDateRange,
+      analyticsContext
+    );
     if (velocityResult.success) {
       reportData.reviewVelocityMetrics = velocityResult.data;
     }
   }
 
   if (config.sections.includes("team_comparison")) {
-    const teamComparison = await generateTeamComparison(analyticsDateRange, context.organizationId);
+    const teamComparison = await generateTeamComparison(organizationId);
     reportData.teamComparison = teamComparison;
   }
 
   if (config.sections.includes("top_performers") || config.sections.includes("needs_attention")) {
-    const orgResult = await getOrganizationAnalytics("monthly");
+    const orgResult = await getOrganizationAnalytics("monthly", analyticsContext);
     if (orgResult.success && orgResult.data) {
       if (config.sections.includes("top_performers") && orgResult.data.topPerformers) {
-        const topPerformerData = [];
-        for (const userId of orgResult.data.topPerformers.slice(0, 5)) {
-          const userResult = await getUserAnalytics(userId, "monthly");
-          if (userResult.success && userResult.data) {
-            topPerformerData.push(userResult.data);
+        const topPerformerData = await mapInChunks(
+          orgResult.data.topPerformers.slice(0, 5),
+          ANALYTICS_CHUNK_SIZE,
+          async (userId) => {
+            const userResult = await getUserAnalytics(userId, "monthly", analyticsContext);
+            if (userResult.success && userResult.data) {
+              return userResult.data;
+            }
+            return null;
           }
-        }
-        reportData.topPerformers = topPerformerData;
+        );
+        reportData.topPerformers = topPerformerData.filter(isPresent);
       }
 
       if (config.sections.includes("needs_attention") && orgResult.data.needsAttention) {
-        const needsAttentionData = [];
-        for (const userId of orgResult.data.needsAttention.slice(0, 5)) {
-          const userResult = await getUserAnalytics(userId, "monthly");
-          if (userResult.success && userResult.data) {
-            needsAttentionData.push(userResult.data);
+        const needsAttentionData = await mapInChunks(
+          orgResult.data.needsAttention.slice(0, 5),
+          ANALYTICS_CHUNK_SIZE,
+          async (userId) => {
+            const userResult = await getUserAnalytics(userId, "monthly", analyticsContext);
+            if (userResult.success && userResult.data) {
+              return userResult.data;
+            }
+            return null;
           }
-        }
-        reportData.needsAttention = needsAttentionData;
+        );
+        reportData.needsAttention = needsAttentionData.filter(isPresent);
       }
     }
   }
@@ -350,15 +498,15 @@ export async function generateReport(
   // Add trends if configured
   if (config.showTrends) {
     const [npsTrend, csatTrend, reviewsTrend] = await Promise.all([
-      getNPSTrendData(filters?.userIds?.[0], 6),
-      getCSATTrendData(filters?.userIds?.[0], 6),
-      getReviewVelocityTrendData(filters?.userIds?.[0], 6),
+      getNPSTrendData(filters?.userIds?.[0], 6, analyticsContext),
+      getCSATTrendData(filters?.userIds?.[0], 6, analyticsContext),
+      getReviewVelocityTrendData(filters?.userIds?.[0], 6, analyticsContext),
     ]);
 
     reportData.trends = {
-      nps: npsTrend.data?.map(p => ({ date: p.date, value: p.value })) || [],
-      csat: csatTrend.data?.map(p => ({ date: p.date, value: p.value })) || [],
-      reviews: reviewsTrend.data?.map(p => ({ date: p.date, value: p.value })) || [],
+      nps: npsTrend.data?.map((p) => ({ date: p.date, value: p.value })) || [],
+      csat: csatTrend.data?.map((p) => ({ date: p.date, value: p.value })) || [],
+      reviews: reviewsTrend.data?.map((p) => ({ date: p.date, value: p.value })) || [],
     };
   }
 
@@ -366,65 +514,35 @@ export async function generateReport(
 }
 
 /**
- * Create a new report template
+ * Generate a complete report for the signed-in manager/admin.
  */
-export async function createReportTemplate(
-  name: string,
-  description: string | undefined,
-  templateType: "monthly_performance" | "team_summary" | "custom",
-  config: unknown
-): Promise<ActionResult<ReportTemplate>> {
+export async function generateReport(
+  templateId: string,
+  dateRange: ReportDateRange,
+  filters?: ReportFilters
+): Promise<ActionResult<GeneratedReport>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
 
-  if (context.role !== "manager" && context.role !== "admin") {
-    return { success: false, error: "Only managers and admins can create templates" };
-  }
+  const roleError = getManageReportsError(context);
+  if (roleError) return { success: false, error: roleError };
 
-  const supabase = createAdminClient();
-
-  const { data, error } = await supabase
-    .from("report_templates")
-    .insert({
-      organization_id: context.organizationId,
-      name,
-      description,
-      template_type: templateType,
-      config: config as Json,
-      is_default: false,
-      created_by: context.userId,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error creating template:", error);
-    return { success: false, error: "Failed to create template" };
-  }
-
-  return {
-    success: true,
-    data: {
-      id: data.id,
-      organizationId: data.organization_id,
-      name: data.name,
-      description: data.description,
-      templateType: data.template_type as ReportTemplateType,
-      config: data.config as unknown as ReportTemplateConfig,
-      isDefault: data.is_default ?? false,
-      createdBy: data.created_by,
-      createdAt: new Date(data.created_at!),
-      updatedAt: new Date(data.updated_at!),
-    },
-  };
+  return generateReportForOrg({
+    organizationId: context.organizationId,
+    templateId,
+    dateRange,
+    filters,
+  });
 }
 
 /**
  * Initialize default templates for an organization
  */
-export async function initializeDefaultTemplates(): Promise<ActionResult<void>> {
+export async function initializeDefaultTemplates(options?: {
+  skipExistingCheck?: boolean;
+}): Promise<ActionResult<void>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
@@ -432,32 +550,37 @@ export async function initializeDefaultTemplates(): Promise<ActionResult<void>> 
 
   const supabase = createAdminClient();
 
-  // Check if templates already exist
-  const { data: existing } = await supabase
-    .from("report_templates")
-    .select("id")
-    .eq("organization_id", context.organizationId)
-    .eq("is_default", true)
-    .limit(1);
+  if (!options?.skipExistingCheck) {
+    const { data: existing } = await supabase
+      .from("report_templates")
+      .select("id")
+      .eq("organization_id", context.organizationId)
+      .eq("is_default", true)
+      .limit(1);
 
-  if (existing && existing.length > 0) {
-    return { success: true, data: undefined };
+    if (existing && existing.length > 0) {
+      return { success: true, data: undefined };
+    }
   }
 
   // Import default templates
   const { DEFAULT_TEMPLATES } = await import("./templates");
 
   // Insert default templates
-  const { error } = await supabase.from("report_templates").insert(
+  const { error } = await supabase.from("report_templates").upsert(
     DEFAULT_TEMPLATES.map((t) => ({
       organization_id: context.organizationId,
       name: t.name,
       description: t.description,
       template_type: t.templateType,
-      config: t.config as unknown as Json,
+      config: toConfigColumn(t.config),
       is_default: t.isDefault,
       created_by: context.userId,
-    }))
+    })),
+    {
+      onConflict: "organization_id,name",
+      ignoreDuplicates: true,
+    }
   );
 
   if (error) {

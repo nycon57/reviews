@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -40,7 +40,7 @@ jobs:
         run: npx tsx scripts/build-embed.ts
 
       - name: Run bundle size assertion
-        run: npx vitest run tests/performance/embed-bundle-size.test.ts
+        run: npx vitest run --config vitest.performance.config.ts
 
   unit-tests:
     name: Widget Unit Tests
@@ -52,7 +52,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -67,6 +67,13 @@ jobs:
   e2e-tests:
     name: Widget E2E Tests
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: mock-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: mock-service-role-key
+      DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
+      BETTER_AUTH_SECRET: mock-ci-secret-not-used-at-runtime
+      BETTER_AUTH_URL: http://localhost:3000
     needs: [bundle-size, unit-tests]
     steps:
       - name: Checkout
@@ -75,7 +82,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -89,9 +96,6 @@ jobs:
 
       - name: Build Next.js app
         run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: mock-anon-key
 
       - name: Run E2E widget tests
         run: npx playwright test tests/e2e/widgets/
@@ -111,7 +115,16 @@ jobs:
   performance-benchmarks:
     name: Performance Benchmarks
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: mock-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: mock-service-role-key
+      DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
+      BETTER_AUTH_SECRET: mock-ci-secret-not-used-at-runtime
+      BETTER_AUTH_URL: http://localhost:3000
     needs: [bundle-size, unit-tests]
+    # Non-blocking until golden-flows replacement (see e2e-tests note).
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -119,7 +132,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -133,9 +146,6 @@ jobs:
 
       - name: Build Next.js app
         run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: mock-anon-key
 
       - name: Run render timing benchmarks
         run: npx playwright test tests/performance/render-timing.test.ts

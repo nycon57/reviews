@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { TaskBadge } from "@/components/dashboard/task-badge";
 import { usePermissions } from "@/lib/permissions/context";
 import {
   useFilteredNav,
+  useNavIsActive,
   ICON_MAP,
   type FilteredNavItem,
   type FilteredNavSection,
@@ -28,16 +28,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, collapsed = false }: SidebarProps) {
-  const pathname = usePathname();
   const { shouldShowUpgradeCTA } = usePermissions();
   const { coreItems, sections, bottomItems } = useFilteredNav();
-
-  const isActive = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === "/dashboard";
-    }
-    return pathname.startsWith(href);
-  };
+  const isActive = useNavIsActive({ coreItems, sections, bottomItems });
 
   return (
     <aside
@@ -126,7 +119,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
             <p className="text-xs text-white/80 mb-3 leading-relaxed">
               Unlock AI insights, unlimited surveys, and priority support.
             </p>
-            <Link href="/dashboard/settings?tab=billing">
+            <Link href="/dashboard/organization?tab=billing">
               <Button
                 size="sm"
                 className="w-full bg-white text-repwell-teal-300 hover:bg-white/90 dark:bg-foreground dark:text-repwell-teal-300 dark:hover:bg-foreground/90 font-medium text-sm h-9 group"
@@ -169,7 +162,7 @@ function SectionDivider({ section, isActive, collapsed }: SectionDividerProps) {
       {!collapsed ? (
         <>
           <div className="my-3 h-px bg-border" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-repwell-teal-400/70 dark:text-repwell-sage-100/50 px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-repwell-teal-400 dark:text-repwell-sage-100 px-3 py-2">
             {section.label}
           </span>
         </>
@@ -199,7 +192,7 @@ interface NavLinkProps {
 const NavLink = React.memo(function NavLink({ item, isActive, collapsed, dynamicBadge }: NavLinkProps) {
   const { isProLocked } = item;
   // If Pro locked, link to billing instead of the actual route
-  const href = isProLocked ? "/dashboard/settings?tab=billing" : item.href;
+  const href = isProLocked ? "/dashboard/organization?tab=billing" : item.href;
 
   const IconComponent = ICON_MAP[item.icon];
 
@@ -210,7 +203,7 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed, dynamic
         "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-out",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/30",
         isActive && !isProLocked
-          ? "bg-surface-soft text-repwell-teal-300"
+          ? "bg-surface-soft text-repwell-teal-500"
           : isProLocked
             ? "text-label/60 hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-400"
             : "text-label hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-500 dark:hover:text-foreground",
@@ -231,7 +224,7 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed, dynamic
       <span className={cn(
         "transition-colors duration-150",
         isActive && !isProLocked
-          ? "text-repwell-teal-300"
+          ? "text-repwell-teal-500"
           : isProLocked
             ? "text-label/60 group-hover:text-repwell-teal-400 dark:group-hover:text-muted-foreground"
             : "text-label group-hover:text-repwell-teal-500 dark:group-hover:text-foreground"

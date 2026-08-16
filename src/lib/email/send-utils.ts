@@ -14,7 +14,10 @@
 import { render } from "@react-email/components";
 import type { ReactElement } from "react";
 import { getResendClient, emailConfig } from "./client";
-import { generateEmailPreferenceTokenForUser } from "../email-preferences/actions";
+import { generateEmailPreferenceTokenForUser } from "../email-preferences/system-actions";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { resolveEmailTypeSend, type EmailTypeSendResolver } from "@/lib/email-ab-testing/overrides";
+import type { EmailTemplate } from "./types";
 
 // =============================================================================
 // TYPES
@@ -45,10 +48,26 @@ export interface EmailSendOptions {
   userId?: string;
   /** Include List-Unsubscribe header (default: true for marketing) */
   includeListUnsubscribe?: boolean;
+  /**
+   * Explicit List-Unsubscribe URL. When set, headers are included even for a
+   * transactional email and this URL is used verbatim (wins over the userId /
+   * recipient resolution). Used by acquisition emails to point the machine
+   * one-click at the Contact-scoped suppression endpoint.
+   */
+  listUnsubscribeUrl?: string;
   /** Maximum retries (default: 3) */
   maxRetries?: number;
   /** Timeout in milliseconds (default: 30000) */
   timeout?: number;
+  /**
+   * Organization + email type enable send-time A/B resolution: an applied
+   * winner's subject (email_type_overrides) or a running test's assigned variant
+   * subject is swapped in, and the assigned variant ids are returned for logging.
+   * Only the subject is swapped — preview text is already baked into the HTML.
+   */
+  organizationId?: string;
+  emailType?: EmailTemplate;
+  emailTypeSendResolver?: EmailTypeSendResolver;
 }
 
 export interface EmailSendResult {
@@ -57,6 +76,11 @@ export interface EmailSendResult {
   error?: string;
   retries?: number;
   htmlSize?: number;
+  /** The subject actually sent (may differ from the requested subject after A/B resolution). */
+  effectiveSubject?: string;
+  /** Set when a running A/B test assigned this send a variant — stamp on email_logs. */
+  abTestId?: string;
+  abTestVariant?: string;
 }
 
 // =============================================================================
@@ -71,7 +95,8 @@ const EMAIL_SIZE_LIMIT = 102 * 1024; // 102KB
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
 
 /** Physical mailing address for CAN-SPAM compliance */
-export const COMPANY_MAILING_ADDRESS = "Repwell Inc., 123 Main Street, Suite 100, San Francisco, CA 94105";
+export const COMPANY_MAILING_ADDRESS =
+  "Repwell Inc., 123 Main Street, Suite 100, San Francisco, CA 94105";
 
 // =============================================================================
 // IDEMPOTENCY KEY GENERATORS
@@ -133,40 +158,28 @@ export function getMilestoneIdempotencyKey(
 /**
  * Generate deterministic idempotency key for welcome sequence
  */
-export function getWelcomeSequenceIdempotencyKey(
-  userId: string,
-  stepNumber: number
-): string {
+export function getWelcomeSequenceIdempotencyKey(userId: string, stepNumber: number): string {
   return `welcome-${userId}-step-${stepNumber}`;
 }
 
 /**
  * Generate deterministic idempotency key for weekly summary
  */
-export function getWeeklySummaryIdempotencyKey(
-  userId: string,
-  weekStartDate: string
-): string {
+export function getWeeklySummaryIdempotencyKey(userId: string, weekStartDate: string): string {
   return `weekly-summary-${userId}-${weekStartDate}`;
 }
 
 /**
  * Generate deterministic idempotency key for trial ending emails
  */
-export function getTrialEndingIdempotencyKey(
-  userId: string,
-  emailNumber: number
-): string {
+export function getTrialEndingIdempotencyKey(userId: string, emailNumber: number): string {
   return `trial-ending-${userId}-email-${emailNumber}`;
 }
 
 /**
  * Generate deterministic idempotency key for dunning emails
  */
-export function getDunningIdempotencyKey(
-  subscriptionId: string,
-  emailNumber: number
-): string {
+export function getDunningIdempotencyKey(subscriptionId: string, emailNumber: number): string {
   return `dunning-${subscriptionId}-email-${emailNumber}`;
 }
 
@@ -203,10 +216,7 @@ export function getReferralIdempotencyKey(
  * @param recipientEmail - Email address (fallback)
  * @returns Unsubscribe URL
  */
-export async function getUnsubscribeUrl(
-  userId?: string,
-  recipientEmail?: string
-): Promise<string> {
+export async function getUnsubscribeUrl(userId?: string, recipientEmail?: string): Promise<string> {
   // Prefer token-based unsubscribe for privacy
   if (userId) {
     try {
@@ -234,9 +244,7 @@ export async function getUnsubscribeUrl(
  * @param userId - User ID for token generation (preferred)
  * @returns Email preferences URL
  */
-export async function getEmailPreferencesUrl(
-  userId?: string
-): Promise<string> {
+export async function getEmailPreferencesUrl(userId?: string): Promise<string> {
   if (userId) {
     try {
       const token = await generateEmailPreferenceTokenForUser(userId);
@@ -262,9 +270,12 @@ export async function getEmailPreferencesUrl(
  */
 export async function getListUnsubscribeHeaders(
   userId?: string,
-  recipientEmail?: string
+  recipientEmail?: string,
+  explicitUrl?: string
 ): Promise<Record<string, string>> {
-  const unsubscribeUrl = await getUnsubscribeUrl(userId, recipientEmail);
+  // An explicit URL (e.g. an acquisition email's Contact-scoped one-click URL)
+  // wins over the platform-user token/email resolution.
+  const unsubscribeUrl = explicitUrl ?? (await getUnsubscribeUrl(userId, recipientEmail));
   const unsubscribeMailto = "unsubscribe@repwell.ai";
 
   return {
@@ -327,31 +338,33 @@ function sleep(ms: number): Promise<void> {
  * Simple implementation that strips tags and decodes entities
  */
 function htmlToPlainText(html: string): string {
-  return html
-    // Remove style and script tags and their content
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-    // Replace <br> and </p> with newlines
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<\/div>/gi, "\n")
-    .replace(/<\/tr>/gi, "\n")
-    .replace(/<\/li>/gi, "\n")
-    // Replace links with text + URL
-    .replace(/<a[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, "$2 ($1)")
-    // Remove remaining HTML tags
-    .replace(/<[^>]+>/g, "")
-    // Decode HTML entities
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    // Clean up whitespace
-    .replace(/\n\s*\n\s*\n/g, "\n\n")
-    .replace(/[ \t]+/g, " ")
-    .trim();
+  return (
+    html
+      // Remove style and script tags and their content
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      // Replace <br> and </p> with newlines
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n\n")
+      .replace(/<\/div>/gi, "\n")
+      .replace(/<\/tr>/gi, "\n")
+      .replace(/<\/li>/gi, "\n")
+      // Replace links with text + URL
+      .replace(/<a[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/gi, "$2 ($1)")
+      // Remove remaining HTML tags
+      .replace(/<[^>]+>/g, "")
+      // Decode HTML entities
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Clean up whitespace
+      .replace(/\n\s*\n\s*\n/g, "\n\n")
+      .replace(/[ \t]+/g, " ")
+      .trim()
+  );
 }
 
 // =============================================================================
@@ -410,8 +423,12 @@ export async function sendEmailWithReliability(
     tags = [],
     userId,
     includeListUnsubscribe = true,
+    listUnsubscribeUrl,
     maxRetries = 3,
     timeout = DEFAULT_TIMEOUT,
+    organizationId,
+    emailType,
+    emailTypeSendResolver,
   } = options;
 
   // Validate that either react or html is provided
@@ -451,14 +468,35 @@ export async function sendEmailWithReliability(
     console.warn(`Email size warning for ${idempotencyKey}: ${sizeCheck.warning}`);
   }
 
+  // Send-time A/B resolution (subject only — the HTML/preheader is already
+  // rendered). Applies an applied-winner override or assigns a running test's
+  // variant for (organizationId, emailType). Best-effort: failures fall through
+  // to the requested subject.
+  let effectiveSubject = subject;
+  let abTestId: string | undefined;
+  let abTestVariant: string | undefined;
+  if (organizationId && emailType) {
+    const resolver = emailTypeSendResolver ?? resolveEmailTypeSend;
+    const resolution = await resolver(createUntypedAdminClient(), {
+      organizationId,
+      emailType,
+      subject,
+    });
+    effectiveSubject = resolution.subject;
+    abTestId = resolution.abTestId;
+    abTestVariant = resolution.abTestVariant;
+  }
+
   // Build headers
   const headers: Record<string, string> = {
     "X-Idempotency-Key": idempotencyKey,
   };
 
-  // Add List-Unsubscribe headers for marketing emails
-  if (includeListUnsubscribe) {
-    const unsubscribeHeaders = await getListUnsubscribeHeaders(userId, to);
+  // Add List-Unsubscribe headers for marketing emails, or whenever an explicit
+  // unsubscribe URL is supplied (e.g. an acquisition email whose human footer
+  // and machine one-click must both hit the Contact suppression system).
+  if (includeListUnsubscribe || listUnsubscribeUrl) {
+    const unsubscribeHeaders = await getListUnsubscribeHeaders(userId, to, listUnsubscribeUrl);
     Object.assign(headers, unsubscribeHeaders);
   }
 
@@ -477,7 +515,7 @@ export async function sendEmailWithReliability(
         from,
         to: toName ? `${toName} <${to}>` : to,
         replyTo,
-        subject,
+        subject: effectiveSubject,
         html,
         text,
         tags,
@@ -495,6 +533,9 @@ export async function sendEmailWithReliability(
         messageId: response.data?.id,
         retries,
         htmlSize: sizeCheck.size,
+        effectiveSubject,
+        abTestId,
+        abTestVariant,
       };
     } catch (error) {
       clearTimeout(timeoutId);
@@ -545,14 +586,59 @@ export const EMAIL_TEMPLATE_CATEGORIES: Record<string, EmailCategory> = {
   survey_invitation: "transactional",
   survey_reminder_3day: "transactional",
   survey_reminder_7day: "transactional",
+  survey_completion_thank_you: "transactional",
+  survey_high_rating_followup: "transactional",
+  survey_low_rating_followup: "transactional",
+  survey_response_received_notification: "transactional",
   new_review_notification: "transactional",
   review_pending_approval: "transactional",
   review_approved: "transactional",
   review_rejected: "transactional",
+  review_response_to_reviewer: "transactional",
+  review_response_sent_confirmation: "transactional",
+  review_published_notification: "transactional",
+  review_response_received: "transactional",
+  scheduled_report: "transactional",
+  negative_review_alert: "transactional",
+  negative_review_alert_enhanced: "transactional",
+  notification_digest: "transactional",
   video_testimonial_invitation: "transactional",
   video_testimonial_reminder: "transactional",
+  video_testimonial_reminder_3day: "transactional",
+  video_testimonial_reminder_7day: "transactional",
+  video_testimonial_received: "transactional",
   password_reset: "transactional",
   email_verification: "transactional",
+  video_testimonial_approved: "transactional",
+  video_testimonial_pending_approval: "transactional",
+  video_processing_started: "transactional",
+  video_processing_complete: "transactional",
+  video_approval_needed: "transactional",
+  video_approved_published: "transactional",
+  video_shared: "transactional",
+  video_customer_thank_you: "transactional",
+  subscription_upgrade_confirmation: "transactional",
+  subscription_downgrade_confirmation: "transactional",
+  subscription_renewal_reminder: "transactional",
+  subscription_renewed: "transactional",
+  subscription_cancelled: "transactional",
+  subscription_cancellation_feedback: "transactional",
+  subscription_plan_change_scheduled: "transactional",
+  subscription_invoice_available: "transactional",
+  subscription_price_increase_notice: "transactional",
+  admin_alert_negative_review: "transactional",
+  admin_alert_team_struggling: "transactional",
+  admin_alert_compliance_violation: "transactional",
+  admin_alert_usage_limit: "transactional",
+  admin_alert_team_member_joined: "transactional",
+  admin_alert_team_member_left: "transactional",
+  admin_alert_unusual_activity: "transactional",
+  admin_alert_integration_disconnected: "transactional",
+  admin_alert_digest: "transactional",
+  profile_referral_introduction: "transactional",
+  review_verification: "transactional",
+  review_video_upsell: "transactional",
+  review_dispute_escalation: "transactional",
 
   // Onboarding
   welcome_1_access: "onboarding",
@@ -563,8 +649,44 @@ export const EMAIL_TEMPLATE_CATEGORIES: Record<string, EmailCategory> = {
   org_onboarding_1: "onboarding",
   org_onboarding_2: "onboarding",
   org_onboarding_3: "onboarding",
+  org_onboarding_1_welcome: "onboarding",
+  org_onboarding_2_branding: "onboarding",
+  org_onboarding_3_team: "onboarding",
+  org_onboarding_4_integrations: "onboarding",
+  org_onboarding_5_billing: "onboarding",
+  org_onboarding_6_advanced: "onboarding",
   team_invite: "onboarding",
+  team_invite_1_initial: "onboarding",
+  team_invite_2_reminder: "onboarding",
+  team_invite_3_final_reminder: "onboarding",
+  team_invite_4_welcome: "onboarding",
+  team_invite_5_expiration: "onboarding",
   role_onboarding: "onboarding",
+  role_onboarding_lo_1_dashboard: "onboarding",
+  role_onboarding_lo_2_surveys: "onboarding",
+  role_onboarding_lo_3_sharing: "onboarding",
+  role_onboarding_lo_4_responding: "onboarding",
+  role_onboarding_lo_5_video: "onboarding",
+  role_onboarding_lo_6_mobile: "onboarding",
+  role_onboarding_lo_7_google: "onboarding",
+  role_onboarding_mgr_1_team_dashboard: "onboarding",
+  role_onboarding_mgr_2_approvals: "onboarding",
+  role_onboarding_mgr_3_leaderboards: "onboarding",
+  role_onboarding_mgr_4_reports: "onboarding",
+  role_onboarding_mgr_5_coaching: "onboarding",
+  role_onboarding_mgr_6_analytics: "onboarding",
+  role_onboarding_admin_1_settings: "onboarding",
+  role_onboarding_admin_2_users: "onboarding",
+  role_onboarding_admin_3_integrations: "onboarding",
+  role_onboarding_admin_4_billing: "onboarding",
+  role_onboarding_admin_5_compliance: "onboarding",
+  profile_reminder_photo: "onboarding",
+  profile_reminder_bio: "onboarding",
+  profile_reminder_final: "onboarding",
+  setup_reminder_survey_template: "onboarding",
+  setup_reminder_first_survey: "onboarding",
+  setup_reminder_google_connect: "onboarding",
+  setup_reminder_invite_team: "onboarding",
 
   // Weekly summary
   weekly_summary_lo: "weekly_summary",
@@ -589,20 +711,31 @@ export const EMAIL_TEMPLATE_CATEGORIES: Record<string, EmailCategory> = {
   milestone_badge_earned: "milestones",
   milestone_streak: "milestones",
   milestone_video: "milestones",
+  milestone_rating_improvement: "milestones",
+  milestone_nps_improvement: "milestones",
+  milestone_profile_completion: "milestones",
 
   // Product updates
   announcement_feature: "product_updates",
   announcement_update: "product_updates",
   announcement_maintenance: "product_updates",
   announcement_security: "product_updates",
+  announcement_digest: "product_updates",
 
   // Marketing
   referral_invite: "marketing",
+  referral_friend_signed_up: "marketing",
+  referral_friend_converted: "marketing",
+  referral_reward_earned: "marketing",
   referral_reminder: "marketing",
   referral_leaderboard: "marketing",
   reengagement_1: "marketing",
   reengagement_2: "marketing",
   reengagement_3: "marketing",
+  reengagement_1_miss_you: "marketing",
+  reengagement_2_whats_new: "marketing",
+  reengagement_3_last_chance: "marketing",
+  reengagement_4_final: "marketing",
   trial_ending_1: "marketing",
   trial_ending_2: "marketing",
   trial_ending_3: "marketing",
@@ -614,15 +747,30 @@ export const EMAIL_TEMPLATE_CATEGORIES: Record<string, EmailCategory> = {
   trial_ending_3_final_reminder: "marketing",
   trial_ending_4_grace_period: "marketing",
   trial_ending_5_winback: "marketing",
+  dunning_1_payment_failed: "marketing",
+  dunning_2_reminder: "marketing",
+  dunning_3_urgent: "marketing",
+  dunning_4_final_warning: "marketing",
+  dunning_5_suspended: "marketing",
+  abandoned_survey_creation_1: "marketing",
+  abandoned_survey_creation_2: "marketing",
+  abandoned_survey_send_1: "marketing",
+  abandoned_survey_send_2: "marketing",
+  abandoned_video_request_1: "marketing",
+  abandoned_video_request_2: "marketing",
+  abandoned_billing_upgrade_1: "marketing",
+  abandoned_billing_upgrade_2: "marketing",
+  abandoned_profile_completion_1: "marketing",
+  abandoned_profile_completion_2: "marketing",
+  abandoned_integration_setup_1: "marketing",
+  abandoned_integration_setup_2: "marketing",
   winback: "marketing",
 };
 
 /**
  * Get the preference field for a category
  */
-export function getCategoryPreferenceField(
-  category: EmailCategory
-): string | null {
+export function getCategoryPreferenceField(category: EmailCategory): string | null {
   switch (category) {
     case "transactional":
       return null; // Always send
@@ -677,7 +825,7 @@ export async function shouldSendEmail(
   }
 
   // Dynamically import to avoid circular dependency
-  const { isEmailCategoryEnabled } = await import("../email-preferences/actions");
+  const { isEmailCategoryEnabled } = await import("../email-preferences/system-actions");
 
   // Check if the category is enabled for this user
   const isEnabled = await isEmailCategoryEnabled(
@@ -725,6 +873,16 @@ export interface SimpleSendOptions {
   userId?: string;
   /** Is this a transactional email (no unsubscribe header)? Default: false */
   isTransactional?: boolean;
+  /** Organization for send-time A/B resolution (see EmailSendOptions). */
+  organizationId?: string;
+  /** Email type / template name for send-time A/B resolution. */
+  emailType?: EmailTemplate;
+  emailTypeSendResolver?: EmailTypeSendResolver;
+  /**
+   * Explicit List-Unsubscribe URL. Forces the header on even for a transactional
+   * email — used by acquisition sends to point one-click at the Contact endpoint.
+   */
+  listUnsubscribeUrl?: string;
 }
 
 /**
@@ -739,9 +897,7 @@ export interface SimpleSendOptions {
  * - Timeout handling
  * - Email size monitoring
  */
-export async function sendWithReliability(
-  options: SimpleSendOptions
-): Promise<EmailSendResult> {
+export async function sendWithReliability(options: SimpleSendOptions): Promise<EmailSendResult> {
   return sendEmailWithReliability({
     to: options.to,
     toName: options.toName,
@@ -753,5 +909,9 @@ export async function sendWithReliability(
     tags: options.tags,
     userId: options.userId,
     includeListUnsubscribe: !options.isTransactional,
+    listUnsubscribeUrl: options.listUnsubscribeUrl,
+    organizationId: options.organizationId,
+    emailType: options.emailType,
+    emailTypeSendResolver: options.emailTypeSendResolver,
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, type RefObject } from "react";
 import { motion } from "framer-motion";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Star,
   VideoCamera,
@@ -31,12 +32,52 @@ interface SendReviewRequestDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  currentUserId?: string | null;
+  restoreFocusRef?: RefObject<HTMLElement | null>;
+}
+
+function SendReviewRequestSkeleton() {
+  return (
+    <div className="space-y-5 py-1" aria-label="Loading review request form">
+      <div className="rounded-xl bg-muted/30 p-4">
+        <Skeleton className="h-4 w-24" />
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Skeleton className="h-10 rounded-lg" />
+          <Skeleton className="h-10 rounded-lg" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Skeleton className="h-10 rounded-lg" />
+        <Skeleton className="h-10 rounded-lg" />
+      </div>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-10 rounded-md" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-10 rounded-md" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 rounded-md" />
+        </div>
+      </div>
+      <div className="flex justify-end gap-2 pt-2">
+        <Skeleton className="h-10 w-20 rounded-md" />
+        <Skeleton className="h-10 w-40 rounded-md" />
+      </div>
+    </div>
+  );
 }
 
 export function SendReviewRequestDialog({
   open,
   onOpenChange,
   onSuccess,
+  currentUserId: providedCurrentUserId,
+  restoreFocusRef,
 }: SendReviewRequestDialogProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -45,11 +86,13 @@ export function SendReviewRequestDialog({
   const [mode, setMode] = useState<"single" | "bulk">("single");
 
   // Data
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [fallbackCurrentUserId, setFallbackCurrentUserId] = useState<string | null>(null);
+  const currentUserId = providedCurrentUserId ?? fallbackCurrentUserId;
 
-  // Load user data each time the dialog opens
+  // Prefer the caller-provided user id; fetch only as a fallback.
   useEffect(() => {
     if (!open) return;
+    if (currentUserId) return;
 
     let cancelled = false;
 
@@ -59,14 +102,14 @@ export function SendReviewRequestDialog({
       if (cancelled) return;
 
       if (userResult) {
-        setCurrentUserId(userResult.id);
+        setFallbackCurrentUserId(userResult.id);
       } else {
-        setCurrentUserId(null);
+        setFallbackCurrentUserId(null);
       }
     });
 
     return () => { cancelled = true; };
-  }, [open]);
+  }, [open, providedCurrentUserId, currentUserId]);
 
   function handleClose() {
     onOpenChange(false);
@@ -74,16 +117,23 @@ export function SendReviewRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+      <DialogContent
+        className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto"
+        onCloseAutoFocus={(event) => {
+          if (!restoreFocusRef?.current) return;
+          event.preventDefault();
+          restoreFocusRef.current.focus();
+        }}
+      >
         <DialogHeader>
-          <DialogTitle>Send Review Request</DialogTitle>
+          <DialogTitle>Send review request</DialogTitle>
           <DialogDescription>
-            Send a review or video testimonial request to your customer.
+            Send a review request or video testimonial request to your customer.
           </DialogDescription>
         </DialogHeader>
 
-        {isPending ? (
-          <div className="py-12" />
+        {isPending && !currentUserId ? (
+          <SendReviewRequestSkeleton />
         ) : !currentUserId ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-sm text-muted-foreground">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type CSSProperties } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,18 +29,32 @@ interface ProfileCompletionLeaderboardProps {
   limit?: number;
   className?: string;
   showPodium?: boolean;
+  initialData?: ProfileCompletionLeaderboardEntry[];
 }
 
 export function ProfileCompletionLeaderboard({
   limit = 10,
   className,
   showPodium = true,
+  initialData,
 }: ProfileCompletionLeaderboardProps) {
-  const [entries, setEntries] = useState<ProfileCompletionLeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const hasInitialData = initialData !== undefined;
+  const didRunInitialEffect = useRef(false);
+  const [entries, setEntries] = useState<ProfileCompletionLeaderboardEntry[]>(initialData ?? []);
+  const [isLoading, setIsLoading] = useState(!hasInitialData);
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!didRunInitialEffect.current) {
+      didRunInitialEffect.current = true;
+      if (hasInitialData) {
+        return () => {
+          cancelled = true;
+        };
+      }
+    }
+
     async function loadData() {
       setIsLoading(true);
       const result = await getProfileCompletionLeaderboard(limit);
@@ -55,7 +69,7 @@ export function ProfileCompletionLeaderboard({
     return () => {
       cancelled = true;
     };
-  }, [limit]);
+  }, [limit, hasInitialData]);
 
   if (isLoading) {
     return (
@@ -355,17 +369,31 @@ function PodiumCard({
 interface CompactProfileLeaderboardProps {
   limit?: number;
   className?: string;
+  initialData?: ProfileCompletionLeaderboardEntry[];
 }
 
 export function CompactProfileLeaderboard({
   limit = 5,
   className,
+  initialData,
 }: CompactProfileLeaderboardProps) {
-  const [entries, setEntries] = useState<ProfileCompletionLeaderboardEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const hasInitialData = initialData !== undefined;
+  const didRunInitialEffect = useRef(false);
+  const [entries, setEntries] = useState<ProfileCompletionLeaderboardEntry[]>(initialData ?? []);
+  const [isLoading, setIsLoading] = useState(!hasInitialData);
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!didRunInitialEffect.current) {
+      didRunInitialEffect.current = true;
+      if (hasInitialData) {
+        return () => {
+          cancelled = true;
+        };
+      }
+    }
+
     async function loadData() {
       const result = await getProfileCompletionLeaderboard(limit);
       if (!cancelled) {
@@ -379,7 +407,7 @@ export function CompactProfileLeaderboard({
     return () => {
       cancelled = true;
     };
-  }, [limit]);
+  }, [limit, hasInitialData]);
 
   if (isLoading) {
     return (

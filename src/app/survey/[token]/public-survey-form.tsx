@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { QuestionRenderer } from "@/components/surveys/question-renderer";
-import { submitSurveyResponse } from "@/lib/surveys/public-actions";
+import {
+  submitSurveyResponse,
+  recordSurveyGoogleReviewClick,
+} from "@/lib/surveys/public-actions";
 import type { PublicSurvey } from "@/lib/surveys/public-types";
 import type { SurveyAnswer } from "@/types/survey.types";
 import {
@@ -29,6 +32,8 @@ export function PublicSurveyForm({ survey }: PublicSurveyFormProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [surveyState, setSurveyState] = useState<SurveyState>("form");
   const [showReviewRedirect, setShowReviewRedirect] = useState(false);
+  const [googleReviewUrl, setGoogleReviewUrl] = useState<string | null>(null);
+  const [responseId, setResponseId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -99,6 +104,8 @@ export function PublicSurveyForm({ survey }: PublicSurveyFormProps) {
 
       if (result.success && result.data) {
         setShowReviewRedirect(result.data.showReviewRedirect);
+        setGoogleReviewUrl(result.data.googleReviewUrl);
+        setResponseId(result.data.responseId);
         setSurveyState("success");
       } else {
         setSubmitError(result.error || "Failed to submit your response");
@@ -172,7 +179,7 @@ export function PublicSurveyForm({ survey }: PublicSurveyFormProps) {
             <h2 className="text-2xl font-semibold">{thankYouConfig.title}</h2>
             <p className="mt-2 text-muted-foreground">{thankYouConfig.message}</p>
 
-            {showReviewRedirect && (
+            {showReviewRedirect && googleReviewUrl && (
               <div className="mt-8 rounded-lg border bg-muted/50 p-6">
                 <div className="mb-3 flex justify-center">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -186,11 +193,25 @@ export function PublicSurveyForm({ survey }: PublicSurveyFormProps) {
                   Would you mind sharing your experience on Google? It helps others find great service.
                 </p>
                 <Button
+                  asChild
                   className="gap-2"
                   style={primaryColor ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}
                 >
-                  <ExternalLink className="h-4 w-4" />
-                  Leave a Google Review
+                  <a
+                    href={googleReviewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => {
+                      // Fire-and-forget: record the click-through without
+                      // blocking or preventing the navigation to Google.
+                      if (responseId) {
+                        void recordSurveyGoogleReviewClick(responseId);
+                      }
+                    }}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Leave a Google Review
+                  </a>
                 </Button>
               </div>
             )}

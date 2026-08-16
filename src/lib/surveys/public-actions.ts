@@ -1,15 +1,28 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { after } from "next/server";
 import { z } from "zod";
-import type {
-  Question,
-  SurveyBranding,
-  ThankYouConfig,
-} from "@/types/survey.types";
-import { applyAutoApprovalRules } from "@/lib/reviews/actions";
+import {
+  normalizeBranding,
+  normalizeQuestions,
+  normalizeThankYouConfig,
+} from "./row-parsers";
+import { publishReviewIfClean } from "@/lib/reviews/publish";
 import { analyzeNewReview } from "@/lib/ai/actions";
+import { emitWebhookEvent } from "@/lib/webhooks/outbound";
 import type { PublicSurvey, ActionResult } from "./public-types";
+
+/**
+ * Build the Google "write a review" deep link for a place id. Mirrors the
+ * validated pattern used by the video high-path share kit — only well-formed
+ * place ids produce a link, everything else yields null (button hidden).
+ */
+function buildGoogleWriteReviewUrl(placeId: string | null | undefined): string | null {
+  if (!placeId) return null;
+  if (!/^[A-Za-z0-9_-]+$/.test(placeId)) return null;
+  return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`;
+}
 
 // Get public survey by token (no auth required)
 export async function getSurveyByToken(
@@ -79,15 +92,7 @@ export async function getSurveyByToken(
     }
 
     // Check if template is active
-    const template = survey.survey_templates as unknown as {
-      id: string;
-      name: string;
-      description: string | null;
-      questions: Question[];
-      branding: SurveyBranding | null;
-      thank_you_config: ThankYouConfig | null;
-      is_active: boolean;
-    };
+    const template = survey.survey_templates;
 
     if (!template.is_active) {
       return { success: false, error: "This survey is no longer available" };
@@ -101,19 +106,10 @@ export async function getSurveyByToken(
         .eq("id", survey.id);
     }
 
-    const loanOfficer = survey.users as unknown as {
-      id: string;
-      full_name: string;
-      photo_url: string | null;
-      title: string | null;
-    };
-
-    const organization = survey.organizations as unknown as {
-      id: string;
-      name: string;
-      logo_url: string | null;
-      primary_color: string | null;
-    };
+    // `organizations` is an inner join so it is always present; `users` is not, because a
+    // survey can be sent without an assigned professional.
+    const loanOfficer = survey.users;
+    const organization = survey.organizations;
 
     // Transform to PublicSurvey format
     const publicSurvey: PublicSurvey = {
@@ -125,10 +121,10 @@ export async function getSurveyByToken(
       expiresAt: survey.expires_at,
       completedAt: survey.completed_at,
       loanOfficer: {
-        id: loanOfficer.id,
-        fullName: loanOfficer.full_name,
-        photoUrl: loanOfficer.photo_url,
-        title: loanOfficer.title,
+        id: loanOfficer?.id ?? "",
+        fullName: loanOfficer?.full_name ?? "",
+        photoUrl: loanOfficer?.photo_url ?? null,
+        title: loanOfficer?.title ?? null,
       },
       organization: {
         id: organization.id,
@@ -140,10 +136,10 @@ export async function getSurveyByToken(
         id: template.id,
         name: template.name,
         description: template.description || undefined,
-        questions: template.questions || [],
-        branding: template.branding || undefined,
-        thankYouConfig: template.thank_you_config || undefined,
-        isActive: template.is_active,
+        questions: normalizeQuestions(template.questions),
+        branding: normalizeBranding(template.branding),
+        thankYouConfig: normalizeThankYouConfig(template.thank_you_config),
+        isActive: template.is_active ?? true,
         isDefault: false,
       },
     };
@@ -172,7 +168,13 @@ export type SubmitSurveyResponseInput = z.infer<typeof submitSurveyResponseSchem
 // Submit a survey response (no auth required)
 export async function submitSurveyResponse(
   input: SubmitSurveyResponseInput
-): Promise<ActionResult<{ responseId: string; showReviewRedirect: boolean }>> {
+): Promise<
+  ActionResult<{
+    responseId: string;
+    showReviewRedirect: boolean;
+    googleReviewUrl: string | null;
+  }>
+> {
   try {
     const validated = submitSurveyResponseSchema.safeParse(input);
     if (!validated.success) {
@@ -194,9 +196,13 @@ export async function submitSurveyResponse(
         status,
         expires_at,
         completed_at,
+        contact_id,
         organization_id,
         user_id,
         template_id,
+        users!user_id (
+          google_place_id
+        ),
         survey_templates!inner (
           thank_you_config
         )
@@ -258,13 +264,30 @@ export async function submitSurveyResponse(
     }
 
     // Update survey status to completed
+    const completedAt = new Date().toISOString();
     await supabase
       .from("surveys")
       .update({
         status: "completed",
-        completed_at: new Date().toISOString(),
+        completed_at: completedAt,
       })
       .eq("id", survey.id);
+
+    after(async () => {
+      await emitWebhookEvent({
+        organizationId: survey.organization_id,
+        type: "survey.completed",
+        data: {
+          survey_id: survey.id,
+          contact_id: survey.contact_id,
+          completed_at: completedAt,
+          rating: overallRating,
+          nps: npsScore,
+        },
+      }).catch((error) => {
+        console.error("Failed to enqueue survey.completed webhook:", error);
+      });
+    });
 
     // Get customer name from survey for review creation
     const { data: surveyDetails } = await supabase
@@ -273,11 +296,16 @@ export async function submitSurveyResponse(
       .eq("id", survey.id)
       .single();
 
-    // Create a review record from the survey response
+    // Create a review record from the survey response. Publish inversion:
+    // machine screening is the only gate — a pass verdict publishes
+    // immediately at any rating; quarantine awaits human release.
     if (overallRating) {
       const reviewText = testimonialText || null;
+      const customerName = surveyDetails?.customer_name || null;
+      const now = new Date().toISOString();
 
-      const { data: newReview, error: reviewError } = await supabase
+      const untypedAdmin = createUntypedAdminClient();
+      const { data: newReview, error: reviewError } = await untypedAdmin
         .from("reviews")
         .insert({
           organization_id: survey.organization_id,
@@ -286,32 +314,42 @@ export async function submitSurveyResponse(
           survey_response_id: response.id,
           rating: overallRating,
           text: reviewText,
-          customer_name: surveyDetails?.customer_name || null,
+          customer_name: customerName,
           status: "pending",
-          review_date: new Date().toISOString(),
+          is_published: false,
+          review_date: now,
         })
         .select("id")
         .single();
 
       if (!reviewError && newReview) {
-        // Apply auto-approval rules
-        await applyAutoApprovalRules(
-          newReview.id,
-          survey.organization_id,
-          overallRating
-        );
+        const reviewId = String((newReview as { id: string }).id);
+
+        if (survey.user_id) {
+          await publishReviewIfClean({
+            reviewId,
+            organizationId: survey.organization_id,
+            ownerUserId: survey.user_id,
+            customerName,
+            rating: overallRating,
+            reviewText,
+            screening: {
+              mode: "compute",
+              text: reviewText ?? "",
+              customerName,
+            },
+          });
+        }
 
         // Trigger AI sentiment analysis (runs async, doesn't block response)
-        analyzeNewReview(newReview.id, reviewText, overallRating).catch((err) =>
+        analyzeNewReview(reviewId, reviewText, overallRating).catch((err) =>
           console.error("Sentiment analysis failed:", err)
         );
       }
     }
 
     // Determine if we should show review redirect
-    const thankYouConfig = (survey.survey_templates as unknown as {
-      thank_you_config: ThankYouConfig | null;
-    }).thank_you_config;
+    const thankYouConfig = normalizeThankYouConfig(survey.survey_templates.thank_you_config);
 
     let showReviewRedirect = false;
     if (thankYouConfig?.showReviewRedirect && thankYouConfig.reviewRedirectRating) {
@@ -326,15 +364,55 @@ export async function submitSurveyResponse(
       }
     }
 
+    // Deep link the promoter to Google's write-a-review flow for this
+    // professional. Only surfaced when we are already showing the redirect
+    // and the professional has a Google place id on file.
+    const professional = survey.users;
+    const googleReviewUrl = showReviewRedirect
+      ? buildGoogleWriteReviewUrl(professional?.google_place_id)
+      : null;
+
     return {
       success: true,
       data: {
         responseId: response.id,
         showReviewRedirect,
+        googleReviewUrl,
       },
     };
   } catch (error) {
     console.error("Error submitting survey response:", error);
     return { success: false, error: "Failed to submit your response" };
+  }
+}
+
+// Record a survey respondent clicking through to the external Google review
+// CTA (no auth — the respondent is anonymous). Fire-and-forget from the client;
+// stamps the first click only. Uses the untyped client because
+// google_review_clicked_at lands with migration 20260707000001 and is not in
+// the generated types yet; a missing column just no-ops gracefully.
+export async function recordSurveyGoogleReviewClick(
+  responseId: string
+): Promise<{ success: boolean }> {
+  if (!responseId) {
+    return { success: false };
+  }
+
+  try {
+    const supabase = createUntypedAdminClient();
+    const { error } = await supabase
+      .from("survey_responses")
+      .update({ google_review_clicked_at: new Date().toISOString() })
+      .eq("id", responseId)
+      .is("google_review_clicked_at", null);
+
+    if (error) {
+      console.error("Error recording survey Google review click:", error);
+      return { success: false };
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error recording survey Google review click:", error);
+    return { success: false };
   }
 }

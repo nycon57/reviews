@@ -27,7 +27,12 @@ function DynamicIcon({
   name: string;
   className?: string;
 }) {
-  const IconComponent = (PhosphorIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[name];
+  // SAFETY: navigation config only ever names Phosphor icon exports, and every
+  // icon export is a component; the handful of non-component exports in the
+  // module (IconContext, SSR helpers) are never referenced by name here.
+  const IconComponent = PhosphorIcons[name as keyof typeof PhosphorIcons] as
+    | React.ComponentType<{ className?: string }>
+    | undefined;
   if (!IconComponent) return null;
   return <IconComponent className={className} />;
 }
@@ -261,21 +266,6 @@ export function MegaMenu() {
         {/* Directory (direct link) */}
         <NavigationMenu.Item>
           <NavLink href="/directory">Directory</NavLink>
-        </NavigationMenu.Item>
-
-        {/* Blog (direct link) */}
-        <NavigationMenu.Item>
-          <NavLink href="/blog">Blog</NavLink>
-        </NavigationMenu.Item>
-
-        {/* About (direct link) */}
-        <NavigationMenu.Item>
-          <NavLink href="/about">About</NavLink>
-        </NavigationMenu.Item>
-
-        {/* Developers (direct link) */}
-        <NavigationMenu.Item>
-          <NavLink href="/developers">Developers</NavLink>
         </NavigationMenu.Item>
 
         {/* Contact (direct link) */}

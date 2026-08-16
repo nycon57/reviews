@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { getStripe } from "@/lib/stripe/server";
 import { PRICING_TIERS, type BillingCycle } from "@/lib/stripe/types";
@@ -29,6 +30,7 @@ interface OnboardingStatusResult {
   selectedPlan?: string | null;
   selectedBillingCycle?: string | null;
   organizationId?: string;
+  accountType?: "individual" | "enterprise";
   shouldSkip?: boolean;
   error?: string;
 }
@@ -44,73 +46,51 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResult> {
     return { success: false, error: "Not authenticated" };
   }
 
-  // Get user's organization ID (enterprise or individual)
+  // Single path (ADR 0006): every account has one organizations row.
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, individual_organization_id")
+    .select("organization_id")
     .eq("id", user.id)
     .single();
 
-  if (userError) {
-    return { success: false, error: "User not found" };
+  if (userError || !userData?.organization_id) {
+    return { success: false, error: "Organization not found" };
   }
 
-  // Enterprise path: use organizations table
-  if (userData?.organization_id) {
-    const { data: orgData, error: orgError } = await supabase
-      .from("organizations")
-      .select("*")
-      .eq("id", userData.organization_id)
-      .single();
+  const { data: orgData, error: orgError } = await supabase
+    .from("organizations")
+    .select("*")
+    .eq("id", userData.organization_id)
+    .single();
 
-    if (orgError) {
-      return { success: false, error: "Organization not found" };
-    }
-
-    const org = orgData as Record<string, unknown> | null;
-
-    return {
-      success: true,
-      status: ((org?.onboarding_status as string) || "pending") as OnboardingStatus,
-      selectedPlan: (org?.selected_plan as string) || null,
-      selectedBillingCycle: (org?.selected_billing_cycle as string) || null,
-      organizationId: userData.organization_id,
-      shouldSkip: false,
-    };
+  if (orgError) {
+    return { success: false, error: "Organization not found" };
   }
 
-  // Individual path: use individual_organizations table
-  if (userData?.individual_organization_id) {
-    const { data: indivOrgData, error: indivOrgError } = await supabase
-      .from("individual_organizations")
-      .select("*")
-      .eq("id", userData.individual_organization_id)
-      .single();
+  const org = orgData as Record<string, unknown> | null;
+  const isIndividual = org?.account_type === "individual";
 
-    if (indivOrgError) {
-      return { success: false, error: "Organization not found" };
-    }
-
-    const indivOrg = indivOrgData as Record<string, unknown> | null;
-
-    return {
-      success: true,
-      // Individual orgs skip plan+payment, go straight to profile
-      status: ((indivOrg?.onboarding_status as string) || "payment_complete") as OnboardingStatus,
-      selectedPlan: "basic",
-      selectedBillingCycle: null,
-      organizationId: userData.individual_organization_id,
-      shouldSkip: false,
-    };
-  }
-
-  return { success: false, error: "Organization not found" };
+  return {
+    success: true,
+    // Individual accounts skip plan + payment and go straight to profile.
+    status: ((org?.onboarding_status as string) ||
+      (isIndividual ? "payment_complete" : "pending")) as OnboardingStatus,
+    selectedPlan: isIndividual ? "basic" : (org?.selected_plan as string) || null,
+    selectedBillingCycle: isIndividual ? null : (org?.selected_billing_cycle as string) || null,
+    organizationId: userData.organization_id,
+    accountType: isIndividual ? "individual" : "enterprise",
+    shouldSkip: false,
+  };
 }
 
 /**
  * Get the redirect path based on current onboarding status
  */
-export async function getOnboardingRedirect(): Promise<{ success: boolean; redirectTo?: string; error?: string }> {
+export async function getOnboardingRedirect(): Promise<{
+  success: boolean;
+  redirectTo?: string;
+  error?: string;
+}> {
   const statusResult = await getOnboardingStatus();
 
   if (!statusResult.success) {
@@ -197,14 +177,15 @@ export async function selectPlan(input: SelectPlanInput): Promise<ActionResult> 
 
   // Record the step completion (using type assertion for untyped table)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
-    .from("onboarding_steps")
-    .upsert({
+  await (adminClient as any).from("onboarding_steps").upsert(
+    {
       organization_id: userData.organization_id,
       step_name: "plan_selection",
       completed_at: new Date().toISOString(),
       data: { plan, billingCycle },
-    }, { onConflict: "organization_id,step_name" });
+    },
+    { onConflict: "organization_id,step_name" }
+  );
 
   revalidatePath("/onboarding");
 
@@ -219,7 +200,7 @@ export async function createOnboardingCheckout(): Promise<{
   success: boolean;
   sessionId?: string;
   url?: string;
-  error?: string
+  error?: string;
 }> {
   const user = await unifiedGetUser();
   const supabase = createAdminClient();
@@ -275,7 +256,7 @@ export async function createOnboardingCheckout(): Promise<{
 
   // Get price ID based on plan and billing cycle
   const billingCycle = (selectedBillingCycle || "month") as BillingCycle;
-  const tier = PRICING_TIERS.find(t => t.id === selectedPlan);
+  const tier = PRICING_TIERS.find((t) => t.id === selectedPlan);
 
   if (!tier) {
     return { success: false, error: "Invalid plan selected" };
@@ -284,13 +265,15 @@ export async function createOnboardingCheckout(): Promise<{
   // Get price ID from environment
   let priceId: string | null = null;
   if (selectedPlan === "basic") {
-    priceId = (billingCycle === "year"
-      ? process.env.STRIPE_BASIC_PRICE_YEARLY
-      : process.env.STRIPE_BASIC_PRICE_MONTHLY) ?? null;
+    priceId =
+      (billingCycle === "year"
+        ? process.env.STRIPE_BASIC_PRICE_YEARLY
+        : process.env.STRIPE_BASIC_PRICE_MONTHLY) ?? null;
   } else if (selectedPlan === "pro") {
-    priceId = (billingCycle === "year"
-      ? process.env.STRIPE_PRO_PRICE_YEARLY
-      : process.env.STRIPE_PRO_PRICE_MONTHLY) ?? null;
+    priceId =
+      (billingCycle === "year"
+        ? process.env.STRIPE_PRO_PRICE_YEARLY
+        : process.env.STRIPE_PRO_PRICE_MONTHLY) ?? null;
   }
 
   if (!priceId) {
@@ -401,14 +384,15 @@ export async function completePaymentStep(sessionId: string): Promise<ActionResu
 
     // Record the step completion (using type assertion for untyped table)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminClient as any)
-      .from("onboarding_steps")
-      .upsert({
+    await (adminClient as any).from("onboarding_steps").upsert(
+      {
         organization_id: userData.organization_id,
         step_name: "payment",
         completed_at: new Date().toISOString(),
         data: { sessionId, subscriptionId: session.subscription },
-      }, { onConflict: "organization_id,step_name" });
+      },
+      { onConflict: "organization_id,step_name" }
+    );
 
     revalidatePath("/onboarding");
     return { success: true, redirectTo: "/onboarding/profile" };
@@ -434,10 +418,10 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
     return { success: false, error: "Not authenticated" };
   }
 
-  // Get user's organization (enterprise or individual)
+  // Single path (ADR 0006): one organizations row; account_type discriminates.
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, individual_organization_id, role")
+    .select("organization_id, role, organizations(account_type)")
     .eq("id", user.id)
     .single();
 
@@ -445,8 +429,9 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
     return { success: false, error: "User not found" };
   }
 
-  const isIndividual = !userData.organization_id && !!userData.individual_organization_id;
-  const orgId = userData.organization_id || userData.individual_organization_id;
+  const orgId = userData.organization_id;
+  const orgAccount = userData.organizations as { account_type?: string } | null;
+  const isIndividual = orgAccount?.account_type === "individual";
 
   if (!orgId) {
     return { success: false, error: "Organization not found" };
@@ -457,19 +442,29 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
   }
 
   const adminClient = createAdminClient();
-  const { organizationName, industry, companySize, address, logoUrl, primaryColor, website, phone, companyEmail } = validated.data;
+  const {
+    organizationName,
+    industry,
+    companySize,
+    address,
+    logoUrl,
+    primaryColor,
+    website,
+    phone,
+    companyEmail,
+  } = validated.data;
 
   if (isIndividual) {
-    // Individual path: update individual_organizations + users table
+    // Individual path: update the organizations row (account_type stays
+    // 'individual') and write the geocoded address to the users table.
     const { error: updateError } = await adminClient
-      .from("individual_organizations")
+      .from("organizations")
       .update({
         name: organizationName,
         website_url: website || null,
         phone: phone || null,
         email: companyEmail || null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onboarding_status: "profile_complete" as any,
+        onboarding_status: "profile_complete",
       })
       .eq("id", orgId);
 
@@ -483,7 +478,7 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
       address.street,
       address.city,
       address.state,
-      address.zip,
+      address.zip
     );
 
     const { error: userUpdateError } = await adminClient
@@ -533,14 +528,15 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
 
   // Record the step completion (using type assertion for untyped table)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
-    .from("onboarding_steps")
-    .upsert({
+  await (adminClient as any).from("onboarding_steps").upsert(
+    {
       organization_id: orgId,
       step_name: "profile",
       completed_at: new Date().toISOString(),
       data: validated.data,
-    }, { onConflict: "organization_id,step_name" });
+    },
+    { onConflict: "organization_id,step_name" }
+  );
 
   revalidatePath("/onboarding");
 
@@ -558,9 +554,10 @@ export async function completeOnboarding(): Promise<ActionResult> {
     return { success: false, error: "Not authenticated" };
   }
 
+  // Single path (ADR 0006): one organizations row; account_type discriminates.
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, individual_organization_id, role")
+    .select("organization_id, role, organizations(account_type)")
     .eq("id", user.id)
     .single();
 
@@ -568,8 +565,9 @@ export async function completeOnboarding(): Promise<ActionResult> {
     return { success: false, error: "User not found" };
   }
 
-  const isIndividual = !userData.organization_id && !!userData.individual_organization_id;
-  const orgId = userData.organization_id || userData.individual_organization_id;
+  const orgId = userData.organization_id;
+  const orgAccount = userData.organizations as { account_type?: string } | null;
+  const isIndividual = orgAccount?.account_type === "individual";
 
   if (!orgId) {
     return { success: false, error: "Organization not found" };
@@ -577,36 +575,25 @@ export async function completeOnboarding(): Promise<ActionResult> {
 
   const adminClient = createAdminClient();
 
-  if (isIndividual) {
-    // Individual path: update individual_organizations
-    await adminClient
-      .from("individual_organizations")
-      .update({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onboarding_status: "completed" as any,
-      })
-      .eq("id", orgId);
-  } else {
-    // Enterprise path: update organizations
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminClient as any)
-      .from("organizations")
-      .update({
-        onboarding_status: "completed",
-        onboarding_completed_at: new Date().toISOString(),
-      })
-      .eq("id", orgId);
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from("organizations")
+    .update({
+      onboarding_status: "completed",
+      onboarding_completed_at: new Date().toISOString(),
+    })
+    .eq("id", orgId);
 
   // Record the step completion (using type assertion for untyped table)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
-    .from("onboarding_steps")
-    .upsert({
+  await (adminClient as any).from("onboarding_steps").upsert(
+    {
       organization_id: orgId,
       step_name: "complete",
       completed_at: new Date().toISOString(),
-    }, { onConflict: "organization_id,step_name" });
+    },
+    { onConflict: "organization_id,step_name" }
+  );
 
   // Start org onboarding email sequence for enterprise admins
   if (!isIndividual && userData.role === "admin") {
@@ -620,6 +607,17 @@ export async function completeOnboarding(): Promise<ActionResult> {
   revalidatePath("/onboarding");
   revalidatePath("/dashboard");
 
+  void capturePostHogEvent({
+    distinctId: user.id,
+    event: "onboarding_completed",
+    properties: {
+      account_type: orgAccount?.account_type ?? "unknown",
+      role: userData.role,
+    },
+    groups: { organization: orgId },
+    logContext: "onboarding completed",
+  });
+
   return { success: true, redirectTo: "/dashboard" };
 }
 
@@ -628,6 +626,11 @@ export async function completeOnboarding(): Promise<ActionResult> {
  * Kept for backwards compatibility but now returns error
  */
 export async function skipPayment(): Promise<ActionResult> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
   return { success: false, error: "Payment required for all plans" };
 }
 
@@ -666,7 +669,10 @@ export async function uploadLogo(
   // Validate file type
   const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
   if (!allowedTypes.includes(file.type)) {
-    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, SVG, or WebP image." };
+    return {
+      success: false,
+      error: "Invalid file type. Please upload a JPG, PNG, SVG, or WebP image.",
+    };
   }
 
   // Validate file size (5MB max)
@@ -679,12 +685,10 @@ export async function uploadLogo(
   const fileName = `${userData.organization_id}/logo-${Date.now()}.${fileExt}`;
 
   // Upload to Supabase Storage
-  const { error: uploadError } = await supabase.storage
-    .from("logos")
-    .upload(fileName, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
+  const { error: uploadError } = await supabase.storage.from("logos").upload(fileName, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
 
   if (uploadError) {
     console.error("Upload error:", uploadError);
@@ -692,9 +696,9 @@ export async function uploadLogo(
   }
 
   // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from("logos")
-    .getPublicUrl(fileName);
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("logos").getPublicUrl(fileName);
 
   // Fetch old logo URL BEFORE updating (to properly clean up old files)
   const { data: orgData } = await supabase

@@ -49,12 +49,23 @@ export async function expectNoErrorBoundary(page: Page) {
   const hasOverlay = await errorOverlay.isVisible({ timeout: 500 }).catch(() => false);
   expect(hasOverlay, "Next.js error overlay should not be visible").toBe(false);
 
-  // Check for custom error boundary content
-  const errorBoundary = page.locator('[data-testid="error-boundary"], [role="alert"]').first();
+  // Check for custom error boundary content. Do not treat ordinary form
+  // validation/toast live regions (`role="alert"`) as app error boundaries.
+  const errorBoundary = page.locator('[data-testid="error-boundary"]').first();
   const hasError = await errorBoundary.isVisible({ timeout: 500 }).catch(() => false);
   if (hasError) {
     const text = await errorBoundary.textContent();
     expect(hasError, `Error boundary visible with text: ${text}`).toBe(false);
+  }
+
+  const criticalAlert = page
+    .locator('[role="alert"]')
+    .filter({ hasText: /application error|something went wrong|error boundary|unhandled|failed to render/i })
+    .first();
+  const hasCriticalAlert = await criticalAlert.isVisible({ timeout: 500 }).catch(() => false);
+  if (hasCriticalAlert) {
+    const text = await criticalAlert.textContent();
+    expect(hasCriticalAlert, `Critical alert visible with text: ${text}`).toBe(false);
   }
 }
 

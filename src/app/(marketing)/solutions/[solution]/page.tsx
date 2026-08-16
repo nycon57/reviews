@@ -7,6 +7,7 @@ import {
 import { getBaseUrl } from "@/lib/seo";
 import { buildSolutionBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
 import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
+import { StructuredData } from "@/components/seo/structured-data";
 import { SolutionLandingPage } from "./solution-landing-page";
 
 interface PageProps {
@@ -60,11 +61,7 @@ export default async function SolutionPage({ params }: PageProps) {
 
   return (
     <>
-      {/* BreadcrumbList JSON-LD — safe: sourced from static build-time solution config */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-      />
+      <StructuredData data={schema} />
       <MarketingBreadcrumbs items={items} />
       <SolutionLandingPage config={config} />
     </>

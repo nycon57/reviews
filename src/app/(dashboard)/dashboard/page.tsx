@@ -1,6 +1,13 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { DashboardEntrance } from "@/components/dashboard/dashboard-entrance";
-import { StatsRowSkeleton, ReviewListSkeleton, CardSkeleton, EmptyState } from "@/components/shared";
+import {
+  StatsRowSkeleton,
+  ReviewListSkeleton,
+  CardSkeleton,
+  EmptyState,
+  WelcomeBanner,
+} from "@/components/shared";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import {
   UserStatsCards,
@@ -16,12 +23,18 @@ import {
   getUserMetrics,
   getUserRecentReviews,
 } from "@/lib/dashboard";
+import { getActivationChecklistState } from "@/lib/dashboard/activation-checklist";
+import { getProfileCompletionScore } from "@/lib/gamification/profile-completion-actions";
+import type { ProfileCompletionScore } from "@/lib/gamification/profile-completion-types";
 import { getCurrentUser } from "@/lib/users/actions";
+import type { User } from "@/lib/users/types";
 
 export const metadata = {
   title: "Dashboard | RepWell",
   description: "Your RepWell dashboard overview",
 };
+
+const ACTIVATION_DISMISSED_COOKIE = "repwell_activation_dismissed";
 
 // Check if user is new (no data yet)
 function isNewUser(metrics: { totalReviews: number; averageRating: number; npsScore: number; responseRate: number }) {
@@ -38,9 +51,9 @@ async function DashboardStats() {
       <EmptyState
         iconName="bar-chart"
         title="Your stats will appear here"
-        description="Once you start collecting reviews and survey responses, you'll see your performance metrics displayed here."
+        description="Once you start collecting reviews and request responses, you'll see your performance metrics displayed here."
         actions={[
-          { label: "Send Your First Survey", href: "/dashboard/reviews?tab=requests", iconName: "send" },
+          { label: "Send your first review request", href: "/dashboard/reviews?tab=requests", iconName: "send" },
           { label: "Import Reviews", href: "/dashboard/reviews", variant: "outline" },
         ]}
       />
@@ -58,20 +71,58 @@ async function RecentReviewsList() {
   return <UserRecentReviews initialReviews={result.success ? (result.data || []) : []} />;
 }
 
-function FullProfileCompletionCard() {
-  return <ProfileCompletionCard showMilestones showTips />;
+function FullProfileCompletionCard({
+  initialData,
+}: {
+  initialData: ProfileCompletionScore | null;
+}) {
+  return <ProfileCompletionCard showMilestones showTips initialData={initialData} />;
 }
 
+async function ActivationChecklist({
+  user,
+  profilePercent,
+}: {
+  user: User;
+  profilePercent: number;
+}) {
+  const steps = await getActivationChecklistState(user, profilePercent);
+
+  return (
+    <WelcomeBanner
+      userName={user.fullName ?? undefined}
+      steps={steps}
+    />
+  );
+}
 
 export default async function DashboardPage() {
   const userResult = await getCurrentUser();
   const user = userResult.success ? userResult.data : null;
   const userName = user?.fullName ?? null;
+  const userId = user?.id ?? null;
+  const [cookieStore, profileCompletionResult] = await Promise.all([
+    cookies(),
+    user ? getProfileCompletionScore(user.id) : Promise.resolve(null),
+  ]);
+  const activationDismissed =
+    cookieStore.get(ACTIVATION_DISMISSED_COOKIE)?.value === "1";
+  const profileCompletion =
+    profileCompletionResult?.success && profileCompletionResult.data
+      ? profileCompletionResult.data
+      : null;
+  const profilePercent = profileCompletion?.percentage ?? 0;
 
   return (
     <DashboardEntrance className="flex-1 space-y-8">
       {/* Page header with Send Review Request CTA */}
-      <DashboardHeader userName={userName} />
+      <DashboardHeader userName={userName} userId={userId} />
+
+      {user && !activationDismissed && (
+        <Suspense fallback={null}>
+          <ActivationChecklist user={user} profilePercent={profilePercent} />
+        </Suspense>
+      )}
 
       {/* Stats cards */}
       <Suspense fallback={<StatsRowSkeleton />}>
@@ -79,7 +130,7 @@ export default async function DashboardPage() {
       </Suspense>
 
       {/* Quick Actions */}
-      <UserQuickActions profileSlug={user?.slug ?? null} userName={userName} />
+      <UserQuickActions profileSlug={user?.slug ?? null} userName={userName} userId={userId} />
 
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -99,7 +150,7 @@ export default async function DashboardPage() {
             <GamificationStatsCard layout="vertical" />
           </Suspense>
           <Suspense fallback={<CardSkeleton />}>
-            <FullProfileCompletionCard />
+            <FullProfileCompletionCard initialData={profileCompletion} />
           </Suspense>
         </div>
       </div>

@@ -12,6 +12,7 @@ import {
 import { createSurveyAndQueue } from "@/lib/distribution/actions";
 import { createVideoTestimonialRequest } from "@/lib/video-testimonials/actions";
 import { EmailTemplatePicker } from "@/components/email-builder/email-template-picker";
+import { isValidEmail } from "@/lib/utils";
 import type { RequestType } from "@/lib/requests/bulk-request-types";
 
 interface SingleRequestFormProps {
@@ -35,18 +36,49 @@ export function SingleRequestForm({
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [emailTemplate, setEmailTemplate] = useState<{ id: string; name: string } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    customerName?: string;
+    customerEmail?: string;
+  }>({});
 
   const isText = requestType === "text";
-  const canSubmit = Boolean(customerName.trim()) && Boolean(customerEmail.trim());
+  const canSubmit = !isPending;
+
+  function validateForm() {
+    const nextErrors: typeof fieldErrors = {};
+    const trimmedName = customerName.trim();
+    const trimmedEmail = customerEmail.trim();
+
+    if (!trimmedName) {
+      nextErrors.customerName = "Enter the customer's name.";
+    }
+
+    if (!trimmedEmail) {
+      nextErrors.customerEmail = "Enter the customer's email address.";
+    } else if (!isValidEmail(trimmedEmail)) {
+      nextErrors.customerEmail = "Enter a valid email address.";
+    }
+
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
 
   function doSubmit() {
+    if (!validateForm()) {
+      return;
+    }
+
+    const trimmedName = customerName.trim();
+    const trimmedEmail = customerEmail.trim();
+    const trimmedPhone = customerPhone.trim();
+
     startTransition(async () => {
       if (isText) {
         const result = await createSurveyAndQueue({
           loanOfficerId: currentUserId,
-          customerName,
-          customerEmail,
-          customerPhone: customerPhone || undefined,
+          customerName: trimmedName,
+          customerEmail: trimmedEmail,
+          customerPhone: trimmedPhone || undefined,
           sendImmediately: true,
           customTemplateId: emailTemplate?.id,
         });
@@ -54,9 +86,9 @@ export function SingleRequestForm({
       } else {
         const result = await createVideoTestimonialRequest({
           loanOfficerId: currentUserId,
-          customerName,
-          customerEmail,
-          customerPhone: customerPhone || undefined,
+          customerName: trimmedName,
+          customerEmail: trimmedEmail,
+          customerPhone: trimmedPhone || undefined,
           sendImmediately: true,
           maxDurationSeconds: 120,
         });
@@ -75,12 +107,13 @@ export function SingleRequestForm({
       setCustomerEmail("");
       setCustomerPhone("");
       setEmailTemplate(null);
+      setFieldErrors({});
       onClose();
       onSuccess();
     } else {
       toast({
         title: "Error",
-        description: result.error || "Failed to send request",
+        description: result.error || "Failed to send review request",
         variant: "destructive",
       });
     }
@@ -94,9 +127,29 @@ export function SingleRequestForm({
         <Input
           id="req-customer-name"
           value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
+          onChange={(e) => {
+            setCustomerName(e.target.value);
+            if (fieldErrors.customerName) {
+              setFieldErrors((prev) => ({ ...prev, customerName: undefined }));
+            }
+          }}
+          onBlur={() => {
+            if (!customerName.trim()) {
+              setFieldErrors((prev) => ({
+                ...prev,
+                customerName: "Enter the customer's name.",
+              }));
+            }
+          }}
           placeholder="John Smith"
+          aria-invalid={Boolean(fieldErrors.customerName)}
+          aria-describedby={fieldErrors.customerName ? "req-customer-name-error" : undefined}
         />
+        {fieldErrors.customerName && (
+          <p id="req-customer-name-error" className="text-xs text-destructive" role="alert">
+            {fieldErrors.customerName}
+          </p>
+        )}
       </div>
 
       {/* Customer Email */}
@@ -106,9 +159,35 @@ export function SingleRequestForm({
           id="req-customer-email"
           type="email"
           value={customerEmail}
-          onChange={(e) => setCustomerEmail(e.target.value)}
+          onChange={(e) => {
+            setCustomerEmail(e.target.value);
+            if (fieldErrors.customerEmail) {
+              setFieldErrors((prev) => ({ ...prev, customerEmail: undefined }));
+            }
+          }}
+          onBlur={() => {
+            const trimmedEmail = customerEmail.trim();
+            if (!trimmedEmail) {
+              setFieldErrors((prev) => ({
+                ...prev,
+                customerEmail: "Enter the customer's email address.",
+              }));
+            } else if (!isValidEmail(trimmedEmail)) {
+              setFieldErrors((prev) => ({
+                ...prev,
+                customerEmail: "Enter a valid email address.",
+              }));
+            }
+          }}
           placeholder="john@example.com"
+          aria-invalid={Boolean(fieldErrors.customerEmail)}
+          aria-describedby={fieldErrors.customerEmail ? "req-customer-email-error" : undefined}
         />
+        {fieldErrors.customerEmail && (
+          <p id="req-customer-email-error" className="text-xs text-destructive" role="alert">
+            {fieldErrors.customerEmail}
+          </p>
+        )}
       </div>
 
       {/* Customer Phone (optional) */}
@@ -148,7 +227,7 @@ export function SingleRequestForm({
           ) : (
             <PaperPlaneRight weight="duotone" className="mr-2 h-4 w-4" />
           )}
-          Send Request
+          Send review request
         </Button>
       </div>
     </div>

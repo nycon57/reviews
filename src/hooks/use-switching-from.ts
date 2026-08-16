@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { setCookie } from "@/lib/utils/cookies";
 
 // ---------------------------------------------------------------------------
 // Valid competitor slugs for switching_from tracking
@@ -16,16 +17,6 @@ const VALID_SLUGS = new Set([
 const STORAGE_KEY = "rw_switching_from";
 const COOKIE_NAME = "rw_switching_from";
 const COOKIE_MAX_AGE_DAYS = 30;
-
-// ---------------------------------------------------------------------------
-// Cookie helpers
-// ---------------------------------------------------------------------------
-
-function setCookie(name: string, value: string, days: number): void {
-  const maxAge = days * 24 * 60 * 60;
-  const secure = window.location.protocol === "https:" ? ";Secure" : "";
-  document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAge};SameSite=Lax${secure}`;
-}
 
 function getCookie(name: string): string | null {
   const match = document.cookie.match(
@@ -93,7 +84,9 @@ export function useSwitchingFrom(): UseSwitchingFromReturn {
       } catch {
         // localStorage unavailable
       }
-      setCookie(COOKIE_NAME, competitor, COOKIE_MAX_AGE_DAYS);
+      setCookie(COOKIE_NAME, competitor, {
+        maxAge: COOKIE_MAX_AGE_DAYS * 24 * 60 * 60,
+      });
     }
   }, [competitor]);
 
@@ -102,7 +95,7 @@ export function useSwitchingFrom(): UseSwitchingFromReturn {
       if (!competitor) return;
 
       // Push to dataLayer if present (Google Tag Manager / GA4)
-      const win = window as unknown as { dataLayer?: Record<string, unknown>[] };
+      const win = window as typeof window & { dataLayer?: Record<string, unknown>[] };
       if (Array.isArray(win.dataLayer)) {
         win.dataLayer.push({
           event: "cta_click",

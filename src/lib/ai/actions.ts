@@ -1,15 +1,13 @@
-'use server';
-
-import { createAdminClient } from '@/lib/supabase/admin';
-import { unifiedGetUser } from '@/lib/auth/actions';
-import { isAIEnabled } from './client';
-import { analyzeReviewSentiment, analyzeReviewSentimentFallback } from './sentiment';
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
+import { isAIEnabled } from "./client";
+import { analyzeReviewSentiment, analyzeReviewSentimentFallback } from "./sentiment";
 import {
   AI_CONFIG,
   type SentimentAnalysisResult,
   type BatchAnalysisResult,
   type AnalysisProgress,
-} from './types';
+} from "./types";
 
 interface ActionResult<T = void> {
   success: boolean;
@@ -45,7 +43,7 @@ export async function analyzeNewReview(
     const adminClient = createAdminClient();
 
     await adminClient
-      .from('reviews')
+      .from("reviews")
       .update({
         sentiment_score: analysis.sentimentScore,
         sentiment_label: analysis.sentimentLabel,
@@ -53,7 +51,7 @@ export async function analyzeNewReview(
         themes: analysis.themes,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', reviewId);
+      .eq("id", reviewId);
   } catch (error) {
     // Log error but don't throw - sentiment analysis shouldn't block review creation
     console.error(`Failed to analyze review ${reviewId}:`, error);
@@ -64,19 +62,19 @@ export async function analyzeNewReview(
 async function getAuthContext() {
   const user = await unifiedGetUser();
   if (!user) {
-    return { error: 'Unauthorized' };
+    return { error: "Unauthorized" };
   }
 
   const supabase = createAdminClient();
   // Get user with organization
   const { data: dbUser, error: userError } = await supabase
-    .from('users')
-    .select('id, organization_id, role')
-    .eq('id', user.id)
+    .from("users")
+    .select("id, organization_id, role")
+    .eq("id", user.id)
     .single();
 
   if (userError || !dbUser?.organization_id) {
-    return { error: 'User not found or no organization' };
+    return { error: "User not found or no organization" };
   }
 
   return {
@@ -92,7 +90,7 @@ export async function analyzeReview(
   reviewId: string
 ): Promise<ActionResult<SentimentAnalysisResult>> {
   const context = await getAuthContext();
-  if ('error' in context) {
+  if ("error" in context) {
     return { success: false, error: context.error };
   }
 
@@ -101,23 +99,23 @@ export async function analyzeReview(
   try {
     // Fetch the review
     const { data: review, error: fetchError } = await supabase
-      .from('reviews')
-      .select('id, text, rating, sentiment_score')
-      .eq('id', reviewId)
-      .eq('organization_id', organizationId)
+      .from("reviews")
+      .select("id, text, rating, sentiment_score")
+      .eq("id", reviewId)
+      .eq("organization_id", organizationId)
       .single();
 
     if (fetchError || !review) {
-      return { success: false, error: 'Review not found' };
+      return { success: false, error: "Review not found" };
     }
 
     if (!review.text) {
-      return { success: false, error: 'Review has no text to analyze' };
+      return { success: false, error: "Review has no text to analyze" };
     }
 
     // Check if already analyzed
     if (review.sentiment_score !== null) {
-      return { success: false, error: 'Review already analyzed' };
+      return { success: false, error: "Review already analyzed" };
     }
 
     // Analyze sentiment
@@ -131,7 +129,7 @@ export async function analyzeReview(
 
     // Update the review
     const { error: updateError } = await supabase
-      .from('reviews')
+      .from("reviews")
       .update({
         sentiment_score: analysis.sentimentScore,
         sentiment_label: analysis.sentimentLabel,
@@ -139,20 +137,20 @@ export async function analyzeReview(
         themes: analysis.themes,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', reviewId)
-      .eq('organization_id', organizationId);
+      .eq("id", reviewId)
+      .eq("organization_id", organizationId);
 
     if (updateError) {
-      console.error('Failed to update review:', updateError);
-      return { success: false, error: 'Failed to save analysis results' };
+      console.error("Failed to update review:", updateError);
+      return { success: false, error: "Failed to save analysis results" };
     }
 
     return { success: true, data: analysis };
   } catch (error) {
-    console.error('Review analysis failed:', error);
+    console.error("Review analysis failed:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Analysis failed',
+      error: error instanceof Error ? error.message : "Analysis failed",
     };
   }
 }
@@ -163,13 +161,13 @@ export async function analyzeReviewText(
   rating?: number
 ): Promise<ActionResult<SentimentAnalysisResult>> {
   const context = await getAuthContext();
-  if ('error' in context) {
+  if ("error" in context) {
     return { success: false, error: context.error };
   }
 
   try {
     if (!text || text.trim().length === 0) {
-      return { success: false, error: 'No text provided' };
+      return { success: false, error: "No text provided" };
     }
 
     let analysis: SentimentAnalysisResult;
@@ -182,10 +180,10 @@ export async function analyzeReviewText(
 
     return { success: true, data: analysis };
   } catch (error) {
-    console.error('Text analysis failed:', error);
+    console.error("Text analysis failed:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Analysis failed',
+      error: error instanceof Error ? error.message : "Analysis failed",
     };
   }
 }
@@ -195,7 +193,7 @@ export async function getUnanalyzedReviews(
   limit: number = 100
 ): Promise<ActionResult<{ id: string; text: string; rating: number }[]>> {
   const context = await getAuthContext();
-  if ('error' in context) {
+  if ("error" in context) {
     return { success: false, error: context.error };
   }
 
@@ -203,29 +201,30 @@ export async function getUnanalyzedReviews(
 
   try {
     const { data: reviews, error } = await supabase
-      .from('reviews')
-      .select('id, text, rating')
-      .eq('organization_id', organizationId)
-      .is('sentiment_score', null)
-      .not('text', 'is', null)
-      .order('created_at', { ascending: false })
+      .from("reviews")
+      .select("id, text, rating")
+      .eq("organization_id", organizationId)
+      .is("sentiment_score", null)
+      .not("text", "is", null)
+      .order("created_at", { ascending: false })
       .limit(limit);
 
     if (error) {
-      console.error('Failed to fetch unanalyzed reviews:', error);
-      return { success: false, error: 'Failed to fetch reviews' };
+      console.error("Failed to fetch unanalyzed reviews:", error);
+      return { success: false, error: "Failed to fetch reviews" };
     }
 
     // Filter to ensure we only return reviews with non-null text
-    const validReviews = (reviews || [])
-      .filter((r): r is { id: string; text: string; rating: number } => r.text !== null);
+    const validReviews = (reviews || []).filter(
+      (r): r is { id: string; text: string; rating: number } => r.text !== null
+    );
 
     return { success: true, data: validReviews };
   } catch (error) {
-    console.error('Failed to get unanalyzed reviews:', error);
+    console.error("Failed to get unanalyzed reviews:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch reviews',
+      error: error instanceof Error ? error.message : "Failed to fetch reviews",
     };
   }
 }
@@ -235,14 +234,14 @@ export async function batchAnalyzeReviews(
   reviewIds: string[]
 ): Promise<ActionResult<BatchAnalysisResult[]>> {
   const context = await getAuthContext();
-  if ('error' in context) {
+  if ("error" in context) {
     return { success: false, error: context.error };
   }
 
   const { supabase, organizationId } = context;
 
   if (!reviewIds || reviewIds.length === 0) {
-    return { success: false, error: 'No review IDs provided' };
+    return { success: false, error: "No review IDs provided" };
   }
 
   // Limit batch size
@@ -252,13 +251,13 @@ export async function batchAnalyzeReviews(
   try {
     // Fetch reviews
     const { data: reviews, error: fetchError } = await supabase
-      .from('reviews')
-      .select('id, text, rating')
-      .eq('organization_id', organizationId)
-      .in('id', idsToProcess);
+      .from("reviews")
+      .select("id, text, rating")
+      .eq("organization_id", organizationId)
+      .in("id", idsToProcess);
 
     if (fetchError || !reviews) {
-      return { success: false, error: 'Failed to fetch reviews' };
+      return { success: false, error: "Failed to fetch reviews" };
     }
 
     // Process each review
@@ -267,7 +266,7 @@ export async function batchAnalyzeReviews(
         results.push({
           reviewId: review.id,
           analysis: null,
-          error: 'No text to analyze',
+          error: "No text to analyze",
         });
         continue;
       }
@@ -283,7 +282,7 @@ export async function batchAnalyzeReviews(
 
         // Update the review
         const { error: updateError } = await supabase
-          .from('reviews')
+          .from("reviews")
           .update({
             sentiment_score: analysis.sentimentScore,
             sentiment_label: analysis.sentimentLabel,
@@ -291,14 +290,14 @@ export async function batchAnalyzeReviews(
             themes: analysis.themes,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', review.id)
-          .eq('organization_id', organizationId);
+          .eq("id", review.id)
+          .eq("organization_id", organizationId);
 
         if (updateError) {
           results.push({
             reviewId: review.id,
             analysis: null,
-            error: 'Failed to save analysis',
+            error: "Failed to save analysis",
           });
         } else {
           results.push({
@@ -310,7 +309,7 @@ export async function batchAnalyzeReviews(
         results.push({
           reviewId: review.id,
           analysis: null,
-          error: error instanceof Error ? error.message : 'Analysis failed',
+          error: error instanceof Error ? error.message : "Analysis failed",
         });
       }
 
@@ -322,10 +321,10 @@ export async function batchAnalyzeReviews(
 
     return { success: true, data: results };
   } catch (error) {
-    console.error('Batch analysis failed:', error);
+    console.error("Batch analysis failed:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Batch analysis failed',
+      error: error instanceof Error ? error.message : "Batch analysis failed",
     };
   }
 }
@@ -340,7 +339,7 @@ export async function getAnalysisStats(): Promise<
   }>
 > {
   const context = await getAuthContext();
-  if ('error' in context) {
+  if ("error" in context) {
     return { success: false, error: context.error };
   }
 
@@ -349,35 +348,35 @@ export async function getAnalysisStats(): Promise<
   try {
     // Get total count
     const { count: totalCount, error: totalError } = await supabase
-      .from('reviews')
-      .select('id', { count: 'exact', head: true })
-      .eq('organization_id', organizationId)
-      .not('text', 'is', null);
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .not("text", "is", null);
 
     if (totalError) {
-      return { success: false, error: 'Failed to fetch stats' };
+      return { success: false, error: "Failed to fetch stats" };
     }
 
     // Get analyzed count
     const { count: analyzedCount, error: analyzedError } = await supabase
-      .from('reviews')
-      .select('id', { count: 'exact', head: true })
-      .eq('organization_id', organizationId)
-      .not('sentiment_score', 'is', null);
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .not("sentiment_score", "is", null);
 
     if (analyzedError) {
-      return { success: false, error: 'Failed to fetch stats' };
+      return { success: false, error: "Failed to fetch stats" };
     }
 
     // Get breakdown by label
     const { data: labelData, error: labelError } = await supabase
-      .from('reviews')
-      .select('sentiment_label')
-      .eq('organization_id', organizationId)
-      .not('sentiment_label', 'is', null);
+      .from("reviews")
+      .select("sentiment_label")
+      .eq("organization_id", organizationId)
+      .not("sentiment_label", "is", null);
 
     if (labelError) {
-      return { success: false, error: 'Failed to fetch stats' };
+      return { success: false, error: "Failed to fetch stats" };
     }
 
     const byLabel: Record<string, number> = {
@@ -403,20 +402,18 @@ export async function getAnalysisStats(): Promise<
       },
     };
   } catch (error) {
-    console.error('Failed to get analysis stats:', error);
+    console.error("Failed to get analysis stats:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to fetch stats',
+      error: error instanceof Error ? error.message : "Failed to fetch stats",
     };
   }
 }
 
 // Analyze all unanalyzed reviews (batch processing)
-export async function analyzeAllUnanalyzedReviews(): Promise<
-  ActionResult<AnalysisProgress>
-> {
+export async function analyzeAllUnanalyzedReviews(): Promise<ActionResult<AnalysisProgress>> {
   const context = await getAuthContext();
-  if ('error' in context) {
+  if ("error" in context) {
     return { success: false, error: context.error };
   }
 
@@ -425,16 +422,16 @@ export async function analyzeAllUnanalyzedReviews(): Promise<
   try {
     // Get all unanalyzed reviews
     const { data: reviews, error: fetchError } = await supabase
-      .from('reviews')
-      .select('id, text, rating')
-      .eq('organization_id', organizationId)
-      .is('sentiment_score', null)
-      .not('text', 'is', null)
-      .order('created_at', { ascending: false })
+      .from("reviews")
+      .select("id, text, rating")
+      .eq("organization_id", organizationId)
+      .is("sentiment_score", null)
+      .not("text", "is", null)
+      .order("created_at", { ascending: false })
       .limit(100); // Process max 100 at a time
 
     if (fetchError) {
-      return { success: false, error: 'Failed to fetch reviews' };
+      return { success: false, error: "Failed to fetch reviews" };
     }
 
     if (!reviews || reviews.length === 0) {
@@ -479,18 +476,16 @@ export async function analyzeAllUnanalyzedReviews(): Promise<
 
     return { success: true, data: progress };
   } catch (error) {
-    console.error('Bulk analysis failed:', error);
+    console.error("Bulk analysis failed:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Bulk analysis failed',
+      error: error instanceof Error ? error.message : "Bulk analysis failed",
     };
   }
 }
 
 // Check if AI features are available
-export async function checkAIStatus(): Promise<
-  ActionResult<{ enabled: boolean; model: string }>
-> {
+export async function checkAIStatus(): Promise<ActionResult<{ enabled: boolean; model: string }>> {
   return {
     success: true,
     data: {

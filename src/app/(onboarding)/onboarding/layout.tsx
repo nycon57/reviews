@@ -4,6 +4,7 @@ import Image from "next/image";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { OnboardingProgress } from "./onboarding-progress";
+import { BRAND_LOGO_URL, SUPPORT_EMAIL } from "@/lib/brand";
 
 export const metadata = {
   title: "Get Started | RepWell",
@@ -26,13 +27,15 @@ export default async function OnboardingLayout({ children }: OnboardingLayoutPro
   // Get user's organization and onboarding status
   const { data: userData } = await supabase
     .from("users")
-    .select(`
+    .select(
+      `
       organization_id,
       organizations(
         id,
         name
       )
-    `)
+    `
+    )
     .eq("id", user.id)
     .single();
 
@@ -60,7 +63,7 @@ export default async function OnboardingLayout({ children }: OnboardingLayoutPro
   const currentStatus = onboardingStatus;
 
   return (
-    <div className="relative min-h-screen bg-[#f8faf8]">
+    <div className="relative min-h-screen bg-background-subtle">
       {/* Subtle dot-grid pattern overlay */}
       <div
         className="pointer-events-none fixed inset-0 opacity-[0.03]"
@@ -76,31 +79,26 @@ export default async function OnboardingLayout({ children }: OnboardingLayoutPro
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center">
               <Image
-                src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+                src={BRAND_LOGO_URL}
                 alt="RepWell"
                 width={120}
                 height={32}
                 className="h-8 w-auto"
               />
             </Link>
-            <OnboardingProgress
-              currentStatus={currentStatus}
-              selectedPlan={selectedPlan}
-            />
+            <OnboardingProgress currentStatus={currentStatus} selectedPlan={selectedPlan} />
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="relative container mx-auto px-4 py-8 md:py-12">
-        <div className="mx-auto max-w-5xl">
-          {children}
-        </div>
+      <main className="container relative mx-auto px-4 py-8 md:py-12">
+        <div className="mx-auto max-w-5xl">{children}</div>
       </main>
 
       {/* Footer */}
-      <footer className="relative border-t bg-white/50 py-6 mt-auto">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-2">
+      <footer className="relative mt-auto border-t bg-white/50 py-6">
+        <div className="container mx-auto space-y-2 px-4 text-center text-sm text-muted-foreground">
           <div className="flex items-center justify-center gap-2">
             <svg
               className="h-4 w-4 text-repwell-teal-300"
@@ -114,8 +112,8 @@ export default async function OnboardingLayout({ children }: OnboardingLayoutPro
           </div>
           <p>
             Need help? Contact us at{" "}
-            <a href="mailto:support@repwell.io" className="text-repwell-teal-300 hover:underline">
-              support@repwell.io
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-repwell-teal-300 hover:underline">
+              {SUPPORT_EMAIL}
             </a>
           </p>
         </div>

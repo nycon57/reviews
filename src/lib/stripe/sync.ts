@@ -1,6 +1,5 @@
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import type Stripe from "stripe";
-import type { Json } from "@/types/database.types";
 
 // Helper type for accessing subscription properties that may vary between API versions
 type SubscriptionWithPeriods = Stripe.Subscription & {
@@ -250,7 +249,7 @@ export async function syncPaymentMethod(
       card_exp_month: paymentMethod.card?.exp_month || null,
       card_exp_year: paymentMethod.card?.exp_year || null,
       is_default: isDefault,
-      billing_details: (paymentMethod.billing_details || {}) as unknown as Json,
+      billing_details: { ...paymentMethod.billing_details },
       updated_at: new Date().toISOString(),
     },
     {
@@ -290,7 +289,7 @@ export async function logBillingEvent(
     stripe_object_id:
       (event.data.object as { id?: string })?.id || null,
     stripe_object_type: event.data.object?.object || null,
-    data: event.data.object as unknown as Json,
+    data: { ...event.data.object },
     processed_at: new Date().toISOString(),
     error_message: error || null,
   });

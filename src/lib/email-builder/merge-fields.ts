@@ -26,8 +26,8 @@ export const MERGE_FIELDS: MergeFieldDefinition[] = [
   { key: "company_logo_url", label: "Company Logo", category: "organization", example: "https://placehold.co/200x60" },
 
   // Links
-  { key: "survey_link", label: "Survey Link", category: "links", example: "https://app.repwell.ai/s/abc123" },
-  { key: "review_link", label: "Review Link", category: "links", example: "https://app.repwell.ai/r/abc123" },
+  { key: "survey_link", label: "Survey Link", category: "links", example: "https://repwell.ai/s/abc123" },
+  { key: "review_link", label: "Review Link", category: "links", example: "https://repwell.ai/s/xyz789" },
   { key: "unsubscribe_link", label: "Unsubscribe", category: "links", example: "#" },
 ];
 

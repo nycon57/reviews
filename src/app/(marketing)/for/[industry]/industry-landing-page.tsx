@@ -50,8 +50,13 @@ const staggerContainer = {
  * Get Phosphor icon component by name
  */
 function getIconByName(name: string): React.ComponentType<IconProps> {
-  const icons = PhosphorIcons as unknown as Record<string, React.ComponentType<IconProps>>;
-  return icons[name] || Question;
+  // SAFETY: page configs only ever name Phosphor icon exports, and every icon
+  // export is a component; the module's few non-component exports (IconContext,
+  // SSR helpers) are never referenced by name here.
+  const icon = PhosphorIcons[name as keyof typeof PhosphorIcons] as
+    | React.ComponentType<IconProps>
+    | undefined;
+  return icon || Question;
 }
 
 /**
@@ -340,6 +345,8 @@ function HowItWorksSection({ config }: { config: IndustryPageConfig }) {
  * Testimonials Section
  */
 function TestimonialsSection({ config }: { config: IndustryPageConfig }) {
+  if (config.testimonials.length === 0) return null;
+
   return (
     <section className="py-16 md:py-24 lg:py-32 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

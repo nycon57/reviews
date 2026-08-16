@@ -165,7 +165,7 @@ export async function createEmployee(
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/employees");
+  revalidatePath("/dashboard/people");
   return { success: true, data: mapEmployee(data) };
 }
 
@@ -208,7 +208,7 @@ export async function updateEmployee(
     return { success: false, error: "Employee not found" };
   }
 
-  revalidatePath("/dashboard/employees");
+  revalidatePath("/dashboard/people");
   return { success: true, data: mapEmployee(data) };
 }
 
@@ -236,7 +236,7 @@ export async function deleteEmployee(
     return { success: false, error: "Employee not found" };
   }
 
-  revalidatePath("/dashboard/employees");
+  revalidatePath("/dashboard/people");
   return { success: true };
 }
 
@@ -353,7 +353,7 @@ export async function bulkImportEmployees(
     }
   }
 
-  revalidatePath("/dashboard/employees");
+  revalidatePath("/dashboard/people");
   return {
     success: true,
     data: { results, successCount, failureCount },

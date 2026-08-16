@@ -62,46 +62,47 @@ export default async function ProfileSetupPage() {
 
   const supabase = createAdminClient();
 
-  // Check if this is an individual org by looking for the user's org type
+  // One org per account (ADR 0006); account_type discriminates. Individual
+  // accounts keep their address on the users row; enterprise on the org.
   const { data: userRow } = await supabase
     .from("users")
-    .select("organization_id, individual_organization_id, address")
+    .select("organization_id, address, organizations(account_type)")
     .eq("id", user.id)
     .single();
 
-  const isIndividual = !userRow?.organization_id && !!userRow?.individual_organization_id;
+  const isIndividual =
+    (userRow?.organizations as { account_type?: string } | null)?.account_type === "individual";
+
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("*")
+    .eq("id", status.organizationId)
+    .single();
 
   let initialData;
 
   if (isIndividual) {
-    // Individual: fetch from individual_organizations
-    const { data: indivOrgData } = await supabase
-      .from("individual_organizations")
-      .select("name, website_url, phone, email")
-      .eq("id", status.organizationId)
-      .single();
+    const indivOrg = orgData as {
+      name?: string | null;
+      website_url?: string | null;
+      phone?: string | null;
+      email?: string | null;
+    } | null;
 
     const userAddress = userRow?.address as Record<string, string> | null;
 
     initialData = {
-      organizationName: indivOrgData?.name || "",
+      organizationName: indivOrg?.name || "",
       industry: "",
       companySize: "",
       address: userAddress || {},
       logoUrl: "",
       primaryColor: "#52796f",
-      website: indivOrgData?.website_url || "",
-      phone: indivOrgData?.phone || "",
-      companyEmail: indivOrgData?.email || "",
+      website: indivOrg?.website_url || "",
+      phone: indivOrg?.phone || "",
+      companyEmail: indivOrg?.email || "",
     };
   } else {
-    // Enterprise: fetch from organizations
-    const { data: orgData } = await supabase
-      .from("organizations")
-      .select("*")
-      .eq("id", status.organizationId)
-      .single();
-
     const org = orgData as {
       name: string;
       logo_url: string | null;

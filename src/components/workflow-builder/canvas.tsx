@@ -31,6 +31,22 @@ import {
   getNodeFamily,
   isWorkflowNodeType,
 } from "./lib/workflow-types";
+import type {
+  WorkflowEdge as WorkflowEdgeModel,
+  WorkflowNode,
+  WorkflowNodeData,
+} from "./lib/workflow-types";
+
+/** A store node carrying the transient validation flags the canvas paints on top of it. */
+type DecoratedWorkflowNode = Omit<WorkflowNode, "data"> & {
+  data: WorkflowNodeData & {
+    __validationError: string | undefined;
+    __validationWarning: string | undefined;
+  };
+};
+
+/** The React Flow instance this canvas hands back, carrying its own node and edge types. */
+export type WorkflowFlowInstance = ReactFlowInstance<DecoratedWorkflowNode, WorkflowEdgeModel>;
 
 interface ValidationByNode {
   error?: string;
@@ -40,7 +56,7 @@ interface ValidationByNode {
 interface WorkflowCanvasProps {
   readOnly?: boolean;
   validationByNode: Map<string, ValidationByNode>;
-  onInit?: (instance: ReactFlowInstance) => void;
+  onInit?: (instance: WorkflowFlowInstance) => void;
 }
 
 function getConditionBranchLabel(connection: Connection, variants: Array<{ name: string; weight: number }> = []): {
@@ -87,7 +103,7 @@ export function WorkflowCanvas({
   const addNode = useWorkflowState((state) => state.addNode);
   const selectNode = useWorkflowState((state) => state.selectNode);
 
-  const instanceRef = useRef<ReactFlowInstance | null>(null);
+  const instanceRef = useRef<WorkflowFlowInstance | null>(null);
 
   const nodeTypes = useMemo(
     () => ({
@@ -95,7 +111,6 @@ export function WorkflowCanvas({
       "trigger-time": TriggerNode,
       "trigger-manual": TriggerNode,
       "action-email": ActionNode,
-      "action-sms": ActionNode,
       "action-smart": ActionNode,
       "condition-ifelse": ConditionNode,
       "condition-absplit": ABSplitNode,
@@ -113,7 +128,7 @@ export function WorkflowCanvas({
     []
   );
 
-  const decoratedNodes = useMemo(() => {
+  const decoratedNodes = useMemo<DecoratedWorkflowNode[]>(() => {
     return nodes.map((node) => {
       const validation = validationByNode.get(node.id);
       return {
@@ -261,8 +276,8 @@ export function WorkflowCanvas({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onInit={(instance) => {
-          instanceRef.current = instance as unknown as ReactFlowInstance;
-          onInit?.(instance as unknown as ReactFlowInstance);
+          instanceRef.current = instance;
+          onInit?.(instance);
           requestAnimationFrame(() => {
             instance.fitView({ duration: 300, padding: 0.2 });
           });

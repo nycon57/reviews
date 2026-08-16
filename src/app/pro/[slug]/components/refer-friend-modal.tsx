@@ -88,7 +88,7 @@ export function ReferFriendModal({
   const [error, setError] = useState<string | null>(null);
   const [referrerOpen, setReferrerOpen] = useState(false);
 
-  const defaultMessage = `I'd like to introduce you to ${loanOfficerName}. I think they'd be a great fit for what you're looking for. Take a look at their profile and reviews — I think you'll be impressed.`;
+  const defaultMessage = `I'd like to introduce you to ${loanOfficerName}. I think they'd be a great fit for what you're looking for. Take a look at their profile and reviews. I think you'll be impressed.`;
 
   const form = useForm<ReferralFormData>({
     resolver: zodResolver(referralSchema),

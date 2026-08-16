@@ -1,5 +1,3 @@
-"use server";
-
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TaskCandidate } from "./types";
 
@@ -136,7 +134,7 @@ export async function checkNoRecentRequests(
       title: "Send review requests to keep momentum",
       description:
         "You haven't sent any review requests in the past 7 days. Consistent outreach drives steady review growth.",
-      actionUrl: "/dashboard/surveys/send",
+      actionUrl: "/dashboard/reviews?tab=requests",
     },
   ];
 }
@@ -185,7 +183,7 @@ export async function checkSurveyVelocityDecline(
       priority: "medium",
       title: `Review requests down ${pctBelow}% from last week`,
       description: `You sent ${thisCount} this week vs ${lastCount} last week. Consistent outreach drives steady growth.`,
-      actionUrl: "/dashboard/surveys/send",
+      actionUrl: "/dashboard/reviews?tab=requests",
       metadata: { thisCount, lastCount, pctBelow },
     },
   ];
@@ -255,19 +253,13 @@ export async function checkRatingImprovement(
 
   const recent = ratingData.filter((r) => new Date(r.review_date) >= thirtyDaysAgo);
   const older = ratingData.filter(
-    (r) =>
-      new Date(r.review_date) < thirtyDaysAgo &&
-      new Date(r.review_date) >= sixtyDaysAgo
+    (r) => new Date(r.review_date) < thirtyDaysAgo && new Date(r.review_date) >= sixtyDaysAgo
   );
 
   const recentAvg =
-    recent.length > 0
-      ? recent.reduce((sum, r) => sum + r.rating!, 0) / recent.length
-      : 0;
+    recent.length > 0 ? recent.reduce((sum, r) => sum + r.rating!, 0) / recent.length : 0;
   const olderAvg =
-    older.length > 0
-      ? older.reduce((sum, r) => sum + r.rating!, 0) / older.length
-      : 0;
+    older.length > 0 ? older.reduce((sum, r) => sum + r.rating!, 0) / older.length : 0;
 
   if (olderAvg === 0 || recentAvg <= olderAvg + 0.2) return [];
 

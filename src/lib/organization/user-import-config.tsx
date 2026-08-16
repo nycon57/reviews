@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { WarningCircle } from "@phosphor-icons/react";
 import type { CsvImportConfig } from "@/components/shared/csv-import-wizard";
@@ -10,6 +12,23 @@ import {
 import { validateImportData, bulkImportUsers } from "./bulk-import-actions";
 import { CSV_FIELDS, MAX_IMPORT_ROWS } from "./bulk-import-types";
 import type { CSVFieldKey, ParsedUserData } from "./bulk-import-types";
+
+/**
+ * The wizard hands validated rows back as opaque records, so read the import fields off them by
+ * name. Each field falls back rather than throwing — `validateImportData` already rejected the
+ * rows that are missing required values.
+ */
+const parsedUserDataSchema = z.object({
+  email: z.string().catch(""),
+  full_name: z.string().catch(""),
+  role: z.string().catch(""),
+  phone: z.string().optional().catch(undefined),
+  title: z.string().optional().catch(undefined),
+  nmls_id: z.string().optional().catch(undefined),
+  branch_name: z.string().optional().catch(undefined),
+  manager_email: z.string().optional().catch(undefined),
+  hire_date: z.string().optional().catch(undefined),
+});
 
 export function createUserImportConfig(): CsvImportConfig {
   let tierInfo = { exceeded: false, remaining: 0 };
@@ -78,7 +97,7 @@ export function createUserImportConfig(): CsvImportConfig {
     import: async (_mappedRows, validation) => {
       const validRows = validation.rows
         .filter((r) => r.status !== "error")
-        .map((r) => r.data as unknown as ParsedUserData);
+        .map((r) => parsedUserDataSchema.parse(r.data));
 
       const toImport = tierInfo.exceeded
         ? validRows.slice(0, Math.max(0, tierInfo.remaining))

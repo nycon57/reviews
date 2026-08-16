@@ -1,13 +1,8 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
-import type { User } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
 import { signOut as betterAuthSignOut, getSession } from "@/lib/auth/auth-client";
-
-// Feature flag for Better Auth migration
-const USE_BETTER_AUTH = process.env.NEXT_PUBLIC_USE_BETTER_AUTH === "true";
 
 // Unified user type that works with both auth systems
 interface AuthUser {
@@ -25,26 +20,13 @@ interface BetterAuthUser {
   image?: string | null;
 }
 
-/**
- * Unified auth hook that supports both Supabase Auth and Better Auth
- * Uses feature flag to determine which auth system to use
- */
 export function useAuth() {
   const router = useRouter();
-
-  // Supabase Auth state
-  const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
-  const [supabaseLoading, setSupabaseLoading] = useState(!USE_BETTER_AUTH);
-  const supabase = useMemo(() => createClient(), []);
-
-  // Better Auth state - only fetched once on mount, not polling
   const [betterAuthUser, setBetterAuthUser] = useState<BetterAuthUser | null>(null);
-  const [betterAuthLoading, setBetterAuthLoading] = useState(USE_BETTER_AUTH);
+  const [betterAuthLoading, setBetterAuthLoading] = useState(true);
 
-  // Fetch Better Auth session once on mount (only when feature flag is enabled)
+  // Fetch Better Auth session once on mount, not polling.
   useEffect(() => {
-    if (!USE_BETTER_AUTH) return;
-
     let mounted = true;
 
     const fetchSession = async () => {
@@ -69,72 +51,26 @@ export function useAuth() {
     };
   }, []);
 
-  // Initialize Supabase auth listener (only when not using Better Auth)
-  useEffect(() => {
-    if (USE_BETTER_AUTH) return;
+  const user: AuthUser | null = betterAuthUser
+    ? {
+        id: betterAuthUser.id,
+        email: betterAuthUser.email,
+        name: betterAuthUser.name,
+        image: betterAuthUser.image,
+      }
+    : null;
 
-    // Get initial user
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setSupabaseUser(user);
-      setSupabaseLoading(false);
-    };
-
-    getUser();
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSupabaseUser(session?.user ?? null);
-      setSupabaseLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase.auth]);
-
-  // Determine current user and loading state based on auth system
-  const user: AuthUser | null = USE_BETTER_AUTH
-    ? betterAuthUser
-      ? {
-          id: betterAuthUser.id,
-          email: betterAuthUser.email,
-          name: betterAuthUser.name,
-          image: betterAuthUser.image,
-        }
-      : null
-    : supabaseUser
-      ? {
-          id: supabaseUser.id,
-          email: supabaseUser.email ?? null,
-          name: supabaseUser.user_metadata?.full_name,
-          image: supabaseUser.user_metadata?.avatar_url,
-        }
-      : null;
-
-  const loading = USE_BETTER_AUTH ? betterAuthLoading : supabaseLoading;
-
-  // Sign out function
   const signOut = async () => {
-    if (USE_BETTER_AUTH) {
-      await betterAuthSignOut();
-    } else {
-      await supabase.auth.signOut();
-    }
+    await betterAuthSignOut();
     router.push("/login");
   };
 
   return {
     user,
-    loading,
+    loading: betterAuthLoading,
     signOut,
     isAuthenticated: !!user,
-    // Expose which auth system is being used (for debugging/logging)
-    authSystem: USE_BETTER_AUTH ? "better-auth" : "supabase",
+    authSystem: "better-auth",
   };
 }
 

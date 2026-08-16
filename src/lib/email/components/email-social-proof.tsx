@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Section, Text, Img, Row, Column } from "@react-email/components";
 import { colors, typography, spacing, layout } from "../theme";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 
 // =============================================================================
 // STAR RATING HELPER COMPONENT
@@ -313,6 +314,7 @@ export function ReviewCard({
   const displayReview = truncate && review.length > maxLength
     ? review.slice(0, maxLength).trim() + "..."
     : review;
+  const sourceLabel = source ? formatReviewSource(source) : null;
 
   // Star display
   const stars = [];
@@ -345,14 +347,14 @@ export function ReviewCard({
         <Column style={{ verticalAlign: "middle" }}>
           {stars}
         </Column>
-        {source && (
+        {sourceLabel && (
           <Column style={{ textAlign: "right", verticalAlign: "middle" }}>
             <Row>
               {sourceIconUrl && (
                 <Column style={{ paddingRight: spacing[1] }}>
                   <Img
                     src={sourceIconUrl}
-                    alt={source}
+                    alt={sourceLabel}
                     width="16"
                     height="16"
                     style={{ verticalAlign: "middle" }}
@@ -369,7 +371,7 @@ export function ReviewCard({
                     verticalAlign: "middle",
                   }}
                 >
-                  {source}
+                  {sourceLabel}
                 </Text>
               </Column>
             </Row>

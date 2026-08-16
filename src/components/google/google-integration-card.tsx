@@ -85,7 +85,7 @@ export function GoogleIntegrationCard() {
         description: 'Your Google Business Profile has been connected successfully.',
       });
       // Clear the URL params
-      router.replace('/dashboard/settings');
+      router.replace('/dashboard/organization?tab=integrations');
     }
 
     if (googleError) {
@@ -94,7 +94,7 @@ export function GoogleIntegrationCard() {
         description: decodeURIComponent(googleError),
         variant: 'destructive',
       });
-      router.replace('/dashboard/settings');
+      router.replace('/dashboard/organization?tab=integrations');
     }
   }, [searchParams, toast, router]);
 

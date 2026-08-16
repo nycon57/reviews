@@ -10,23 +10,14 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   MagnifyingGlass as Search,
-  FileText,
-  Star,
-  Gear as Settings,
-  ChartBar as BarChart3,
   PaperPlaneRight as Send,
-  SquaresFour as LayoutDashboard,
-  TrendUp as TrendingUp,
-  Bell,
-  Users,
-  Question as HelpCircle,
-  Code,
-  Sparkle,
-  ClipboardText,
-  Buildings,
-  Trophy,
+  Plus,
+  Images,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/lib/permissions/context";
+import { PERMISSIONS } from "@/lib/permissions";
+import { ICON_MAP, useFilteredNav, type FilteredNavItem } from "@/lib/nav";
 
 interface SearchResult {
   id: string;
@@ -37,128 +28,40 @@ interface SearchResult {
   category: string;
 }
 
-const quickLinks: SearchResult[] = [
-  {
-    id: "dashboard",
-    title: "Dashboard",
-    description: "Overview and key metrics",
-    href: "/dashboard",
-    icon: LayoutDashboard,
+function navItemToResult(item: FilteredNavItem, category: string): SearchResult {
+  return {
+    id: `nav:${item.href}`,
+    title: item.title,
+    description: category === "Core" ? "Dashboard page" : `${category} page`,
+    href: item.isProLocked ? "/dashboard/organization?tab=billing" : item.href,
+    icon: ICON_MAP[item.icon] ?? Search,
     category: "Pages",
-  },
-  {
-    id: "reviews",
-    title: "Reviews",
-    description: "View and manage all reviews",
-    href: "/dashboard/reviews",
-    icon: Star,
-    category: "Pages",
-  },
-  {
-    id: "analytics",
-    title: "Analytics",
-    description: "View performance metrics",
-    href: "/dashboard/analytics",
-    icon: BarChart3,
-    category: "Pages",
-  },
-  {
-    id: "trends",
-    title: "Trends",
-    description: "Analytics trends over time",
-    href: "/dashboard/analytics/trends",
-    icon: TrendingUp,
-    category: "Pages",
-  },
-  {
-    id: "surveys",
-    title: "Surveys",
-    description: "Create and manage surveys",
-    href: "/dashboard/surveys",
-    icon: FileText,
-    category: "Pages",
-  },
-  {
-    id: "campaigns",
-    title: "Campaigns",
-    description: "Review request campaigns",
-    href: "/dashboard/campaigns",
-    icon: Send,
-    category: "Pages",
-  },
-  {
-    id: "team",
-    title: "Team",
-    description: "Manage team members",
-    href: "/dashboard/team",
-    icon: Users,
-    category: "Pages",
-  },
-  {
-    id: "notifications",
-    title: "Notifications",
-    description: "View all notifications",
-    href: "/dashboard/notifications",
-    icon: Bell,
-    category: "Pages",
-  },
-  {
-    id: "settings",
-    title: "Settings",
-    description: "Account and app settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-    category: "Pages",
-  },
-  {
-    id: "help",
-    title: "Help",
-    description: "Documentation and support",
-    href: "/dashboard/help",
-    icon: HelpCircle,
-    category: "Pages",
-  },
-  {
-    id: "widgets",
-    title: "Widgets",
-    description: "Embeddable review widgets",
-    href: "/dashboard/widgets",
-    icon: Code,
-    category: "Pages",
-  },
-  {
-    id: "insights",
-    title: "AI Insights",
-    description: "AI-powered analysis of your reviews",
-    href: "/dashboard/insights",
-    icon: Sparkle,
-    category: "Pages",
-  },
-  {
-    id: "approvals",
-    title: "Approvals",
-    description: "Review and approve Share Studio edits",
-    href: "/dashboard/approvals",
-    icon: ClipboardText,
-    category: "Pages",
-  },
-  {
-    id: "organization",
-    title: "Organization",
-    description: "Organization settings and branding",
-    href: "/dashboard/organization",
-    icon: Buildings,
-    category: "Pages",
-  },
-  {
-    id: "leaderboard",
-    title: "Leaderboard",
-    description: "Team performance rankings",
-    href: "/dashboard/analytics/leaderboard",
-    icon: Trophy,
-    category: "Pages",
-  },
-];
+  };
+}
+
+function matchesQuery(result: SearchResult, query: string): boolean {
+  const haystack = [result.title, result.description, result.category]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const needle = query.toLowerCase();
+
+  if (haystack.includes(needle)) {
+    return true;
+  }
+
+  let index = 0;
+  for (const character of haystack) {
+    if (character === needle[index]) {
+      index += 1;
+    }
+    if (index === needle.length) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 interface SearchDialogProps {
   open: boolean;
@@ -167,19 +70,67 @@ interface SearchDialogProps {
 
 export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const router = useRouter();
+  const { coreItems, sections, bottomItems } = useFilteredNav();
+  const { hasPermission } = usePermissions();
   const [query, setQuery] = React.useState("");
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  const quickLinks = React.useMemo<SearchResult[]>(() => {
+    const navResults = [
+      ...coreItems.map((item) => navItemToResult(item, "Core")),
+      ...sections.flatMap((section) =>
+        section.items.map((item) => navItemToResult(item, section.label))
+      ),
+      ...bottomItems.map((item) => navItemToResult(item, "Account")),
+    ];
+
+    const actions: SearchResult[] = [
+      ...(hasPermission(PERMISSIONS.SEND_SURVEY)
+        ? [
+            {
+              id: "action:send-review-request",
+              title: "Send review request",
+              description: "Open the review request workflow",
+              href: "/dashboard/reviews?tab=requests",
+              icon: Send,
+              category: "Actions",
+            },
+          ]
+        : []),
+      ...(hasPermission(PERMISSIONS.VIEW_CAMPAIGNS)
+        ? [
+            {
+              id: "action:new-campaign",
+              title: "Create campaign",
+              description: "Start a review request campaign",
+              href: "/dashboard/campaigns",
+              icon: Plus,
+              category: "Actions",
+            },
+          ]
+        : []),
+      ...(hasPermission(PERMISSIONS.VIEW_SHARE_STUDIO)
+        ? [
+            {
+              id: "action:create-social-graphic",
+              title: "Create social graphic",
+              description: "Design a new social proof graphic",
+              href: "/dashboard/social-graphics/new",
+              icon: Images,
+              category: "Actions",
+            },
+          ]
+        : []),
+    ];
+
+    return [...actions, ...navResults];
+  }, [bottomItems, coreItems, hasPermission, sections]);
+
   const filteredResults = React.useMemo(() => {
     if (!query) return quickLinks;
-    const lowerQuery = query.toLowerCase();
-    return quickLinks.filter(
-      (item) =>
-        item.title.toLowerCase().includes(lowerQuery) ||
-        item.description?.toLowerCase().includes(lowerQuery)
-    );
-  }, [query]);
+    return quickLinks.filter((item) => matchesQuery(item, query));
+  }, [query, quickLinks]);
 
   React.useEffect(() => {
     if (open) {

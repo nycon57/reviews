@@ -81,35 +81,34 @@ export async function GET(
   const qKeywords = searchParams.get("keywords");
   const qDateRange = searchParams.get("dateRange");
 
-  const VALID_SORT_ORDERS = ["featured", "newest", "oldest", "highest", "lowest"];
+  const VALID_SORT_ORDERS = ["featured", "newest", "oldest", "highest", "lowest"] as const;
   const VALID_LOAN_TYPES = ["Purchase", "Refinance", "VA", "FHA", "Jumbo", "USDA", "Conventional"];
   const VALID_SOURCES = ["google", "zillow", "internal", "facebook", "yelp"];
 
-  const filters: WidgetConfigJson["filters"] = {
-    ...configFilters,
-    ...(qMinRating
-      ? { minRating: Math.min(5, Math.max(1, parseInt(qMinRating, 10))) }
-      : {}),
-    ...(qSortOrder && VALID_SORT_ORDERS.includes(qSortOrder)
-      ? {
-          sortOrder: qSortOrder as
-            | "featured"
-            | "newest"
-            | "oldest"
-            | "highest"
-            | "lowest",
-        }
-      : {}),
-    ...(qSources
-      ? { sources: qSources.split(",").filter((s) => VALID_SOURCES.includes(s)) }
-      : {}),
-    ...(qLoanTypes
-      ? { loanTypes: qLoanTypes.split(",").filter((t) => VALID_LOAN_TYPES.includes(t)) }
-      : {}),
-    ...(qKeywords
-      ? { keywords: qKeywords.split(",").map((k) => k.replace(/[^a-zA-Z0-9\s-]/g, "").trim()).filter(Boolean).slice(0, 10) }
-      : {}),
-  };
+  const filters: NonNullable<WidgetConfigJson["filters"]> = { ...configFilters };
+
+  if (qMinRating) {
+    filters.minRating = Math.min(5, Math.max(1, parseInt(qMinRating, 10)));
+  }
+  if (qSortOrder) {
+    const sortOrder = VALID_SORT_ORDERS.find((order) => order === qSortOrder);
+    if (sortOrder) {
+      filters.sortOrder = sortOrder;
+    }
+  }
+  if (qSources) {
+    filters.sources = qSources.split(",").filter((s) => VALID_SOURCES.includes(s));
+  }
+  if (qLoanTypes) {
+    filters.loanTypes = qLoanTypes.split(",").filter((t) => VALID_LOAN_TYPES.includes(t));
+  }
+  if (qKeywords) {
+    filters.keywords = qKeywords
+      .split(",")
+      .map((k) => k.replace(/[^a-zA-Z0-9\s-]/g, "").trim())
+      .filter(Boolean)
+      .slice(0, 10);
+  }
 
   // Handle dateRange presets
   if (qDateRange) {

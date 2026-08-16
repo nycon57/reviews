@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -120,22 +120,24 @@ export function BaseNode({
         />
       ))}
 
-      {config.handles.sources.map((handle, index) => (
-        <Handle
-          key={`source:${handle.id}`}
-          id={handle.id}
-          type="source"
-          position={handle.position}
-          style={{
-            ...(handle.position === Position.Top || handle.position === Position.Bottom
-              ? { left: getHandleLeft(index, config.handles.sources.length) }
-              : {}),
-            backgroundColor: toHandleColor(handle.colorClassName),
-          }}
-          className="!h-3 !w-3 !border-2 !border-background !bg-primary"
-          aria-label={handle.label ? `${handle.label} output handle` : "Output handle"}
-        />
-      ))}
+      {config.handles.sources.map((handle, index) => {
+        const style: CSSProperties = { backgroundColor: toHandleColor(handle.colorClassName) };
+        if (handle.position === Position.Top || handle.position === Position.Bottom) {
+          style.left = getHandleLeft(index, config.handles.sources.length);
+        }
+
+        return (
+          <Handle
+            key={`source:${handle.id}`}
+            id={handle.id}
+            type="source"
+            position={handle.position}
+            style={style}
+            className="!h-3 !w-3 !border-2 !border-background !bg-primary"
+            aria-label={handle.label ? `${handle.label} output handle` : "Output handle"}
+          />
+        );
+      })}
 
       {config.handles.sources.some((handle) => handle.label) ? (
         <div className="pointer-events-none absolute -bottom-6 left-0 right-0 flex justify-between px-4 text-[10px] font-medium text-muted-foreground">

@@ -9,7 +9,6 @@ import {
   ThumbsDown,
   ShareNetwork as Share2,
   Trash as Trash2,
-  FilmStrip as Film,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +23,14 @@ import {
 import { cn } from "@/lib/utils";
 import type { VideoTestimonialResponse } from "@/lib/video-testimonials/actions";
 import { useVideoLibrary } from "./video-library-context";
-import { ApprovalStatusBadge, SentimentBadge, formatDuration, formatDate } from "./video-shared";
+import {
+  ApprovalStatusBadge,
+  SentimentBadge,
+  QuarantineBadge,
+  CustomerRatingStars,
+  formatDuration,
+  formatDate,
+} from "./video-shared";
 
 export const VideoCard = memo(function VideoCard({
   video,
@@ -34,8 +40,14 @@ export const VideoCard = memo(function VideoCard({
   const { state, actions } = useVideoLibrary();
   const isSelected = state.selectedIds.has(video.id);
   const [thumbnailError, setThumbnailError] = useState(false);
+  const [videoPreviewError, setVideoPreviewError] = useState(false);
 
   const onClick = () => actions.handleVideoClick(video);
+  const thumbnailUrl = !thumbnailError ? video.thumbnailUrl : null;
+  const videoPreviewUrl =
+    !thumbnailUrl && !videoPreviewError && video.videoPreviewUrl
+      ? `${video.videoPreviewUrl}#t=0.1`
+      : null;
 
   return (
     <Card className={cn(
@@ -52,12 +64,21 @@ export const VideoCard = memo(function VideoCard({
         onKeyDown={(e) => e.key === "Enter" && onClick()}
         aria-label={`View details for ${video.customerName}'s testimonial`}
       >
-        {video.thumbnailUrl && !thumbnailError ? (
+        {thumbnailUrl ? (
           <img
-            src={video.thumbnailUrl}
+            src={thumbnailUrl}
             alt={`Thumbnail for ${video.customerName}'s testimonial`}
             className="h-full w-full object-cover"
             onError={() => setThumbnailError(true)}
+          />
+        ) : videoPreviewUrl ? (
+          <video
+            src={videoPreviewUrl}
+            className="h-full w-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+            onError={() => setVideoPreviewError(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-repwell-teal-300 to-repwell-sage-300">
@@ -109,7 +130,7 @@ export const VideoCard = memo(function VideoCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold text-heading">
+            <h3 className="truncate text-sm font-semibold leading-snug text-heading">
               {video.customerName}
             </h3>
             <p className="truncate text-sm text-muted-foreground">
@@ -165,12 +186,23 @@ export const VideoCard = memo(function VideoCard({
           )}
         </div>
 
-        <div className="mt-3 flex items-center justify-between">
-          <ApprovalStatusBadge status={video.approvalStatus} />
-          <span className="text-xs text-muted-foreground">
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <ApprovalStatusBadge status={video.approvalStatus} />
+            {video.quarantined && <QuarantineBadge />}
+          </div>
+          <span className="shrink-0 text-xs text-muted-foreground">
             {formatDate(video.submittedAt)}
           </span>
         </div>
+
+        {/* Customer rating */}
+        {video.customerRating !== null && (
+          <div className="mt-2 flex items-center gap-1.5 text-xs">
+            <span className="text-muted-foreground">Rating:</span>
+            <CustomerRatingStars rating={video.customerRating} />
+          </div>
+        )}
 
         {/* Sentiment indicator */}
         {video.sentimentLabel && (

@@ -26,6 +26,7 @@ import { buildFirstTimeBuyerBadge } from "../../components/first-time-buyer-badg
 import type { WidgetInstance } from "../../types";
 import { buildFilterControls } from "../shared/filter-controls";
 import { t } from "../../i18n";
+import { formatEmbedSource } from "../../core/source-labels";
 
 function starsRow(rating: number, filledColor: string, emptyColor: string, className: string): HTMLElement {
   const row = el("div", className);
@@ -138,7 +139,7 @@ function buildReviewCard(review: PublicReview, config: PublicWidgetConfig, starF
 
   const tags = el("div", "rw-lo-review__tags");
   let hasTags = false;
-  if (content?.showSource !== false && review.source) { tags.appendChild(text("span", `${t("via")} ${review.source}`, "rw-lo-review__source")); hasTags = true; }
+  if (content?.showSource !== false && review.source) { tags.appendChild(text("span", `${t("via")} ${formatEmbedSource(review.source)}`, "rw-lo-review__source")); hasTags = true; }
   if (review.loan_type) { tags.appendChild(buildLoanTypeTag(review.loan_type, "rw-lo-review")); hasTags = true; }
   if (review.first_time_homebuyer) {
     tags.appendChild(buildFirstTimeBuyerBadge("rw-lo-review__fthb-badge"));
@@ -240,7 +241,7 @@ export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicRevi
     const branding = el("div", "rw-branding");
     branding.textContent = `${t("poweredBy")} `;
     const link = document.createElement("a");
-    link.href = "https://repwell.com";
+    link.href = "https://repwell.ai";
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.textContent = "RepWell";

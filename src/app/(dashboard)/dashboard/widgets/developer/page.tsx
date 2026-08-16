@@ -140,7 +140,7 @@ RepWell.off('my-widget-slug', 'ready', handler);`}
 
           <div className="bg-gray-950 rounded-lg p-4 overflow-x-auto">
             <pre className="text-xs text-gray-300 font-mono leading-relaxed">
-{`<script src="https://app.repwell.com/embed.js" async></script>
+{`<script src="https://repwell.ai/embed.js" async></script>
 <div
   data-repwell-widget="team-reviews"
   data-repwell-entity-type="user"

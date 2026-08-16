@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +16,8 @@ import {
   Book,
   FileText,
   Envelope as Mail,
-  ChatCircle as MessageCircle,
   MagnifyingGlass as Search,
   ArrowSquareOut as ExternalLink,
-  VideoCamera as Video,
-  Lightbulb,
   Shield,
   Gear as Settings,
   Users,
@@ -27,6 +25,7 @@ import {
   PaperPlaneRight as Send,
   Star,
 } from "@phosphor-icons/react";
+import { SECURITY_EMAIL, SUPPORT_EMAIL } from "@/lib/brand";
 
 interface FAQItem {
   id: string;
@@ -38,9 +37,9 @@ interface FAQItem {
 const FAQ_ITEMS: FAQItem[] = [
   {
     id: "1",
-    question: "How do I send a survey to a customer?",
-    answer: "You can send surveys to customers in two ways: 1) Go to 'Send Survey' in the sidebar and fill out the customer details manually, or 2) Use the Distribution Queue to schedule and automate survey delivery. Both methods allow you to select a loan officer and survey template.",
-    category: "surveys",
+    question: "How do I send a review request?",
+    answer: "Use the Send review request button on your dashboard, or open Reviews and choose the Requests tab. From there you can send a text, email, or video request to a contact and track its status.",
+    category: "requests",
   },
   {
     id: "2",
@@ -50,62 +49,63 @@ const FAQ_ITEMS: FAQItem[] = [
   },
   {
     id: "3",
-    question: "How do I invite team members to my organization?",
-    answer: "Navigate to 'Team' in the sidebar (requires Manager or Admin role), click 'Invite Member', enter their email address, select their role (Admin, Manager, or Loan Officer), and send the invitation. They'll receive an email to join your organization.",
-    category: "team",
-  },
-  {
-    id: "4",
-    question: "What's the difference between user roles?",
-    answer: "There are three roles: Admin (full access including billing and organization settings), Manager (can manage team members, view all analytics, and configure surveys), and Loan Officer (can view their own reviews and analytics, and receive customer surveys).",
-    category: "team",
-  },
-  {
-    id: "5",
-    question: "How do I customize survey templates?",
-    answer: "Go to 'Surveys' in the sidebar, then click 'Create Template' or edit an existing one. You can customize the questions, rating scales, and thank-you messages. Templates can be set as active or inactive based on your needs.",
-    category: "surveys",
-  },
-  {
-    id: "6",
-    question: "Can customers leave reviews on external platforms?",
-    answer: "Yes! After completing a survey, customers with high ratings (typically 4-5 stars) are prompted to share their experience on platforms like Google, Zillow, or other review sites you've configured in your organization settings.",
+    question: "Where do I manage reviews, videos, and requests?",
+    answer: "Open Reviews from the sidebar. The hub includes Text Reviews, Videos, Requests, Contacts, Share Studio, and Disputes, depending on your account permissions.",
     category: "reviews",
   },
   {
+    id: "4",
+    question: "How do contacts work?",
+    answer: "Contacts live in the Contacts tab inside Reviews. They are created as you send review or video requests, and you can import contacts when you need to build a list before outreach.",
+    category: "contacts",
+  },
+  {
+    id: "5",
+    question: "How do I invite people to my workspace?",
+    answer: "Enterprise managers and admins can open People from the sidebar to manage members and employees. Individual accounts do not use the People management flow.",
+    category: "people",
+  },
+  {
+    id: "6",
+    question: "What's the difference between user roles?",
+    answer: "Enterprise workspaces use Admin, Manager, and User roles. Admins manage billing and workspace settings, managers can oversee team workflows, and users focus on their own reviews, requests, and profile.",
+    category: "people",
+  },
+  {
     id: "7",
-    question: "How does the reputation score work?",
-    answer: "The reputation score is a composite metric that combines your average rating, NPS score, review volume, and response rate. Higher scores indicate better overall customer satisfaction and engagement. Scores are calculated for each loan officer and aggregated for the team.",
-    category: "analytics",
+    question: "How do I create a survey?",
+    answer: "Open Surveys from the Manage section to create and edit customer feedback surveys. Use EX Surveys for employee experience surveys.",
+    category: "surveys",
   },
   {
     id: "8",
-    question: "What are badges and how do I earn them?",
-    answer: "Badges are achievements earned for hitting milestones like collecting your first review, reaching certain NPS scores, or maintaining high ratings. They appear on your profile and leaderboard, motivating healthy competition within your team.",
-    category: "gamification",
+    question: "Can customers leave reviews on external platforms?",
+    answer: "Yes. You can connect review sources and configure links in Workspace settings so happy customers can continue to platforms like Google, Facebook, and Yelp.",
+    category: "reviews",
   },
   {
     id: "9",
-    question: "How do I schedule automated survey campaigns?",
-    answer: "Go to 'Campaigns' in the sidebar, click 'New Campaign', and configure the timing, target audience, and survey template. You can create one-time campaigns, recurring schedules, or triggered campaigns based on loan events.",
+    question: "How do campaigns work?",
+    answer: "Campaigns combines sequences and email templates. Use it to build outreach workflows, choose audiences, and manage reusable messaging for review request follow-up.",
     category: "campaigns",
   },
   {
     id: "10",
-    question: "How can I export my data?",
-    answer: "Most sections include an 'Export' button that generates a CSV file. You can export reviews, leaderboard rankings, analytics data, and campaign results. For API access or custom integrations, contact our support team.",
+    question: "How can I export or connect my data?",
+    answer: "Use export controls where they appear in Reviews, Analytics, and related tables. For integrations, webhooks, API keys, and billing, open Workspace from the Manage section or contact support.",
     category: "data",
   },
 ];
 
 const CATEGORIES = [
   { id: "all", label: "All Topics", icon: Book },
+  { id: "reviews", label: "Reviews", icon: Star },
+  { id: "requests", label: "Requests", icon: Send },
+  { id: "contacts", label: "Contacts", icon: Users },
+  { id: "people", label: "People", icon: Users },
   { id: "surveys", label: "Surveys", icon: FileText },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "team", label: "Team", icon: Users },
-  { id: "reviews", label: "Reviews", icon: Star },
   { id: "campaigns", label: "Campaigns", icon: Send },
-  { id: "gamification", label: "Gamification", icon: Lightbulb },
   { id: "data", label: "Data & Export", icon: Settings },
 ];
 
@@ -114,20 +114,14 @@ const QUICK_LINKS = [
     title: "Getting Started Guide",
     description: "Learn the basics of RepWell",
     icon: Book,
-    href: "#",
+    href: "/docs/getting-started",
     badge: "New",
-  },
-  {
-    title: "Video Tutorials",
-    description: "Watch step-by-step tutorials",
-    icon: Video,
-    href: "#",
   },
   {
     title: "API Documentation",
     description: "Integrate with your systems",
     icon: FileText,
-    href: "#",
+    href: "/docs/developers",
   },
 ];
 
@@ -136,21 +130,14 @@ const SUPPORT_OPTIONS = [
     title: "Email Support",
     description: "Get help via email within 24 hours",
     icon: Mail,
-    action: "support@repwell.com",
+    action: SUPPORT_EMAIL,
     actionLabel: "Send Email",
-  },
-  {
-    title: "Live Chat",
-    description: "Chat with our support team",
-    icon: MessageCircle,
-    action: "#",
-    actionLabel: "Start Chat",
   },
   {
     title: "Security",
     description: "Report security concerns",
     icon: Shield,
-    action: "security@repwell.com",
+    action: SECURITY_EMAIL,
     actionLabel: "Report Issue",
   },
 ];
@@ -177,6 +164,7 @@ export function HelpCenter() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              aria-label="Search help articles"
               placeholder="Search for help..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -187,31 +175,33 @@ export function HelpCenter() {
       </Card>
 
       {/* Quick links */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {QUICK_LINKS.map((link) => (
-          <Card key={link.title} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <link.icon className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold">{link.title}</h3>
-                    {link.badge && (
-                      <Badge variant="secondary" className="text-xs">
-                        {link.badge}
-                      </Badge>
-                    )}
+          <Link key={link.title} href={link.href} className="block">
+            <Card className="h-full hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <link.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {link.description}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold">{link.title}</h3>
+                      {link.badge && (
+                        <Badge variant="secondary" className="text-xs">
+                          {link.badge}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {link.description}
+                    </p>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
                 </div>
-                <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
@@ -289,7 +279,7 @@ export function HelpCenter() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             {SUPPORT_OPTIONS.map((option) => (
               <div
                 key={option.title}
@@ -319,7 +309,7 @@ export function HelpCenter() {
       <div className="text-center text-sm text-muted-foreground py-4">
         <p>
           Can't find what you're looking for?{" "}
-          <a href="mailto:support@repwell.com" className="text-primary hover:underline">
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-repwell-teal-400 underline">
             Contact support
           </a>{" "}
           and we'll help you out.

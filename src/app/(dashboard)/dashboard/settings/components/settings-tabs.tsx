@@ -1,53 +1,25 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, Suspense } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import {
-  UserCircle,
-  Link as Link2,
-  Key,
-  Plugs,
-} from "@phosphor-icons/react";
-import { cn } from '@/lib/utils';
-import { IntegrationsTab } from './integrations-tab';
-import { ApiTab } from './api-tab';
-import { AccountSettingsPanel, type AccountSubTab } from '@/components/settings/account/account-settings-panel';
-import { WebhookSettingsPanel, type WebhookSubTab } from '@/components/settings/webhooks/webhook-settings-panel';
+  AccountSettingsPanel,
+  type AccountSubTab,
+} from '@/components/settings/account/account-settings-panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfileData } from '@/lib/auth/profile-schemas';
 
-type SettingsTab = 'account' | 'integrations' | 'api' | 'webhooks';
+// Settings is personal-only (ADR 0007 "Me vs Us"). Org-scoped surfaces
+// (billing, integrations, API keys, webhooks) moved to the Workspace and are
+// redirected there in next.config. Only the personal account sub-tabs remain.
+const ACCOUNT_SUB_TABS: AccountSubTab[] = ['profile', 'notifications', 'smart-links'];
 
-const VALID_TABS: SettingsTab[] = ['account', 'integrations', 'api', 'webhooks'];
-
-// Backwards-compat: old tab URL params → consolidated tabs
-const ACCOUNT_SUB_TAB_MAP: Record<string, AccountSubTab> = {
-  'profile': 'profile',
-  'billing': 'billing',
-  'notifications': 'notifications',
-  'smart-links': 'smart-links',
-};
-
-const WEBHOOK_SUB_TAB_MAP: Record<string, WebhookSubTab> = {
-  'webhook-logs': 'logs',
-  'webhook-configs': 'configurations',
-};
-
-function resolveTab(value: string | null): { tab: SettingsTab; accountSubTab?: AccountSubTab; webhookSubTab?: WebhookSubTab } {
-  if (!value) return { tab: 'account' };
-  if (VALID_TABS.includes(value as SettingsTab)) return { tab: value as SettingsTab };
-  if (value in ACCOUNT_SUB_TAB_MAP) return { tab: 'account', accountSubTab: ACCOUNT_SUB_TAB_MAP[value] };
-  if (value in WEBHOOK_SUB_TAB_MAP) return { tab: 'webhooks', webhookSubTab: WEBHOOK_SUB_TAB_MAP[value] };
-  return { tab: 'account' };
+function resolveSubTab(value: string | null): AccountSubTab {
+  if (value && ACCOUNT_SUB_TABS.includes(value as AccountSubTab)) {
+    return value as AccountSubTab;
+  }
+  return 'profile';
 }
-
-const tabs: { value: SettingsTab; label: string; icon: React.ElementType }[] = [
-  { value: 'account', label: 'Account', icon: UserCircle },
-  { value: 'integrations', label: 'Integrations', icon: Link2 },
-  { value: 'api', label: 'API', icon: Key },
-  { value: 'webhooks', label: 'Webhooks', icon: Plugs },
-];
 
 function TabSkeleton() {
   return (
@@ -64,80 +36,13 @@ interface SettingsTabsProps {
   profile: UserProfileData;
 }
 
-export function SettingsTabs({
-  initialTab = 'account',
-  profile,
-}: SettingsTabsProps) {
-  const router = useRouter();
+export function SettingsTabs({ initialTab = 'profile', profile }: SettingsTabsProps) {
   const searchParams = useSearchParams();
-
-  const tabParam = searchParams.get('tab');
-  const { tab: currentTab, accountSubTab, webhookSubTab } = resolveTab(tabParam ?? initialTab);
-
-  const handleTabChange = useCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('tab', value);
-      router.push(`/dashboard/settings?${params.toString()}`, { scroll: false });
-    },
-    [router, searchParams]
-  );
+  const subTab = resolveSubTab(searchParams.get('tab') ?? initialTab);
 
   return (
-    <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-      <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto gap-0 overflow-x-auto flex-nowrap">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <TabsTrigger
-              key={tab.value}
-              value={tab.value}
-              className={cn(
-                'relative px-4 py-3 text-sm font-medium',
-                'text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100/80',
-                'data-[state=active]:text-repwell-teal-300',
-                'border-b-2 border-transparent',
-                'data-[state=active]:border-repwell-teal-300',
-                'rounded-none bg-transparent shadow-none',
-                'transition-colors duration-200',
-                'flex items-center gap-2 whitespace-nowrap'
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {tab.label}
-            </TabsTrigger>
-          );
-        })}
-      </TabsList>
-
-      <div className="mt-6">
-        <TabsContent value="account" className="m-0 animate-fade-in">
-          <Suspense fallback={<TabSkeleton />}>
-            <AccountSettingsPanel
-              initialSubTab={accountSubTab}
-              profile={profile}
-            />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="integrations" className="m-0 animate-fade-in">
-          <Suspense fallback={<TabSkeleton />}>
-            <IntegrationsTab />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="api" className="m-0 animate-fade-in">
-          <Suspense fallback={<TabSkeleton />}>
-            <ApiTab />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="webhooks" className="m-0 animate-fade-in">
-          <Suspense fallback={<TabSkeleton />}>
-            <WebhookSettingsPanel initialSubTab={webhookSubTab} />
-          </Suspense>
-        </TabsContent>
-      </div>
-    </Tabs>
+    <Suspense fallback={<TabSkeleton />}>
+      <AccountSettingsPanel initialSubTab={subTab} profile={profile} />
+    </Suspense>
   );
 }

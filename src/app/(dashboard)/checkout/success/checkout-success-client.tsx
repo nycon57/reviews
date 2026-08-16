@@ -67,7 +67,7 @@ export function CheckoutSuccessClient() {
             <ul className="text-left text-sm text-muted-foreground space-y-2">
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
-                <span>Set up your team members and loan officers</span>
+                <span>Set up your team members and workspace</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
@@ -88,7 +88,7 @@ export function CheckoutSuccessClient() {
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/dashboard/settings?tab=billing">
+              <Link href="/dashboard/organization?tab=billing">
                 View Subscription Details
               </Link>
             </Button>

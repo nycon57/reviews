@@ -1,11 +1,19 @@
 import { MetadataRoute } from "next";
-import { getAllPublicUserSlugs, getAllOrganizationSlugs, getAllPublicBranchSlugs } from "@/lib/seo/actions";
+import {
+  getAllPublicUserSlugs,
+  getAllOrganizationSlugs,
+  getAllPublicBranchSlugs,
+} from "@/lib/seo/actions";
 import { getBaseUrl } from "@/lib/seo";
 import { industryFilterConfig } from "@/components/directory/industry-filter";
 import { competitorSlugs } from "@/lib/competitor-pages";
 import { getAllIntegrationSlugs } from "@/config/integration-pages";
 import { docSections } from "@/lib/docs/content";
 import { getAllCustomerSlugs } from "@/config/customer-pages";
+import { getAllPosts } from "@/lib/blog";
+import { getAllIndustryPageSlugs } from "@/config/industry-pages";
+import { getAllSolutionPageSlugs } from "@/config/solution-pages";
+import { getAllFeaturePageSlugs } from "@/config/feature-pages";
 
 /**
  * Generate dynamic sitemap for SEO
@@ -18,67 +26,144 @@ import { getAllCustomerSlugs } from "@/config/customer-pages";
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl();
-  const now = new Date().toISOString();
+  const toSitemapEntries = (
+    slugs: string[],
+    prefix: string,
+    priority: number
+  ): MetadataRoute.Sitemap =>
+    slugs.map((slug) => ({
+      url: `${baseUrl}/${prefix}/${slug}`,
+      changeFrequency: "weekly" as const,
+      priority,
+    }));
+
+  const [blogPosts, professionalSlugs, orgSlugs, branchSlugs] = await Promise.all([
+    getAllPosts(),
+    getAllPublicUserSlugs(),
+    getAllOrganizationSlugs(),
+    getAllPublicBranchSlugs(),
+  ]);
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: now,
       changeFrequency: "weekly",
       priority: 1.0,
     },
     {
+      url: `${baseUrl}/pricing`,
+      changeFrequency: "weekly",
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/features`,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/compare`,
+      changeFrequency: "weekly",
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/signup`,
+      changeFrequency: "weekly",
+      priority: 0.85,
+    },
+    {
+      url: `${baseUrl}/demo`,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/contact`,
+      changeFrequency: "monthly",
+      priority: 0.75,
+    },
+    {
+      url: `${baseUrl}/about`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: `${baseUrl}/directory`,
-      lastModified: now,
       changeFrequency: "daily",
       priority: 0.95,
     },
     {
       url: `${baseUrl}/pro`,
-      lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/security`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      changeFrequency: "yearly",
+      priority: 0.35,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      changeFrequency: "yearly",
+      priority: 0.35,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      changeFrequency: "weekly",
+      priority: 0.75,
     },
   ];
 
   // Industry directory pages
-  const industryPages: MetadataRoute.Sitemap = Object.values(industryFilterConfig).map(({ slug }) => ({
-    url: `${baseUrl}/directory/${slug}`,
-    lastModified: now,
-    changeFrequency: "daily" as const,
-    priority: 0.9,
-  }));
+  const industryPages: MetadataRoute.Sitemap = Object.values(industryFilterConfig).map(
+    ({ slug }) => ({
+      url: `${baseUrl}/directory/${slug}`,
+      changeFrequency: "daily" as const,
+      priority: 0.9,
+    })
+  );
+
+  // Blog posts
+  const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => {
+    const entry: MetadataRoute.Sitemap[number] = {
+      url: `${baseUrl}/blog/${post.slug}`,
+      changeFrequency: "weekly",
+      priority: 0.65,
+    };
+    if (post.date) entry.lastModified = post.date;
+    return entry;
+  });
+
+  // Industry landing pages
+  const industryLandingPages = toSitemapEntries(getAllIndustryPageSlugs(), "for", 0.75);
+
+  // Solution landing pages
+  const solutionPages = toSitemapEntries(getAllSolutionPageSlugs(), "solutions", 0.75);
+
+  // Feature landing pages
+  const featurePages = toSitemapEntries(getAllFeaturePageSlugs(), "features", 0.75);
 
   // Dynamic professional profile pages (using SEO-friendly slugs)
-  const professionalSlugs = await getAllPublicUserSlugs();
   const professionalPages: MetadataRoute.Sitemap = professionalSlugs.map((slug) => ({
     url: `${baseUrl}/pro/${slug}`,
-    lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
 
   // Organization profile pages
-  const orgSlugs = await getAllOrganizationSlugs();
   const orgPages: MetadataRoute.Sitemap = orgSlugs.map((slug) => ({
     url: `${baseUrl}/org/${slug}`,
-    lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.75,
   }));
 
   // Branch profile pages
-  const branchSlugs = await getAllPublicBranchSlugs();
   const branchPages: MetadataRoute.Sitemap = branchSlugs.map((slug) => ({
     url: `${baseUrl}/branch/${slug}`,
-    lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.7,
   }));
@@ -86,7 +171,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Competitor comparison pages
   const comparisonPages: MetadataRoute.Sitemap = competitorSlugs.map((slug) => ({
     url: `${baseUrl}/compare/${slug}`,
-    lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
@@ -96,14 +180,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const integrationIndexPage: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/integrations`,
-      lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.85,
     },
   ];
   const integrationDetailPages: MetadataRoute.Sitemap = integrationSlugs.map((slug) => ({
     url: `${baseUrl}/integrations/${slug}`,
-    lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
@@ -113,14 +195,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const customerIndexPage: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/customers`,
-      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8,
     },
   ];
   const customerDetailPages: MetadataRoute.Sitemap = customerSlugs.map((slug) => ({
     url: `${baseUrl}/customers/${slug}`,
-    lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.7,
   }));
@@ -129,7 +209,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const docsLandingPage: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/docs`,
-      lastModified: now,
       changeFrequency: "weekly",
       priority: 0.7,
     },
@@ -138,7 +217,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const docsArticlePages: MetadataRoute.Sitemap = docSections.flatMap((section) =>
     section.articles.map((article) => ({
       url: `${baseUrl}/docs/${section.slug}/${article.slug}`,
-      lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.6,
     }))
@@ -148,17 +226,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const developerPages: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/developers`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${baseUrl}/developers/api`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
     },
   ];
 
-  return [...staticPages, ...industryPages, ...comparisonPages, ...integrationIndexPage, ...integrationDetailPages, ...customerIndexPage, ...customerDetailPages, ...professionalPages, ...orgPages, ...branchPages, ...docsLandingPage, ...docsArticlePages, ...developerPages];
+  return [
+    ...staticPages,
+    ...industryPages,
+    ...blogPages,
+    ...industryLandingPages,
+    ...solutionPages,
+    ...featurePages,
+    ...comparisonPages,
+    ...integrationIndexPage,
+    ...integrationDetailPages,
+    ...customerIndexPage,
+    ...customerDetailPages,
+    ...professionalPages,
+    ...orgPages,
+    ...branchPages,
+    ...docsLandingPage,
+    ...docsArticlePages,
+    ...developerPages,
+  ];
 }

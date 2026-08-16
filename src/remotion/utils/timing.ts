@@ -11,6 +11,7 @@ import type {
   ReportSummaryProps,
   SocialClipProps,
 } from "../types";
+import { getPlayedDurationMs } from "../types";
 
 // =============================================================================
 // Constants
@@ -76,6 +77,16 @@ function calculateReadingTime(text: string): number {
 // =============================================================================
 
 /**
+ * Duration of the AI quote highlight segment. Shared by the composition's
+ * sequence layout and the duration calculator; they must agree or the clip
+ * ends with dead frames.
+ */
+export function calculateQuoteDurationSec(quote: string | null): number {
+  if (!quote) return 0;
+  return Math.min(8, Math.max(4, calculateReadingTime(quote)));
+}
+
+/**
  * Calculate total duration for VideoTestimonial composition
  */
 export function calculateVideoTestimonialDuration(
@@ -89,14 +100,12 @@ export function calculateVideoTestimonialDuration(
     totalSeconds += INTRO_DURATION_SEC;
   }
 
-  // Video duration
-  const videoDurationSec = props.videoDurationMs / 1000;
+  // Played video duration (after trim)
+  const videoDurationSec = getPlayedDurationMs(props) / 1000;
   totalSeconds += Math.max(videoDurationSec, MIN_VIDEO_DURATION_SEC);
 
   // AI quote highlight segment (if quote exists)
-  if (props.aiQuote) {
-    totalSeconds += calculateReadingTime(props.aiQuote);
-  }
+  totalSeconds += calculateQuoteDurationSec(props.aiQuote);
 
   // Outro duration
   if (props.showOutro) {

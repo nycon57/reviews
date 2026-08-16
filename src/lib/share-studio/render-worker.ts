@@ -8,8 +8,15 @@ import {
   type ShareStudioVideoFormat,
 } from "@/lib/share-studio/remotion-renderer";
 import { renderStillWithSatori } from "@/lib/share-studio/satori-renderer";
+import {
+  renderClipForResponse,
+  type ClipRenderOptions,
+  type ClipRenderOutcome,
+} from "@/lib/share-studio/clip-renderer";
 
 const RENDER_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+// Clips render the full source video with audio prep; allow longer.
+const CLIP_RENDER_TIMEOUT_MS = 10 * 60 * 1000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -202,8 +209,37 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
   let height = 0;
   let durationSeconds: number | undefined;
   let contentType = "image/png";
+  let appliedOptions: ClipRenderOutcome["appliedOptions"] | null = null;
 
-  if (assetType === "video") {
+  const composition =
+    typeof payload.composition === "string" ? payload.composition : null;
+
+  if (assetType === "video" && composition === "video_testimonial") {
+    // Clip render: full branded testimonial built from the source video.
+    const sourceId = item.source_id as string | null;
+    if (!sourceId) {
+      throw new Error("Clip render job has no source video response");
+    }
+
+    const clipResult = await withTimeout(
+      renderClipForResponse(
+        sourceId,
+        String(processingJob.organization_id),
+        (payload.options as ClipRenderOptions | undefined) ?? {
+          format: requestedFormat === "og" ? "9:16" : requestedFormat,
+        }
+      ),
+      CLIP_RENDER_TIMEOUT_MS,
+      "Clip rendering timed out"
+    );
+
+    localOutputPath = clipResult.outputPath;
+    width = clipResult.width;
+    height = clipResult.height;
+    durationSeconds = clipResult.durationSeconds;
+    contentType = "video/mp4";
+    appliedOptions = clipResult.appliedOptions;
+  } else if (assetType === "video") {
     const videoResult = await withTimeout(
       renderShareStudioVideo({
         input,
@@ -247,6 +283,15 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
     contentType,
   });
 
+  // Only record the keys this render actually produced: `composition` is absent for
+  // non-composited assets and `applied_options` only exists for clip renders.
+  const metadata: Record<string, unknown> = {
+    requested_format: requestedFormat,
+    payload,
+  };
+  if (composition) metadata.composition = composition;
+  if (appliedOptions) metadata.applied_options = appliedOptions;
+
   const { data: asset, error: assetError } = await supabase
     .from("proof_assets")
     .insert({
@@ -261,10 +306,7 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
       width,
       height,
       duration_seconds: durationSeconds ?? null,
-      metadata: {
-        requested_format: requestedFormat,
-        payload,
-      },
+      metadata,
     })
     .select("*")
     .single();

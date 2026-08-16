@@ -275,7 +275,7 @@ function UserMenu({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild className="text-repwell-teal-400 dark:text-repwell-sage-100/80 hover:text-repwell-teal-500 dark:hover:text-repwell-sage-100 hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 cursor-pointer">
-          <Link href="/dashboard/settings?tab=billing" className="flex items-center">
+          <Link href="/dashboard/organization?tab=billing" className="flex items-center">
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Billing</span>
           </Link>

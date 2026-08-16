@@ -4,10 +4,11 @@ import {
   type ResponseTone,
   type ReviewContext,
 } from "@/lib/ai/response-suggestions";
-import { sendReviewResponseEmail } from "@/lib/email/send";
-import { createNotification } from "@/lib/notifications/actions";
+import { createNotification } from "@/lib/notifications/system-actions";
+import { sendReviewResponseConfirmationEmail } from "./response-confirmation";
 import { coerceAutoReplySettings, hasAutoReplyFeature } from "./auto-reply-config";
 import { sanitizeExternalText } from "./utils";
+import { isReviewLive } from "./publish";
 
 interface ProcessResult {
   processed: number;
@@ -20,9 +21,7 @@ interface ProcessResult {
  * Process a batch of auto-reply queue items.
  * Called by the cron endpoint every 15 minutes.
  */
-export async function processAutoReplyBatch(
-  batchSize = 20
-): Promise<ProcessResult> {
+export async function processAutoReplyBatch(batchSize = 20): Promise<ProcessResult> {
   const result: ProcessResult = { processed: 0, failed: 0, skipped: 0, errors: [] };
 
   const supabase = createUntypedAdminClient();
@@ -130,11 +129,12 @@ async function checkSkipConditions(supabase: any, item: any): Promise<boolean> {
   // 3. Check review already has a response
   const { data: review } = await supabase
     .from("reviews")
-    .select("response_text, response_status")
+    .select("response_text, response_status, is_published")
     .eq("id", item.review_id)
     .single();
 
   if (!review) return true;
+  if (!isReviewLive(review)) return true;
   if (review.response_text || review.response_status === "posted") return true;
 
   return false;
@@ -145,13 +145,14 @@ async function processQueueItem(supabase: any, item: any): Promise<void> {
   // Fetch review with context
   const { data: review, error: reviewError } = await supabase
     .from("reviews")
-    .select(`
+    .select(
+      `
       id, source, source_review_id, user_id, customer_name, customer_email,
       rating, text, sentiment_score, sentiment_label, themes, key_phrases,
-      review_date, organization_id,
-      users!user_id(full_name),
-      organizations!inner(name)
-    `)
+      review_date, organization_id, is_published,
+      users!user_id(full_name)
+    `
+    )
     .eq("id", item.review_id)
     .single();
 
@@ -159,20 +160,27 @@ async function processQueueItem(supabase: any, item: any): Promise<void> {
     throw new Error(`Review ${item.review_id} not found`);
   }
 
+  if (!isReviewLive(review)) {
+    throw new Error(`Review ${item.review_id} is not published`);
+  }
+
   const loanOfficer = review.users as { full_name: string } | null;
-  const organization = review.organizations as unknown as { name: string };
 
   // Build review context for AI (sanitize external text to prevent prompt injection)
   const reviewContext: ReviewContext = {
-    text: sanitizeExternalText(review.text ?? ''),
+    text: sanitizeExternalText(review.text ?? ""),
     rating: review.rating,
-    customerName: sanitizeExternalText(review.customer_name ?? ''),
+    customerName: sanitizeExternalText(review.customer_name ?? ""),
     loanOfficerName: loanOfficer?.full_name ?? "Team Member",
     source: review.source,
     sentimentScore: review.sentiment_score,
     sentimentLabel: review.sentiment_label,
-    themes: (review.themes as string[] | null)?.map((t: string) => sanitizeExternalText(t)) as ReviewContext["themes"],
-    keyPhrases: (review.key_phrases as string[] | null)?.map((p: string) => sanitizeExternalText(p)) ?? undefined,
+    themes: (review.themes as string[] | null)?.map((t: string) =>
+      sanitizeExternalText(t)
+    ) as ReviewContext["themes"],
+    keyPhrases:
+      (review.key_phrases as string[] | null)?.map((p: string) => sanitizeExternalText(p)) ??
+      undefined,
   };
 
   // Generate AI response
@@ -233,8 +241,7 @@ async function processQueueItem(supabase: any, item: any): Promise<void> {
     // Calculate response time
     const reviewDate = new Date(review.review_date);
     const responseDate = new Date(now);
-    const responseTimeHours =
-      (responseDate.getTime() - reviewDate.getTime()) / (1000 * 60 * 60);
+    const responseTimeHours = (responseDate.getTime() - reviewDate.getTime()) / (1000 * 60 * 60);
 
     // Insert response analytics
     await supabase.from("response_analytics").insert({
@@ -271,23 +278,14 @@ async function processQueueItem(supabase: any, item: any): Promise<void> {
       }
     }
 
-    // Internal reviews: send response email
-    if (review.source === "internal" && review.customer_email) {
-      await sendReviewResponseEmail({
-        toEmail: review.customer_email,
-        toName: review.customer_name || undefined,
-        customerName: review.customer_name || "Valued Customer",
-        loanOfficerName: loanOfficer?.full_name ?? "Team Member",
-        organizationName: organization.name,
-        originalReviewText: review.text || null,
-        responseText: suggestion.response,
-        rating: review.rating ?? undefined,
-        organizationId: item.organization_id,
-        loanOfficerId: review.user_id,
-      }).catch((err) => {
-        console.error("Auto-reply: failed to send response email:", err);
-      });
-    }
+    await sendReviewResponseConfirmationEmail({
+      reviewId: item.review_id,
+      organizationId: item.organization_id,
+      responseText: suggestion.response,
+      supabase,
+    }).catch((err) => {
+      console.error("Auto-reply: failed to send response confirmation:", err);
+    });
 
     // Send in-app notification to the LO
     await createNotification({

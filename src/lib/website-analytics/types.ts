@@ -132,7 +132,7 @@ export interface PerformanceMetrics {
   largestContentfulPaint: number | null;
   cumulativeLayoutShift: number | null;
   totalBlockingTime: number | null;
-  performanceScore: number;
+  performanceScore: number | null;
 }
 
 // Mobile friendliness
@@ -211,7 +211,7 @@ export interface SEOAuditResult {
   // Score breakdown
   technicalScore: number;
   contentScore: number;
-  performanceScore: number;
+  performanceScore: number | null;
   mobileScore: number;
 
   // Detailed analysis
@@ -241,7 +241,7 @@ export interface WebsiteSEOOverview {
   // Score breakdown
   avgTechnicalScore: number;
   avgContentScore: number;
-  avgPerformanceScore: number;
+  avgPerformanceScore: number | null;
   avgMobileScore: number;
 
   // Page audits

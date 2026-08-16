@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Email Sequence Orchestration Engine - Step Executor
  *
@@ -13,6 +11,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import type {
+  CompletedStep,
   SequenceDefinition,
   SequenceRecord,
   SequenceStep,
@@ -22,11 +21,7 @@ import type {
   ExitCondition,
   ConditionalBranch,
 } from "./types";
-import {
-  evaluateExitConditions,
-  evaluateBranches,
-  defaultCustomEvaluators,
-} from "./conditions";
+import { evaluateExitConditions, evaluateBranches, defaultCustomEvaluators } from "./conditions";
 import { addDelay } from "./utils";
 
 // ============================================================================
@@ -150,9 +145,7 @@ export async function updateSequenceStatus(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from as any)("email_sequences")
-    .update(updateData)
-    .eq("id", sequenceId);
+  await (supabase.from as any)("email_sequences").update(updateData).eq("id", sequenceId);
 }
 
 /**
@@ -168,16 +161,15 @@ export async function updateSequenceAfterSend(
 ): Promise<void> {
   const supabase = createAdminClient();
 
-  const stepsCompleted = [
-    ...sequence.steps_completed,
-    {
-      step,
-      email_id: emailId,
-      sent_at: new Date().toISOString(),
-      template: templateName,
-      ...(variant ? { variant } : {}),
-    },
-  ];
+  const completedStep: CompletedStep = {
+    step,
+    email_id: emailId,
+    sent_at: new Date().toISOString(),
+    template: templateName,
+  };
+  if (variant) completedStep.variant = variant;
+
+  const stepsCompleted = [...sequence.steps_completed, completedStep];
 
   const isComplete = step >= sequence.total_steps;
 
@@ -395,7 +387,9 @@ export async function evaluateStepBranches(
 export async function executeStep(
   sequence: SequenceRecord,
   definition: SequenceDefinition,
-  emailSender: (ctx: EmailContext) => Promise<{ success: boolean; emailId?: string; error?: string }>
+  emailSender: (
+    ctx: EmailContext
+  ) => Promise<{ success: boolean; emailId?: string; error?: string }>
 ): Promise<StepProcessResult> {
   const supabase = createAdminClient();
 
@@ -441,12 +435,7 @@ export async function executeStep(
   // Check step-level exit conditions
   const stepExit = await checkStepExitConditions(sequence, stepConfig);
   if (stepExit) {
-    await updateSequenceStatus(
-      sequence.id,
-      "exited",
-      stepExit.reason,
-      stepExit.milestone
-    );
+    await updateSequenceStatus(sequence.id, "exited", stepExit.reason, stepExit.milestone);
     return { success: true, action: "exited" };
   }
 
@@ -571,7 +560,9 @@ export async function executeStep(
 
   // Calculate next email time
   const followingStepForSend = definition.steps.find((s) => s.step === currentStepNum + 1);
-  const nextEmailAt = followingStepForSend ? addDelay(new Date(), followingStepForSend.delay) : null;
+  const nextEmailAt = followingStepForSend
+    ? addDelay(new Date(), followingStepForSend.delay)
+    : null;
 
   // Update sequence state
   await updateSequenceAfterSend(

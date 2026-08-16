@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import type { ActionResult } from "./types";
 import {
   generateResponseSuggestion,
@@ -10,7 +11,9 @@ import {
   type ResponseTone,
   type ReviewContext,
 } from "@/lib/ai/response-suggestions";
-import { sendReviewResponseEmail } from "@/lib/email/send";
+import { sendReviewResponseConfirmationEmail } from "./response-confirmation";
+import { isReviewLive } from "./publish";
+import { emitWebhookEvent } from "@/lib/webhooks/outbound";
 
 // Response template types
 export interface ResponseTemplate {
@@ -296,6 +299,8 @@ export async function saveDraftResponse(
   }
 
   revalidatePath("/dashboard/all-reviews");
+  revalidatePath("/dashboard/reviews");
+  revalidatePath(`/dashboard/reviews/${reviewId}`);
   revalidatePath("/dashboard/organization");
   return { success: true };
 }
@@ -335,7 +340,7 @@ export async function postResponse(
     .from("reviews")
     .select(`
       id, source, source_review_id, user_id, customer_name, customer_email,
-      sentiment_score, review_date, text,
+      sentiment_score, review_date, text, rating, is_published,
       users!user_id(full_name),
       organizations!inner(name)
     `)
@@ -345,6 +350,13 @@ export async function postResponse(
 
   if (fetchError || !review) {
     return { success: false, error: "Review not found" };
+  }
+
+  if (!isReviewLive(review)) {
+    return {
+      success: false,
+      error: "Only draft responses can be saved until the review is published",
+    };
   }
 
   const now = new Date().toISOString();
@@ -415,29 +427,32 @@ export async function postResponse(
     }
   }
 
-  // Send email notification to reviewer (only for internal reviews with customer email)
-  if (review.source === "internal" && review.customer_email) {
-    const loanOfficer = review.users as { full_name: string } | null;
-    const organization = review.organizations as unknown as { name: string };
+  await sendReviewResponseConfirmationEmail({
+    reviewId,
+    organizationId: context.organizationId,
+    responseText,
+  }).catch((err) => {
+    // Log error but don't fail the response posting
+    console.error("Failed to send review response confirmation:", err);
+  });
 
-    await sendReviewResponseEmail({
-      toEmail: review.customer_email,
-      toName: review.customer_name || undefined,
-      customerName: review.customer_name || "Valued Customer",
-      loanOfficerName: loanOfficer?.full_name ?? "Team Member",
-      organizationName: organization.name,
-      originalReviewText: review.text || null,
-      responseText: responseText,
-      rating: review.rating || 5,
+  after(async () => {
+    await emitWebhookEvent({
       organizationId: context.organizationId,
-      loanOfficerId: review.user_id,
+      type: "review.responded",
+      data: {
+        review_id: reviewId,
+        response_text: responseText,
+        responded_at: now,
+      },
     }).catch((err) => {
-      // Log error but don't fail the response posting
-      console.error("Failed to send review response email:", err);
+      console.error("Failed to enqueue review.responded webhook:", err);
     });
-  }
+  });
 
   revalidatePath("/dashboard/all-reviews");
+  revalidatePath("/dashboard/reviews");
+  revalidatePath(`/dashboard/reviews/${reviewId}`);
   revalidatePath("/dashboard/organization");
   return { success: true };
 }

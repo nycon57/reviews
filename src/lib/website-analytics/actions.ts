@@ -119,12 +119,12 @@ export async function getWebsiteAnalytics(
     const totalSessions = data.reduce((sum, d) => sum + (d.sessions || 0), 0);
 
     // Calculate averages
-    const avgSessionDuration = data.length > 0
-      ? data.reduce((sum, d) => sum + (d.avg_session_duration_seconds || 0), 0) / data.length
-      : 0;
-    const avgBounceRate = data.length > 0
-      ? data.reduce((sum, d) => sum + (d.bounce_rate || 0), 0) / data.length
-      : 0;
+    const avgSessionDuration =
+      data.length > 0
+        ? data.reduce((sum, d) => sum + (d.avg_session_duration_seconds || 0), 0) / data.length
+        : 0;
+    const avgBounceRate =
+      data.length > 0 ? data.reduce((sum, d) => sum + (d.bounce_rate || 0), 0) / data.length : 0;
 
     // Aggregate traffic sources
     const trafficSources: TrafficSourceBreakdown = {
@@ -137,7 +137,7 @@ export async function getWebsiteAnalytics(
     };
 
     data.forEach((d) => {
-      const sources = (d.traffic_sources as unknown as Record<string, number>) || {};
+      const sources: Record<string, number> = d.traffic_sources || {};
       Object.entries(sources).forEach(([key, value]) => {
         if (key in trafficSources) {
           trafficSources[key as keyof TrafficSourceBreakdown] += value;
@@ -148,7 +148,7 @@ export async function getWebsiteAnalytics(
     // Aggregate device breakdown
     const deviceBreakdown: DeviceBreakdown = { desktop: 0, mobile: 0, tablet: 0 };
     data.forEach((d) => {
-      const devices = (d.device_breakdown as unknown as Record<string, number>) || {};
+      const devices: Record<string, number> = d.device_breakdown || {};
       Object.entries(devices).forEach(([key, value]) => {
         if (key in deviceBreakdown) {
           deviceBreakdown[key as keyof DeviceBreakdown] += value;
@@ -159,7 +159,7 @@ export async function getWebsiteAnalytics(
     // Aggregate geographic data
     const geoMap = new Map<string, number>();
     data.forEach((d) => {
-      const geo = (d.geographic_data as unknown as Record<string, number>) || {};
+      const geo: Record<string, number> = d.geographic_data || {};
       Object.entries(geo).forEach(([country, visitors]) => {
         geoMap.set(country, (geoMap.get(country) || 0) + visitors);
       });
@@ -200,7 +200,7 @@ export async function getWebsiteAnalytics(
     // Aggregate search queries
     const queryMap = new Map<string, SearchQueryData>();
     data.forEach((d) => {
-      const queries = (d.search_queries as unknown as SearchQueryData[]) || [];
+      const queries: SearchQueryData[] = d.search_queries || [];
       queries.forEach((q) => {
         const existing = queryMap.get(q.query) || {
           query: q.query,
@@ -245,7 +245,9 @@ export async function getWebsiteAnalytics(
 
     // Calculate period comparison (compare to previous period)
     const previousStart = new Date(start);
-    previousStart.setDate(previousStart.getDate() - (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    previousStart.setDate(
+      previousStart.getDate() - (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
     const { data: previousData } = await supabase
       .from("website_analytics")
@@ -257,13 +259,16 @@ export async function getWebsiteAnalytics(
     const prevPageviews = (previousData || []).reduce((sum, d) => sum + (d.pageviews || 0), 0);
     const prevVisitors = (previousData || []).reduce((sum, d) => sum + (d.unique_visitors || 0), 0);
     const prevSessions = (previousData || []).reduce((sum, d) => sum + (d.sessions || 0), 0);
-    const prevBounceRate = previousData && previousData.length > 0
-      ? previousData.reduce((sum, d) => sum + (d.bounce_rate || 0), 0) / previousData.length
-      : 0;
+    const prevBounceRate =
+      previousData && previousData.length > 0
+        ? previousData.reduce((sum, d) => sum + (d.bounce_rate || 0), 0) / previousData.length
+        : 0;
 
     const periodComparison = {
-      pageviewsChange: prevPageviews > 0 ? ((totalPageviews - prevPageviews) / prevPageviews) * 100 : 0,
-      visitorsChange: prevVisitors > 0 ? ((totalUniqueVisitors - prevVisitors) / prevVisitors) * 100 : 0,
+      pageviewsChange:
+        prevPageviews > 0 ? ((totalPageviews - prevPageviews) / prevPageviews) * 100 : 0,
+      visitorsChange:
+        prevVisitors > 0 ? ((totalUniqueVisitors - prevVisitors) / prevVisitors) * 100 : 0,
       sessionsChange: prevSessions > 0 ? ((totalSessions - prevSessions) / prevSessions) * 100 : 0,
       bounceRateChange: avgBounceRate - prevBounceRate,
     };
@@ -322,7 +327,7 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
     }
 
     // Get unique pages (latest audit per page)
-    const pageAuditMap = new Map<string, typeof audits[0]>();
+    const pageAuditMap = new Map<string, (typeof audits)[0]>();
     (audits || []).forEach((audit) => {
       if (!pageAuditMap.has(audit.page_url)) {
         pageAuditMap.set(audit.page_url, audit);
@@ -340,7 +345,7 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
           scoreChange: null,
           avgTechnicalScore: 0,
           avgContentScore: 0,
-          avgPerformanceScore: 0,
+          avgPerformanceScore: null,
           avgMobileScore: 0,
           totalPagesAudited: 0,
           pagesWithErrors: 0,
@@ -356,11 +361,22 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
 
     // Calculate averages
     const totalPagesAudited = latestAudits.length;
-    const avgScore = latestAudits.reduce((sum, a) => sum + (a.seo_score || 0), 0) / totalPagesAudited;
-    const avgTechnicalScore = latestAudits.reduce((sum, a) => sum + (a.technical_score || 0), 0) / totalPagesAudited;
-    const avgContentScore = latestAudits.reduce((sum, a) => sum + (a.content_score || 0), 0) / totalPagesAudited;
-    const avgPerformanceScore = latestAudits.reduce((sum, a) => sum + (a.performance_score || 0), 0) / totalPagesAudited;
-    const avgMobileScore = latestAudits.reduce((sum, a) => sum + (a.mobile_score || 0), 0) / totalPagesAudited;
+    const avgScore =
+      latestAudits.reduce((sum, a) => sum + (a.seo_score || 0), 0) / totalPagesAudited;
+    const avgTechnicalScore =
+      latestAudits.reduce((sum, a) => sum + (a.technical_score || 0), 0) / totalPagesAudited;
+    const avgContentScore =
+      latestAudits.reduce((sum, a) => sum + (a.content_score || 0), 0) / totalPagesAudited;
+    const measuredPerformanceScores = latestAudits
+      .map((audit) => audit.performance_score)
+      .filter((score): score is number => score !== null && score !== undefined);
+    const avgPerformanceScore =
+      measuredPerformanceScores.length > 0
+        ? measuredPerformanceScores.reduce((sum, score) => sum + score, 0) /
+          measuredPerformanceScores.length
+        : null;
+    const avgMobileScore =
+      latestAudits.reduce((sum, a) => sum + (a.mobile_score || 0), 0) / totalPagesAudited;
 
     // Count pages by status
     let pagesWithErrors = 0;
@@ -368,7 +384,7 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
     let pagesHealthy = 0;
 
     latestAudits.forEach((audit) => {
-      const issues = (audit.issues as unknown as SEOIssue[]) || [];
+      const issues: SEOIssue[] = audit.issues || [];
       const hasErrors = issues.some((i) => i.type === "error");
       const hasWarnings = issues.some((i) => i.type === "warning");
 
@@ -386,8 +402,8 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
     const allRecommendations: SEORecommendation[] = [];
 
     latestAudits.forEach((audit) => {
-      const issues = (audit.issues as unknown as SEOIssue[]) || [];
-      const recommendations = (audit.recommendations as unknown as SEORecommendation[]) || [];
+      const issues: SEOIssue[] = audit.issues || [];
+      const recommendations: SEORecommendation[] = audit.recommendations || [];
       allIssues.push(...issues);
       allRecommendations.push(...recommendations);
     });
@@ -448,7 +464,9 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
         titleLength: audit.meta_title_length,
         descriptionLength: audit.meta_description_length,
         titleOptimal: (audit.meta_title_length || 0) >= 30 && (audit.meta_title_length || 0) <= 60,
-        descriptionOptimal: (audit.meta_description_length || 0) >= 120 && (audit.meta_description_length || 0) <= 160,
+        descriptionOptimal:
+          (audit.meta_description_length || 0) >= 120 &&
+          (audit.meta_description_length || 0) <= 160,
         hasCanonical: audit.has_canonical_url ?? false,
         hasRobotsMeta: audit.has_robots_meta ?? false,
       },
@@ -463,9 +481,10 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
         totalImages: audit.total_images || 0,
         imagesWithAlt: audit.images_with_alt || 0,
         imagesWithoutAlt: audit.images_without_alt || 0,
-        altTextScore: (audit.total_images || 0) > 0
-          ? ((audit.images_with_alt || 0) / (audit.total_images || 1)) * 100
-          : 100,
+        altTextScore:
+          (audit.total_images || 0) > 0
+            ? ((audit.images_with_alt || 0) / (audit.total_images || 1)) * 100
+            : 100,
       },
       links: {
         internalLinks: audit.internal_links_count || 0,
@@ -499,17 +518,18 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
         readingTimeMinutes: audit.reading_time_minutes || 0,
         contentFreshnessDays: audit.content_freshness_days,
       },
-      issues: (audit.issues as unknown as SEOIssue[]) || [],
-      recommendations: (audit.recommendations as unknown as SEORecommendation[]) || [],
+      issues: audit.issues || [],
+      recommendations: audit.recommendations || [],
       auditedAt: audit.audited_at,
     }));
 
     // Get the most recent audit date
-    const lastAuditedAt = latestAudits.length > 0
-      ? latestAudits.reduce((latest, audit) =>
-          new Date(audit.audited_at) > new Date(latest.audited_at) ? audit : latest
-        ).audited_at
-      : null;
+    const lastAuditedAt =
+      latestAudits.length > 0
+        ? latestAudits.reduce((latest, audit) =>
+            new Date(audit.audited_at) > new Date(latest.audited_at) ? audit : latest
+          ).audited_at
+        : null;
 
     return {
       success: true,
@@ -519,7 +539,7 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
         scoreChange: null,
         avgTechnicalScore: Math.round(avgTechnicalScore),
         avgContentScore: Math.round(avgContentScore),
-        avgPerformanceScore: Math.round(avgPerformanceScore),
+        avgPerformanceScore: avgPerformanceScore === null ? null : Math.round(avgPerformanceScore),
         avgMobileScore: Math.round(avgMobileScore),
         totalPagesAudited,
         pagesWithErrors,
@@ -588,8 +608,11 @@ export async function getPageSEOAudit(
           hasDescription: audit.has_meta_description ?? false,
           titleLength: audit.meta_title_length,
           descriptionLength: audit.meta_description_length,
-          titleOptimal: (audit.meta_title_length || 0) >= 30 && (audit.meta_title_length || 0) <= 60,
-          descriptionOptimal: (audit.meta_description_length || 0) >= 120 && (audit.meta_description_length || 0) <= 160,
+          titleOptimal:
+            (audit.meta_title_length || 0) >= 30 && (audit.meta_title_length || 0) <= 60,
+          descriptionOptimal:
+            (audit.meta_description_length || 0) >= 120 &&
+            (audit.meta_description_length || 0) <= 160,
           hasCanonical: audit.has_canonical_url ?? false,
           hasRobotsMeta: audit.has_robots_meta ?? false,
         },
@@ -604,9 +627,10 @@ export async function getPageSEOAudit(
           totalImages: audit.total_images || 0,
           imagesWithAlt: audit.images_with_alt || 0,
           imagesWithoutAlt: audit.images_without_alt || 0,
-          altTextScore: (audit.total_images || 0) > 0
-            ? ((audit.images_with_alt || 0) / (audit.total_images || 1)) * 100
-            : 100,
+          altTextScore:
+            (audit.total_images || 0) > 0
+              ? ((audit.images_with_alt || 0) / (audit.total_images || 1)) * 100
+              : 100,
         },
         links: {
           internalLinks: audit.internal_links_count || 0,
@@ -640,8 +664,8 @@ export async function getPageSEOAudit(
           readingTimeMinutes: audit.reading_time_minutes || 0,
           contentFreshnessDays: audit.content_freshness_days,
         },
-        issues: (audit.issues as unknown as SEOIssue[]) || [],
-        recommendations: (audit.recommendations as unknown as SEORecommendation[]) || [],
+        issues: audit.issues || [],
+        recommendations: audit.recommendations || [],
         auditedAt: audit.audited_at,
       },
     };
@@ -676,7 +700,9 @@ export async function recordAnalytics(data: {
     // Check if record exists for today + page
     const { data: existing } = await supabase
       .from("website_analytics")
-      .select("id, pageviews, unique_visitors, sessions, traffic_sources, device_breakdown, geographic_data")
+      .select(
+        "id, pageviews, unique_visitors, sessions, traffic_sources, device_breakdown, geographic_data"
+      )
       .eq("organization_id", context.organizationId)
       .eq("date", today)
       .eq("page_path", data.pagePath)
@@ -684,9 +710,9 @@ export async function recordAnalytics(data: {
 
     if (existing) {
       // Update existing record
-      const trafficSources = (existing.traffic_sources || {}) as unknown as Record<string, number>;
-      const deviceBreakdown = (existing.device_breakdown || {}) as unknown as Record<string, number>;
-      const geographicData = (existing.geographic_data || {}) as unknown as Record<string, number>;
+      const trafficSources: Record<string, number> = existing.traffic_sources || {};
+      const deviceBreakdown: Record<string, number> = existing.device_breakdown || {};
+      const geographicData: Record<string, number> = existing.geographic_data || {};
 
       if (data.trafficSource) {
         trafficSources[data.trafficSource] = (trafficSources[data.trafficSource] || 0) + 1;

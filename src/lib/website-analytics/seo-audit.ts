@@ -11,6 +11,18 @@ import type { ActionResult } from "@/lib/reviews/types";
 import type { SEOAuditResult, SEOIssue, SEORecommendation } from "./types";
 import type { Json } from "@/types/database.types";
 
+
+/**
+ * `website_seo_audits.issues` / `.recommendations` are jsonb columns. `SEOIssue` and
+ * `SEORecommendation` are declared as interfaces, which TypeScript will not structurally match to
+ * `Json`, so the conversion lives here instead of at the insert site.
+ */
+function toJsonColumn<T>(value: T): Json {
+  // SAFETY: issues and recommendations are plain data literals built by generateIssues /
+  // generateRecommendations in this module — strings, numbers and nested literals only.
+  return value as Json;
+}
+
 /**
  * Get user context
  */
@@ -52,8 +64,9 @@ function analyzeMetaTags(html: string): {
   description: string | null;
 } {
   const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i)
-    || html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+  const descMatch =
+    html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
+    html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
   const canonicalMatch = html.match(/<link[^>]*rel=["']canonical["']/i);
   const robotsMatch = html.match(/<meta[^>]*name=["']robots["']/i);
 
@@ -123,7 +136,10 @@ function analyzeImages(html: string): {
 /**
  * Analyze links from HTML
  */
-function analyzeLinks(html: string, baseUrl: string): {
+function analyzeLinks(
+  html: string,
+  baseUrl: string
+): {
   internalLinks: number;
   externalLinks: number;
 } {
@@ -186,7 +202,8 @@ function analyzeStructuredData(html: string): {
   hasStructuredData: boolean;
   types: string[];
 } {
-  const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+  const jsonLdMatches =
+    html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
   const types: string[] = [];
 
   jsonLdMatches.forEach((match) => {
@@ -299,7 +316,7 @@ function generateIssues(analysis: {
       title: "Missing canonical URL",
       description: "No canonical URL is specified, which may cause duplicate content issues.",
       impact: "medium",
-      howToFix: "Add a <link rel=\"canonical\" href=\"...\"> tag to the page.",
+      howToFix: 'Add a <link rel="canonical" href="..."> tag to the page.',
     });
   }
 
@@ -361,7 +378,7 @@ function generateIssues(analysis: {
       title: "Viewport not configured",
       description: "The page doesn't have a viewport meta tag, making it not mobile-friendly.",
       impact: "high",
-      howToFix: "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+      howToFix: 'Add <meta name="viewport" content="width=device-width, initial-scale=1">',
     });
   }
 
@@ -402,7 +419,8 @@ function generateRecommendations(analysis: {
       priority: "medium",
       category: "structured_data",
       title: "Add structured data markup",
-      description: "Implement JSON-LD structured data to help search engines understand your content and enable rich snippets.",
+      description:
+        "Implement JSON-LD structured data to help search engines understand your content and enable rich snippets.",
       estimatedImpact: 6,
       effort: "moderate",
     });
@@ -428,7 +446,8 @@ function generateRecommendations(analysis: {
       priority: "low",
       category: "content",
       title: "Add relevant images",
-      description: "Images can improve engagement and provide additional context for search engines.",
+      description:
+        "Images can improve engagement and provide additional context for search engines.",
       estimatedImpact: 4,
       effort: "moderate",
     });
@@ -451,7 +470,7 @@ function calculateScores(analysis: {
   seoScore: number;
   technicalScore: number;
   contentScore: number;
-  performanceScore: number;
+  performanceScore: number | null;
   mobileScore: number;
 } {
   // Technical score (meta tags, canonical, robots)
@@ -470,28 +489,25 @@ function calculateScores(analysis: {
   if (analysis.images.totalImages > 0) contentScore += 15;
   if (analysis.images.imagesWithoutAlt === 0) contentScore += 20;
 
-  // Performance score (placeholder - would need actual metrics)
-  const performanceScore = 75; // Default without actual measurements
-
   // Mobile score
   let mobileScore = 0;
   if (analysis.mobileFriendliness.viewportConfigured) mobileScore += 50;
   if (analysis.mobileFriendliness.fontSizeReadable) mobileScore += 25;
   if (analysis.mobileFriendliness.tapTargetsSized) mobileScore += 25;
 
-  // Overall SEO score (weighted average)
+  // Overall SEO score (weighted average of measured components only)
+  const measuredWeightTotal = 0.35 + 0.3 + 0.2;
   const seoScore = Math.round(
-    technicalScore * 0.35 +
-    contentScore * 0.30 +
-    performanceScore * 0.15 +
-    mobileScore * 0.20
+    technicalScore * (0.35 / measuredWeightTotal) +
+      contentScore * (0.3 / measuredWeightTotal) +
+      mobileScore * (0.2 / measuredWeightTotal)
   );
 
   return {
     seoScore,
     technicalScore,
     contentScore,
-    performanceScore,
+    performanceScore: null,
     mobileScore,
   };
 }
@@ -499,9 +515,7 @@ function calculateScores(analysis: {
 /**
  * Run SEO audit on a URL
  */
-export async function runPageSEOAudit(
-  pageUrl: string
-): Promise<ActionResult<SEOAuditResult>> {
+export async function runPageSEOAudit(pageUrl: string): Promise<ActionResult<SEOAuditResult>> {
   try {
     const context = await getUserContext();
     if (!context) {
@@ -540,11 +554,30 @@ export async function runPageSEOAudit(
     const mobileFriendliness = analyzeMobileFriendliness(html);
 
     // Generate issues and recommendations
-    const issues = generateIssues({ metaTags, headers, images, structuredData, mobileFriendliness });
-    const recommendations = generateRecommendations({ metaTags, headers, images, content, structuredData });
+    const issues = generateIssues({
+      metaTags,
+      headers,
+      images,
+      structuredData,
+      mobileFriendliness,
+    });
+    const recommendations = generateRecommendations({
+      metaTags,
+      headers,
+      images,
+      content,
+      structuredData,
+    });
 
     // Calculate scores
-    const scores = calculateScores({ metaTags, headers, images, content, structuredData, mobileFriendliness });
+    const scores = calculateScores({
+      metaTags,
+      headers,
+      images,
+      content,
+      structuredData,
+      mobileFriendliness,
+    });
 
     // Get previous audit for comparison
     // Use untyped client for website_seo_audits table (not in generated types yet)
@@ -603,8 +636,8 @@ export async function runPageSEOAudit(
       structured_data_valid: true,
       word_count: content.wordCount,
       reading_time_minutes: content.readingTimeMinutes,
-      issues: issues as unknown as Json,
-      recommendations: recommendations as unknown as Json,
+      issues: toJsonColumn(issues),
+      recommendations: toJsonColumn(recommendations),
       audit_type: "manual",
       audited_at: new Date().toISOString(),
     };
@@ -638,7 +671,8 @@ export async function runPageSEOAudit(
         titleLength: metaTags.titleLength,
         descriptionLength: metaTags.descriptionLength,
         titleOptimal: (metaTags.titleLength || 0) >= 30 && (metaTags.titleLength || 0) <= 60,
-        descriptionOptimal: (metaTags.descriptionLength || 0) >= 120 && (metaTags.descriptionLength || 0) <= 160,
+        descriptionOptimal:
+          (metaTags.descriptionLength || 0) >= 120 && (metaTags.descriptionLength || 0) <= 160,
         hasCanonical: metaTags.hasCanonical,
         hasRobotsMeta: metaTags.hasRobotsMeta,
       },
@@ -653,7 +687,8 @@ export async function runPageSEOAudit(
         totalImages: images.totalImages,
         imagesWithAlt: images.imagesWithAlt,
         imagesWithoutAlt: images.imagesWithoutAlt,
-        altTextScore: images.totalImages > 0 ? (images.imagesWithAlt / images.totalImages) * 100 : 100,
+        altTextScore:
+          images.totalImages > 0 ? (images.imagesWithAlt / images.totalImages) * 100 : 100,
       },
       links: {
         internalLinks: links.internalLinks,
@@ -715,7 +750,8 @@ export async function runBatchSEOAudit(
     let successful = 0;
     let failed = 0;
 
-    for (const url of pageUrls.slice(0, 10)) { // Limit to 10 pages at a time
+    for (const url of pageUrls.slice(0, 10)) {
+      // Limit to 10 pages at a time
       const result = await runPageSEOAudit(url);
       if (result.success && result.data) {
         results.push(result.data);

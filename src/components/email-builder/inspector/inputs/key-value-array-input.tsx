@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash, CaretUp, CaretDown } from "@phosphor-icons/react";
+import { useStableIds } from "@/hooks/use-stable-ids";
 
 interface KeyValueItem {
   key: string;
@@ -32,33 +32,18 @@ export function KeyValueArrayInput({
   valuePlaceholder,
   maxItems = 10,
 }: KeyValueArrayInputProps) {
-  const counterRef = useRef(0);
-  function genId() {
-    return `kv_${++counterRef.current}`;
-  }
-
-  const idsRef = useRef<string[]>(items.map(() => genId()));
-
-  useEffect(() => {
-    if (idsRef.current.length < items.length) {
-      const next = [...idsRef.current];
-      while (next.length < items.length) next.push(genId());
-      idsRef.current = next;
-    } else if (idsRef.current.length > items.length) {
-      idsRef.current = idsRef.current.slice(0, items.length);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length]);
+  // Stable IDs so inputs keep DOM identity across reorders.
+  const { ids, appendId, removeIdAt, moveId } = useStableIds(items.length);
 
   function addItem() {
     if (items.length < maxItems) {
-      idsRef.current = [...idsRef.current, genId()];
+      appendId();
       onChange([...items, { key: "", value: "" }]);
     }
   }
 
   function removeItem(index: number) {
-    idsRef.current = idsRef.current.filter((_, i) => i !== index);
+    removeIdAt(index);
     onChange(items.filter((_, i) => i !== index));
   }
 
@@ -73,12 +58,7 @@ export function KeyValueArrayInput({
     const next = [...items];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
-
-    const nextIds = [...idsRef.current];
-    const [movedId] = nextIds.splice(from, 1);
-    nextIds.splice(to, 0, movedId);
-    idsRef.current = nextIds;
-
+    moveId(from, to);
     onChange(next);
   }
 
@@ -96,7 +76,7 @@ export function KeyValueArrayInput({
       <div className="space-y-1.5">
         {items.map((item, index) => (
           <div
-            key={idsRef.current[index]}
+            key={ids[index]}
             className="grid grid-cols-[24px_1fr_1fr_32px] items-center gap-1"
           >
             <div className="flex flex-col">

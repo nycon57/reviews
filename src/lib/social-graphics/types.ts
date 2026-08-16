@@ -16,11 +16,11 @@ export type ActionResult<T = void> =
 
 // ── Canvas Types ────────────────────────────────────────────────────────
 
-export interface CanvasSize {
+export type CanvasSize = {
   width: number;
   height: number;
   name?: string;
-}
+};
 
 export const CANVAS_PRESETS: CanvasSize[] = [
   { width: 1080, height: 1080, name: "Instagram Post" },
@@ -46,7 +46,7 @@ export type ShapeType = "rectangle" | "circle" | "rounded-rect";
 
 export type TextAlignment = "left" | "center" | "right";
 
-export interface CanvasElement {
+export type CanvasElement = {
   id: string;
   type: ElementType;
   /** Position as fraction of canvas (0-1) for proportional scaling */
@@ -88,7 +88,7 @@ export interface CanvasElement {
   // Icon
   iconName?: string;
   iconColor?: string;
-}
+};
 
 // ── Template Types ──────────────────────────────────────────────────────
 
@@ -234,7 +234,9 @@ export const PLATFORM_LABELS: Record<SocialPlatform, string> = {
 /** Convert a Json value from the database to typed CanvasElement[] */
 export function parseElements(json: Json): CanvasElement[] {
   if (!Array.isArray(json)) return [];
-  return json as unknown as CanvasElement[];
+  // SAFETY: the `elements` column is only ever written from CanvasElement[] by
+  // the editor and batch generator, so a stored array always holds elements.
+  return json as CanvasElement[];
 }
 
 /** Convert a Json value from the database to typed CanvasSize */

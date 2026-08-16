@@ -1,3 +1,4 @@
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 /**
  * Admin Alert Digest Cron Job (S089)
  *
@@ -30,39 +31,37 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const result = await sendAdminAlertDigests();
+  return withCronHeartbeat("send-admin-alert-digests", async () => {
+    try {
+      const result = await sendAdminAlertDigests();
 
-    return NextResponse.json({
-      success: result.success,
-      sent: result.sent,
-      failed: result.failed,
-      errors: result.errors.slice(0, 10), // Limit error details returned
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Admin alert digest cron job error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+      return NextResponse.json({
+        success: result.success,
+        sent: result.sent,
+        failed: result.failed,
+        errors: result.errors.slice(0, 10), // Limit error details returned
         timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+      });
+    } catch (error) {
+      console.error("Admin alert digest cron job error:", error);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString(),
+        },
+        { status: 500 }
+      );
+    }
+  });
 }
 
 // GET endpoint for health checks
-export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "send-admin-alert-digests",
-    timestamp: new Date().toISOString(),
-  });
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
+export async function GET(request: NextRequest) {
+  return POST(request);
 }

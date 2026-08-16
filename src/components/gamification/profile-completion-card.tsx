@@ -61,6 +61,7 @@ const milestoneIcons: Record<string, React.ElementType> = {
 
 interface ProfileCompletionCardProps {
   loanOfficerId?: string;
+  initialData?: ProfileCompletionScore | null;
   className?: string;
   showSections?: boolean;
   showMilestones?: boolean;
@@ -69,27 +70,34 @@ interface ProfileCompletionCardProps {
 
 export function ProfileCompletionCard({
   loanOfficerId,
+  initialData,
   className,
   showSections = true,
   showMilestones = true,
   showTips = true,
 }: ProfileCompletionCardProps) {
-  const [data, setData] = useState<ProfileCompletionScore | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [fetchedData, setFetchedData] = useState<ProfileCompletionScore | null>(null);
+  const [isLoading, setIsLoading] = useState(initialData === undefined);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [isExpanded, setIsExpanded] = useState(false);
+  const data = initialData !== undefined ? initialData : fetchedData;
+  const loading = initialData !== undefined ? false : isLoading;
 
   useEffect(() => {
+    if (initialData !== undefined) {
+      return;
+    }
+
     async function loadData() {
       setIsLoading(true);
       const result = await getProfileCompletionScore(loanOfficerId);
       if (result.success && result.data) {
-        setData(result.data);
+        setFetchedData(result.data);
       }
       setIsLoading(false);
     }
     loadData();
-  }, [loanOfficerId]);
+  }, [loanOfficerId, initialData]);
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) => {
@@ -103,7 +111,7 @@ export function ProfileCompletionCard({
     });
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Card className={cn("shadow-soft", className)}>
         <CardHeader className="pb-4">
@@ -139,8 +147,8 @@ export function ProfileCompletionCard({
   }
 
   const getScoreColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-600 dark:text-green-400";
-    if (percentage >= 50) return "text-yellow-600";
+    if (percentage >= 80) return "text-green-700 dark:text-green-400";
+    if (percentage >= 50) return "text-yellow-700";
     return "text-orange-600";
   };
 
@@ -148,9 +156,9 @@ export function ProfileCompletionCard({
   const getProgressHue = (pct: number) => Math.round((Math.min(pct, 100) / 100) * 120);
 
   const getSearchRankLabel = (score: number) => {
-    if (score >= 750) return { label: "Excellent", color: "text-green-600 dark:text-green-400" };
+    if (score >= 750) return { label: "Excellent", color: "text-green-700 dark:text-green-400" };
     if (score >= 600) return { label: "Good", color: "text-blue-600" };
-    if (score >= 400) return { label: "Fair", color: "text-yellow-600" };
+    if (score >= 400) return { label: "Fair", color: "text-yellow-700" };
     return { label: "Needs Work", color: "text-orange-600" };
   };
 
@@ -187,6 +195,8 @@ export function ProfileCompletionCard({
               <Progress
                 value={data.percentage}
                 className="h-1.5"
+                aria-label="Profile score progress"
+                aria-valuetext={`${data.percentage}% complete`}
                 indicatorClassName="!bg-[var(--progress-fill)]"
                 indicatorStyle={{ "--progress-fill": `hsl(${getProgressHue(data.percentage)} 65% 45%)` } as CSSProperties}
               />
@@ -271,6 +281,8 @@ export function ProfileCompletionCard({
             <Progress
               value={data.percentage}
               className="h-2"
+              aria-label="Profile completion progress"
+              aria-valuetext={`${data.percentage}% complete`}
               indicatorClassName="!bg-[var(--progress-fill)]"
               indicatorStyle={{ "--progress-fill": `hsl(${getProgressHue(data.percentage)} 65% 45%)` } as CSSProperties}
             />
@@ -323,7 +335,7 @@ export function ProfileCompletionCard({
                           </p>
                           <p className="text-xs mt-1">
                             {milestone.achieved ? (
-                              <span className="text-green-600 dark:text-green-400">+{milestone.bonusPoints} bonus points earned!</span>
+                              <span className="text-green-700 dark:text-green-400">+{milestone.bonusPoints} bonus points earned!</span>
                             ) : (
                               <span>+{milestone.bonusPoints} bonus points</span>
                             )}
@@ -394,7 +406,7 @@ export function ProfileCompletionCard({
               ))}
             </div>
             <Button variant="outline" size="sm" className="w-full" asChild>
-              <a href="/dashboard/profile">
+              <a href="/dashboard/settings">
                 Complete Profile
                 <ChevronRight className="ml-1 h-4 w-4" />
               </a>
@@ -426,7 +438,7 @@ function SectionRow({
             className={cn(
               "h-8 w-8 rounded-full flex items-center justify-center",
               section.completed
-                ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
+                ? "bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400"
                 : "bg-muted text-muted-foreground"
             )}
           >
@@ -446,7 +458,12 @@ function SectionRow({
                 )}
               </div>
             </div>
-            <Progress value={section.percentage} className="h-1.5 mt-1" />
+            <Progress
+              value={section.percentage}
+              className="h-1.5 mt-1"
+              aria-label={`${section.section.name} profile section progress`}
+              aria-valuetext={`${section.percentage}% complete`}
+            />
           </div>
         </div>
       </CollapsibleTrigger>
@@ -476,7 +493,7 @@ function SectionRow({
               <span
                 className={cn(
                   "text-xs",
-                  fieldStatus.completed ? "text-green-600 dark:text-green-400" : "text-repwell-teal-400"
+                  fieldStatus.completed ? "text-green-700 dark:text-green-400" : "text-repwell-teal-400"
                 )}
               >
                 {fieldStatus.completed ? "+" : ""}

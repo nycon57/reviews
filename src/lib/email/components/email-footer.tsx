@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Section, Text, Link, Row, Column, Img } from "@react-email/components";
 import { colors, typography, spacing } from "../theme";
+import { emailConfig } from "../client";
 
 // =============================================================================
 // SOCIAL LINK ICONS (inline SVG data URIs for email compatibility)
@@ -318,6 +319,12 @@ export interface RepwellFooterProps {
   unsubscribeToken?: string;
   /** Email address for unsubscribe (fallback if no token) */
   email?: string;
+  /**
+   * Fully-formed unsubscribe URL that overrides the computed one. Used by
+   * ACQUISITION emails to point the footer at the Contact-scoped unsubscribe
+   * page (/u/c/[token], ADR 0004) instead of the platform-user flow.
+   */
+  unsubscribeUrlOverride?: string;
   /** Base URL for the app */
   baseUrl?: string;
   /** Variant */
@@ -333,15 +340,19 @@ export interface RepwellFooterProps {
 export function RepwellFooter({
   unsubscribeToken,
   email,
-  baseUrl = "https://app.repwell.ai",
+  unsubscribeUrlOverride,
+  baseUrl = emailConfig.baseUrl,
   variant = "default",
 }: RepwellFooterProps) {
-  // Prefer token-based unsubscribe for privacy
-  const unsubscribeUrl = unsubscribeToken
-    ? `${baseUrl}/unsubscribe/${unsubscribeToken}`
-    : email
-      ? `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(email)}`
-      : `${baseUrl}/unsubscribed`;
+  // An acquisition Contact-scoped URL wins; otherwise prefer token-based
+  // unsubscribe for privacy, then the legacy email fallback.
+  const unsubscribeUrl = unsubscribeUrlOverride
+    ? unsubscribeUrlOverride
+    : unsubscribeToken
+      ? `${baseUrl}/unsubscribe/${unsubscribeToken}`
+      : email
+        ? `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(email)}`
+        : `${baseUrl}/unsubscribed`;
 
   const preferencesUrl = unsubscribeToken
     ? `${baseUrl}/email-preferences/${unsubscribeToken}`

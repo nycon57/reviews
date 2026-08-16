@@ -1,9 +1,11 @@
-'use server';
+"use server";
 
-import { createAdminClient, createUntypedAdminClient } from '@/lib/supabase/admin';
-import { unifiedGetUser } from '@/lib/auth/actions';
-import { revalidatePath } from 'next/cache';
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
+import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import {
+  createTwitterPkcePair,
   exchangeCodeForTokens,
   refreshAccessToken,
   getUserInfo,
@@ -15,22 +17,21 @@ import {
   postToTwitter,
   postToLinkedIn,
   postToInstagram,
-} from './client';
-import {
-  fillTemplatePlaceholders,
-  PLATFORM_LIMITS,
-} from './types';
+} from "./client";
+import { fillTemplatePlaceholders, PLATFORM_LIMITS } from "./types";
 import type {
   SocialPlatform,
   SocialConnection,
   SocialPostTemplate,
   SocialPost,
   ActionResult,
-} from './types';
-import { ensureSmartLinkForSource } from '@/lib/share-studio/service';
-import { createHmac, timingSafeEqual } from 'crypto';
+} from "./types";
+import { ensureSmartLinkForSource } from "@/lib/share-studio/service";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 
 const OAUTH_STATE_MAX_AGE_MS = 5 * 60 * 1000;
+const TWITTER_PKCE_COOKIE_PREFIX = "repwell_twitter_pkce_";
+const TWITTER_PKCE_COOKIE_PATH = "/api/auth/social/twitter/callback";
 
 type SignedOAuthStatePayload = {
   platform: SocialPlatform;
@@ -42,31 +43,31 @@ type SignedOAuthStatePayload = {
 function getOAuthStateSigningSecret(): string {
   const secret = process.env.SOCIAL_OAUTH_STATE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!secret) {
-    throw new Error('Missing SOCIAL_OAUTH_STATE_SECRET or SUPABASE_SERVICE_ROLE_KEY');
+    throw new Error("Missing SOCIAL_OAUTH_STATE_SECRET or SUPABASE_SERVICE_ROLE_KEY");
   }
 
   return secret;
 }
 
 function signOAuthState(payload: SignedOAuthStatePayload): string {
-  const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const signature = createHmac('sha256', getOAuthStateSigningSecret())
+  const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = createHmac("sha256", getOAuthStateSigningSecret())
     .update(payloadEncoded)
-    .digest('base64url');
+    .digest("base64url");
 
   return `${payloadEncoded}.${signature}`;
 }
 
 function verifyAndDecodeOAuthState(state: string): SignedOAuthStatePayload | null {
-  const [payloadEncoded, signature] = state.split('.');
+  const [payloadEncoded, signature] = state.split(".");
 
   if (!payloadEncoded || !signature) {
     return null;
   }
 
-  const expectedSignature = createHmac('sha256', getOAuthStateSigningSecret())
+  const expectedSignature = createHmac("sha256", getOAuthStateSigningSecret())
     .update(payloadEncoded)
-    .digest('base64url');
+    .digest("base64url");
 
   const providedBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expectedSignature);
@@ -79,9 +80,16 @@ function verifyAndDecodeOAuthState(state: string): SignedOAuthStatePayload | nul
   }
 
   try {
-    const parsed = JSON.parse(Buffer.from(payloadEncoded, 'base64url').toString()) as SignedOAuthStatePayload;
+    const parsed = JSON.parse(
+      Buffer.from(payloadEncoded, "base64url").toString()
+    ) as SignedOAuthStatePayload;
 
-    if (!parsed.organizationId || !parsed.userId || !parsed.platform || typeof parsed.timestamp !== 'number') {
+    if (
+      !parsed.organizationId ||
+      !parsed.userId ||
+      !parsed.platform ||
+      typeof parsed.timestamp !== "number"
+    ) {
       return null;
     }
 
@@ -89,6 +97,38 @@ function verifyAndDecodeOAuthState(state: string): SignedOAuthStatePayload | nul
   } catch {
     return null;
   }
+}
+
+function getTwitterPkceCookieName(state: string): string {
+  const digest = createHash("sha256").update(state).digest("base64url").slice(0, 32);
+  return `${TWITTER_PKCE_COOKIE_PREFIX}${digest}`;
+}
+
+async function storeTwitterPkceVerifier(state: string, codeVerifier: string): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(getTwitterPkceCookieName(state), codeVerifier, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: TWITTER_PKCE_COOKIE_PATH,
+    maxAge: Math.floor(OAUTH_STATE_MAX_AGE_MS / 1000),
+  });
+}
+
+async function consumeTwitterPkceVerifier(state: string): Promise<string | null> {
+  const cookieStore = await cookies();
+  const cookieName = getTwitterPkceCookieName(state);
+  const codeVerifier = cookieStore.get(cookieName)?.value ?? null;
+
+  cookieStore.set(cookieName, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: TWITTER_PKCE_COOKIE_PATH,
+    maxAge: 0,
+  });
+
+  return codeVerifier;
 }
 
 // Get user's role and organization ID
@@ -100,9 +140,9 @@ async function getUserContext() {
 
   const supabase = createAdminClient();
   const { data: userData } = await supabase
-    .from('users')
-    .select('id, organization_id, role')
-    .eq('id', user.id)
+    .from("users")
+    .select("id, organization_id, role")
+    .eq("id", user.id)
     .single();
 
   return userData;
@@ -119,7 +159,7 @@ async function requireManagerRole(): Promise<{
     return null;
   }
 
-  if (!['admin', 'manager'].includes(context.role)) {
+  if (!["admin", "manager"].includes(context.role)) {
     return null;
   }
 
@@ -130,12 +170,7 @@ async function requireManagerRole(): Promise<{
 }
 
 function getAppBaseUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.SITE_URL ||
-    'https://app.repwell.com'
-  ).replace(/\/$/, '');
+  return (process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai").replace(/\/$/, "");
 }
 
 async function resolveReviewSmartLinkUrl(params: {
@@ -146,7 +181,7 @@ async function resolveReviewSmartLinkUrl(params: {
   try {
     const ensured = await ensureSmartLinkForSource({
       organizationId: params.organizationId,
-      sourceType: 'review',
+      sourceType: "review",
       sourceId: params.reviewId,
       actorUserId: params.actorUserId,
     });
@@ -165,10 +200,10 @@ async function getValidAccessToken(connectionId: string): Promise<{
   const adminClient = createUntypedAdminClient();
 
   const { data: connection, error } = await adminClient
-    .from('social_connections')
-    .select('platform, access_token, refresh_token, token_expires_at, page_access_token')
-    .eq('id', connectionId)
-    .eq('is_active', true)
+    .from("social_connections")
+    .select("platform, access_token, refresh_token, token_expires_at, page_access_token")
+    .eq("id", connectionId)
+    .eq("is_active", true)
     .single();
 
   if (error || !connection) {
@@ -186,17 +221,17 @@ async function getValidAccessToken(connectionId: string): Promise<{
 
         // Update tokens in database
         await adminClient
-          .from('social_connections')
+          .from("social_connections")
           .update({
             access_token: newTokens.accessToken,
             refresh_token: newTokens.refreshToken || connection.refresh_token,
             token_expires_at: newTokens.expiresAt?.toISOString(),
           })
-          .eq('id', connectionId);
+          .eq("id", connectionId);
 
         accessToken = newTokens.accessToken;
       } catch (error) {
-        console.error('Failed to refresh token:', error);
+        console.error("Failed to refresh token:", error);
         return null;
       }
     } else {
@@ -217,7 +252,7 @@ export async function initiateSocialOAuth(
 ): Promise<ActionResult<{ url: string }>> {
   const context = await requireManagerRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Manager role required' };
+    return { success: false, error: "Unauthorized - Manager role required" };
   }
 
   // Create signed state with organization info
@@ -228,7 +263,17 @@ export async function initiateSocialOAuth(
     timestamp: Date.now(),
   });
 
-  const url = getAuthorizationUrl(platform, state);
+  const pkce = platform === "twitter" ? createTwitterPkcePair() : null;
+
+  if (pkce) {
+    await storeTwitterPkceVerifier(state, pkce.codeVerifier);
+  }
+
+  const url = getAuthorizationUrl(
+    platform,
+    state,
+    pkce ? { codeChallenge: pkce.codeChallenge } : undefined
+  );
 
   return { success: true, data: { url } };
 }
@@ -238,27 +283,52 @@ export async function handleSocialOAuthCallback(
   platform: SocialPlatform,
   code: string,
   state: string
-): Promise<ActionResult<{ connectionId: string; needsPageSelection?: boolean; pages?: Array<{ id: string; name: string }> }>> {
+): Promise<
+  ActionResult<{
+    connectionId: string;
+    needsPageSelection?: boolean;
+    pages?: Array<{ id: string; name: string }>;
+  }>
+> {
   try {
     // Verify and decode state
     const stateData = verifyAndDecodeOAuthState(state);
     if (!stateData) {
-      return { success: false, error: 'Invalid OAuth state' };
+      return { success: false, error: "Invalid OAuth state" };
     }
 
     if (stateData.platform !== platform) {
-      return { success: false, error: 'OAuth state platform mismatch' };
+      return { success: false, error: "OAuth state platform mismatch" };
     }
 
     const { organizationId } = stateData;
 
     // Validate timestamp (5 minute expiry)
     if (Date.now() - stateData.timestamp > OAUTH_STATE_MAX_AGE_MS) {
-      return { success: false, error: 'OAuth session expired' };
+      return { success: false, error: "OAuth session expired" };
+    }
+
+    const context = await requireManagerRole();
+    if (!context) {
+      return { success: false, error: "Unauthorized - Manager role required" };
+    }
+
+    if (
+      context.organizationId !== stateData.organizationId ||
+      context.userId !== stateData.userId
+    ) {
+      return { success: false, error: "OAuth state does not match the current session" };
+    }
+
+    const codeVerifier =
+      platform === "twitter" ? await consumeTwitterPkceVerifier(state) : undefined;
+
+    if (platform === "twitter" && !codeVerifier) {
+      return { success: false, error: "OAuth session expired" };
     }
 
     // Exchange code for tokens
-    const tokens = await exchangeCodeForTokens(platform, code);
+    const tokens = await exchangeCodeForTokens(platform, code, codeVerifier ?? undefined);
 
     // Get user info
     const userInfo = await getUserInfo(platform, tokens.accessToken);
@@ -267,16 +337,16 @@ export async function handleSocialOAuthCallback(
 
     // Check if connection already exists
     const { data: existing } = await adminClient
-      .from('social_connections')
-      .select('id')
-      .eq('organization_id', organizationId)
-      .eq('platform', platform)
+      .from("social_connections")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("platform", platform)
       .single();
 
     if (existing) {
       // Update existing connection
       await adminClient
-        .from('social_connections')
+        .from("social_connections")
         .update({
           platform_user_id: userInfo.id,
           platform_username: userInfo.username,
@@ -289,19 +359,19 @@ export async function handleSocialOAuthCallback(
           token_scope: tokens.scope,
           is_active: true,
         })
-        .eq('id', existing.id);
+        .eq("id", existing.id);
 
-      revalidatePath('/dashboard/settings/social');
+      revalidatePath("/dashboard/organization");
       return { success: true, data: { connectionId: existing.id } };
     }
 
     // For Facebook and LinkedIn, we need to get pages
-    if (platform === 'facebook' || platform === 'instagram') {
+    if (platform === "facebook" || platform === "instagram") {
       const pages = await getFacebookPages(tokens.accessToken);
       if (pages.length > 0) {
         // Store connection temporarily without page
         const { data: connection, error } = await adminClient
-          .from('social_connections')
+          .from("social_connections")
           .insert({
             organization_id: organizationId,
             platform,
@@ -316,11 +386,11 @@ export async function handleSocialOAuthCallback(
             token_scope: tokens.scope,
             is_active: true,
           })
-          .select('id')
+          .select("id")
           .single();
 
         if (error || !connection) {
-          return { success: false, error: 'Failed to save connection' };
+          return { success: false, error: "Failed to save connection" };
         }
 
         // Return pages for selection
@@ -335,12 +405,12 @@ export async function handleSocialOAuthCallback(
       }
     }
 
-    if (platform === 'linkedin') {
+    if (platform === "linkedin") {
       const pages = await getLinkedInPages(tokens.accessToken);
       if (pages.length > 0) {
         // Store connection temporarily without page
         const { data: connection, error } = await adminClient
-          .from('social_connections')
+          .from("social_connections")
           .insert({
             organization_id: organizationId,
             platform,
@@ -352,11 +422,11 @@ export async function handleSocialOAuthCallback(
             token_scope: tokens.scope,
             is_active: true,
           })
-          .select('id')
+          .select("id")
           .single();
 
         if (error || !connection) {
-          return { success: false, error: 'Failed to save connection' };
+          return { success: false, error: "Failed to save connection" };
         }
 
         // Return pages for selection
@@ -373,7 +443,7 @@ export async function handleSocialOAuthCallback(
 
     // Create connection without page selection (Twitter)
     const { data: connection, error } = await adminClient
-      .from('social_connections')
+      .from("social_connections")
       .insert({
         organization_id: organizationId,
         platform,
@@ -388,18 +458,18 @@ export async function handleSocialOAuthCallback(
         token_scope: tokens.scope,
         is_active: true,
       })
-      .select('id')
+      .select("id")
       .single();
 
     if (error || !connection) {
-      return { success: false, error: 'Failed to save connection' };
+      return { success: false, error: "Failed to save connection" };
     }
 
-    revalidatePath('/dashboard/settings/social');
+    revalidatePath("/dashboard/organization");
     return { success: true, data: { connectionId: connection.id } };
   } catch (error) {
-    console.error('OAuth callback error:', error);
-    return { success: false, error: 'Failed to complete authentication' };
+    console.error("OAuth callback error:", error);
+    return { success: false, error: "Failed to complete authentication" };
   }
 }
 
@@ -412,26 +482,26 @@ export async function selectSocialPage(
 ): Promise<ActionResult> {
   const context = await requireManagerRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Manager role required' };
+    return { success: false, error: "Unauthorized - Manager role required" };
   }
 
   const adminClient = createUntypedAdminClient();
 
   const { error } = await adminClient
-    .from('social_connections')
+    .from("social_connections")
     .update({
       page_id: pageId,
       page_name: pageName,
       page_access_token: pageAccessToken,
     })
-    .eq('id', connectionId)
-    .eq('organization_id', context.organizationId);
+    .eq("id", connectionId)
+    .eq("organization_id", context.organizationId);
 
   if (error) {
-    return { success: false, error: 'Failed to update connection' };
+    return { success: false, error: "Failed to update connection" };
   }
 
-  revalidatePath('/dashboard/settings/social');
+  revalidatePath("/dashboard/organization");
   return { success: true };
 }
 
@@ -439,20 +509,20 @@ export async function selectSocialPage(
 export async function getSocialConnections(): Promise<ActionResult<SocialConnection[]>> {
   const context = await requireManagerRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Manager role required' };
+    return { success: false, error: "Unauthorized - Manager role required" };
   }
 
   // Use untyped client for social_connections table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
-    .from('social_connections')
-    .select('*')
-    .eq('organization_id', context.organizationId)
-    .order('created_at', { ascending: false });
+    .from("social_connections")
+    .select("*")
+    .eq("organization_id", context.organizationId)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    return { success: false, error: 'Failed to fetch connections' };
+    return { success: false, error: "Failed to fetch connections" };
   }
 
   const connections: SocialConnection[] = (data || []).map((row) => ({
@@ -487,23 +557,23 @@ export async function getSocialConnections(): Promise<ActionResult<SocialConnect
 export async function disconnectSocial(connectionId: string): Promise<ActionResult> {
   const context = await requireManagerRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Manager role required' };
+    return { success: false, error: "Unauthorized - Manager role required" };
   }
 
   // Use untyped client for social_connections table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   const { error } = await supabase
-    .from('social_connections')
+    .from("social_connections")
     .update({ is_active: false })
-    .eq('id', connectionId)
-    .eq('organization_id', context.organizationId);
+    .eq("id", connectionId)
+    .eq("organization_id", context.organizationId);
 
   if (error) {
-    return { success: false, error: 'Failed to disconnect' };
+    return { success: false, error: "Failed to disconnect" };
   }
 
-  revalidatePath('/dashboard/settings/social');
+  revalidatePath("/dashboard/organization");
   return { success: true };
 }
 
@@ -515,26 +585,26 @@ export async function updateAutoPublishSettings(
 ): Promise<ActionResult> {
   const context = await requireManagerRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Manager role required' };
+    return { success: false, error: "Unauthorized - Manager role required" };
   }
 
   // Use untyped client for social_connections table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   const { error } = await supabase
-    .from('social_connections')
+    .from("social_connections")
     .update({
       auto_publish_enabled: enabled,
       auto_publish_min_rating: minRating,
     })
-    .eq('id', connectionId)
-    .eq('organization_id', context.organizationId);
+    .eq("id", connectionId)
+    .eq("organization_id", context.organizationId);
 
   if (error) {
-    return { success: false, error: 'Failed to update settings' };
+    return { success: false, error: "Failed to update settings" };
   }
 
-  revalidatePath('/dashboard/settings/social');
+  revalidatePath("/dashboard/organization");
   return { success: true };
 }
 
@@ -544,27 +614,27 @@ export async function getSocialPostTemplates(
 ): Promise<ActionResult<SocialPostTemplate[]>> {
   const context = await getUserContext();
   if (!context || !context.organization_id) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: "Unauthorized" };
   }
 
   // Use untyped client for social_post_templates table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   let query = supabase
-    .from('social_post_templates')
-    .select('*')
+    .from("social_post_templates")
+    .select("*")
     .or(`is_system.eq.true,organization_id.eq.${context.organization_id}`)
-    .eq('is_active', true)
-    .order('is_default', { ascending: false });
+    .eq("is_active", true)
+    .order("is_default", { ascending: false });
 
   if (platform) {
-    query = query.eq('platform', platform);
+    query = query.eq("platform", platform);
   }
 
   const { data, error } = await query;
 
   if (error) {
-    return { success: false, error: 'Failed to fetch templates' };
+    return { success: false, error: "Failed to fetch templates" };
   }
 
   const templates: SocialPostTemplate[] = (data || []).map((row) => ({
@@ -579,7 +649,7 @@ export async function getSocialPostTemplates(
     templateText: row.template_text,
     includeImage: row.include_image ?? true,
     includeLink: row.include_link ?? true,
-    linkText: row.link_text ?? 'Read more reviews',
+    linkText: row.link_text ?? "Read more reviews",
     maxLength: row.max_length,
     defaultHashtags: row.default_hashtags || [],
     createdAt: row.created_at!,
@@ -593,10 +663,17 @@ export async function getSocialPostTemplates(
 export async function generatePostPreview(
   reviewId: string,
   templateId: string
-): Promise<ActionResult<{ content: string; platform: SocialPlatform; characterCount: number; maxLength: number | null }>> {
+): Promise<
+  ActionResult<{
+    content: string;
+    platform: SocialPlatform;
+    characterCount: number;
+    maxLength: number | null;
+  }>
+> {
   const context = await getUserContext();
   if (!context || !context.organization_id) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: "Unauthorized" };
   }
 
   // Use untyped client for social_post_templates table (not in generated types)
@@ -604,38 +681,40 @@ export async function generatePostPreview(
 
   // Get review with loan officer info
   const { data: review, error: reviewError } = await supabase
-    .from('reviews')
-    .select(`
+    .from("reviews")
+    .select(
+      `
       *,
       loan_officers (
         full_name,
         branch
       )
-    `)
-    .eq('id', reviewId)
-    .eq('organization_id', context.organization_id)
+    `
+    )
+    .eq("id", reviewId)
+    .eq("organization_id", context.organization_id)
     .single();
 
   if (reviewError || !review) {
-    return { success: false, error: 'Review not found' };
+    return { success: false, error: "Review not found" };
   }
 
   // Get template
   const { data: template, error: templateError } = await supabase
-    .from('social_post_templates')
-    .select('*')
-    .eq('id', templateId)
+    .from("social_post_templates")
+    .select("*")
+    .eq("id", templateId)
     .single();
 
   if (templateError || !template) {
-    return { success: false, error: 'Template not found' };
+    return { success: false, error: "Template not found" };
   }
 
   // Get organization name
   const { data: org } = await supabase
-    .from('organizations')
-    .select('name')
-    .eq('id', context.organization_id)
+    .from("organizations")
+    .select("name")
+    .eq("id", context.organization_id)
     .single();
 
   // Fill template
@@ -646,12 +725,12 @@ export async function generatePostPreview(
       actorUserId: context.id,
     })) ||
     review.source_url ||
-    '';
+    "";
 
   const content = fillTemplatePlaceholders(template.template_text, {
-    reviewerName: review.customer_name || 'Happy Customer',
+    reviewerName: review.customer_name || "Happy Customer",
     rating: review.rating,
-    reviewText: review.text || '',
+    reviewText: review.text || "",
     loanOfficerName: review.loan_officers?.full_name ?? undefined,
     branchName: review.loan_officers?.branch ?? undefined,
     organizationName: org?.name ?? undefined,
@@ -683,22 +762,22 @@ export async function createSocialPost(params: {
 }): Promise<ActionResult<SocialPost>> {
   const context = await requireManagerRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Manager role required' };
+    return { success: false, error: "Unauthorized - Manager role required" };
   }
 
   const adminClient = createUntypedAdminClient();
 
   // Get connection
   const { data: connection, error: connError } = await adminClient
-    .from('social_connections')
-    .select('platform')
-    .eq('id', params.connectionId)
-    .eq('organization_id', context.organizationId)
-    .eq('is_active', true)
+    .from("social_connections")
+    .select("platform")
+    .eq("id", params.connectionId)
+    .eq("organization_id", context.organizationId)
+    .eq("is_active", true)
     .single();
 
   if (connError || !connection) {
-    return { success: false, error: 'Connection not found' };
+    return { success: false, error: "Connection not found" };
   }
 
   // Check character limit
@@ -712,7 +791,7 @@ export async function createSocialPost(params: {
   }
 
   // Determine status
-  const status = params.scheduledFor ? 'scheduled' : 'draft';
+  const status = params.scheduledFor ? "scheduled" : "draft";
   let resolvedLinkUrl = params.linkUrl ?? null;
 
   if (!resolvedLinkUrl && params.reviewId) {
@@ -725,7 +804,7 @@ export async function createSocialPost(params: {
 
   // Create post record
   const { data: post, error: insertError } = await adminClient
-    .from('social_posts')
+    .from("social_posts")
     .insert({
       organization_id: context.organizationId,
       connection_id: params.connectionId,
@@ -741,14 +820,14 @@ export async function createSocialPost(params: {
       created_by: context.userId,
       is_auto_generated: false,
     })
-    .select('*')
+    .select("*")
     .single();
 
   if (insertError || !post) {
-    return { success: false, error: 'Failed to create post' };
+    return { success: false, error: "Failed to create post" };
   }
 
-  revalidatePath('/dashboard/social');
+  revalidatePath("/dashboard/social");
 
   return {
     success: true,
@@ -763,7 +842,7 @@ export async function createSocialPost(params: {
       content: post.content,
       imageUrl: post.image_url,
       linkUrl: post.link_url,
-      status: post.status as SocialPost['status'],
+      status: post.status as SocialPost["status"],
       scheduledFor: post.scheduled_for,
       publishedAt: post.published_at,
       platformPostId: post.platform_post_id,
@@ -783,43 +862,40 @@ export async function createSocialPost(params: {
 export async function publishSocialPost(postId: string): Promise<ActionResult> {
   const context = await requireManagerRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Manager role required' };
+    return { success: false, error: "Unauthorized - Manager role required" };
   }
 
   const adminClient = createUntypedAdminClient();
 
   // Get post
   const { data: post, error: postError } = await adminClient
-    .from('social_posts')
-    .select('*, social_connections!inner(*)')
-    .eq('id', postId)
-    .eq('organization_id', context.organizationId)
+    .from("social_posts")
+    .select("*, social_connections!inner(*)")
+    .eq("id", postId)
+    .eq("organization_id", context.organizationId)
     .single();
 
   if (postError || !post) {
-    return { success: false, error: 'Post not found' };
+    return { success: false, error: "Post not found" };
   }
 
   // Update status to publishing
-  await adminClient
-    .from('social_posts')
-    .update({ status: 'publishing' })
-    .eq('id', postId);
+  await adminClient.from("social_posts").update({ status: "publishing" }).eq("id", postId);
 
   try {
     // Get valid access token
     const tokens = await getValidAccessToken(post.connection_id);
     if (!tokens) {
-      throw new Error('Failed to get valid access token');
+      throw new Error("Failed to get valid access token");
     }
 
     const platform = post.platform as SocialPlatform;
     let result;
 
     switch (platform) {
-      case 'facebook':
+      case "facebook":
         if (!post.social_connections.page_id || !post.social_connections.page_access_token) {
-          throw new Error('Facebook page not configured');
+          throw new Error("Facebook page not configured");
         }
         result = await postToFacebook(
           post.social_connections.page_access_token,
@@ -830,11 +906,11 @@ export async function publishSocialPost(postId: string): Promise<ActionResult> {
         );
         break;
 
-      case 'twitter':
+      case "twitter":
         result = await postToTwitter(tokens.accessToken, post.content);
         break;
 
-      case 'linkedin':
+      case "linkedin":
         result = await postToLinkedIn(
           tokens.accessToken,
           post.social_connections.page_id || post.social_connections.platform_user_id,
@@ -843,12 +919,12 @@ export async function publishSocialPost(postId: string): Promise<ActionResult> {
         );
         break;
 
-      case 'instagram':
+      case "instagram":
         if (!post.image_url) {
-          throw new Error('Instagram posts require an image');
+          throw new Error("Instagram posts require an image");
         }
         if (!post.social_connections.page_access_token) {
-          throw new Error('Instagram not configured');
+          throw new Error("Instagram not configured");
         }
         result = await postToInstagram(
           post.social_connections.page_access_token,
@@ -863,51 +939,51 @@ export async function publishSocialPost(postId: string): Promise<ActionResult> {
     }
 
     if (!result.success) {
-      throw new Error(result.error || 'Failed to publish');
+      throw new Error(result.error || "Failed to publish");
     }
 
     // Update post with success
     await adminClient
-      .from('social_posts')
+      .from("social_posts")
       .update({
-        status: 'published',
+        status: "published",
         published_at: new Date().toISOString(),
         platform_post_id: result.postId,
         platform_post_url: result.postUrl,
         error_message: null,
       })
-      .eq('id', postId);
+      .eq("id", postId);
 
     // Update connection stats
     await adminClient
-      .from('social_connections')
+      .from("social_connections")
       .update({
         last_post_at: new Date().toISOString(),
         posts_count: (post.social_connections.posts_count || 0) + 1,
       })
-      .eq('id', post.connection_id);
+      .eq("id", post.connection_id);
 
     // Create analytics record
-    await adminClient.from('social_post_analytics').insert({
+    await adminClient.from("social_post_analytics").insert({
       post_id: postId,
       organization_id: context.organizationId,
     });
 
-    revalidatePath('/dashboard/social');
+    revalidatePath("/dashboard/social");
     return { success: true };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     // Update post with error
     await adminClient
-      .from('social_posts')
+      .from("social_posts")
       .update({
-        status: 'failed',
+        status: "failed",
         error_message: errorMessage,
         retry_count: (post.retry_count || 0) + 1,
         last_retry_at: new Date().toISOString(),
       })
-      .eq('id', postId);
+      .eq("id", postId);
 
     return { success: false, error: `Failed to publish: ${errorMessage}` };
   }
@@ -916,29 +992,29 @@ export async function publishSocialPost(postId: string): Promise<ActionResult> {
 // Get social posts for organization
 export async function getSocialPosts(params?: {
   platform?: SocialPlatform;
-  status?: SocialPost['status'];
+  status?: SocialPost["status"];
   limit?: number;
   offset?: number;
 }): Promise<ActionResult<{ posts: SocialPost[]; total: number }>> {
   const context = await getUserContext();
   if (!context || !context.organization_id) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: "Unauthorized" };
   }
 
   // Use untyped client for social_posts table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   let query = supabase
-    .from('social_posts')
-    .select('*', { count: 'exact' })
-    .eq('organization_id', context.organization_id)
-    .order('created_at', { ascending: false });
+    .from("social_posts")
+    .select("*", { count: "exact" })
+    .eq("organization_id", context.organization_id)
+    .order("created_at", { ascending: false });
 
   if (params?.platform) {
-    query = query.eq('platform', params.platform);
+    query = query.eq("platform", params.platform);
   }
   if (params?.status) {
-    query = query.eq('status', params.status);
+    query = query.eq("status", params.status);
   }
   if (params?.limit) {
     query = query.limit(params.limit);
@@ -950,7 +1026,7 @@ export async function getSocialPosts(params?: {
   const { data, error, count } = await query;
 
   if (error) {
-    return { success: false, error: 'Failed to fetch posts' };
+    return { success: false, error: "Failed to fetch posts" };
   }
 
   const posts: SocialPost[] = (data || []).map((row) => ({
@@ -964,7 +1040,7 @@ export async function getSocialPosts(params?: {
     content: row.content,
     imageUrl: row.image_url,
     linkUrl: row.link_url,
-    status: row.status as SocialPost['status'],
+    status: row.status as SocialPost["status"],
     scheduledFor: row.scheduled_for,
     publishedAt: row.published_at,
     platformPostId: row.platform_post_id,
@@ -985,23 +1061,23 @@ export async function getSocialPosts(params?: {
 export async function deleteSocialPost(postId: string): Promise<ActionResult> {
   const context = await requireManagerRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Manager role required' };
+    return { success: false, error: "Unauthorized - Manager role required" };
   }
 
   // Use untyped client for social_posts table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   const { error } = await supabase
-    .from('social_posts')
+    .from("social_posts")
     .delete()
-    .eq('id', postId)
-    .eq('organization_id', context.organizationId);
+    .eq("id", postId)
+    .eq("organization_id", context.organizationId);
 
   if (error) {
-    return { success: false, error: 'Failed to delete post' };
+    return { success: false, error: "Failed to delete post" };
   }
 
-  revalidatePath('/dashboard/social');
+  revalidatePath("/dashboard/social");
   return { success: true };
 }
 
@@ -1013,22 +1089,22 @@ export async function bulkQueueReviewsForPublishing(
 ): Promise<ActionResult<{ queued: number }>> {
   const context = await requireManagerRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Manager role required' };
+    return { success: false, error: "Unauthorized - Manager role required" };
   }
 
   const adminClient = createUntypedAdminClient();
 
   // Verify connection
   const { data: connection, error: connError } = await adminClient
-    .from('social_connections')
-    .select('id')
-    .eq('id', connectionId)
-    .eq('organization_id', context.organizationId)
-    .eq('is_active', true)
+    .from("social_connections")
+    .select("id")
+    .eq("id", connectionId)
+    .eq("organization_id", context.organizationId)
+    .eq("is_active", true)
     .single();
 
   if (connError || !connection) {
-    return { success: false, error: 'Connection not found' };
+    return { success: false, error: "Connection not found" };
   }
 
   // Queue each review
@@ -1042,14 +1118,12 @@ export async function bulkQueueReviewsForPublishing(
     priority: reviewIds.length - index, // Higher priority for earlier items
   }));
 
-  const { error } = await adminClient
-    .from('social_publish_queue')
-    .insert(queueItems);
+  const { error } = await adminClient.from("social_publish_queue").insert(queueItems);
 
   if (error) {
-    return { success: false, error: 'Failed to queue reviews' };
+    return { success: false, error: "Failed to queue reviews" };
   }
 
-  revalidatePath('/dashboard/social');
+  revalidatePath("/dashboard/social");
   return { success: true, data: { queued: reviewIds.length } };
 }

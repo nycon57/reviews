@@ -21,34 +21,19 @@ import { TIER_FEATURES } from "@/lib/organization/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { getUnifiedRequests, getUnifiedRequestStats } from "@/lib/requests/unified-requests";
+import { getContacts } from "@/lib/contacts/queries";
+import { getReviewFlags, getReviewFlagStats } from "@/lib/reviews/flag-actions";
+import { DisputeQueue } from "@/components/reviews/dispute-queue";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { getAccessContext } from "@/lib/access";
 import { ShareStudioCards } from "@/components/dashboard/share-studio-cards";
+import { ReviewsHubFallback } from "@/components/shared";
 
 // Dynamic import for heavy UnifiedContentHub component
 const UnifiedContentHub = dynamic(
   () => import("@/components/reviews/unified-content-hub").then((mod) => mod.UnifiedContentHub),
   {
-    loading: () => (
-      <div className="space-y-6">
-        {/* Stats skeleton */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
-        </div>
-        {/* Tabs skeleton */}
-        <Skeleton className="h-10 w-80" />
-        {/* Filter skeleton */}
-        <Skeleton className="h-12" />
-        {/* Content skeleton */}
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-      </div>
-    ),
+    loading: () => <ReviewsHubFallback />,
   }
 );
 
@@ -99,14 +84,7 @@ async function getUserRole(): Promise<UserRole> {
   return userData.role;
 }
 
-export default async function ReviewsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ id?: string; tab?: string }>;
-}) {
-  const params = await searchParams;
-  const initialReviewId = params?.id;
-
+async function ReviewsContent({ initialReviewId }: { initialReviewId?: string }) {
   // Get user role and access context for permissions
   const [userRole, accessCtx] = await Promise.all([
     getUserRole(),
@@ -114,6 +92,7 @@ export default async function ReviewsPage({
   ]);
 
   const canSendRequests = hasPermission(accessCtx, PERMISSIONS.SEND_SURVEY);
+  const canManageDisputes = userRole === "admin" || userRole === "manager";
 
   // Fetch all data in parallel
   const [
@@ -126,6 +105,11 @@ export default async function ReviewsPage({
     orgResult,
     requestsResult,
     requestStatsResult,
+    contactsResult,
+    openFlagsResult,
+    resolvedFlagsResult,
+    flagStatsResult,
+    accountTypeRow,
   ] = await Promise.all([
     getAggregatedReviews({ page: 1, limit: 20 }),
     getReviewStats(),
@@ -136,6 +120,17 @@ export default async function ReviewsPage({
     getCurrentOrganization(),
     canSendRequests ? getUnifiedRequests({ page: 1, pageSize: 25 }) : null,
     canSendRequests ? getUnifiedRequestStats() : null,
+    canSendRequests ? getContacts({ page: 1, pageSize: 25 }) : null,
+    canManageDisputes ? getReviewFlags({ status: "pending" }) : null,
+    canManageDisputes ? getReviewFlags({ status: "resolved" }) : null,
+    canManageDisputes ? getReviewFlagStats() : null,
+    canManageDisputes && accessCtx
+      ? createAdminClient()
+          .from("organizations")
+          .select("account_type")
+          .eq("id", accessCtx.organizationId)
+          .single()
+      : null,
   ]);
 
   // Process text reviews data
@@ -191,10 +186,77 @@ export default async function ReviewsPage({
   const subscriptionTier = orgResult.organization?.subscription_tier ?? "basic";
   const hasAiAccess = TIER_FEATURES[subscriptionTier]?.ai_insights ?? false;
 
+  // Process disputes data (admins/managers only)
+  const openFlags = openFlagsResult?.success ? openFlagsResult.data?.flags ?? [] : [];
+  const resolvedFlags = resolvedFlagsResult?.success
+    ? resolvedFlagsResult.data?.flags ?? []
+    : [];
+  const openDisputeCount = flagStatsResult?.success
+    ? flagStatsResult.data?.open ?? 0
+    : openFlags.length;
+  const accountType =
+    accountTypeRow?.data?.account_type === "enterprise" ? "enterprise" : "individual";
+
   // Process requests data
   const initialRequests = requestsResult?.requests ?? [];
   const initialRequestsTotal = requestsResult?.total ?? 0;
   const initialRequestStats = requestStatsResult ?? undefined;
+
+  // Process contacts data (same acquisition permission as requests)
+  const initialContacts = contactsResult?.contacts ?? [];
+  const initialContactsTotal = contactsResult?.total ?? 0;
+
+  return (
+    <UnifiedContentHub
+      initialReviews={initialReviews}
+      initialReviewsTotal={initialReviewsTotal}
+      reviewStats={reviewStats}
+      aggregatedStats={aggregatedStats}
+      initialVideos={initialVideos}
+      initialVideosTotal={initialVideosTotal}
+      videoStats={videoStats}
+      teamMembers={teamMembers}
+      userRole={userRole}
+      hasAiAccess={hasAiAccess}
+      initialReviewId={initialReviewId}
+      initialRequests={initialRequests}
+      initialRequestsTotal={initialRequestsTotal}
+      initialRequestStats={initialRequestStats}
+      canSendRequests={canSendRequests}
+      initialContacts={initialContacts}
+      initialContactsTotal={initialContactsTotal}
+      contactsEnabled={canSendRequests}
+      shareStudioContent={
+        accessCtx ? (
+          <Suspense fallback={<Skeleton className="h-[200px]" />}>
+            <ShareStudioCards organizationId={accessCtx.organizationId} />
+          </Suspense>
+        ) : undefined
+      }
+      openDisputeCount={openDisputeCount}
+      disputesContent={
+        canManageDisputes ? (
+          <DisputeQueue
+            key={`${openFlags.map((flag) => flag.id).join(":")}|${resolvedFlags
+              .map((flag) => flag.id)
+              .join(":")}`}
+            initialOpenFlags={openFlags}
+            initialResolvedFlags={resolvedFlags}
+            accountType={accountType}
+          />
+        ) : undefined
+      }
+    />
+  );
+}
+
+export default async function ReviewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string; tab?: string }>;
+}) {
+  const params = await searchParams;
+  const initialReviewId = params?.id;
 
   return (
     <div className="flex-1 space-y-6">
@@ -212,48 +274,8 @@ export default async function ReviewsPage({
       </div>
 
       {/* Unified Content Hub */}
-      <Suspense
-        fallback={
-          <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-24" />
-              ))}
-            </div>
-            <Skeleton className="h-10 w-80" />
-            <Skeleton className="h-12" />
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-32" />
-              ))}
-            </div>
-          </div>
-        }
-      >
-        <UnifiedContentHub
-          initialReviews={initialReviews}
-          initialReviewsTotal={initialReviewsTotal}
-          reviewStats={reviewStats}
-          aggregatedStats={aggregatedStats}
-          initialVideos={initialVideos}
-          initialVideosTotal={initialVideosTotal}
-          videoStats={videoStats}
-          teamMembers={teamMembers}
-          userRole={userRole}
-          hasAiAccess={hasAiAccess}
-          initialReviewId={initialReviewId}
-          initialRequests={initialRequests}
-          initialRequestsTotal={initialRequestsTotal}
-          initialRequestStats={initialRequestStats}
-          canSendRequests={canSendRequests}
-          shareStudioContent={
-            accessCtx ? (
-              <Suspense fallback={<Skeleton className="h-[200px]" />}>
-                <ShareStudioCards organizationId={accessCtx.organizationId} />
-              </Suspense>
-            ) : undefined
-          }
-        />
+      <Suspense fallback={<ReviewsHubFallback />}>
+        <ReviewsContent initialReviewId={initialReviewId} />
       </Suspense>
     </div>
   );

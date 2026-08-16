@@ -12,6 +12,7 @@ import { AdminAlertDigestEmail } from "../templates/admin-alerts";
 import type {
   AdminAlertDigestEmailData,
   AdminAlertDigestItem,
+  AdminAlertEmailHealth,
   AdminAlertSeverity,
 } from "../types";
 
@@ -20,6 +21,136 @@ interface SendDigestResult {
   sent: number;
   failed: number;
   errors: string[];
+}
+
+interface DigestRecipient {
+  userId: string;
+  email: string;
+  fullName: string;
+  organizationId: string;
+  organizationName: string;
+}
+
+/** Default failed-send count over the window that triggers an email-health alert. */
+const EMAIL_FAILURE_THRESHOLD_DEFAULT = 5;
+/** Window over which failed sends are counted for the health check. */
+const EMAIL_HEALTH_WINDOW_HOURS = 24;
+/** How many top failing templates to surface in the digest. */
+const EMAIL_HEALTH_TOP_TEMPLATES = 3;
+
+/**
+ * Per-org email-deliverability health for orgs whose failed-send count in the
+ * window exceeds their threshold (default 5, overridable via
+ * organizations.settings.email_failure_alert_threshold). Returns a map keyed by
+ * organization_id — only over-threshold orgs are included.
+ */
+async function getOrgEmailHealth(): Promise<Map<string, AdminAlertEmailHealth>> {
+  const supabase = createUntypedAdminClient();
+  const since = new Date(
+    Date.now() - EMAIL_HEALTH_WINDOW_HOURS * 60 * 60 * 1000
+  ).toISOString();
+
+  const { data: failedRows, error } = await supabase
+    .from("email_logs")
+    .select("organization_id, template_name")
+    .eq("status", "failed")
+    .gte("created_at", since)
+    .not("organization_id", "is", null);
+
+  if (error || !failedRows || failedRows.length === 0) {
+    if (error) console.error("Error computing email health:", error);
+    return new Map();
+  }
+
+  // Aggregate failed counts per org, and per template within each org.
+  const perOrg = new Map<string, { total: number; byTemplate: Map<string, number> }>();
+  for (const row of failedRows as Array<{
+    organization_id: string | null;
+    template_name: string | null;
+  }>) {
+    const orgId = row.organization_id;
+    if (!orgId) continue;
+    const entry = perOrg.get(orgId) ?? { total: 0, byTemplate: new Map() };
+    entry.total += 1;
+    const template = row.template_name || "unknown";
+    entry.byTemplate.set(template, (entry.byTemplate.get(template) ?? 0) + 1);
+    perOrg.set(orgId, entry);
+  }
+
+  // Load per-org thresholds from settings; default when unset/invalid.
+  const orgIds = [...perOrg.keys()];
+  const thresholds = new Map<string, number>();
+  const { data: orgs } = await supabase
+    .from("organizations")
+    .select("id, settings")
+    .in("id", orgIds);
+  for (const org of (orgs ?? []) as Array<{ id: string; settings: unknown }>) {
+    const raw = (org.settings as Record<string, unknown> | null)?.[
+      "email_failure_alert_threshold"
+    ];
+    const parsed = Number(raw);
+    thresholds.set(
+      org.id,
+      Number.isFinite(parsed) && parsed > 0 ? parsed : EMAIL_FAILURE_THRESHOLD_DEFAULT
+    );
+  }
+
+  const analyticsUrl = `${emailConfig.baseUrl}/staff/email-analytics`;
+  const result = new Map<string, AdminAlertEmailHealth>();
+  for (const [orgId, entry] of perOrg) {
+    const threshold = thresholds.get(orgId) ?? EMAIL_FAILURE_THRESHOLD_DEFAULT;
+    if (entry.total <= threshold) continue;
+
+    const topTemplates = [...entry.byTemplate.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, EMAIL_HEALTH_TOP_TEMPLATES)
+      .map(([templateName, count]) => ({ templateName, count }));
+
+    result.set(orgId, {
+      failedCount: entry.total,
+      threshold,
+      windowHours: EMAIL_HEALTH_WINDOW_HOURS,
+      topTemplates,
+      analyticsUrl,
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Admins/managers of the given orgs — the recipients for an email-health alert
+ * when they have no queued alerts that would otherwise pull them into the digest.
+ */
+async function getAdminRecipientsForOrgs(
+  orgIds: string[]
+): Promise<DigestRecipient[]> {
+  if (orgIds.length === 0) return [];
+  const supabase = createUntypedAdminClient();
+
+  const { data: users, error } = await supabase
+    .from("users")
+    .select("id, email, full_name, organization_id, organizations(name)")
+    .in("organization_id", orgIds)
+    .in("role", ["admin", "manager"])
+    .eq("is_active", true);
+
+  if (error || !users) {
+    if (error) console.error("Error fetching email-health recipients:", error);
+    return [];
+  }
+
+  return (users as Array<Record<string, unknown>>).map((user) => {
+    const org = user.organizations as { name: string } | { name: string }[] | null;
+    const orgName = Array.isArray(org) ? org[0]?.name : org?.name;
+    return {
+      userId: user.id as string,
+      email: user.email as string,
+      fullName: user.full_name as string,
+      organizationId: user.organization_id as string,
+      organizationName: orgName || "Your Organization",
+    };
+  });
 }
 
 interface QueuedAlert {
@@ -219,14 +350,9 @@ function getActionUrl(alert: QueuedAlert): string {
  * Send daily digest email to a single user
  */
 async function sendDigestToUser(
-  user: {
-    userId: string;
-    email: string;
-    fullName: string;
-    organizationId: string;
-    organizationName: string;
-  },
-  alerts: QueuedAlert[]
+  user: DigestRecipient,
+  alerts: QueuedAlert[],
+  emailHealth?: AdminAlertEmailHealth
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const resend = getResendClient();
@@ -266,20 +392,24 @@ async function sendDigestToUser(
       alertSettingsUrl: `${emailConfig.baseUrl}/settings/notifications`,
       toEmail: user.email,
       unsubscribeUrl: `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}&type=admin_alerts`,
+      emailHealth,
     };
 
     // Render email
     const html = await render(AdminAlertDigestEmail({ data: emailData }));
 
-    // Build subject line
+    // Build subject line. An email-health-only digest (no queued alerts) leads
+    // with the deliverability problem rather than "0 alerts".
     let subject = `Daily Alert Digest: ${digestItems.length} alert${digestItems.length !== 1 ? "s" : ""}`;
-    if (criticalCount > 0) {
+    if (digestItems.length === 0 && emailHealth) {
+      subject = `[Important] Email health: ${emailHealth.failedCount} failed sends need attention`;
+    } else if (criticalCount > 0) {
       subject = `[URGENT] ${subject} (${criticalCount} critical)`;
     } else if (highCount > 0) {
       subject = `[Important] ${subject}`;
     }
 
-    // Send email
+    // Operational admin alert digest; leave direct because it is not A/B material.
     const { data: sendData, error: sendError } = await resend.emails.send({
       from: getFromAddress(),
       to: user.email,
@@ -341,20 +471,38 @@ export async function sendAdminAlertDigests(): Promise<SendDigestResult> {
   };
 
   try {
-    const users = await getUsersWithPendingAlerts();
+    // Email-health is org-scoped and can reach admins who have no queued alerts,
+    // so the recipient set is the union of alert-queue users and admins/managers
+    // of over-threshold orgs.
+    const emailHealthByOrg = await getOrgEmailHealth();
+    const alertUsers = await getUsersWithPendingAlerts();
 
-    if (users.length === 0) {
+    const recipients = new Map<string, DigestRecipient>();
+    for (const user of alertUsers) recipients.set(user.userId, user);
+    if (emailHealthByOrg.size > 0) {
+      const healthRecipients = await getAdminRecipientsForOrgs([
+        ...emailHealthByOrg.keys(),
+      ]);
+      for (const user of healthRecipients) {
+        if (!recipients.has(user.userId)) recipients.set(user.userId, user);
+      }
+    }
+
+    if (recipients.size === 0) {
       return result;
     }
 
-    for (const user of users) {
+    for (const user of recipients.values()) {
       const alerts = await getPendingAlertsForUser(user.userId);
+      const emailHealth = emailHealthByOrg.get(user.organizationId);
 
-      if (alerts.length === 0) {
+      // Relaxed early-continue: skip only when there is nothing to say — no
+      // queued alerts AND the org is not over its failed-send threshold.
+      if (alerts.length === 0 && !emailHealth) {
         continue;
       }
 
-      const sendResult = await sendDigestToUser(user, alerts);
+      const sendResult = await sendDigestToUser(user, alerts, emailHealth);
 
       if (sendResult.success) {
         result.sent++;

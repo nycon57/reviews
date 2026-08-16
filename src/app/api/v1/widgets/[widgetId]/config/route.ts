@@ -150,12 +150,13 @@ export async function GET(
     ab_test_config: _abc,
     ...publicWidget
   } = effectiveWidget;
+  // Unset extras stay `undefined` so `NextResponse.json` omits their keys entirely.
   const body = {
     ...publicWidget,
     entity_profile: entityProfile,
-    ...(videoTestimonials ? { video_testimonials: videoTestimonials } : {}),
-    ...(npsData ? { nps_data: npsData } : {}),
-    ...(abTest ? { ab_test: abTest } : {}),
+    video_testimonials: videoTestimonials ?? undefined,
+    nps_data: npsData ?? undefined,
+    ab_test: abTest ?? undefined,
   };
   const response = NextResponse.json(body);
   return withCorsAndCache(response, allowedOrigin, CACHE_CONTROL);

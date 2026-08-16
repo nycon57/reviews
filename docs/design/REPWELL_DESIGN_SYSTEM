@@ -105,10 +105,9 @@ module.exports = {
           hover: '#52796f',
         },
         background: {
-          DEFAULT: '#ffffff',
-          subtle: '#f8faf8',
-          muted: '#f0f4f0',
-          sage: '#cad2c5',
+          DEFAULT: 'hsl(var(--background))',
+          subtle: 'hsl(var(--background-subtle))',
+          muted: 'hsl(var(--background-muted))',
         },
         foreground: {
           DEFAULT: '#2f3e46',
@@ -116,8 +115,8 @@ module.exports = {
           subtle: '#84a98c',
         },
         border: {
-          DEFAULT: '#e2e8e4',
-          subtle: '#eef2ee',
+          DEFAULT: 'hsl(var(--border))',
+          subtle: 'hsl(var(--border-subtle))',
         }
       }
     }
@@ -130,11 +129,11 @@ module.exports = {
 #### Backgrounds
 | Use Case | Color | Tailwind Class |
 |----------|-------|----------------|
-| Page background | White | `bg-white` |
-| Subtle sections | Off-white with sage tint | `bg-background-subtle` or `bg-[#f8faf8]` |
-| Muted sections | Light sage | `bg-background-muted` or `bg-repwell-sage-100/30` |
+| Page background | App canvas | `bg-background` |
+| Subtle sections | Off-white with sage tint | `bg-background-subtle` |
+| Muted sections | Light sage | `bg-background-muted` |
 | Dark sections (CTAs, hero variants) | Deep teal | `bg-repwell-teal-500` |
-| Cards | White with subtle border | `bg-white border border-border` |
+| Cards | Card surface with subtle border | `bg-card border border-border` |
 
 #### Text
 | Use Case | Color | Tailwind Class |
@@ -162,6 +161,16 @@ For data visualization, status indicators, or highlighting:
 --accent-error: #c47c7c;    /* Muted coral - errors, destructive */
 --accent-info: #7c9eb8;     /* Muted blue - informational */
 ```
+
+Use status badges and chips with the semantic recipe:
+
+```tsx
+<span className="rounded-full border border-success/20 bg-success/10 px-2.5 py-0.5 text-xs font-semibold text-success">
+  Healthy
+</span>
+```
+
+Swap `success` for `warning`, `destructive`, or `info` as needed. Do not introduce new raw `green-*`, `red-*`, `amber-*`, `yellow-*`, or `orange-*` status classes in product UI.
 
 ---
 
@@ -586,6 +595,8 @@ Motion in Repwell should feel:
 - **Subtle**: Enhances without distracting
 - **Smooth**: Consistent easing, no jarring transitions
 - **Professional**: Not playful or bouncy
+
+Reduced-motion handling is centralized: Framer Motion uses the app-level `MotionConfig reducedMotion="user"` provider, and CSS animation utilities are governed by the global `prefers-reduced-motion` block in `globals.css`. Preserve loading spinners because they communicate active state.
 
 ### Framer Motion Configuration
 
@@ -1344,10 +1355,17 @@ module.exports = {
         },
         
         // Semantic colors for shadcn/ui compatibility
-        border: "hsl(var(--border))",
+        border: {
+          DEFAULT: "hsl(var(--border))",
+          subtle: "hsl(var(--border-subtle))",
+        },
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
+        background: {
+          DEFAULT: "hsl(var(--background))",
+          subtle: "hsl(var(--background-subtle))",
+          muted: "hsl(var(--background-muted))",
+        },
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -1377,6 +1395,25 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
+        chart: {
+          1: "hsl(var(--chart-1))",
+          2: "hsl(var(--chart-2))",
+          3: "hsl(var(--chart-3))",
+          4: "hsl(var(--chart-4))",
+          5: "hsl(var(--chart-5))",
+        },
       },
       
       fontFamily: {
@@ -1396,9 +1433,10 @@ module.exports = {
       },
       
       boxShadow: {
-        'soft': '0 2px 8px -2px rgba(47, 62, 70, 0.1), 0 4px 16px -4px rgba(47, 62, 70, 0.1)',
-        'medium': '0 4px 12px -2px rgba(47, 62, 70, 0.12), 0 8px 24px -4px rgba(47, 62, 70, 0.12)',
-        'large': '0 8px 24px -4px rgba(47, 62, 70, 0.15), 0 16px 48px -8px rgba(47, 62, 70, 0.15)',
+        'soft': '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
+        'card-hover': '0 8px 16px -4px rgb(0 0 0 / 0.08), 0 4px 8px -4px rgb(0 0 0 / 0.04)',
+        'button-hover': '0 4px 12px -2px rgb(82 121 111 / 0.25)',
+        'glow': '0 0 20px -5px rgb(82 121 111 / 0.4)',
       },
       
       animation: {
@@ -1445,8 +1483,10 @@ module.exports = {
 @layer base {
   :root {
     /* Base colors mapped to Repwell palette */
-    --background: 0 0% 100%;
-    --foreground: 195 21% 23%;  /* repwell-teal-500 */
+	    --background: 97 14% 96%;
+	    --background-subtle: 120 17% 98%;
+	    --background-muted: 120 15% 95%;
+	    --foreground: 201 20% 23%;  /* repwell-teal-500 */
     
     --card: 0 0% 100%;
     --card-foreground: 195 21% 23%;
@@ -1466,20 +1506,30 @@ module.exports = {
     --accent: 100 10% 90%;
     --accent-foreground: 195 21% 23%;
     
-    --destructive: 0 60% 50%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --border: 100 10% 88%;
-    --input: 100 10% 88%;
-    --ring: 163 18% 40%;
+	    --destructive: 0 38% 63%;      /* #c47c7c */
+	    --destructive-foreground: 201 20% 14%;
+
+	    --border: 140 12% 90%;         /* #e2e8e4 */
+	    --border-subtle: 120 13% 94%;  /* #eef2ee */
+	    --input: 140 12% 90%;
+	    --ring: 165 19% 40%;
+
+	    --success: 133 18% 59%;        /* #84a98c */
+	    --success-foreground: 201 20% 14%;
+	    --warning: 31 53% 64%;         /* #d4a574 */
+	    --warning-foreground: 201 20% 14%;
+	    --info: 206 30% 60%;           /* #7c9eb8 */
+	    --info-foreground: 201 20% 14%;
     
     --radius: 0.5rem;
   }
   
   /* Dark mode — fully implemented */
-  .dark {
-    --background: 195 21% 11%;
-    --foreground: 97 14% 80%;
+	  .dark {
+	    --background: 195 21% 11%;
+	    --background-subtle: 195 18% 14%;
+	    --background-muted: 195 15% 18%;
+	    --foreground: 97 14% 80%;
     --card: 195 21% 14%;
     --card-foreground: 97 14% 80%;
     --primary: 165 22% 48%;       /* Lifted for visibility on dark */
@@ -1490,10 +1540,19 @@ module.exports = {
     --muted-foreground: 97 14% 60%;
     --accent: 195 21% 18%;
     --accent-foreground: 97 14% 80%;
-    --border: 195 21% 22%;
-    --input: 195 21% 22%;
-    --ring: 165 22% 48%;
-    --heading: 97 14% 90%;
+	    --border: 195 21% 22%;
+	    --border-subtle: 195 12% 20%;
+	    --input: 195 21% 22%;
+	    --ring: 165 22% 48%;
+	    --destructive: 0 42% 70%;
+	    --destructive-foreground: 201 20% 14%;
+	    --success: 133 22% 66%;
+	    --success-foreground: 201 20% 14%;
+	    --warning: 31 55% 68%;
+	    --warning-foreground: 201 20% 14%;
+	    --info: 206 34% 68%;
+	    --info-foreground: 201 20% 14%;
+	    --heading: 97 14% 90%;
     --surface-soft: 195 21% 14%;
     --surface-subtle: 195 21% 16%;
   }
@@ -1573,7 +1632,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        "rounded-xl border border-border bg-card text-card-foreground shadow-soft transition-shadow duration-300 hover:shadow-medium",
+        "rounded-xl border border-border bg-card text-card-foreground shadow-soft transition-shadow duration-300 hover:shadow-md",
         className
       )}
       {...props}
@@ -1729,7 +1788,7 @@ const badgeVariants = cva(
           key={feature.title}
           variants={fadeInUp}
           custom={index}
-          className="bg-white border border-border rounded-xl p-6 lg:p-8 hover:shadow-medium transition-shadow duration-300"
+          className="bg-white border border-border rounded-xl p-6 lg:p-8 hover:shadow-md transition-shadow duration-300"
         >
           <div className="w-12 h-12 bg-repwell-sage-100/50 rounded-xl flex items-center justify-center mb-6">
             <feature.icon className="w-6 h-6 text-repwell-teal-300" />
@@ -1788,7 +1847,7 @@ const badgeVariants = cva(
             <img 
               src={section.image} 
               alt="" 
-              className="relative rounded-2xl shadow-large"
+              className="relative rounded-2xl shadow-xl"
             />
           </div>
         </div>
@@ -2021,13 +2080,24 @@ Respect user preferences:
 ```css
 /* In CSS */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+
+  :where(.animate-pulse, .animate-fade-in, .animate-fade-in-up, .animate-blob-float, .animate-shimmer) {
+    animation: none !important;
+  }
+
+  :where([class*="animate-"]:not(.animate-spin)) {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
   }
 }
 ```
+
+Loading spinners (`animate-spin`) are exempt because they communicate active state. Framer Motion is covered by the global `MotionConfig reducedMotion="user"` provider; do not duplicate that logic per component.
 
 ---
 
@@ -2254,6 +2324,10 @@ Use these consistently instead of ad-hoc gradient values:
 | `bg-gradient-to-b` | Section backgrounds, hero overlays (10 uses) |
 | `bg-gradient-to-t` | Bottom-up fades, footer transitions (6 uses) |
 
+### Shadow Rules
+
+Tailwind defaults are the shadow scale. Use `shadow-sm`, `shadow-md`, `shadow-lg`, `shadow-xl`, or `shadow-2xl` for elevation changes. Use the RepWell `shadow-soft` token only for the established low-contrast card treatment. Do not add `shadow-elevation-*`, `shadow-card`, `shadow-medium`, or `shadow-large` tokens.
+
 ---
 
 ## Dashboard Patterns
@@ -2321,8 +2395,8 @@ Common pattern for dashboard content with sidebar info:
 |---------|--------|-------------|
 | `"default"` | Sage gradient bg + border-bottom + rounded-t-xl | Dashboard cards (most cards) — **this is the default** |
 | `"plain"` | No bg, no border (original behavior) | Auth, onboarding, public, marketing pages |
-| `"accent-amber"` | Amber gradient + amber border-bottom | Warning/destructive contexts (e.g. account deactivation) |
-| `"accent-green"` | Green gradient + green border-bottom | Success/action contexts (e.g. smart actions) |
+| `"accent-amber"` | `warning` gradient + `warning` border-bottom | Warning/destructive contexts (e.g. account deactivation) |
+| `"accent-green"` | `success` gradient + `success` border-bottom | Success/action contexts (e.g. smart actions) |
 
 ```tsx
 // Dashboard card — default variant, no prop needed
@@ -2499,7 +2573,7 @@ import { fadeInUp, staggerContainer, viewportOnce, cardHover } from "@/lib/motio
 | `liftOnHover` | translateY(-4) on hover |
 | `buttonHover` | Scale 1.02 on hover, 0.98 on tap |
 | `iconHover` | Scale 1.1, rotate 5° on hover |
-| `cardHover` | translateY(-4), shadow elevation on hover |
+| `cardHover` | translateY(-4), Tailwind shadow on hover |
 
 #### Special Animations
 | Name | Description |
@@ -2548,6 +2622,7 @@ Used for eyebrows, section labels, and category tags (11+ occurrences):
 |---------|------|---------|
 | 1.0.0 | January 2026 | Initial design system release |
 | 1.1.0 | March 2026 | Added: Shared Component Library, SectionWrapper, Icon Container Pattern, Gradient Presets, Dashboard Patterns, Loading & Empty States, Icon Registry, Motion Library Reference, Uppercase Label Pattern. Fixed: Industry-agnostic language, Erstoria font references, dark mode documentation. |
+| 1.1.1 | July 2026 | Fixed: design-token foundation for background/border subkeys, muted status tokens, chart token usage, reduced-motion guardrails, and shadow guidance. |
 
 ---
 

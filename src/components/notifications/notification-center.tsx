@@ -15,55 +15,22 @@ import {
   Bell,
   Check,
   Checks as CheckCheck,
-  Star,
-  Warning as AlertTriangle,
-  Chats as MessageSquare,
-  Trophy,
-  FileText,
   Gear as Settings,
   Archive,
 } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
-import type { NotificationWithDetails, NotificationType } from "@/lib/notifications/types";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import { getNotificationTypeConfig } from "@/lib/notifications/config";
+import type { NotificationWithDetails } from "@/lib/notifications/types";
 import {
   getNotifications,
   getUnreadNotificationCount,
   markNotificationsAsRead,
-  archiveNotification,
 } from "@/lib/notifications/actions";
-import { formatDistanceToNow } from "date-fns";
+import { useArchivableNotifications } from "./use-archivable-notifications";
 
 interface NotificationCenterProps {
   className?: string;
 }
-
-const notificationIcons: Record<NotificationType, React.ElementType> = {
-  new_review: Star,
-  negative_review: AlertTriangle,
-  review_approved: Check,
-  review_rejected: AlertTriangle,
-  response_posted: MessageSquare,
-  badge_earned: Trophy,
-  milestone_reached: Trophy,
-  mention: MessageSquare,
-  report_ready: FileText,
-  digest: FileText,
-  system: Bell,
-};
-
-const notificationColors: Record<NotificationType, string> = {
-  new_review: "bg-amber-100 text-amber-600",
-  negative_review: "bg-red-100 text-red-600",
-  review_approved: "bg-green-100 text-green-600",
-  review_rejected: "bg-red-100 text-red-600",
-  response_posted: "bg-blue-100 text-blue-600",
-  badge_earned: "bg-purple-100 text-purple-600",
-  milestone_reached: "bg-purple-100 text-purple-600",
-  mention: "bg-blue-100 text-blue-600",
-  report_ready: "bg-indigo-100 text-indigo-600",
-  digest: "bg-indigo-100 text-indigo-600",
-  system: "bg-muted text-muted-foreground",
-};
 
 export function NotificationCenter({ className }: NotificationCenterProps) {
   const [open, setOpen] = React.useState(false);
@@ -122,16 +89,11 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
     }
   };
 
-  const handleArchive = async (notificationId: string) => {
-    const result = await archiveNotification(notificationId);
-    if (result.success) {
-      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-      const notification = notifications.find((n) => n.id === notificationId);
-      if (notification && !notification.is_read) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
-    }
-  };
+  const { handleArchive } = useArchivableNotifications({
+    notifications,
+    setNotifications,
+    setUnreadCount,
+  });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -175,7 +137,7 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
               </Button>
             )}
             <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-              <Link href="/dashboard/settings">
+              <Link href="/dashboard/settings" aria-label="Notification settings">
                 <Settings className="h-3.5 w-3.5" />
               </Link>
             </Button>
@@ -255,8 +217,7 @@ function NotificationItem({
   onArchive,
   onClick,
 }: NotificationItemProps) {
-  const Icon = notificationIcons[notification.type as NotificationType] || Bell;
-  const colorClass = notificationColors[notification.type as NotificationType] || notificationColors.system;
+  const { icon: Icon, colorClass } = getNotificationTypeConfig(notification.type);
 
   const content = (
     <div
@@ -271,7 +232,7 @@ function NotificationItem({
       </div>
 
       {/* Content */}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 pr-14">
         <div className="flex items-start justify-between gap-2">
           <p className={cn("text-sm", !notification.is_read && "font-medium")}>
             {notification.title}
@@ -284,12 +245,12 @@ function NotificationItem({
           {notification.message}
         </p>
         <p className="mt-1 text-xs text-muted-foreground/70">
-          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+          {formatRelativeTime(notification.created_at)}
         </p>
       </div>
 
       {/* Actions (visible on hover) */}
-      <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute right-2 top-2 flex gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100 group-focus-within:opacity-100">
         {!notification.is_read && (
           <Button
             variant="ghost"
@@ -301,6 +262,7 @@ function NotificationItem({
               onMarkAsRead();
             }}
             title="Mark as read"
+            aria-label={`Mark notification as read: ${notification.title}`}
           >
             <Check className="h-3 w-3" />
           </Button>
@@ -315,6 +277,7 @@ function NotificationItem({
             onArchive();
           }}
           title="Archive"
+          aria-label={`Archive notification: ${notification.title}`}
         >
           <Archive className="h-3 w-3" />
         </Button>

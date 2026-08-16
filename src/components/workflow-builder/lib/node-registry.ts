@@ -1,6 +1,5 @@
 import {
   ArrowBendDownRight,
-  ChatText,
   ClipboardText,
   Clock,
   Envelope,
@@ -47,7 +46,6 @@ export interface FieldDefinition {
     | "schedule"
     | "ab-variants"
     | "exit-config"
-    | "sms-requirements"
     | "email-template-selector"
     | "survey-template-selector";
   placeholder?: string;
@@ -256,37 +254,6 @@ export const NODE_REGISTRY: Record<WorkflowNodeType, NodeTypeConfig> = {
       },
     ],
   },
-  "action-sms": {
-    type: "action-sms",
-    label: "Send SMS",
-    description: "Delivers an SMS template and optional fallback.",
-    category: "actions",
-    family: "action",
-    icon: ChatText,
-    iconName: "ChatText",
-    accentClassName: "bg-sky-500",
-    handles: {
-      targets: [{ id: "target", position: Position.Top }],
-      sources: [{ id: "source", position: Position.Bottom }],
-    },
-    defaultData: {
-      smsTemplateName: "",
-      fallbackToEmail: true,
-    },
-    configFields: [
-      {
-        key: "smsTemplateName",
-        label: "SMS Template",
-        type: "text",
-        placeholder: "review_request_sms_reminder",
-      },
-      {
-        key: "fallbackToEmail",
-        label: "Fallback to Email",
-        type: "switch",
-      },
-    ],
-  },
   "action-survey": {
     type: "action-survey",
     label: "Send Survey",
@@ -351,14 +318,8 @@ export const NODE_REGISTRY: Record<WorkflowNodeType, NodeTypeConfig> = {
     },
     defaultData: {
       strategy: "best_available",
-      smsRequirements: {
-        requireConsent: true,
-        requirePhoneNumber: true,
-        respectQuietHours: true,
-      },
       emailTemplateId: "",
       templateName: "",
-      smsTemplateName: "",
     },
     configFields: [
       {
@@ -366,25 +327,14 @@ export const NODE_REGISTRY: Record<WorkflowNodeType, NodeTypeConfig> = {
         label: "Strategy",
         type: "select",
         options: [
-          { label: "Prefer SMS", value: "prefer_sms" },
           { label: "Prefer Email", value: "prefer_email" },
           { label: "Best Available", value: "best_available" },
         ],
       },
       {
-        key: "smsRequirements",
-        label: "SMS Requirements",
-        type: "sms-requirements",
-      },
-      {
         key: "emailTemplateId",
         label: "Email Template",
         type: "email-template-selector",
-      },
-      {
-        key: "smsTemplateName",
-        label: "SMS Template",
-        type: "text",
       },
     ],
   },
@@ -599,8 +549,6 @@ export function getNodeSummary(type: string, data: WorkflowNodeData): string {
       return data.emailTemplateId || data.surveyTemplateId
         ? "Survey invitation configured"
         : "Select templates...";
-    case "action-sms":
-      return data.smsTemplateName ? `Template: ${String(data.smsTemplateName)}` : "Select template...";
     case "action-smart":
       return data.strategy ? `Strategy: ${toRelativeLabel(String(data.strategy))}` : "Choose strategy";
     case "condition-ifelse":

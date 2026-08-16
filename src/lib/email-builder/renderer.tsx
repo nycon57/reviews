@@ -109,6 +109,20 @@ export async function renderEmailDocument(
   return { html };
 }
 
+/**
+ * Narrow a stored block's prop bag to the contract its renderer owns.
+ *
+ * Documents are persisted as untyped JSON, so props reach the renderer as
+ * `Record<string, unknown>` with no compile-time link to the block type.
+ */
+function blockProps<TProps>(raw: Record<string, unknown>): TProps {
+  // SAFETY: the caller is the `case` in renderBlock that owns this block type,
+  // so TProps is the prop schema the editor writes for that type. Renderers
+  // read every field defensively (`?? default`), so a document saved before a
+  // field existed renders with defaults rather than throwing.
+  return raw as TProps;
+}
+
 function renderBlock(
   block: BlockNode,
   mergeValues?: Record<string, string>
@@ -125,55 +139,55 @@ function renderBlock(
 
   switch (block.type) {
     case "text":
-      return renderText(raw as unknown as TextProps);
+      return renderText(blockProps<TextProps>(raw));
     case "heading":
-      return renderHeading(raw as unknown as HeadingProps);
+      return renderHeading(blockProps<HeadingProps>(raw));
     case "button":
-      return renderButton(raw as unknown as ButtonProps);
+      return renderButton(blockProps<ButtonProps>(raw));
     case "image":
-      return renderImage(raw as unknown as ImageProps);
+      return renderImage(blockProps<ImageProps>(raw));
     case "divider":
-      return renderDividerBlock(raw as unknown as DividerProps);
+      return renderDividerBlock(blockProps<DividerProps>(raw));
     case "spacer":
-      return renderSpacerBlock(raw as unknown as SpacerProps);
+      return renderSpacerBlock(blockProps<SpacerProps>(raw));
     case "card":
-      return renderCard(raw as unknown as CardProps, children);
+      return renderCard(blockProps<CardProps>(raw), children);
     case "section":
-      return renderSectionBlock(raw as unknown as SectionProps, children);
+      return renderSectionBlock(blockProps<SectionProps>(raw), children);
     case "columns":
-      return renderColumns(raw as unknown as ColumnsProps, block.children, mergeValues);
+      return renderColumns(blockProps<ColumnsProps>(raw), block.children, mergeValues);
     case "cta":
-      return renderCTA(raw as unknown as CTAProps);
+      return renderCTA(blockProps<CTAProps>(raw));
     case "logo":
-      return renderLogo(raw as unknown as LogoProps);
+      return renderLogo(blockProps<LogoProps>(raw));
     case "social-links":
-      return renderSocialLinks(raw as unknown as SocialLinksProps);
+      return renderSocialLinks(blockProps<SocialLinksProps>(raw));
     case "header":
-      return renderHeader(raw as unknown as HeaderProps);
+      return renderHeader(blockProps<HeaderProps>(raw));
     case "footer":
-      return renderFooterBlock(raw as unknown as FooterProps);
+      return renderFooterBlock(blockProps<FooterProps>(raw));
     case "testimonial":
-      return renderTestimonial(raw as unknown as TestimonialBlockProps);
+      return renderTestimonial(blockProps<TestimonialBlockProps>(raw));
     case "stats":
-      return renderStats(raw as unknown as StatsProps);
+      return renderStats(blockProps<StatsProps>(raw));
     case "feature-list":
-      return renderFeatureList(raw as unknown as FeatureListProps);
+      return renderFeatureList(blockProps<FeatureListProps>(raw));
     case "rating":
-      return renderRating(raw as unknown as RatingProps);
+      return renderRating(blockProps<RatingProps>(raw));
     case "callout":
-      return renderCallout(raw as unknown as CalloutProps);
+      return renderCallout(blockProps<CalloutProps>(raw));
     case "list":
-      return renderList(raw as unknown as ListProps);
+      return renderList(blockProps<ListProps>(raw));
     case "button-group":
-      return renderButtonGroup(raw as unknown as ButtonGroupProps);
+      return renderButtonGroup(blockProps<ButtonGroupProps>(raw));
     case "hero":
-      return renderHero(raw as unknown as HeroProps);
+      return renderHero(blockProps<HeroProps>(raw));
     case "gallery":
-      return renderGallery(raw as unknown as GalleryProps);
+      return renderGallery(blockProps<GalleryProps>(raw));
     case "article":
-      return renderArticle(raw as unknown as ArticleProps);
+      return renderArticle(blockProps<ArticleProps>(raw));
     case "avatar":
-      return renderAvatar(raw as unknown as AvatarBlockProps);
+      return renderAvatar(blockProps<AvatarBlockProps>(raw));
     default:
       return null;
   }

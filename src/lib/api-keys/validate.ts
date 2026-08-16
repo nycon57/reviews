@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getClientIp } from '@/lib/api-v2/middleware';
 import { hashApiKey, isValidKeyFormat, generateRequestId } from './generate';
 import type {
   ApiKeyScope,
@@ -123,14 +124,18 @@ export async function checkRateLimit(
   });
 
   if (error) {
-    console.error('Rate limit check error:', error);
-    // On error, allow the request but log it
+    // Fail closed: if we can't verify the rate limit we must deny the request
+    // rather than let it through unmetered. Ask the client to retry shortly.
+    console.error(
+      '[api-keys] Rate limit check failed — failing closed (denying request):',
+      error
+    );
     return {
-      isAllowed: true,
-      currentCount: 0,
+      isAllowed: false,
+      currentCount: rateLimit,
       limitCount: rateLimit,
-      resetAt: new Date(Date.now() + 3600000).toISOString(),
-      remaining: rateLimit,
+      resetAt: new Date(Date.now() + 60000).toISOString(),
+      remaining: 0,
     };
   }
 
@@ -174,7 +179,7 @@ export async function logApiKeyUsage(params: {
 }): Promise<void> {
   const supabase = createAdminClient();
 
-  await supabase.from('api_key_usage_logs').insert({
+  const { error: insertError } = await supabase.from('api_key_usage_logs').insert({
     api_key_id: params.apiKeyId,
     organization_id: params.organizationId,
     endpoint: params.endpoint,
@@ -189,10 +194,18 @@ export async function logApiKeyUsage(params: {
     error_message: params.errorMessage,
   });
 
+  if (insertError) {
+    console.error('[api-keys] Failed to write api_key_usage_logs entry:', insertError);
+  }
+
   // Also increment total request count
-  await supabase.rpc('increment_api_key_request_count', {
+  const { error: incrementError } = await supabase.rpc('increment_api_key_request_count', {
     p_api_key_id: params.apiKeyId,
   });
+
+  if (incrementError) {
+    console.error('[api-keys] Failed to increment api_key request count:', incrementError);
+  }
 }
 
 /**
@@ -320,10 +333,7 @@ export function withApiAuth(
     };
 
     // Get request metadata for logging
-    const ipAddress =
-      request.headers.get('x-forwarded-for')?.split(',')[0] ||
-      request.headers.get('x-real-ip') ||
-      undefined;
+    const ipAddress = getClientIp(request) ?? undefined;
     const userAgent = request.headers.get('user-agent') || undefined;
 
     try {

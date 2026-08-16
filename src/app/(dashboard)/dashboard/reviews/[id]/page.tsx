@@ -1,5 +1,5 @@
 import { redirect, notFound } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { VideoDetailView } from "@/components/reviews/video-detail-view";
 import { ReviewDetailView } from "@/components/reviews/review-detail-view";
@@ -33,6 +33,7 @@ async function checkAccess() {
   const role: UserRole = validRoles.includes(rawRole as UserRole) ? (rawRole as UserRole) : "user";
 
   return {
+    userId: user.id,
     role,
     organizationId: userData.organization_id,
   };
@@ -53,6 +54,8 @@ async function getVideoTestimonial(id: string, organizationId: string) {
       ai_generated_text,
       sentiment_score,
       sentiment_label,
+      customer_rating,
+      quarantined,
       key_phrases,
       duration_seconds,
       file_size_bytes,
@@ -66,6 +69,7 @@ async function getVideoTestimonial(id: string, organizationId: string) {
       approved_by,
       published_at,
       created_at,
+      review_id,
       video_testimonial_requests!inner (
         id,
         customer_name,
@@ -115,6 +119,8 @@ async function getVideoTestimonial(id: string, organizationId: string) {
     aiGeneratedText: data.ai_generated_text,
     sentimentScore: data.sentiment_score,
     sentimentLabel: data.sentiment_label,
+    customerRating: data.customer_rating,
+    quarantined: data.quarantined ?? false,
     keyPhrases: data.key_phrases as string[] | null,
     durationSeconds: data.duration_seconds,
     fileSizeBytes: data.file_size_bytes,
@@ -128,6 +134,7 @@ async function getVideoTestimonial(id: string, organizationId: string) {
     approvedBy: data.approved_by,
     publishedAt: data.published_at,
     submittedAt: data.created_at,
+    reviewId: data.review_id,
     customerName: request.customer_name,
     customerEmail: request.customer_email,
     loanOfficerId: request.user_id || "",
@@ -135,6 +142,22 @@ async function getVideoTestimonial(id: string, organizationId: string) {
     loanOfficerEmail,
     requestId: request.id,
   };
+}
+
+async function reviewHasOpenDispute(
+  reviewId: string,
+  organizationId: string
+): Promise<boolean> {
+  // review_flags is not yet in the generated database types
+  const supabase = createUntypedAdminClient();
+  const { count } = await supabase
+    .from("review_flags")
+    .select("id", { count: "exact", head: true })
+    .eq("review_id", reviewId)
+    .eq("organization_id", organizationId)
+    .eq("status", "pending");
+
+  return (count ?? 0) > 0;
 }
 
 async function getTextReview(id: string, organizationId: string) {
@@ -157,8 +180,15 @@ async function getTextReview(id: string, organizationId: string) {
       review_date,
       status,
       featured,
+      rejection_reason,
+      is_published,
       response_text,
+      response_status,
       response_at,
+      response_by,
+      response_template_id,
+      ai_suggested_response,
+      response_posted_at,
       sentiment_score,
       sentiment_label,
       key_phrases,
@@ -211,8 +241,21 @@ async function getTextReview(id: string, organizationId: string) {
     reviewDate: data.review_date,
     status: data.status as "pending" | "approved" | "rejected" | "archived",
     featured: data.featured ?? false,
+    rejectionReason: data.rejection_reason,
+    isPublished: data.is_published ?? false,
     responseText: data.response_text,
+    responseStatus: data.response_status as
+      | "draft"
+      | "pending_approval"
+      | "approved"
+      | "rejected"
+      | "posted"
+      | null,
     responseAt: data.response_at,
+    responseBy: data.response_by,
+    responseTemplateId: data.response_template_id,
+    aiSuggestedResponse: data.ai_suggested_response,
+    responsePostedAt: data.response_posted_at,
     sentimentScore: data.sentiment_score,
     sentimentLabel: data.sentiment_label,
     keyPhrases: data.key_phrases as string[] | null,
@@ -226,6 +269,38 @@ async function getTextReview(id: string, organizationId: string) {
   };
 }
 
+async function getLinkedVideoSummary(videoId: string, organizationId: string) {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("video_testimonial_responses")
+    .select(
+      `
+      id,
+      thumbnail_url,
+      duration_seconds,
+      approval_status,
+      video_testimonial_requests!inner (
+        organization_id
+      )
+    `
+    )
+    .eq("id", videoId)
+    .eq("video_testimonial_requests.organization_id", organizationId)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return {
+    id: data.id,
+    thumbnailUrl: data.thumbnail_url,
+    durationSeconds: data.duration_seconds,
+    approvalStatus: data.approval_status,
+  };
+}
+
 export default async function ContentDetailPage({
   params,
   searchParams,
@@ -235,7 +310,7 @@ export default async function ContentDetailPage({
 }) {
   const { id } = await params;
   const { type } = await searchParams;
-  const { role, organizationId } = await checkAccess();
+  const { userId, role, organizationId } = await checkAccess();
 
   const isVideo = type === "video";
 
@@ -245,14 +320,53 @@ export default async function ContentDetailPage({
       notFound();
     }
 
-    return <VideoDetailView video={video} userRole={role} />;
+    // Unified view: surface the extracted written review alongside the video
+    const linkedReview = video.reviewId
+      ? await getTextReview(video.reviewId, organizationId)
+      : null;
+
+    return (
+      <VideoDetailView
+        video={video}
+        userRole={role}
+        linkedReview={
+          linkedReview
+            ? {
+                id: linkedReview.id,
+                rating: linkedReview.rating,
+                text: linkedReview.text,
+                customerName: linkedReview.customerName,
+                status: linkedReview.status,
+                isPublished: linkedReview.isPublished,
+              }
+            : undefined
+        }
+      />
+    );
   }
 
   // Text review
-  const review = await getTextReview(id, organizationId);
+  const [review, hasOpenDispute] = await Promise.all([
+    getTextReview(id, organizationId),
+    reviewHasOpenDispute(id, organizationId),
+  ]);
   if (!review) {
     notFound();
   }
 
-  return <ReviewDetailView review={review} userRole={role} />;
+  // Unified view: surface the source video asset alongside the review record
+  const linkedVideo =
+    review.source === "video_testimonial" && review.sourceReviewId
+      ? await getLinkedVideoSummary(review.sourceReviewId, organizationId)
+      : null;
+
+  return (
+    <ReviewDetailView
+      review={review}
+      userRole={role}
+      currentUserId={userId}
+      hasOpenDispute={hasOpenDispute}
+      linkedVideo={linkedVideo ?? undefined}
+    />
+  );
 }

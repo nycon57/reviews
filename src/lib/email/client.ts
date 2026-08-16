@@ -18,10 +18,14 @@ export function getResendClient(): Resend {
 }
 
 // Email configuration
+function normalizeResendSender(email: string): string {
+  return email.replace(/@repwell\.ai(?=>?$)/i, "@mail.repwell.ai");
+}
+
 export const emailConfig = {
   // Default from address - should be configured per organization
   defaultFromEmail:
-    process.env.RESEND_FROM_EMAIL || "noreply@repwell.ai",
+    normalizeResendSender(process.env.RESEND_FROM_EMAIL || "noreply@mail.repwell.ai"),
   defaultFromName: process.env.RESEND_FROM_NAME || "RepWell",
 
   // Base URL for links in emails

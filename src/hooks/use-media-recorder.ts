@@ -18,9 +18,13 @@ export type RecorderStatus =
   | "stopped"
   | "error";
 
+export type RecorderOrientation = "portrait" | "landscape";
+
 export interface UseMediaRecorderOptions {
   /** Maximum recording duration in milliseconds (default: 120000 = 2 minutes) */
   maxDuration?: number;
+  /** Capture orientation: portrait for mobile, landscape for desktop (default: landscape) */
+  orientation?: RecorderOrientation;
   /** Video constraints for getUserMedia */
   videoConstraints?: MediaTrackConstraints;
   /** Audio constraints for getUserMedia */
@@ -62,17 +66,27 @@ export interface UseMediaRecorderReturn {
   setVideoDevice: (deviceId: string) => Promise<void>;
 }
 
-// Preferred video quality settings with fallbacks
-const VIDEO_QUALITY_PRESETS = [
-  // 720p preferred
-  { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
-  // 480p fallback
-  { width: { ideal: 854 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
-  // 360p fallback
-  { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 30 } },
-  // Minimum quality
-  { width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 24 } },
-];
+// Preferred video quality settings with fallbacks, per capture orientation
+const VIDEO_QUALITY_PRESETS: Record<RecorderOrientation, MediaTrackConstraints[]> = {
+  landscape: [
+    // 720p preferred
+    { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+    // 480p fallback
+    { width: { ideal: 854 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
+    // 360p fallback
+    { width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 30 } },
+    // Minimum quality
+    { width: { ideal: 320 }, height: { ideal: 240 }, frameRate: { ideal: 24 } },
+  ],
+  portrait: [
+    // 720p vertical preferred
+    { width: { ideal: 720 }, height: { ideal: 1280 }, frameRate: { ideal: 30 } },
+    // 480p vertical fallback
+    { width: { ideal: 480 }, height: { ideal: 854 }, frameRate: { ideal: 30 } },
+    // 360p vertical fallback
+    { width: { ideal: 360 }, height: { ideal: 640 }, frameRate: { ideal: 30 } },
+  ],
+};
 
 // Get supported MIME type for video recording
 function getSupportedMimeType(): string {
@@ -98,6 +112,7 @@ export function useMediaRecorder(
 ): UseMediaRecorderReturn {
   const {
     maxDuration = 120000, // 2 minutes default
+    orientation = "landscape",
     videoConstraints,
     audioConstraints,
     onRecordingComplete,
@@ -223,8 +238,9 @@ export function useMediaRecorder(
     }
 
     // Try to get media stream with quality fallbacks
-    for (let i = 0; i < VIDEO_QUALITY_PRESETS.length; i++) {
-      const videoQuality = VIDEO_QUALITY_PRESETS[i];
+    const qualityPresets = VIDEO_QUALITY_PRESETS[orientation];
+    for (let i = 0; i < qualityPresets.length; i++) {
+      const videoQuality = qualityPresets[i];
       try {
         console.log(`[VideoRecorder] requestPermissions: Trying quality preset ${i}`, videoQuality);
         const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -321,7 +337,7 @@ export function useMediaRecorder(
     setError("Could not initialize camera with any quality setting.");
     setStatus("error");
     return false;
-  }, [videoConstraints, audioConstraints, selectedVideoDeviceId, selectedAudioDeviceId, enumerateDevices]);
+  }, [orientation, videoConstraints, audioConstraints, selectedVideoDeviceId, selectedAudioDeviceId, enumerateDevices]);
 
   // Ref for track ended listeners cleanup
   const trackListenersRef = useRef<{ track: MediaStreamTrack; handler: () => void }[]>([]);
@@ -632,7 +648,7 @@ export function useMediaRecorder(
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: "user",
-            ...VIDEO_QUALITY_PRESETS[0],
+            ...VIDEO_QUALITY_PRESETS[orientation][0],
             ...(selectedVideoDeviceId && { deviceId: { exact: selectedVideoDeviceId } }),
           },
           audio: {
@@ -651,7 +667,7 @@ export function useMediaRecorder(
         setError("Failed to switch microphone. Please try again.");
       }
     }
-  }, [status, stream, selectedVideoDeviceId]);
+  }, [status, stream, orientation, selectedVideoDeviceId]);
 
   // Switch video device (seamlessly restarts stream)
   const setVideoDevice = useCallback(async (deviceId: string): Promise<void> => {
@@ -676,7 +692,7 @@ export function useMediaRecorder(
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: "user",
-            ...VIDEO_QUALITY_PRESETS[0],
+            ...VIDEO_QUALITY_PRESETS[orientation][0],
             deviceId: { exact: deviceId },
           },
           audio: {
@@ -695,7 +711,7 @@ export function useMediaRecorder(
         setError("Failed to switch camera. Please try again.");
       }
     }
-  }, [status, stream, selectedAudioDeviceId]);
+  }, [status, stream, orientation, selectedAudioDeviceId]);
 
   return {
     status,

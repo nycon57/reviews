@@ -2,7 +2,7 @@ import Image from "next/image";
 import type { LogoBarItem } from "@/lib/competitor-pages";
 
 interface LogoBarSectionProps {
-  logos: LogoBarItem[];
+  logos?: LogoBarItem[];
 }
 
 /**
@@ -15,7 +15,7 @@ interface LogoBarSectionProps {
  * Animation styles defined in globals.css (.logo-bar-scroll, .logo-bar-mask).
  */
 export function LogoBarSection({ logos }: LogoBarSectionProps) {
-  if (logos.length === 0) return null;
+  if (!logos || logos.length === 0) return null;
 
   // Duplicate logos for seamless infinite scroll
   const allLogos = [...logos, ...logos];

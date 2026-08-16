@@ -10,6 +10,7 @@ import {
 } from '@/lib/api/response';
 import { professionalFiltersSchema, validateParams } from '@/lib/api/validation';
 import type { ProfessionalResource } from '@/lib/api/types';
+import { escapeLike } from '@/lib/sql/escape-like';
 
 // Map database row to API resource
 function mapProfessionalRow(row: Record<string, unknown>): ProfessionalResource {
@@ -71,10 +72,7 @@ async function handleGet(
     query = query.eq('branch_id', filters.branch_id);
   }
   if (filters.search) {
-    const escapedSearch = filters.search
-      .replace(/\\/g, '\\\\')
-      .replace(/%/g, '\\%')
-      .replace(/_/g, '\\_');
+    const escapedSearch = escapeLike(filters.search);
     query = query.or(
       `full_name.ilike.%${escapedSearch}%,email.ilike.%${escapedSearch}%`
     );

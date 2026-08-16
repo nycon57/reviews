@@ -1,21 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   FilmStrip as Film,
   Chats as MessageSquare,
+  Flag,
   PaperPlaneRight,
   ShareNetwork,
+  AddressBook,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
+import { UrlSyncedTabs } from "@/components/shared/url-synced-tabs";
 import type {
   VideoTestimonialResponse,
   VideoLibraryStats,
@@ -28,6 +23,8 @@ import type {
 import { ReviewQueue } from "@/components/reviews/review-queue";
 import { VideoLibraryProvider, VideoTabContent } from "@/components/video-library";
 import { UnifiedRequestsTab } from "@/components/requests/unified-requests-tab";
+import { ContactsTab } from "@/components/contacts";
+import type { ContactListItem } from "@/lib/contacts/queries";
 
 // ============================================================================
 // Types
@@ -63,11 +60,24 @@ interface UnifiedContentHubProps {
   initialRequestsTotal?: number;
   initialRequestStats?: UnifiedRequestStats;
   canSendRequests?: boolean;
+  // Contacts tab (optional — shown alongside Requests)
+  initialContacts?: ContactListItem[];
+  initialContactsTotal?: number;
+  contactsEnabled?: boolean;
   // Share Studio tab (optional — hidden when not provided)
   shareStudioContent?: React.ReactNode;
+  // Disputes tab (optional — admins/managers only)
+  disputesContent?: React.ReactNode;
+  openDisputeCount?: number;
 }
 
-type ContentTab = "reviews" | "videos" | "requests" | "share-studio";
+type ContentTab =
+  | "reviews"
+  | "videos"
+  | "requests"
+  | "contacts"
+  | "share-studio"
+  | "disputes";
 
 // ============================================================================
 // Main Unified Content Hub Component
@@ -89,21 +99,15 @@ export function UnifiedContentHub({
   initialRequestsTotal,
   initialRequestStats,
   canSendRequests,
+  initialContacts,
+  initialContactsTotal = 0,
+  contactsEnabled,
   shareStudioContent,
+  disputesContent,
+  openDisputeCount = 0,
 }: UnifiedContentHubProps) {
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  const defaultTab: ContentTab =
-    tabParam === "videos"
-      ? "videos"
-      : tabParam === "requests" && canSendRequests
-        ? "requests"
-        : tabParam === "share-studio" && shareStudioContent
-          ? "share-studio"
-          : "reviews";
-  const [activeTab, setActiveTab] = useState<ContentTab>(defaultTab);
-
   const showRequestsTab = canSendRequests && initialRequestStats;
+  const showContactsTab = contactsEnabled && initialContacts;
 
   const tabs: Array<{ value: ContentTab; label: string; icon: typeof MessageSquare; count: number }> = [
     { value: "reviews", label: "Text Reviews", icon: MessageSquare, count: reviewStats.total },
@@ -111,48 +115,38 @@ export function UnifiedContentHub({
     ...(showRequestsTab
       ? [{ value: "requests" as const, label: "Requests", icon: PaperPlaneRight, count: initialRequestStats.total }]
       : []),
+    ...(showContactsTab
+      ? [{ value: "contacts" as const, label: "Contacts", icon: AddressBook, count: initialContactsTotal }]
+      : []),
     ...(shareStudioContent
       ? [{ value: "share-studio" as const, label: "Share Studio", icon: ShareNetwork, count: 0 }]
+      : []),
+    ...(disputesContent
+      ? [{ value: "disputes" as const, label: "Disputes", icon: Flag, count: openDisputeCount }]
       : []),
   ];
 
   return (
     <div className="space-y-6">
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value as ContentTab)}
+      <UrlSyncedTabs
+        basePath="/dashboard/reviews"
+        defaultTab="reviews"
         className="space-y-4"
+        tabs={tabs.map((tab) => {
+          const Icon = tab.icon;
+          return {
+            value: tab.value,
+            label: tab.label,
+            icon: <Icon className="h-4 w-4" />,
+            badge:
+              tab.count > 0 ? (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {tab.count}
+                </Badge>
+              ) : null,
+          };
+        })}
       >
-        <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto gap-0">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className={cn(
-                  "relative px-4 py-3 text-sm font-medium",
-                  "text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-muted-foreground",
-                  "data-[state=active]:text-repwell-teal-300",
-                  "border-b-2 border-transparent",
-                  "data-[state=active]:border-repwell-teal-300",
-                  "rounded-none bg-transparent shadow-none",
-                  "transition-colors duration-200",
-                  "flex items-center gap-2 whitespace-nowrap"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-                {tab.count > 0 && (
-                  <Badge variant="secondary" className="ml-1 text-xs">
-                    {tab.count}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-
         <TabsContent value="reviews" className="mt-6">
           <ReviewQueue
             initialReviews={initialReviews}
@@ -189,12 +183,29 @@ export function UnifiedContentHub({
           </TabsContent>
         )}
 
+        {showContactsTab && (
+          <TabsContent value="contacts" className="mt-6">
+            <ContactsTab
+              initialContacts={initialContacts ?? []}
+              initialTotal={initialContactsTotal}
+              teamMembers={teamMembers}
+              userRole={userRole}
+            />
+          </TabsContent>
+        )}
+
         {shareStudioContent && (
           <TabsContent value="share-studio" className="mt-6">
             {shareStudioContent}
           </TabsContent>
         )}
-      </Tabs>
+
+        {disputesContent && (
+          <TabsContent value="disputes" className="mt-6">
+            {disputesContent}
+          </TabsContent>
+        )}
+      </UrlSyncedTabs>
     </div>
   );
 }

@@ -56,12 +56,17 @@ const itemVariants = {
   },
 };
 
+type PhosphorExport = (typeof PhosphorIcons)[keyof typeof PhosphorIcons];
+
 /**
  * Get Phosphor icon component by name
  */
 function getIconByName(name: string): React.ComponentType<IconProps> {
-  const icons = PhosphorIcons as unknown as Record<string, React.ComponentType<IconProps>>;
-  return icons[name] || PhosphorIcons.Question;
+  const icons: Record<string, PhosphorExport> = PhosphorIcons;
+  // SAFETY: `name` comes from page config that only ever names glyph exports, and every glyph in
+  // this namespace is a component taking IconProps. Anything unmatched falls back to Question.
+  const icon = icons[name] as React.ComponentType<IconProps> | undefined;
+  return icon ?? PhosphorIcons.Question;
 }
 
 export function PainPointSection({

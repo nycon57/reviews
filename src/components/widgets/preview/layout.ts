@@ -109,13 +109,15 @@ export function applyFeaturedStyle(
   accentColor: string,
 ): CSSProperties {
   const gradient = `linear-gradient(135deg, color-mix(in srgb, ${accentColor} 8%, var(--rw-surface, var(--rw-bg, #ffffff)) 92%) 0%, color-mix(in srgb, ${accentColor} 14%, var(--rw-surface, var(--rw-bg, #ffffff)) 86%) 100%)`;
-  return {
+  const featured: CSSProperties = {
     ...style,
     borderLeftWidth: "3px",
     borderLeftStyle: "solid",
     borderLeftColor: accentColor,
-    ...(style.background == null ? { background: gradient } : {}),
   };
+  // Keep an explicit background from the caller; only unstyled cards get the tint.
+  if (style.background == null) featured.background = gradient;
+  return featured;
 }
 
 export function getPreviewSurfaceStyle(

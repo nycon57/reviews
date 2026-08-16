@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Envelope as Mail,
@@ -19,15 +19,27 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { unifiedResendVerificationEmail } from "@/lib/auth/actions";
 
+const RESEND_COOLDOWN_SECONDS = 60;
+
 export default function VerifyEmailPage() {
   const [isResending, setIsResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const { toast } = useToast();
 
+  // Tick down the resend cooldown once per second.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
   const handleResend = async () => {
+    if (isResending || cooldown > 0) return;
     setIsResending(true);
     try {
       const result = await unifiedResendVerificationEmail();
       if (result.success) {
+        setCooldown(RESEND_COOLDOWN_SECONDS);
         toast({
           title: "Email sent!",
           description: "A new verification email has been sent.",
@@ -80,13 +92,15 @@ export default function VerifyEmailPage() {
           variant="outline"
           className="w-full"
           onClick={handleResend}
-          disabled={isResending}
+          disabled={isResending || cooldown > 0}
         >
           {isResending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Sending...
             </>
+          ) : cooldown > 0 ? (
+            `Resend in ${cooldown}s`
           ) : (
             "Resend verification email"
           )}

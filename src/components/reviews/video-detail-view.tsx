@@ -13,25 +13,16 @@ import {
   XCircle,
   ShareNetwork as Share2,
   Chats as MessageSquare,
-  SpinnerGap as Loader2,
   Calendar,
   Copy,
   LinkSimple,
   Palette,
+  Star,
+  ArrowSquareOut,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -40,11 +31,19 @@ import {
   updateVideoApprovalStatus,
 } from "@/lib/video-testimonials/actions";
 import { ensureVideoSmartLink } from "@/lib/share-studio/actions";
+import {
+  QuarantineBadge,
+  CustomerRatingStars,
+} from "@/components/video-library/video-shared";
 import { VideoPlayerSection } from "./video-player-section";
-import { VideoApprovalPanel } from "./video-approval-panel";
 import { VideoFeedbackSection } from "./video-feedback-section";
 import { ReviewShareAssets } from "./review-share-assets";
 import { AssetCreatorModal } from "@/components/share-studio/asset-creator-modal";
+import {
+  PublishingStatusPanel,
+  type PublishingStatus,
+} from "./publishing-status-panel";
+import { ReviewStatusBadge } from "./review-status-badge";
 import { AnimatedSection } from "@/components/motion";
 
 // ============================================================================
@@ -60,6 +59,8 @@ interface VideoDetail {
   aiGeneratedText: string | null;
   sentimentScore: number | null;
   sentimentLabel: string | null;
+  customerRating: number | null;
+  quarantined: boolean;
   keyPhrases: string[] | null;
   durationSeconds: number | null;
   fileSizeBytes: number | null;
@@ -81,12 +82,21 @@ interface VideoDetail {
   requestId: string;
 }
 
+export interface LinkedReviewSummary {
+  id: string;
+  rating: number;
+  text: string | null;
+  customerName: string | null;
+  status: "pending" | "approved" | "rejected" | "archived";
+  isPublished: boolean;
+}
+
 interface Props {
   video: VideoDetail;
   userRole: "admin" | "manager" | "user";
+  /** The published written review extracted from this video, when one exists. */
+  linkedReview?: LinkedReviewSummary;
 }
-
-type ApprovalAction = "approve" | "reject" | "request_changes" | "publish";
 
 // ============================================================================
 // Utility Functions
@@ -130,15 +140,15 @@ function ApprovalStatusBadge({ status }: { status: string }) {
       className?: string;
     }
   > = {
-    pending: { label: "Pending Review", variant: "secondary", icon: Clock },
+    pending: { label: "Pending review", variant: "secondary", icon: Clock },
     changes_requested: {
-      label: "Changes Requested",
+      label: "Changes requested",
       variant: "outline",
       icon: MessageSquare,
       className: "border-amber-500/50 text-amber-600",
     },
-    approved: { label: "Approved", variant: "default", icon: CheckCircle },
-    rejected: { label: "Rejected", variant: "destructive", icon: XCircle },
+    approved: { label: "Ready to publish", variant: "default", icon: CheckCircle },
+    rejected: { label: "Removed", variant: "destructive", icon: XCircle },
     published: { label: "Published", variant: "default", icon: Share2 },
   };
 
@@ -157,140 +167,59 @@ function ApprovalStatusBadge({ status }: { status: string }) {
   );
 }
 
-// ============================================================================
-// Action Confirmation Dialog
-// ============================================================================
-
-function ActionDialog({
-  open,
-  onOpenChange,
-  actionType,
-  onConfirm,
-  isLoading,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  actionType: ApprovalAction | null;
-  onConfirm: (notes?: string) => void;
-  isLoading: boolean;
-}) {
-  const [notes, setNotes] = useState("");
-
-  const handleOpenChange = useCallback(
-    (newOpen: boolean) => {
-      if (!newOpen) {
-        setNotes("");
-      }
-      onOpenChange(newOpen);
-    },
-    [onOpenChange]
-  );
-
-  if (!actionType) return null;
-
-  const needsNotes = actionType === "reject" || actionType === "request_changes";
-
+function LinkedReviewCard({ review }: { review: LinkedReviewSummary }) {
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {actionType === "approve" && (
-              <>
-                <CheckCircle className="h-5 w-5 text-repwell-sage-200" />
-                Approve Testimonial
-              </>
-            )}
-            {actionType === "reject" && (
-              <>
-                <XCircle className="h-5 w-5 text-[#c47c7c]" />
-                Reject Testimonial
-              </>
-            )}
-            {actionType === "request_changes" && (
-              <>
-                <MessageSquare className="h-5 w-5 text-amber-500" />
-                Request Changes
-              </>
-            )}
-            {actionType === "publish" && (
-              <>
-                <Share2 className="h-5 w-5 text-primary" />
-                Publish Testimonial
-              </>
-            )}
-          </DialogTitle>
-          <DialogDescription>
-            {actionType === "approve" &&
-              "This testimonial will be approved and ready for publishing."}
-            {actionType === "reject" &&
-              "This testimonial will be rejected and the team member will be notified."}
-            {actionType === "request_changes" &&
-              "The team member will be notified to make changes to this testimonial."}
-            {actionType === "publish" &&
-              "This testimonial will be published and visible publicly."}
-          </DialogDescription>
-        </DialogHeader>
-
-        {needsNotes && (
-          <div className="space-y-2">
-            <Label htmlFor="actionNotes">
-              {actionType === "reject" ? "Rejection Reason" : "Notes for Team Member"}
-              {actionType === "reject" && (
-                <span className="ml-1 text-muted-foreground">(optional)</span>
-              )}
-            </Label>
-            <Textarea
-              id="actionNotes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={
-                actionType === "reject"
-                  ? "e.g., Poor video quality, inappropriate content..."
-                  : "e.g., Please re-record with better lighting, adjust the AI text..."
-              }
-              rows={4}
-            />
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between gap-3 text-base">
+          <span className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Review record
+          </span>
+          <ReviewStatusBadge status={review.status} />
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                weight={i < review.rating ? "fill" : "regular"}
+                className={cn(
+                  "h-4 w-4",
+                  i < review.rating
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-muted-foreground/40"
+                )}
+              />
+            ))}
           </div>
+          <span className="text-sm font-medium">
+            {review.customerName || "Anonymous"}
+          </span>
+        </div>
+        {review.text ? (
+          <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+            {review.text}
+          </p>
+        ) : (
+          <p className="text-sm italic text-muted-foreground/60">
+            No written review text
+          </p>
         )}
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            variant="outline"
-            onClick={() => handleOpenChange(false)}
-            disabled={isLoading}
-          >
-            Cancel
+        <p className="text-xs text-muted-foreground">
+          This is the written review extracted from the video. It publishes on
+          its own and is only removed through an upheld dispute.
+        </p>
+        <Link href={`/dashboard/reviews/${review.id}`}>
+          <Button variant="outline" size="sm" className="gap-2">
+            <ArrowSquareOut className="h-4 w-4" />
+            View review record
           </Button>
-          <Button
-            onClick={() => onConfirm(needsNotes ? notes : undefined)}
-            disabled={isLoading}
-            className={cn(
-              actionType === "approve" &&
-                "bg-repwell-sage-200 hover:bg-repwell-sage-200/80 text-white",
-              actionType === "reject" &&
-                "bg-[#c47c7c] hover:bg-[#c47c7c]/80 text-white",
-              actionType === "request_changes" &&
-                "bg-amber-500 hover:bg-amber-500/80 text-white"
-            )}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                {actionType === "approve" && "Approve"}
-                {actionType === "reject" && "Reject"}
-                {actionType === "request_changes" && "Request Changes"}
-                {actionType === "publish" && "Publish"}
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </Link>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -298,7 +227,7 @@ function ActionDialog({
 // Main Component
 // ============================================================================
 
-export function VideoDetailView({ video, userRole }: Props) {
+export function VideoDetailView({ video, userRole, linkedReview }: Props) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -306,10 +235,6 @@ export function VideoDetailView({ video, userRole }: Props) {
   const [isLoadingUrl, setIsLoadingUrl] = useState(true);
   const [activeTab, setActiveTab] = useState<"video" | "transcription" | "details">("video");
 
-  // Action state
-  const [actionDialogOpen, setActionDialogOpen] = useState(false);
-  const [currentAction, setCurrentAction] = useState<ApprovalAction | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [shareBusy, setShareBusy] = useState<Set<string>>(new Set());
   const [assetsRefreshToken, setAssetsRefreshToken] = useState(0);
   const [assetCreatorOpen, setAssetCreatorOpen] = useState(false);
@@ -318,6 +243,8 @@ export function VideoDetailView({ video, userRole }: Props) {
   const removeBusy = (key: string) => setShareBusy(prev => { const next = new Set(prev); next.delete(key); return next; });
 
   const canManage = userRole === "admin" || userRole === "manager";
+  const publishingStatus = video.approvalStatus as PublishingStatus;
+  const canShare = ["approved", "published"].includes(video.approvalStatus);
 
   // Load video URL on mount
   useEffect(() => {
@@ -360,49 +287,28 @@ export function VideoDetailView({ video, userRole }: Props) {
     };
   }, [video.videoPath]);
 
-  const handleActionClick = (action: ApprovalAction) => {
-    setCurrentAction(action);
-    setActionDialogOpen(true);
+  const runApprovalAction = async (
+    action: "approve" | "publish" | "reject",
+    pastTense: string,
+    payload?: { reason: string }
+  ) => {
+    const result = await updateVideoApprovalStatus(video.id, action, payload);
+    if (result.success) {
+      toast({ title: `Video ${pastTense}` });
+      router.refresh();
+    } else {
+      toast({
+        title: `Failed to ${action} video`,
+        description: result.error || "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleActionConfirm = useCallback(
-    async (notes?: string) => {
-      if (!currentAction) return;
-
-      setIsSubmitting(true);
-      try {
-        const result = await updateVideoApprovalStatus(video.id, currentAction, {
-          reason: currentAction === "reject" ? notes : undefined,
-          managerNotes: currentAction === "request_changes" ? notes : undefined,
-        });
-
-        if (result.success) {
-          const actionLabels = {
-            approve: "approved",
-            reject: "rejected",
-            request_changes: "marked for changes",
-            publish: "published",
-          };
-          toast({
-            title: "Success",
-            description: `Video ${actionLabels[currentAction]} successfully`,
-          });
-          setActionDialogOpen(false);
-          setCurrentAction(null);
-          router.refresh();
-        } else {
-          toast({
-            title: "Error",
-            description: result.error || "Failed to update video",
-            variant: "destructive",
-          });
-        }
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [currentAction, video.id, router]
-  );
+  const handleApproveVideo = () => runApprovalAction("approve", "approved");
+  const handlePublishVideo = () => runApprovalAction("publish", "published");
+  const handleRejectVideo = (reason: string) =>
+    runApprovalAction("reject", "rejected", { reason });
 
   const resolveSmartLinkUrl = useCallback(async (): Promise<string | null> => {
     const result = await ensureVideoSmartLink(video.id);
@@ -473,7 +379,11 @@ export function VideoDetailView({ video, userRole }: Props) {
             </p>
           </div>
         </div>
-        <ApprovalStatusBadge status={video.approvalStatus} />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <CustomerRatingStars rating={video.customerRating} />
+          {video.quarantined && <QuarantineBadge />}
+          <ApprovalStatusBadge status={video.approvalStatus} />
+        </div>
       </div>
 
       {/* Main content grid */}
@@ -603,7 +513,7 @@ export function VideoDetailView({ video, userRole }: Props) {
                     </div>
                     {video.approvedAt && (
                       <div className="flex justify-between">
-                        <dt className="text-muted-foreground">Approved</dt>
+                        <dt className="text-muted-foreground">Ready</dt>
                         <dd className="font-medium">{formatDateLong(video.approvedAt)}</dd>
                       </div>
                     )}
@@ -618,11 +528,32 @@ export function VideoDetailView({ video, userRole }: Props) {
               </Card>
             </TabsContent>
           </Tabs>
+
+          {linkedReview && <LinkedReviewCard review={linkedReview} />}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           <AnimatedSection>
+            <PublishingStatusPanel
+              status={publishingStatus}
+              canManage={canManage}
+              publishedAt={video.publishedAt}
+              rejectionReason={video.rejectionReason}
+              onApprove={handleApproveVideo}
+              onPublish={handlePublishVideo}
+              onReject={handleRejectVideo}
+              contextNote={
+                linkedReview
+                  ? "Controls where the video itself can appear. The written review publishes separately."
+                  : undefined
+              }
+            />
+          </AnimatedSection>
+
+          {canShare && (
+            <>
+          <AnimatedSection delay={0.05}>
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Share Studio</CardTitle>
@@ -666,41 +597,32 @@ export function VideoDetailView({ video, userRole }: Props) {
             sourceId={video.id}
             refreshToken={assetsRefreshToken}
           />
-
-          <AnimatedSection delay={0.1}>
-          <VideoApprovalPanel
-            video={video}
-            canManage={canManage}
-            onAction={handleActionClick}
-          />
-          </AnimatedSection>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Action Dialog */}
-      <ActionDialog
-        open={actionDialogOpen}
-        onOpenChange={setActionDialogOpen}
-        actionType={currentAction}
-        onConfirm={handleActionConfirm}
-        isLoading={isSubmitting}
-      />
-
       {/* Asset Creator Modal */}
-      <AssetCreatorModal
-        open={assetCreatorOpen}
-        onOpenChange={setAssetCreatorOpen}
-        sourceType="video_testimonial"
-        sourceId={video.id}
-        reviewData={{
-          text: video.aiGeneratedText || video.transcription,
-          customerName: video.customerName,
-          rating: video.sentimentScore
-            ? Math.max(1, Math.min(5, Math.round((video.sentimentScore / 100) * 5)))
-            : 5,
-        }}
-        onQueued={() => setAssetsRefreshToken((v) => v + 1)}
-      />
+      {canShare && (
+        <AssetCreatorModal
+          open={assetCreatorOpen}
+          onOpenChange={setAssetCreatorOpen}
+          sourceType="video_testimonial"
+          sourceId={video.id}
+          reviewData={{
+            text: video.aiGeneratedText || video.transcription,
+            customerName: video.customerName,
+            rating: video.sentimentScore
+              ? Math.max(1, Math.min(5, Math.round((video.sentimentScore / 100) * 5)))
+              : 5,
+          }}
+          clipSource={{
+            transcript: video.transcription,
+            durationSeconds: video.durationSeconds,
+          }}
+          onQueued={() => setAssetsRefreshToken((v) => v + 1)}
+        />
+      )}
     </div>
   );
 }

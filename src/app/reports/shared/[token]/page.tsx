@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
-import { createClient } from "@/lib/supabase/server";
-import { getReportShareByToken, generateReport } from "@/lib/reporting";
+import { unstable_cache } from "next/cache";
+import { getReportShareByToken, generateReportForOrg } from "@/lib/reporting";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +12,7 @@ import {
   Link as Link2,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
+import type { ReportFilters, ReportShare } from "@/lib/reporting/types";
 
 // Dynamic import for heavy ReportViewer with recharts
 const ReportViewer = dynamic(
@@ -38,29 +39,39 @@ interface SharedReportPageProps {
   params: Promise<{ token: string }>;
 }
 
-export async function generateMetadata({
-  params,
-}: SharedReportPageProps): Promise<Metadata> {
-  const { token } = await params;
-  const shareResult = await getReportShareByToken(token);
-
-  if (!shareResult.success || !shareResult.data) {
-    return {
-      title: "Report Not Found | RepWell",
-    };
-  }
-
+export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: `${shareResult.data.title} | RepWell`,
+    title: "Shared Report | RepWell",
     description: "Shared performance report from RepWell",
   };
 }
 
-export default async function SharedReportPage({
-  params,
-}: SharedReportPageProps) {
+async function generateCachedSharedReport(share: ReportShare) {
+  return unstable_cache(
+    async () =>
+      generateReportForOrg({
+        organizationId: share.organizationId,
+        templateId: share.templateId,
+        dateRange: {
+          preset: "custom",
+          start: new Date(share.dateRangeStart),
+          end: new Date(share.dateRangeEnd),
+        },
+        filters: (share.filters || {}) as ReportFilters,
+        shareToken: share.shareToken,
+      }),
+    [
+      "shared-report",
+      share.shareToken,
+      share.dateRangeStart.toISOString(),
+      share.dateRangeEnd.toISOString(),
+    ],
+    { revalidate: 3600 }
+  )();
+}
+
+export default async function SharedReportPage({ params }: SharedReportPageProps) {
   const { token } = await params;
-  const supabase = await createClient();
 
   // Get share details
   const shareResult = await getReportShareByToken(token);
@@ -74,16 +85,15 @@ export default async function SharedReportPage({
   // Check if expired
   if (share.expiresAt && new Date(share.expiresAt) < new Date()) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="flex min-h-screen items-center justify-center bg-background p-6">
         <Card className="w-full max-w-md">
           <CardHeader variant="plain" className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
               <AlertCircle className="h-6 w-6 text-destructive" />
             </div>
             <CardTitle>Link Expired</CardTitle>
             <CardDescription>
-              This shared report link has expired. Please request a new link from the
-              report owner.
+              This shared report link has expired. Please request a new link from the report owner.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -91,38 +101,20 @@ export default async function SharedReportPage({
     );
   }
 
-  // Update access count
-  await supabase
-    .from("report_shares")
-    .update({
-      access_count: share.accessCount + 1,
-      last_accessed_at: new Date().toISOString(),
-    })
-    .eq("id", share.id);
-
-  // Generate the report
-  const reportResult = await generateReport(
-    share.templateId,
-    {
-      preset: "custom",
-      start: new Date(share.dateRangeStart),
-      end: new Date(share.dateRangeEnd),
-    },
-    share.filters || {}
-  );
+  const reportResult = await generateCachedSharedReport(share);
 
   if (!reportResult.success || !reportResult.data) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="flex min-h-screen items-center justify-center bg-background p-6">
         <Card className="w-full max-w-md">
           <CardHeader variant="plain" className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
               <AlertCircle className="h-6 w-6 text-destructive" />
             </div>
             <CardTitle>Error Loading Report</CardTitle>
             <CardDescription>
-              There was an error generating this report. Please try again later or
-              contact the report owner.
+              There was an error generating this report. Please try again later or contact the
+              report owner.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -140,9 +132,7 @@ export default async function SharedReportPage({
               <Link2 className="h-5 w-5 text-muted-foreground" />
               <div>
                 <h1 className="text-lg font-semibold">{share.title}</h1>
-                <p className="text-sm text-muted-foreground">
-                  Shared report from RepWell
-                </p>
+                <p className="text-sm text-muted-foreground">Shared report from RepWell</p>
               </div>
             </div>
             <div className="flex items-center gap-4">

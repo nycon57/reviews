@@ -10,6 +10,7 @@ import {
 import type { BlockType } from "@/lib/email-builder/types";
 import { useEditorStore } from "./store";
 import * as Icons from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react";
 
 function PaletteItem({ definition }: { definition: BlockDefinitionWithSchema }) {
   const addBlock = useEditorStore((s) => s.addBlock);
@@ -25,7 +26,10 @@ function PaletteItem({ definition }: { definition: BlockDefinitionWithSchema }) 
     ? { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.5 : 1 }
     : undefined;
 
-  const IconComponent = (Icons as unknown as Record<string, React.ComponentType<{ size?: number; weight?: string; className?: string }>>)[definition.icon];
+  // SAFETY: block definitions only ever name a Phosphor icon export; the Phosphor namespace also
+  // exports non-component helpers, so a name outside the icon set reads back as an unrenderable
+  // value and the guarded render below skips it.
+  const IconComponent = Icons[definition.icon as keyof typeof Icons] as Icon | undefined;
 
   return (
     <button

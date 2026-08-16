@@ -6,12 +6,12 @@ import {
   BlogAuthor,
 } from "@/types/blog";
 
-interface BlogPostRow {
+/** The columns every list query selects — everything a card needs, minus the body. */
+interface BlogPostMetaRow {
   id: string;
   slug: string;
   title: string;
   description: string;
-  content: string;
   date: string;
   author: BlogAuthor;
   category: BlogCategory;
@@ -22,12 +22,23 @@ interface BlogPostRow {
   status: string;
 }
 
+/** A full post row: the card columns plus the article body. */
+interface BlogPostRow extends BlogPostMetaRow {
+  content: string;
+}
+
+/**
+ * `blog_posts` is absent from the generated schema, so every query here runs through the untyped
+ * admin client and returns untyped rows. The assertions below are each anchored to a select list
+ * that names exactly the columns on the asserted row type.
+ */
+
 function rowToPost(row: BlogPostRow): BlogPost {
   return {
     title: row.title,
     description: row.description,
     date: row.date,
-    author: row.author as BlogAuthor,
+    author: row.author,
     category: row.category,
     tags: row.tags,
     image: row.image ?? undefined,
@@ -38,12 +49,12 @@ function rowToPost(row: BlogPostRow): BlogPost {
   };
 }
 
-function rowToMeta(row: BlogPostRow): BlogPostMeta {
+function rowToMeta(row: BlogPostMetaRow): BlogPostMeta {
   return {
     title: row.title,
     description: row.description,
     date: row.date,
-    author: row.author as BlogAuthor,
+    author: row.author,
     category: row.category,
     tags: row.tags,
     image: row.image ?? undefined,
@@ -93,7 +104,9 @@ export async function getPostBySlug(
     .single();
 
   if (error || !data) return null;
-  return rowToPost(data as unknown as BlogPostRow);
+  // SAFETY: the `select("*")` above returns every `blog_posts` column, which is what
+  // BlogPostRow names; `.single()` already rejected the empty and multi-row cases.
+  return rowToPost(data as BlogPostRow);
 }
 
 /**
@@ -110,7 +123,8 @@ export async function getAllPosts(): Promise<BlogPostMeta[]> {
     .order("date", { ascending: false });
 
   if (error || !data) return [];
-  return (data as unknown as BlogPostRow[]).map(rowToMeta);
+  // SAFETY: the select list above names exactly the columns on BlogPostMetaRow.
+  return (data as BlogPostMetaRow[]).map(rowToMeta);
 }
 
 /**
@@ -130,7 +144,8 @@ export async function getPostsByCategory(
     .order("date", { ascending: false });
 
   if (error || !data) return [];
-  return (data as unknown as BlogPostRow[]).map(rowToMeta);
+  // SAFETY: the select list above names exactly the columns on BlogPostMetaRow.
+  return (data as BlogPostMetaRow[]).map(rowToMeta);
 }
 
 /**
@@ -148,7 +163,8 @@ export async function getPostsByTag(tag: string): Promise<BlogPostMeta[]> {
     .order("date", { ascending: false });
 
   if (error || !data) return [];
-  return (data as unknown as BlogPostRow[]).map(rowToMeta);
+  // SAFETY: the select list above names exactly the columns on BlogPostMetaRow.
+  return (data as BlogPostMetaRow[]).map(rowToMeta);
 }
 
 /**
@@ -166,7 +182,8 @@ export async function getFeaturedPosts(): Promise<BlogPostMeta[]> {
     .order("date", { ascending: false });
 
   if (error || !data) return [];
-  return (data as unknown as BlogPostRow[]).map(rowToMeta);
+  // SAFETY: the select list above names exactly the columns on BlogPostMetaRow.
+  return (data as BlogPostMetaRow[]).map(rowToMeta);
 }
 
 /**

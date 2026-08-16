@@ -5,6 +5,7 @@ import {
   detectInactiveUsersAndStartSequences,
   processReengagementSequenceQueue,
 } from "@/lib/email/reengagement-sequence-service";
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 
 // Zod schema for query parameters
 const cronParamsSchema = z.object({
@@ -14,12 +15,8 @@ const cronParamsSchema = z.object({
     .min(1, "Batch size must be at least 1")
     .max(100, "Batch size cannot exceed 100")
     .default(50),
-  detect_only: z.coerce
-    .boolean()
-    .default(false),
-  process_only: z.coerce
-    .boolean()
-    .default(false),
+  detect_only: z.coerce.boolean().default(false),
+  process_only: z.coerce.boolean().default(false),
 });
 
 /**
@@ -51,10 +48,7 @@ function verifyCronSecret(request: NextRequest): boolean {
   }
 
   try {
-    return timingSafeEqual(
-      Buffer.from(authHeader, "utf8"),
-      Buffer.from(expectedHeader, "utf8")
-    );
+    return timingSafeEqual(Buffer.from(authHeader, "utf8"), Buffer.from(expectedHeader, "utf8"));
   } catch {
     return false;
   }
@@ -85,105 +79,84 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    // Validate and parse query params with Zod
-    const url = new URL(request.url);
-    const parseResult = cronParamsSchema.safeParse({
-      batch_size: url.searchParams.get("batch_size") ?? undefined,
-      detect_only: url.searchParams.get("detect_only") ?? undefined,
-      process_only: url.searchParams.get("process_only") ?? undefined,
-    });
+  return withCronHeartbeat("process-reengagement", async () => {
+    try {
+      // Validate and parse query params with Zod
+      const url = new URL(request.url);
+      const parseResult = cronParamsSchema.safeParse({
+        batch_size: url.searchParams.get("batch_size") ?? undefined,
+        detect_only: url.searchParams.get("detect_only") ?? undefined,
+        process_only: url.searchParams.get("process_only") ?? undefined,
+      });
 
-    if (!parseResult.success) {
+      if (!parseResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parseResult.error.errors[0]?.message || "Invalid parameters",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const {
+        batch_size: batchSize,
+        detect_only: detectOnly,
+        process_only: processOnly,
+      } = parseResult.data;
+
+      const response: {
+        success: boolean;
+        detection?: {
+          newSequencesStarted: number;
+          alreadyInSequence: number;
+          errors: string[];
+        };
+        processing?: {
+          processed: number;
+          failed: number;
+          skipped: number;
+          exited: number;
+          errors: string[];
+        };
+        timestamp: string;
+      } = {
+        success: true,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Run detection (unless process_only is true)
+      if (!processOnly) {
+        const detectionResult = await detectInactiveUsersAndStartSequences();
+        response.detection = detectionResult;
+      }
+
+      // Process queue (unless detect_only is true)
+      if (!detectOnly) {
+        const processingResult = await processReengagementSequenceQueue(batchSize);
+        response.processing = processingResult;
+      }
+
+      return NextResponse.json(response);
+    } catch (error) {
+      console.error("Re-engagement sequence cron job error:", error);
+
       return NextResponse.json(
         {
           success: false,
-          error: parseResult.error.errors[0]?.message || "Invalid parameters",
+          error: error instanceof Error ? error.message : "Unknown error",
           timestamp: new Date().toISOString(),
         },
-        { status: 400 }
+        { status: 500 }
       );
     }
-
-    const { batch_size: batchSize, detect_only: detectOnly, process_only: processOnly } = parseResult.data;
-
-    const response: {
-      success: boolean;
-      detection?: {
-        newSequencesStarted: number;
-        alreadyInSequence: number;
-        errors: string[];
-      };
-      processing?: {
-        processed: number;
-        failed: number;
-        skipped: number;
-        exited: number;
-        errors: string[];
-      };
-      timestamp: string;
-    } = {
-      success: true,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Run detection (unless process_only is true)
-    if (!processOnly) {
-      const detectionResult = await detectInactiveUsersAndStartSequences();
-      response.detection = detectionResult;
-    }
-
-    // Process queue (unless detect_only is true)
-    if (!detectOnly) {
-      const processingResult = await processReengagementSequenceQueue(batchSize);
-      response.processing = processingResult;
-    }
-
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error("Re-engagement sequence cron job error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+  });
 }
 
-/**
- * GET /api/cron/process-reengagement
- *
- * Health check endpoint for the re-engagement sequence processor.
- * Returns the current status of the endpoint.
- */
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-reengagement",
-    description: "Re-engagement email sequence processor for inactive users",
-    schedule: "Daily for detection, every 5 minutes for queue processing",
-    features: [
-      "4-email re-engagement sequence",
-      "Inactive user detection (7, 14, 30, 45 days)",
-      "Paid vs free user differentiation",
-      "Exit on user login",
-      "Missed reviews metrics",
-      "Personal messaging ('from the team')",
-    ],
-    sequence_timing: {
-      email_1: "7 days inactive - 'We miss you'",
-      email_2: "14 days inactive - 'What's new'",
-      email_3: "30 days inactive - 'Last chance'",
-      email_4: "45 days inactive - 'Final email'",
-    },
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

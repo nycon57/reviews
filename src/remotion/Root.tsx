@@ -69,6 +69,20 @@ const defaultVideoTestimonialProps: VideoTestimonialProps = {
   showIntro: true,
   showOutro: true,
   videoDurationMs: 10000,
+  trimStartMs: 0,
+  trimEndMs: 10000,
+  sourceWidth: 1280,
+  sourceHeight: 720,
+  music: null,
+  endCard: {
+    professionalName: "Sarah Johnson",
+    professionalTitle: "Senior Loan Officer",
+    professionalPhotoUrl: null,
+    ctaText: "Get Started",
+    qrUrl: "https://repwell.ai/s/example",
+    phone: "(555) 123-4567",
+    website: "repwell.com",
+  },
 };
 
 const defaultTextTestimonialProps: TextTestimonialProps = {
@@ -174,19 +188,25 @@ const defaultThumbnailProps: VideoThumbnailProps = {
 // Frame rate constant
 const FPS = 30;
 
-// Type-safe component wrappers for Remotion compatibility
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const VideoTestimonialComponent = VideoTestimonial as React.FC<any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const TextTestimonialComponent = TextTestimonial as React.FC<any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const LeaderboardCelebrationComponent = LeaderboardCelebration as React.FC<any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ReportSummaryComponent = ReportSummary as React.FC<any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const SocialClipComponent = SocialClip as React.FC<any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const VideoThumbnailComponent = VideoThumbnail as React.FC<any>;
+/**
+ * Remotion constrains composition props to `Record<string, unknown>`. The prop contracts in
+ * `./types` are interfaces, which never gain an implicit index signature; mapping one into an
+ * anonymous object type produces a structurally identical type that does satisfy the constraint.
+ * That keeps `calculateMetadata` receiving the real prop type instead of `Record<string, unknown>`.
+ */
+type CompositionPropsOf<T> = { [K in keyof T]: T[K] };
+
+const VideoTestimonialComponent: React.FC<CompositionPropsOf<VideoTestimonialProps>> =
+  VideoTestimonial;
+const TextTestimonialComponent: React.FC<CompositionPropsOf<TextTestimonialProps>> =
+  TextTestimonial;
+const LeaderboardCelebrationComponent: React.FC<
+  CompositionPropsOf<LeaderboardCelebrationProps>
+> = LeaderboardCelebration;
+const ReportSummaryComponent: React.FC<CompositionPropsOf<ReportSummaryProps>> = ReportSummary;
+const SocialClipComponent: React.FC<CompositionPropsOf<SocialClipProps>> = SocialClip;
+const VideoThumbnailComponent: React.FC<CompositionPropsOf<VideoThumbnailProps>> =
+  VideoThumbnail;
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -201,7 +221,7 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={defaultVideoTestimonialProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateVideoTestimonialDuration(props as unknown as VideoTestimonialProps, FPS),
+          durationInFrames: calculateVideoTestimonialDuration(props, FPS),
         })}
       />
 
@@ -218,7 +238,7 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{ ...defaultVideoTestimonialProps, format: "1:1" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateVideoTestimonialDuration(props as unknown as VideoTestimonialProps, FPS),
+          durationInFrames: calculateVideoTestimonialDuration(props, FPS),
         })}
       />
 
@@ -235,7 +255,7 @@ export const RemotionRoot: React.FC = () => {
         height={1920}
         defaultProps={{ ...defaultVideoTestimonialProps, format: "9:16" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateVideoTestimonialDuration(props as unknown as VideoTestimonialProps, FPS),
+          durationInFrames: calculateVideoTestimonialDuration(props, FPS),
         })}
       />
 
@@ -249,7 +269,7 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={defaultTextTestimonialProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateTextTestimonialDuration(props as unknown as TextTestimonialProps, FPS),
+          durationInFrames: calculateTextTestimonialDuration(props, FPS),
         })}
       />
 
@@ -266,7 +286,7 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{ ...defaultTextTestimonialProps, format: "1:1" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateTextTestimonialDuration(props as unknown as TextTestimonialProps, FPS),
+          durationInFrames: calculateTextTestimonialDuration(props, FPS),
         })}
       />
 
@@ -283,7 +303,7 @@ export const RemotionRoot: React.FC = () => {
         height={1920}
         defaultProps={{ ...defaultTextTestimonialProps, format: "9:16" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateTextTestimonialDuration(props as unknown as TextTestimonialProps, FPS),
+          durationInFrames: calculateTextTestimonialDuration(props, FPS),
         })}
       />
 
@@ -297,7 +317,7 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={defaultLeaderboardProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateLeaderboardDuration(props as unknown as LeaderboardCelebrationProps, FPS),
+          durationInFrames: calculateLeaderboardDuration(props, FPS),
         })}
       />
 
@@ -311,7 +331,7 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={defaultReportProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateReportDuration(props as unknown as ReportSummaryProps, FPS),
+          durationInFrames: calculateReportDuration(props, FPS),
         })}
       />
 
@@ -325,7 +345,7 @@ export const RemotionRoot: React.FC = () => {
         height={1920}
         defaultProps={defaultSocialClipProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateSocialClipDuration(props as unknown as SocialClipProps, FPS),
+          durationInFrames: calculateSocialClipDuration(props, FPS),
         })}
       />
 
@@ -342,7 +362,24 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{ ...defaultSocialClipProps, format: "1:1" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateSocialClipDuration(props as unknown as SocialClipProps, FPS),
+          durationInFrames: calculateSocialClipDuration(props, FPS),
+        })}
+      />
+
+      {/* Social Clip - 16:9 Landscape */}
+      <Composition
+        id="SocialClip-16-9"
+        component={SocialClipComponent}
+        durationInFrames={calculateSocialClipDuration(
+          { ...defaultSocialClipProps, format: "16:9" },
+          FPS
+        )}
+        fps={FPS}
+        width={1920}
+        height={1080}
+        defaultProps={{ ...defaultSocialClipProps, format: "16:9" }}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: calculateSocialClipDuration(props, FPS),
         })}
       />
 

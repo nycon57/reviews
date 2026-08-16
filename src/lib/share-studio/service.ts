@@ -484,6 +484,10 @@ export async function createProofItem(input: CreateProofItemInput): Promise<Reco
 
   const built = await buildProofItemSnapshot(input);
 
+  // Carry the source snapshot's payload forward, tagging it with the template when one was chosen.
+  const customPayload = { ...(built.content.custom_payload || {}) };
+  if (input.templateId) customPayload.template_id = input.templateId;
+
   const itemPayload = {
     organization_id: input.organizationId,
     created_by: input.createdBy ?? null,
@@ -498,10 +502,7 @@ export async function createProofItem(input: CreateProofItemInput): Promise<Reco
     rating: input.rating ?? built.content.rating,
     source_platform: built.content.source_platform,
     source_review_date: built.content.source_review_date,
-    custom_payload: {
-      ...(built.content.custom_payload || {}),
-      ...(input.templateId ? { template_id: input.templateId } : {}),
-    },
+    custom_payload: customPayload,
     status: "approved",
     approval_required: false,
     approved_at: new Date().toISOString(),
@@ -839,6 +840,179 @@ export async function createRenderJob(input: CreateRenderJobInput): Promise<Reco
   return data;
 }
 
+/** Fire-and-forget kick so queued render jobs start without waiting for cron. */
+export function kickRenderWorker(): void {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
+  fetch(`${appUrl}/api/cron/share-render-jobs`, {
+    method: "POST",
+    headers: { "x-cron-secret": process.env.CRON_SECRET || "" },
+  }).catch(() => {});
+}
+
+export interface QueueClipRenderInput {
+  organizationId: string;
+  videoResponseId: string;
+  actorUserId?: string | null;
+  /** ClipRenderOptions passed through to the renderer (see clip-renderer.ts) */
+  options?: Record<string, unknown>;
+  priority?: number;
+  /**
+   * When true (auto-kit), skip if any clip job already exists for this
+   * source so re-approvals don't re-render. Manual regenerates pass false.
+   */
+  idempotent?: boolean;
+}
+
+export interface QueueClipRenderResult {
+  jobId: string | null;
+  proofItemId: string;
+  skipped?: "existing_job";
+}
+
+/**
+ * Queue a Clip render (branded VideoTestimonial composition) for a video
+ * response. Ensures the proof item + smart link exist first; quarantine and
+ * approval gating are enforced by ensureSmartLinkForSource.
+ */
+export async function queueClipRender(
+  input: QueueClipRenderInput
+): Promise<QueueClipRenderResult> {
+  const supabase = createUntypedAdminClient();
+
+  const ensured = await ensureSmartLinkForSource({
+    organizationId: input.organizationId,
+    sourceType: "video_testimonial",
+    sourceId: input.videoResponseId,
+    actorUserId: input.actorUserId ?? null,
+  });
+
+  if (input.idempotent) {
+    const { data: existing } = await supabase
+      .from("proof_render_jobs")
+      .select("id, status")
+      .eq("proof_item_id", ensured.proofItemId)
+      .eq("organization_id", input.organizationId)
+      .eq("asset_type", "video")
+      .contains("payload", { composition: "video_testimonial" })
+      .in("status", ["queued", "processing", "completed"])
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return { jobId: null, proofItemId: ensured.proofItemId, skipped: "existing_job" };
+    }
+  }
+
+  const options = input.options ?? {};
+  const format = typeof options.format === "string" ? options.format : "9:16";
+
+  const job = await createRenderJob({
+    organizationId: input.organizationId,
+    proofItemId: ensured.proofItemId,
+    assetType: "video",
+    requestedBy: input.actorUserId ?? undefined,
+    priority: input.priority,
+    payload: {
+      composition: "video_testimonial",
+      format,
+      options: { format, ...options },
+    },
+  });
+
+  kickRenderWorker();
+
+  return { jobId: String(job.id), proofItemId: ensured.proofItemId };
+}
+
+const QUOTE_CARD_KIT_FORMATS = ["1:1", "9:16"] as const;
+
+/**
+ * Text-review half of the Asset Kit: queue quote-card images (1:1 + 9:16)
+ * for reviews that were just approved at/above the org's celebration
+ * threshold. Video-sourced reviews are skipped (they get a Clip instead).
+ * Idempotent per review: a review that already has kit jobs is not re-queued.
+ */
+export async function queueQuoteCardKitForReviews(input: {
+  organizationId: string;
+  reviewIds: string[];
+  actorUserId?: string | null;
+  /** Minimum rating for kit generation (the org's celebration threshold) */
+  minRating: number;
+}): Promise<{ queued: number; skipped: number }> {
+  const supabase = createUntypedAdminClient();
+  let queued = 0;
+  let skipped = 0;
+
+  const { data: reviews, error } = await supabase
+    .from("reviews")
+    .select("id, rating, source")
+    .in("id", input.reviewIds)
+    .eq("organization_id", input.organizationId);
+
+  if (error) {
+    throw new Error(error.message || "Failed to load reviews for kit generation");
+  }
+
+  for (const review of reviews || []) {
+    const rating = typeof review.rating === "number" ? review.rating : null;
+    if (
+      review.source === "video_testimonial" ||
+      rating === null ||
+      rating < input.minRating
+    ) {
+      skipped += 1;
+      continue;
+    }
+
+    try {
+      const ensured = await ensureSmartLinkForSource({
+        organizationId: input.organizationId,
+        sourceType: "review",
+        sourceId: String(review.id),
+        actorUserId: input.actorUserId ?? null,
+      });
+
+      const { data: existing } = await supabase
+        .from("proof_render_jobs")
+        .select("id")
+        .eq("proof_item_id", ensured.proofItemId)
+        .eq("organization_id", input.organizationId)
+        .eq("asset_type", "image")
+        .contains("payload", { kit: "quote_card" })
+        .in("status", ["queued", "processing", "completed"])
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        skipped += 1;
+        continue;
+      }
+
+      for (const format of QUOTE_CARD_KIT_FORMATS) {
+        await createRenderJob({
+          organizationId: input.organizationId,
+          proofItemId: ensured.proofItemId,
+          assetType: "image",
+          requestedBy: input.actorUserId ?? undefined,
+          payload: { kit: "quote_card", format, template: "modern" },
+        });
+      }
+      queued += 1;
+    } catch (err) {
+      console.error("Asset kit: failed to queue quote cards for review", {
+        reviewId: review.id,
+        organizationId: input.organizationId,
+        error: err,
+      });
+      skipped += 1;
+    }
+  }
+
+  if (queued > 0) {
+    kickRenderWorker();
+  }
+
+  return { queued, skipped };
+}
+
 export async function getRenderJob(
   organizationId: string,
   jobId: string
@@ -915,6 +1089,33 @@ export async function ensureSmartLinkForSource(
   input: EnsureSmartLinkForSourceInput
 ): Promise<EnsureSmartLinkForSourceResult> {
   const supabase = createUntypedAdminClient();
+
+  // Quarantine enforcement (ADR 0001): low-path/quarantined videos are held
+  // back, but 4+ star video testimonials may be shared immediately.
+  if (input.sourceType === "video_testimonial") {
+    const { data: videoRow, error: videoError } = await supabase
+      .from("video_testimonial_responses")
+      .select("approval_status, customer_rating, quarantined")
+      .eq("id", input.sourceId)
+      .eq("organization_id", input.organizationId)
+      .maybeSingle();
+
+    if (videoError || !videoRow) {
+      throw new Error("Video testimonial not found");
+    }
+
+    const status = String(videoRow.approval_status ?? "");
+    const rating =
+      typeof videoRow.customer_rating === "number" ? videoRow.customer_rating : null;
+    const approvedForPublicShare =
+      ["approved", "published"].includes(status) || (rating !== null && rating >= 4);
+
+    if (videoRow.quarantined || !approvedForPublicShare) {
+      throw new Error(
+        "This video must have a 4+ star rating or be approved before it can be shared publicly"
+      );
+    }
+  }
   const presenterUserId = await resolvePresenterUserIdForSource(
     input.organizationId,
     input.sourceType,
@@ -1161,7 +1362,7 @@ export async function getProofLinkBySlug(slug: string): Promise<{
       .maybeSingle(),
     supabase
       .from("organizations")
-      .select("id, name, logo_url, primary_color, settings")
+      .select("id, name, slug, account_type, logo_url, primary_color, settings")
       .eq("id", link.organization_id)
       .single(),
   ]);

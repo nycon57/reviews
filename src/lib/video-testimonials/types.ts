@@ -100,6 +100,23 @@ export interface ActionResult<T = void> {
   error?: string;
 }
 
+/**
+ * Contact fields shown on the thank-you screen contact card.
+ * Mirrors what the public pro profile page already exposes; never more.
+ */
+export interface PublicProfessionalContact {
+  phone: string | null;
+  address: { street?: string; city?: string; state?: string; zip?: string } | null;
+  ctaText: string | null;
+  ctaUrl: string | null;
+  linkedinUrl: string | null;
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+  twitterUrl: string | null;
+  personalWebsiteUrl: string | null;
+  zillowUrl: string | null;
+}
+
 export interface PublicVideoTestimonialRequest {
   id: string;
   token: string;
@@ -115,7 +132,7 @@ export interface PublicVideoTestimonialRequest {
     fullName: string;
     photoUrl: string | null;
     title: string | null;
-  };
+  } & PublicProfessionalContact;
   organization: {
     id: string;
     name: string;
@@ -127,6 +144,8 @@ export interface PublicVideoTestimonialRequest {
 export interface CustomerInfoInput {
   displayName: string;
   relationship: RelationshipType;
+  /** Required 1-5 star rating collected before recording. */
+  rating: number;
 }
 
 export interface ConsentInput {
@@ -199,6 +218,29 @@ export interface VideoSubmissionResult {
   generatedReview?: string;
   transcription?: string;
   error?: string;
+}
+
+// ============================================================================
+// Thank-You Screen / Share Kit Types
+// ============================================================================
+
+export type ShareKitStatus = "preparing" | "ready";
+
+export type PassthroughPlatform = "google" | "zillow";
+
+/** Bundle returned to the high-path thank-you screen. */
+export interface ShareKit {
+  status: ShareKitStatus;
+  /** First-person caption generated from the customer's transcript. */
+  caption: string | null;
+  smartLinkUrl: string | null;
+  /** Public share links are withheld until the video clears approval/quarantine. */
+  smartLinkPendingApproval: boolean;
+  thumbnailUrl: string | null;
+  /** AI-generated written review draft for platform passthrough. */
+  reviewText: string | null;
+  googleReviewUrl: string | null;
+  zillowUrl: string | null;
 }
 
 /** Processing status for video upload flow */

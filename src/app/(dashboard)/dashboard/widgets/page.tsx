@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/shared";
 import { WidgetList } from "@/components/widgets/widget-list";
 import { listWidgets } from "@/lib/widgets/actions";
 import { ensureDefaultWidgets } from "@/lib/widgets/seed-defaults";
@@ -49,9 +50,11 @@ async function WidgetListLoader() {
 
   if (!result.success) {
     return (
-      <div className="py-16 text-center text-muted-foreground">
-        <p className="text-sm">Could not load widgets. Please try again.</p>
-      </div>
+      <ErrorState
+        title="Widgets couldn't load"
+        description="We couldn't refresh your widget templates. Try again, or contact support if it keeps happening."
+        compact
+      />
     );
   }
 

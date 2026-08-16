@@ -35,7 +35,7 @@ async function SettingsContent() {
   const profile = toUserProfileData(raw);
 
   return (
-    <SettingsTabs initialTab="account" profile={profile} />
+    <SettingsTabs initialTab="profile" profile={profile} />
   );
 }
 

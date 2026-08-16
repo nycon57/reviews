@@ -4,7 +4,9 @@ import * as React from "react";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { MobileNavTrigger } from "./mobile-nav";
+import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { cn } from "@/lib/utils";
+import { setCookie } from "@/lib/utils/cookies";
 import { PermissionProvider } from "@/lib/permissions/context";
 import type { UserContext } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,7 @@ interface DashboardLayoutProps {
     expiresAt?: string | null;
   } | null;
   onSignOut?: () => void;
+  initialSidebarCollapsed?: boolean;
 }
 
 export function DashboardLayout({
@@ -42,8 +45,9 @@ export function DashboardLayout({
   userContext,
   impersonation,
   onSignOut,
+  initialSidebarCollapsed = false,
 }: DashboardLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(initialSidebarCollapsed);
   const [isStoppingImpersonation, startStopTransition] = React.useTransition();
   const router = useRouter();
   const { toast } = useToast();
@@ -89,6 +93,14 @@ export function DashboardLayout({
     });
   }, [router, toast]);
 
+  const handleSidebarCollapsedChange = React.useCallback((collapsed: boolean) => {
+    setSidebarCollapsed(collapsed);
+    setCookie("repwell_sidebar_collapsed", collapsed ? "true" : "false", {
+      path: "/dashboard",
+      maxAge: 31536000,
+    });
+  }, []);
+
   return (
     <PermissionProvider userContext={userContext || null}>
       <div className="flex h-dvh overflow-hidden bg-background">
@@ -110,7 +122,7 @@ export function DashboardLayout({
             isStoppingImpersonation={isStoppingImpersonation}
             mobileMenuTrigger={<MobileNavTrigger />}
             sidebarCollapsed={sidebarCollapsed}
-            onSidebarCollapsedChange={setSidebarCollapsed}
+            onSidebarCollapsedChange={handleSidebarCollapsedChange}
           />
 
           {impersonation?.active && (
@@ -159,6 +171,7 @@ export function DashboardLayout({
               "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border"
             )}
           >
+            <Breadcrumbs className="mb-4" />
             {children}
           </main>
         </div>

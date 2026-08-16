@@ -135,7 +135,7 @@ const salesforceConfig: IntegrationPageConfig = {
     },
   ],
 
-  relatedIntegrations: ["hubspot", "zapier", "slack"],
+  relatedIntegrations: ["zapier", "slack"],
 
   seo: {
     title: "Salesforce Integration | RepWell",
@@ -399,7 +399,7 @@ const slackConfig: IntegrationPageConfig = {
     },
   ],
 
-  relatedIntegrations: ["microsoft-teams", "zapier", "google-business-profile"],
+  relatedIntegrations: ["zapier", "google-business-profile"],
 
   seo: {
     title: "Slack Integration | RepWell",
@@ -416,231 +416,100 @@ const slackConfig: IntegrationPageConfig = {
 };
 
 /**
- * Microsoft Teams integration configuration
- */
-const microsoftTeamsConfig: IntegrationPageConfig = {
-  slug: "microsoft-teams",
-  name: "Microsoft Teams",
-  shortDescription:
-    "Receive review alerts, NPS updates, and team reports directly in your Microsoft Teams channels.",
-  category: "communication",
-  icon: "MicrosoftTeamsLogo",
-
-  hero: {
-    headline: "Connect RepWell with Microsoft Teams",
-    description:
-      "Bring customer feedback into your Microsoft Teams workflow. Review notifications, NPS alerts, and performance reports arrive right where your team already works.",
-    badge: "Communication",
-  },
-
-  overview: {
-    whatItDoes:
-      "The Microsoft Teams integration delivers real-time customer feedback notifications and automated reports to your Teams channels. Configure alert rules to ensure the right people see the right information at the right time.",
-    dataFlow: [
-      { direction: "out", label: "Review notifications to Teams" },
-      { direction: "out", label: "NPS and performance alerts" },
-      { direction: "out", label: "Automated weekly reports" },
-    ],
-  },
-
-  features: [
-    {
-      icon: "Bell",
-      title: "Review Notifications",
-      description:
-        "New reviews appear as rich cards in your Teams channels with rating, text, and quick-action buttons.",
-    },
-    {
-      icon: "Warning",
-      title: "Priority Alerts",
-      description:
-        "Low-rating reviews trigger urgent notifications to managers and support teams for rapid response.",
-    },
-    {
-      icon: "ChartBar",
-      title: "Scheduled Reports",
-      description:
-        "Weekly and monthly performance summaries posted to channels automatically. No manual reporting.",
-    },
-    {
-      icon: "Sliders",
-      title: "Flexible Routing",
-      description:
-        "Send different notification types to different channels or teams based on your organizational structure.",
-    },
-    {
-      icon: "ShieldCheck",
-      title: "Enterprise Security",
-      description:
-        "Built on Microsoft Graph API with enterprise-grade security. Respects your Teams admin policies.",
-    },
-    {
-      icon: "ArrowSquareOut",
-      title: "One-Click Actions",
-      description:
-        "Respond to reviews, view customer details, or escalate issues directly from the Teams notification card.",
-    },
-  ],
-
-  setupSteps: [
-    {
-      step: 1,
-      title: "Install the App",
-      description:
-        "Find RepWell in the Microsoft Teams app store or install via the RepWell integrations page.",
-      icon: "Plus",
-    },
-    {
-      step: 2,
-      title: "Select Teams & Channels",
-      description:
-        "Choose which Teams channels should receive RepWell notifications. Works with any channel type.",
-      icon: "Hash",
-    },
-    {
-      step: 3,
-      title: "Set Alert Rules",
-      description:
-        "Configure which events trigger notifications and set priority levels for different review types.",
-      icon: "Sliders",
-    },
-    {
-      step: 4,
-      title: "Go Live",
-      description:
-        "Enable the integration and notifications begin immediately. Manage settings from either platform.",
-      icon: "Play",
-    },
-  ],
-
-  useCases: [
-    {
-      title: "Enterprise Communication",
-      description:
-        "For organizations on Microsoft 365, keep feedback visible without adding another tool to the stack.",
-    },
-    {
-      title: "Manager Oversight",
-      description:
-        "Branch managers receive alerts in their Teams channels, enabling quick action on customer issues.",
-    },
-    {
-      title: "Cross-Team Coordination",
-      description:
-        "Route feedback to the right department automatically -- support issues to support, compliments to sales.",
-    },
-  ],
-
-  relatedIntegrations: ["slack", "salesforce", "zapier"],
-
-  seo: {
-    title: "Microsoft Teams Integration | RepWell",
-    description:
-      "Connect Microsoft Teams with RepWell for real-time review notifications, NPS alerts, and automated performance reports.",
-    keywords: [
-      "microsoft teams integration",
-      "teams review notifications",
-      "microsoft 365 review management",
-      "teams customer feedback",
-      "enterprise review alerts",
-    ],
-  },
-};
-
-/**
  * Zapier integration configuration
  */
+const ZAPIER_INVITE_LINK = "https://zapier.com/app/invite/repwell";
+
 const zapierConfig: IntegrationPageConfig = {
   slug: "zapier",
   name: "Zapier",
   shortDescription:
-    "Connect RepWell with 5,000+ apps. Automate workflows between your review platform and any tool.",
+    "Use RepWell's Zapier app or Webhooks by Zapier to automate review, survey, and contact workflows.",
   category: "automation",
   icon: "Lightning",
 
   hero: {
     headline: "Connect RepWell with Zapier",
     description:
-      "Use Zapier to connect RepWell with over 5,000 apps. Automate review workflows, sync data between tools, and build custom integrations without writing code.",
+      "Connect RepWell to Zapier's 9,000+ app ecosystem with five RepWell triggers, two create actions, and API-key authentication.",
     badge: "Automation",
   },
 
   overview: {
     whatItDoes:
-      "The Zapier integration exposes RepWell triggers and actions to the Zapier platform, letting you build automated workflows (Zaps) that connect RepWell with thousands of other applications. Trigger Zaps when reviews arrive, NPS changes, or milestones are reached.",
+      "The RepWell Zapier app exposes five event triggers and two create actions. It is pending Zapier directory publication and is available by invite link until listing approval; Webhooks by Zapier remains the fallback that works today.",
     dataFlow: [
-      { direction: "out", label: "Review events as Zapier triggers" },
-      { direction: "in", label: "Contact data from other apps via Zapier" },
-      { direction: "both", label: "Custom workflow data between tools" },
+      { direction: "out", label: "Review, survey, and contact events as Zapier triggers" },
+      { direction: "in", label: "Create contacts and trigger surveys from Zapier actions" },
+      { direction: "both", label: "API-key authenticated workflows between RepWell and Zapier" },
     ],
   },
 
   features: [
     {
       icon: "Lightning",
-      title: "Pre-Built Triggers",
+      title: "Five RepWell Triggers",
       description:
-        "New review, negative review, NPS change, milestone reached -- choose from a library of RepWell triggers.",
+        "Trigger Zaps from review.published, review.negative, review.responded, survey.completed, and contact.created events.",
     },
     {
       icon: "Plug",
-      title: "5,000+ App Connections",
+      title: "Zapier Ecosystem",
       description:
-        "Connect RepWell with any app in the Zapier ecosystem. CRMs, email tools, spreadsheets, project management, and more.",
+        "Zapier currently describes its ecosystem as 9,000+ apps, so RepWell workflows can hand data to the tools your team already uses.",
     },
     {
       icon: "ArrowsClockwise",
-      title: "Two-Way Actions",
+      title: "Two Create Actions",
       description:
-        "Not just triggers -- use Zapier actions to create contacts in RepWell, trigger surveys, or update records.",
+        "Use Zapier to create or update contacts in RepWell and to trigger survey requests through the RepWell API.",
     },
     {
-      icon: "Code",
-      title: "No Code Required",
+      icon: "Key",
+      title: "API-Key Authentication",
       description:
-        "Build sophisticated workflows with Zapier's visual builder. No developers needed.",
+        "Connect with a RepWell API key sent in the X-API-Key header; use scoped keys for the actions your Zap needs.",
     },
     {
       icon: "GitBranch",
-      title: "Conditional Logic",
+      title: "Filters and Paths",
       description:
-        "Use Zapier Paths and Filters to create conditional workflows based on review rating, customer data, or custom fields.",
+        "Use Zapier Filters and Paths to branch on review rating, event type, customer data, or survey details.",
     },
     {
       icon: "Table",
-      title: "Data Transformation",
+      title: "Webhooks Fallback",
       description:
-        "Format, filter, and transform data between RepWell and your other tools using Zapier's built-in tools.",
+        "Until the native RepWell app is directory-published, Webhooks by Zapier can receive outbound RepWell events or call RepWell REST endpoints.",
     },
   ],
 
   setupSteps: [
     {
       step: 1,
-      title: "Create a Zap",
-      description:
-        "Log in to Zapier and search for RepWell. Choose RepWell as your trigger or action app.",
+      title: "Open the RepWell Zapier app",
+      description: `Use the RepWell invite link (${ZAPIER_INVITE_LINK}) while directory publication is pending, then choose RepWell as your trigger or action app.`,
       icon: "Plus",
     },
     {
       step: 2,
-      title: "Authenticate",
+      title: "Authenticate with an API key",
       description:
-        "Connect your RepWell account by entering your API key or signing in through OAuth.",
+        "Create a scoped RepWell API key and paste it into Zapier. The app authenticates with the X-API-Key header.",
       icon: "Key",
     },
     {
       step: 3,
-      title: "Configure Workflow",
+      title: "Choose a trigger or action",
       description:
-        "Choose your trigger event, map data fields, and connect your destination app.",
+        "Pick one of five triggers or the create_contact / trigger_survey actions, then map fields into the next Zap step.",
       icon: "Sliders",
     },
     {
       step: 4,
-      title: "Test & Enable",
+      title: "Test and enable",
       description:
-        "Run a test to verify data flows correctly, then turn on your Zap to automate.",
+        "Run a Zapier test using RepWell sample data. If you do not have invite access yet, use Webhooks by Zapier with RepWell outbound endpoints.",
       icon: "Play",
     },
   ],
@@ -649,26 +518,26 @@ const zapierConfig: IntegrationPageConfig = {
     {
       title: "CRM Sync Without Native Integration",
       description:
-        "Connect RepWell with any CRM -- even niche or industry-specific ones -- using Zapier as the bridge.",
+        "Create or update RepWell contacts from CRMs that do not have a dedicated RepWell integration.",
     },
     {
       title: "Custom Notification Workflows",
       description:
-        "Send review alerts to any channel: email, SMS, Discord, Telegram, or your custom webhook endpoint.",
+        "Send published, negative, or responded review events into Slack, email, SMS, or your team's workflow queue.",
     },
     {
       title: "Spreadsheet Reporting",
       description:
-        "Automatically log every review to Google Sheets or Airtable for custom reporting and analysis.",
+        "Log review, survey, and contact events to Google Sheets, Airtable, or a data warehouse through Zapier.",
     },
   ],
 
-  relatedIntegrations: ["salesforce", "hubspot", "slack"],
+  relatedIntegrations: ["salesforce", "slack"],
 
   seo: {
     title: "Zapier Integration | RepWell",
     description:
-      "Connect RepWell with 5,000+ apps through Zapier. Automate review workflows, sync customer data, and build custom integrations without code.",
+      "Connect RepWell with Zapier's 9,000+ app ecosystem. Use five RepWell triggers, two create actions, and Webhooks by Zapier fallback workflows.",
     keywords: [
       "zapier integration",
       "review automation zapier",
@@ -680,161 +549,29 @@ const zapierConfig: IntegrationPageConfig = {
 };
 
 /**
- * HubSpot integration configuration
- */
-const hubspotConfig: IntegrationPageConfig = {
-  slug: "hubspot",
-  name: "HubSpot",
-  shortDescription:
-    "Sync contacts, trigger surveys from deal stages, and enrich HubSpot records with review data.",
-  category: "crm",
-  icon: "Hexagon",
-
-  hero: {
-    headline: "Connect RepWell with HubSpot",
-    description:
-      "Bridge the gap between your HubSpot CRM and customer feedback. Sync contacts, trigger review requests from deal pipelines, and see satisfaction data right inside HubSpot.",
-    badge: "CRM Integration",
-  },
-
-  overview: {
-    whatItDoes:
-      "The HubSpot integration syncs your CRM contacts with RepWell, triggers review requests based on deal stage changes, and enriches HubSpot contact records with NPS scores and review activity. Get a complete customer view without switching tools.",
-    dataFlow: [
-      { direction: "in", label: "Contact and deal data from HubSpot" },
-      { direction: "out", label: "NPS scores and review data to HubSpot" },
-      { direction: "both", label: "Customer lifecycle data" },
-    ],
-  },
-
-  features: [
-    {
-      icon: "ArrowsClockwise",
-      title: "Contact Sync",
-      description:
-        "Keep contacts synchronized between HubSpot and RepWell. New deals automatically create survey recipients.",
-    },
-    {
-      icon: "Lightning",
-      title: "Pipeline Triggers",
-      description:
-        "Fire review requests when deals move to specific pipeline stages. Automate the ask at the perfect moment.",
-    },
-    {
-      icon: "Notepad",
-      title: "Custom Properties",
-      description:
-        "RepWell creates custom HubSpot properties for NPS score, review count, and last review date on contact records.",
-    },
-    {
-      icon: "ListChecks",
-      title: "Smart Lists",
-      description:
-        "Build HubSpot lists based on RepWell data -- promoters, detractors, unreviewed customers, and more.",
-    },
-    {
-      icon: "Envelope",
-      title: "Marketing Automation",
-      description:
-        "Use RepWell data in HubSpot workflows. Send targeted campaigns to promoters or re-engagement to detractors.",
-    },
-    {
-      icon: "ChartBar",
-      title: "Reporting Integration",
-      description:
-        "Add RepWell data to HubSpot reports and dashboards for unified business intelligence.",
-    },
-  ],
-
-  setupSteps: [
-    {
-      step: 1,
-      title: "Connect HubSpot",
-      description:
-        "Navigate to RepWell integrations and click 'Connect HubSpot'. Sign in with your HubSpot admin account.",
-      icon: "Link",
-    },
-    {
-      step: 2,
-      title: "Map Properties",
-      description:
-        "Review the default field mapping and customize as needed. RepWell auto-creates custom properties in HubSpot.",
-      icon: "Table",
-    },
-    {
-      step: 3,
-      title: "Configure Triggers",
-      description:
-        "Select which pipeline stages should trigger survey sends. Set timing and channel preferences.",
-      icon: "Lightning",
-    },
-    {
-      step: 4,
-      title: "Activate Sync",
-      description:
-        "Turn on the integration and monitor initial sync from the RepWell dashboard. Data flows in minutes.",
-      icon: "ArrowsClockwise",
-    },
-  ],
-
-  useCases: [
-    {
-      title: "Inbound Lead Nurturing",
-      description:
-        "Enrich HubSpot workflows with review data. Send testimonial requests to happy customers or save offers to unhappy ones.",
-    },
-    {
-      title: "Customer Success Scoring",
-      description:
-        "Combine HubSpot engagement data with RepWell NPS scores for a comprehensive customer health score.",
-    },
-    {
-      title: "Revenue Attribution",
-      description:
-        "Track which deals generated the most positive reviews and correlate review activity with revenue.",
-    },
-  ],
-
-  relatedIntegrations: ["salesforce", "zapier", "google-business-profile"],
-
-  seo: {
-    title: "HubSpot Integration | RepWell",
-    description:
-      "Connect HubSpot with RepWell to sync contacts, trigger review requests from pipelines, and enrich CRM records with customer feedback data.",
-    keywords: [
-      "hubspot integration",
-      "hubspot review management",
-      "hubspot nps",
-      "hubspot customer feedback",
-      "crm review automation",
-    ],
-  },
-};
-
-/**
  * Encompass integration configuration
  */
 const encompassConfig: IntegrationPageConfig = {
   slug: "encompass",
   name: "Encompass",
   shortDescription:
-    "Trigger post-closing surveys automatically when loans fund in Encompass. Purpose-built for mortgage.",
+    "Trigger post-closing surveys automatically when loans fund in Encompass. Purpose-built for lending teams.",
   category: "los",
   icon: "FileText",
 
   hero: {
     headline: "Connect RepWell with Encompass",
     description:
-      "Purpose-built for mortgage professionals. Automatically trigger review requests when loans close in Encompass. No manual work, no missed opportunities.",
+      "Purpose-built for client-facing professionals. Automatically trigger review requests when loans close in Encompass. No manual work, no missed opportunities.",
     badge: "Loan Origination",
   },
 
   overview: {
     whatItDoes:
-      "The Encompass integration listens for loan milestone events via webhooks and automatically triggers RepWell surveys. When a loan funds or closes, the borrower receives a perfectly-timed review request with the right loan officer attributed.",
+      "The Encompass integration listens for loan milestone events via webhooks and automatically triggers RepWell surveys. When a loan funds or closes, the borrower receives a perfectly-timed review request with the right team member attributed.",
     dataFlow: [
       { direction: "in", label: "Loan milestone events from Encompass" },
-      { direction: "in", label: "Borrower and loan officer data" },
+      { direction: "in", label: "Borrower and team member data" },
       { direction: "out", label: "Survey delivery confirmations" },
     ],
   },
@@ -850,7 +587,7 @@ const encompassConfig: IntegrationPageConfig = {
       icon: "UserCircle",
       title: "Automatic Attribution",
       description:
-        "Reviews are automatically attributed to the correct loan officer based on Encompass loan data.",
+        "Reviews are automatically attributed to the correct team member based on Encompass loan data.",
     },
     {
       icon: "Clock",
@@ -862,13 +599,13 @@ const encompassConfig: IntegrationPageConfig = {
       icon: "ShieldCheck",
       title: "Compliance-Safe",
       description:
-        "Survey content and timing can be configured to comply with mortgage industry regulations.",
+        "Survey content and timing can be configured to stay compliant with your industry's regulations.",
     },
     {
       icon: "Buildings",
       title: "Multi-Branch Support",
       description:
-        "Handle loans from multiple branches with automatic routing to the correct branch and loan officer.",
+        "Handle loans from multiple branches with automatic routing to the correct branch and team member.",
     },
     {
       icon: "Gear",
@@ -890,7 +627,7 @@ const encompassConfig: IntegrationPageConfig = {
       step: 2,
       title: "Map Loan Fields",
       description:
-        "Map Encompass loan fields to RepWell: borrower name, email, loan officer, branch, and custom fields.",
+        "Map Encompass loan fields to RepWell: borrower name, email, team member, branch, and custom fields.",
       icon: "Table",
     },
     {
@@ -916,9 +653,9 @@ const encompassConfig: IntegrationPageConfig = {
         "Capture feedback when the experience is fresh. Automatic triggers mean no borrower falls through the cracks.",
     },
     {
-      title: "Loan Officer Leaderboards",
+      title: "team member Leaderboards",
       description:
-        "Compare review performance across loan officers with automatic attribution from Encompass data.",
+        "Compare review performance across team members with automatic attribution from Encompass data.",
     },
     {
       title: "Branch Performance",
@@ -930,14 +667,14 @@ const encompassConfig: IntegrationPageConfig = {
   relatedIntegrations: ["salesforce", "google-business-profile", "slack"],
 
   seo: {
-    title: "Encompass LOS Integration | RepWell",
+    title: "Encompass workflow Integration | RepWell",
     description:
-      "Connect Encompass with RepWell for automatic post-closing review collection. Purpose-built for mortgage professionals and lenders.",
+      "Connect Encompass with RepWell for automatic post-closing review collection. Purpose-built for client-facing professionals and lenders.",
     keywords: [
       "encompass integration",
-      "mortgage review automation",
+      "client review automation",
       "encompass review collection",
-      "los integration",
+      "workflow integration",
       "post closing surveys",
     ],
   },
@@ -1082,9 +819,7 @@ export const integrationPageConfigs: Record<IntegrationSlug, IntegrationPageConf
   salesforce: salesforceConfig,
   "google-business-profile": googleBusinessConfig,
   slack: slackConfig,
-  "microsoft-teams": microsoftTeamsConfig,
   zapier: zapierConfig,
-  hubspot: hubspotConfig,
   encompass: encompassConfig,
   facebook: facebookConfig,
 };
@@ -1106,12 +841,8 @@ export function getIntegrationBySlug(slug: string): IntegrationPageConfig | null
 /**
  * Get all integrations for a given category
  */
-export function getIntegrationsByCategory(
-  category: IntegrationCategory
-): IntegrationPageConfig[] {
-  return Object.values(integrationPageConfigs).filter(
-    (config) => config.category === category
-  );
+export function getIntegrationsByCategory(category: IntegrationCategory): IntegrationPageConfig[] {
+  return Object.values(integrationPageConfigs).filter((config) => config.category === category);
 }
 
 /**

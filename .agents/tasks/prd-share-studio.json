@@ -60,7 +60,7 @@
       ],
       "priority": "P1",
       "estimate": "S",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -74,7 +74,8 @@
         "src/app/s/[slug]/page.tsx",
         "src/app/s/[slug]/smart-link-content.tsx"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Dropped: superseded by organization/user Smart Link settings shipped through the June build equivalents."
     },
     {
       "id": "S101",
@@ -92,7 +93,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -105,7 +106,8 @@
       ],
       "files_new": [
         "src/components/share-studio/smart-link-analytics.tsx"
-      ]
+      ],
+      "status_note": "Done: this build."
     },
     {
       "id": "S102",
@@ -124,7 +126,7 @@
       ],
       "priority": "P1",
       "estimate": "S",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -137,7 +139,8 @@
       ],
       "files_new": [
         "src/app/s/[slug]/loading.tsx"
-      ]
+      ],
+      "status_note": "Done: sibling worker, this build."
     },
     {
       "id": "S103",
@@ -156,7 +159,7 @@
       ],
       "priority": "P2",
       "estimate": "S",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -168,7 +171,8 @@
         "src/lib/share-studio/service.ts",
         "src/lib/share-studio/actions.ts"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Done: this build."
     },
     {
       "id": "S104",
@@ -186,7 +190,7 @@
       ],
       "priority": "P1",
       "estimate": "S",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -198,7 +202,8 @@
         "src/lib/share-studio/remotion-renderer.ts",
         "src/app/s/[slug]/opengraph-image.tsx"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Dropped: superseded by the shipped render pipeline and explicit asset generation flow."
     },
     {
       "id": "S200",
@@ -219,7 +224,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -234,7 +239,8 @@
       ],
       "files_new": [
         "src/remotion/compositions/DslTemplate.tsx"
-      ]
+      ],
+      "status_note": "Dropped: superseded by the June template renderer equivalents; no new migration in this build."
     },
     {
       "id": "S201",
@@ -254,7 +260,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -269,7 +275,8 @@
       ],
       "files_new": [
         "supabase/migrations/YYYYMMDD_share_studio_mvp_templates.sql"
-      ]
+      ],
+      "status_note": "Dropped: superseded by shipped system template equivalents; no seed/migration work in this build."
     },
     {
       "id": "S202",
@@ -289,7 +296,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -305,7 +312,8 @@
       "files_new": [
         "src/components/share-studio/dsl-preview-renderer.tsx",
         "src/components/share-studio/template-gallery-picker.tsx"
-      ]
+      ],
+      "status_note": "Dropped: superseded by shipped asset creator/template picker equivalents."
     },
     {
       "id": "S203",
@@ -325,7 +333,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -337,7 +345,8 @@
         "src/lib/share-studio/service.ts",
         "src/lib/share-studio/actions.ts"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Dropped: superseded by shipped render actions and modal flows."
     },
     {
       "id": "S204",
@@ -357,7 +366,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -371,7 +380,8 @@
       ],
       "files_new": [
         "src/components/share-studio/generate-graphic-modal.tsx"
-      ]
+      ],
+      "status_note": "Done: shipped in June build; equivalent capability already present."
     },
     {
       "id": "S205",
@@ -391,7 +401,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -405,7 +415,8 @@
       ],
       "files_new": [
         "src/components/share-studio/render-progress-card.tsx"
-      ]
+      ],
+      "status_note": "Dropped: superseded by shipped polling, download, clipboard, and per-source gallery equivalents."
     },
     {
       "id": "S206",
@@ -424,7 +435,7 @@
       ],
       "priority": "P1",
       "estimate": "S",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -434,7 +445,8 @@
         "src/lib/share-studio/render-worker.ts",
         "src/app/api/cron/share-render-jobs/route.ts"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Done: shipped in June build; equivalent capability already present."
     },
     {
       "id": "S207",
@@ -454,7 +466,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -469,7 +481,8 @@
       ],
       "files_new": [
         "src/components/share-studio/graphics-gallery.tsx"
-      ]
+      ],
+      "status_note": "Done: this build."
     },
     {
       "id": "S300",
@@ -490,7 +503,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -500,7 +513,8 @@
       "files_existing": [],
       "files_new": [
         "src/lib/share-studio/transcription-service.ts"
-      ]
+      ],
+      "status_note": "Done: shipped in June build; equivalent capability already present."
     },
     {
       "id": "S301",
@@ -517,7 +531,7 @@
       ],
       "priority": "P1",
       "estimate": "S",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -531,7 +545,8 @@
       ],
       "files_new": [
         "supabase/migrations/YYYYMMDD_word_level_timestamps.sql"
-      ]
+      ],
+      "status_note": "Done: shipped in June build; equivalent capability already present."
     },
     {
       "id": "S302",
@@ -552,7 +567,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -565,7 +580,8 @@
         "src/remotion/components/AnimatedCaptions.tsx",
         "src/remotion/utils/timing.ts"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Done: shipped in June build; equivalent capability already present."
     },
     {
       "id": "S303",
@@ -585,7 +601,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -600,7 +616,8 @@
         "src/lib/share-studio/remotion-renderer.ts",
         "src/remotion/compositions/VideoTestimonial.tsx"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Done: shipped in June build; equivalent capability already present."
     },
     {
       "id": "S304",
@@ -620,7 +637,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -635,7 +652,8 @@
       ],
       "files_new": [
         "src/components/share-studio/video-config-modal.tsx"
-      ]
+      ],
+      "status_note": "Done: shipped in June build; equivalent capability already present."
     },
     {
       "id": "S305",
@@ -654,7 +672,7 @@
       ],
       "priority": "P2",
       "estimate": "S",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -666,7 +684,8 @@
         "src/lib/share-studio/service.ts",
         "src/lib/share-studio/actions.ts"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Done: shipped in June build; equivalent capability already present."
     },
     {
       "id": "S400",
@@ -686,7 +705,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -699,7 +718,8 @@
         "src/remotion/compositions/DslTemplate.tsx",
         "src/lib/share-studio/template-types.ts"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Dropped: superseded by static/video asset flows; animation DSL expansion is out of this build."
     },
     {
       "id": "S401",
@@ -719,7 +739,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -734,7 +754,8 @@
       ],
       "files_new": [
         "supabase/migrations/YYYYMMDD_animated_template_variants.sql"
-      ]
+      ],
+      "status_note": "Dropped: superseded by static/video template equivalents; animated variants are out of this build."
     },
     {
       "id": "S402",
@@ -753,7 +774,7 @@
       ],
       "priority": "P2",
       "estimate": "S",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -766,7 +787,8 @@
         "src/components/share-studio/generate-graphic-modal.tsx",
         "src/components/share-studio/template-gallery-picker.tsx"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Dropped: superseded by the asset hub and creator modal; animation entry point is out of scope."
     },
     {
       "id": "S403",
@@ -786,7 +808,7 @@
       ],
       "priority": "P2",
       "estimate": "S",
-      "status": "pending",
+      "status": "dropped",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -799,7 +821,8 @@
         "src/components/share-studio/template-gallery-picker.tsx",
         "src/components/share-studio/dsl-preview-renderer.tsx"
       ],
-      "files_new": []
+      "files_new": [],
+      "status_note": "Dropped: superseded by existing template previews; animation preview work is out of scope."
     }
   ],
   "marketing_psychology": {

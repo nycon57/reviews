@@ -26,7 +26,7 @@ import {
 } from "@phosphor-icons/react";
 import { DirectoryCard } from "./directory-card";
 import { DirectoryMapView } from "./directory-map-view";
-import { MessageModal } from "@/app/pro/[slug]/components/message-modal";
+import { MessageModal } from "@/components/public-profile/message-modal";
 import {
   searchProfessionals,
   type DirectoryProfessional,
@@ -347,13 +347,14 @@ export function DirectorySearch({
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    aria-label="Search professionals by name"
                     placeholder="Search by name..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                <Button type="submit" disabled={isPending} size="icon">
+                <Button type="submit" disabled={isPending} size="icon" aria-label="Search professionals">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
@@ -366,6 +367,7 @@ export function DirectorySearch({
                   onPlaceClear={handlePlaceClear}
                   onChange={setPlaceLabel}
                   placeholder="Search city..."
+                  aria-label="Search city"
                 />
               </div>
 
@@ -375,7 +377,7 @@ export function DirectorySearch({
                   value={minRating || "any"}
                   onValueChange={(v) => handleFilterChange("minRating", v === "any" ? "" : v)}
                 >
-                  <SelectTrigger className="flex-1 min-w-0 text-left">
+                  <SelectTrigger className="flex-1 min-w-0 text-left" aria-label="Filter by minimum rating">
                     <Star className="mr-2 h-4 w-4 text-yellow-400 shrink-0" />
                     <SelectValue placeholder="Rating" />
                   </SelectTrigger>
@@ -392,7 +394,7 @@ export function DirectorySearch({
                     value={radius}
                     onValueChange={(v) => handleFilterChange("radius", v)}
                   >
-                    <SelectTrigger className="flex-1 min-w-0 text-left">
+                    <SelectTrigger className="flex-1 min-w-0 text-left" aria-label="Filter by search radius">
                       <Crosshair className="mr-2 h-4 w-4 shrink-0" />
                       <SelectValue placeholder="Radius" />
                     </SelectTrigger>
@@ -411,7 +413,7 @@ export function DirectorySearch({
                   value={sortBy}
                   onValueChange={(v) => handleFilterChange("sortBy", v)}
                 >
-                  <SelectTrigger className="flex-1 min-w-0 text-left">
+                  <SelectTrigger className="flex-1 min-w-0 text-left" aria-label="Sort professionals">
                     <SlidersHorizontal className="mr-2 h-4 w-4 shrink-0" />
                     <SelectValue placeholder="Sort" />
                   </SelectTrigger>
@@ -483,7 +485,7 @@ export function DirectorySearch({
                     {displayedProfessionals.length}
                   </span>
                   {displayedProfessionals.length !== totalCount && (
-                    <span className="text-muted-foreground/70"> of {totalCount}</span>
+                    <span className="text-muted-foreground"> of {totalCount}</span>
                   )}
                   {" "}professionals
                 </>
@@ -567,6 +569,7 @@ export function DirectorySearch({
                 size="sm"
                 disabled={page === 1}
                 onClick={() => handlePageChange(page - 1)}
+                aria-label="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -600,6 +603,7 @@ export function DirectorySearch({
                 size="sm"
                 disabled={page === totalPages}
                 onClick={() => handlePageChange(page + 1)}
+                aria-label="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

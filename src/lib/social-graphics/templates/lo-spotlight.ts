@@ -50,7 +50,7 @@ function generate(input: TemplateInput): CanvasElement[] {
   });
 
   // LO photo placeholder circle
-  elements.push({
+  const avatarCircle: CanvasElement = {
     id: generateId(),
     type: "shape",
     x: 0.38,
@@ -64,8 +64,12 @@ function generate(input: TemplateInput): CanvasElement[] {
     visible: true,
     shape: "circle",
     backgroundColor: "#52796f",
-    ...(lo?.avatarUrl ? { imageUrl: lo.avatarUrl, objectFit: "cover" as const } : {}),
-  });
+  };
+  if (lo?.avatarUrl) {
+    avatarCircle.imageUrl = lo.avatarUrl;
+    avatarCircle.objectFit = "cover";
+  }
+  elements.push(avatarCircle);
 
   // LO name
   elements.push({

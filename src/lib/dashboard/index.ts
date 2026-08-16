@@ -13,6 +13,7 @@ export type {
   UserProfile,
   DashboardMetrics,
   RecentReview,
+  RecentReviewStatusFilter,
   TrendDataPoint,
   ProfileCompletionItem,
 } from "./user-actions";
@@ -25,6 +26,7 @@ export {
   getEnterpriseFilterOptions,
   getLeaderboard,
   getLowPerformers,
+  getReviewsBySource,
   getTeamNPSTrend,
   getTeamRatingTrend,
   getTeamReviewVolumeTrend,
@@ -36,3 +38,8 @@ export type {
   FilterOptions,
   LeaderboardEntry,
 } from "./manager-actions";
+
+export type {
+  ReviewsBySourceEntry,
+  ReviewsBySourceOptions,
+} from "./source-distribution";

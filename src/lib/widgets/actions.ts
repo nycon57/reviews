@@ -13,7 +13,6 @@ import {
   type WidgetConfigJson,
   widgetConfigJsonSchema,
 } from "./schemas";
-import type { Json } from "@/types/database.types";
 import { sanitizeCustomCSS } from "@/embed/core/css-sanitizer";
 import { getBaseUrl } from "@/lib/seo";
 import { getBranchPublicPath } from "@/lib/branches/utils";
@@ -54,7 +53,7 @@ async function createVersionSnapshotInternal(
     const { error } = await (supabase as any).from("widget_config_versions").insert({
       widget_config_id: widgetConfigId,
       version: widgetData.version ?? 1,
-      config: currentConfig as unknown as Json,
+      config: currentConfig,
       name: widgetData.name,
       status: widgetData.status,
       allowed_domains: widgetData.allowed_domains ?? [],
@@ -96,7 +95,7 @@ async function getAuthedUserContext(
 
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, individual_organization_id, role")
+    .select("organization_id, role, organizations(account_type)")
     .eq("id", user.id)
     .single();
 
@@ -104,13 +103,14 @@ async function getAuthedUserContext(
     return { success: false, error: "Organization not found" };
   }
 
-  // Resolve organization ID: enterprise uses organization_id, individual uses individual_organization_id
-  const orgId = userData?.organization_id || userData?.individual_organization_id;
+  // Single path (ADR 0006): one org per account; account_type discriminates.
+  const orgId = userData?.organization_id;
   if (!orgId) {
     return { success: false, error: "Organization not found" };
   }
 
-  const isIndividual = !userData.organization_id && !!userData.individual_organization_id;
+  const isIndividual =
+    (userData.organizations as { account_type?: string } | null)?.account_type === "individual";
 
   // Enterprise users need admin/manager role; individual users (always admin of their own org) pass through
   if (!isIndividual && userData.role !== "admin" && userData.role !== "manager") {
@@ -183,7 +183,7 @@ export async function updateWidget(
     };
 
     if (validated.data.config !== undefined)
-      updatePayload.config = mergedConfig as unknown as Json;
+      updatePayload.config = mergedConfig;
     if (validated.data.allowed_domains !== undefined)
       updatePayload.allowed_domains = validated.data.allowed_domains;
     if (validated.data.enable_structured_data !== undefined)

@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -18,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { List as Menu, Lock } from "@phosphor-icons/react";
 import {
   useFilteredNav,
+  useNavIsActive,
   ICON_MAP,
   type FilteredNavItem,
 } from "@/lib/nav";
@@ -29,15 +29,8 @@ interface MobileNavProps {
 
 export function MobileNav({ className }: MobileNavProps) {
   const [open, setOpen] = React.useState(false);
-  const pathname = usePathname();
   const { coreItems, sections, bottomItems } = useFilteredNav();
-
-  const isActive = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === "/dashboard";
-    }
-    return pathname.startsWith(href);
-  };
+  const isActive = useNavIsActive({ coreItems, sections, bottomItems });
 
   const handleNavClick = () => {
     setOpen(false);
@@ -84,7 +77,7 @@ export function MobileNav({ className }: MobileNavProps) {
             {sections.map((section) => (
               <React.Fragment key={section.label}>
                 <Separator className="my-3" />
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/70 dark:text-repwell-sage-100/50 px-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-repwell-teal-400 dark:text-repwell-sage-100 px-3">
                   {section.label}
                 </p>
                 {section.items.map((item) => (
@@ -125,7 +118,7 @@ interface MobileNavLinkProps {
 
 function MobileNavLink({ item, isActive, onClick, dynamicBadge }: MobileNavLinkProps) {
   const { isProLocked } = item;
-  const href = isProLocked ? "/dashboard/settings?tab=billing" : item.href;
+  const href = isProLocked ? "/dashboard/organization?tab=billing" : item.href;
   const IconComponent = ICON_MAP[item.icon];
 
   return (

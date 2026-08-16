@@ -1,0 +1,232 @@
+{
+  "navRoutes": [
+    {
+      "title": "Dashboard",
+      "route": "/dashboard",
+      "permission": "VIEW_DASHBOARD"
+    },
+    {
+      "title": "Reviews",
+      "route": "/dashboard/reviews",
+      "permission": "VIEW_REVIEWS"
+    },
+    {
+      "title": "Contacts",
+      "route": "/dashboard/reviews?tab=contacts",
+      "permission": "VIEW_REVIEWS"
+    },
+    {
+      "title": "Share Studio",
+      "route": "/dashboard/share-studio",
+      "permission": "VIEW_SHARE_STUDIO"
+    },
+    {
+      "title": "Social Graphics",
+      "route": "/dashboard/social-graphics",
+      "permission": "VIEW_SHARE_STUDIO"
+    },
+    {
+      "title": "Tasks",
+      "route": "/dashboard/tasks",
+      "permission": "VIEW_TASKS"
+    },
+    {
+      "title": "Campaigns",
+      "route": "/dashboard/campaigns",
+      "permission": "VIEW_CAMPAIGNS"
+    },
+    {
+      "title": "Recognition",
+      "route": "/dashboard/recognition",
+      "permission": "VIEW_RECOGNITION"
+    },
+    {
+      "title": "Analytics",
+      "route": "/dashboard/analytics",
+      "permission": "VIEW_ANALYTICS"
+    },
+    {
+      "title": "Reports",
+      "route": "/dashboard/reports",
+      "permission": "VIEW_REPORTS"
+    },
+    {
+      "title": "Trends",
+      "route": "/dashboard/analytics/trends",
+      "permission": "VIEW_TRENDS"
+    },
+    {
+      "title": "Leaderboard",
+      "route": "/dashboard/analytics/leaderboard",
+      "permission": "VIEW_LEADERBOARD"
+    },
+    {
+      "title": "Agents",
+      "route": "/dashboard/analytics/agents",
+      "permission": "VIEW_TEAM"
+    },
+    {
+      "title": "Team",
+      "route": "/dashboard/analytics/team",
+      "permission": "VIEW_TEAM"
+    },
+    {
+      "title": "AI Insights",
+      "route": "/dashboard/insights",
+      "permission": "VIEW_AI_INSIGHTS"
+    },
+    {
+      "title": "People",
+      "route": "/dashboard/people",
+      "permission": "VIEW_TEAM"
+    },
+    {
+      "title": "Surveys",
+      "route": "/dashboard/surveys",
+      "permission": "VIEW_SURVEYS"
+    },
+    {
+      "title": "EX Surveys",
+      "route": "/dashboard/ex-surveys",
+      "permission": "VIEW_EX_SURVEYS"
+    },
+    {
+      "title": "Widgets",
+      "route": "/dashboard/widgets",
+      "permission": "VIEW_DASHBOARD"
+    },
+    {
+      "title": "Media",
+      "route": "/dashboard/media",
+      "permission": "VIEW_ORGANIZATION"
+    },
+    {
+      "title": "Workspace",
+      "route": "/dashboard/organization",
+      "permission": "VIEW_ORGANIZATION"
+    },
+    {
+      "title": "Settings",
+      "route": "/dashboard/settings",
+      "permission": "VIEW_SETTINGS"
+    },
+    {
+      "title": "Help & Support",
+      "route": "/dashboard/help",
+      "permission": "VIEW_HELP"
+    }
+  ],
+  "middlewareRoutes": [
+    {
+      "route": "/staff",
+      "guards": [
+        "requiresPlatformAdmin"
+      ]
+    },
+    {
+      "route": "/dashboard/people",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/campaigns",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/approvals",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/share-studio",
+      "guards": [
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/ex-surveys",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/analytics/team",
+      "guards": [
+        "requiresEnterprise",
+        "allowedRoles:admin,manager"
+      ]
+    },
+    {
+      "route": "/dashboard/recognition",
+      "guards": [
+        "requiresEnterprise"
+      ]
+    },
+    {
+      "route": "/dashboard/analytics/leaderboard",
+      "guards": [
+        "requiresEnterprise"
+      ]
+    },
+    {
+      "route": "/dashboard/organization",
+      "guards": [
+        "requiresOrgAdmin"
+      ]
+    },
+    {
+      "route": "/dashboard/insights",
+      "guards": [
+        "minTier:pro"
+      ]
+    },
+    {
+      "route": "/dashboard/analytics/website",
+      "guards": [
+        "minTier:pro"
+      ]
+    }
+  ],
+  "docRoutes": [
+    "/dashboard",
+    "/dashboard/reviews",
+    "/dashboard/reviews?tab=contacts",
+    "/dashboard/share-studio",
+    "/dashboard/social-graphics",
+    "/dashboard/tasks",
+    "/dashboard/campaigns",
+    "/dashboard/recognition",
+    "/dashboard/analytics",
+    "/dashboard/reports",
+    "/dashboard/analytics/trends",
+    "/dashboard/analytics/leaderboard",
+    "/dashboard/analytics/agents",
+    "/dashboard/analytics/team",
+    "/dashboard/insights",
+    "/dashboard/analytics/website",
+    "/dashboard/people",
+    "/dashboard/surveys",
+    "/dashboard/ex-surveys",
+    "/dashboard/widgets",
+    "/dashboard/media",
+    "/dashboard/organization",
+    "/dashboard/settings",
+    "/dashboard/help",
+    "/dashboard/approvals",
+    "/staff",
+    "/staff/announcements",
+    "/staff/email-ab-tests",
+    "/staff/email-ab-tests/new",
+    "/staff/email-ab-tests/[id]",
+    "/staff/email-analytics",
+    "/staff/email-preview"
+  ]
+}

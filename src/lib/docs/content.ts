@@ -1,4 +1,5 @@
 // Documentation content structure
+import { SUPPORT_EMAIL } from "@/lib/brand";
 export interface DocSection {
   id: string;
   title: string;
@@ -70,7 +71,7 @@ RepWell helps you:
 If you need assistance:
 - Browse the documentation sections in the sidebar
 - Search for specific topics using the search bar
-- Contact support at support@repwell.com
+- Contact support at ${SUPPORT_EMAIL}
         `,
       },
       {
@@ -861,11 +862,11 @@ Public profile customization:
 
 ## Workflow Settings
 
-### Approval Rules
-Configure auto-approval:
-- Star threshold for auto-approve
-- Review all negative feedback
-- Require manager approval
+### Review Publishing
+Reviews publish automatically after machine screening:
+- Screened reviews go live immediately at any rating
+- Flagged reviews are quarantined for human release
+- Live reviews are only removed through a dispute
 
 ### Notification Defaults
 Organization-wide defaults:
@@ -1086,6 +1087,69 @@ When a new contact is added:
 }
 \`\`\`
 
+## Outbound Webhooks
+
+Outbound webhooks send RepWell events to an endpoint you control. Use them for Zapier Catch Hook URLs, middleware, data warehouses, or internal workflow services.
+
+### Outbound events
+
+- \`review.published\`
+- \`review.negative\`
+- \`review.responded\`
+- \`survey.completed\`
+- \`contact.created\`
+
+### Delivery envelope
+
+Each outbound delivery uses this JSON envelope:
+
+\`\`\`json
+{
+  "id": "evt_123",
+  "type": "review.published",
+  "created_at": "2026-07-08T12:00:00.000Z",
+  "organization_id": "org_123",
+  "data": {
+    "review_id": "rev_123",
+    "rating": 5,
+    "customer_name": "Jordan Lee"
+  }
+}
+\`\`\`
+
+RepWell includes these headers:
+
+| Header | Description |
+|---|---|
+| \`X-RepWell-Event\` | Event type, such as \`review.published\` |
+| \`X-RepWell-Delivery\` | Unique delivery ID |
+| \`X-RepWell-Signature\` | \`sha256=\` plus the HMAC-SHA256 digest of the raw body |
+
+### Verify signatures
+
+Use the endpoint signing secret shown when you create the outbound endpoint. The secret is only displayed once.
+
+\`\`\`ts
+import { createHmac, timingSafeEqual } from "crypto";
+
+export function verifyRepWellSignature(
+  rawBody: Buffer,
+  signatureHeader: string,
+  secret: string
+) {
+  const expected =
+    "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");
+
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(signatureHeader);
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}
+\`\`\`
+
 ## Security
 
 ### Signature Verification
@@ -1225,7 +1289,7 @@ Use API keys for authentication:
 
 ### Base URL
 \`\`\`
-https://api.repwell.com/v1
+https://api.repwell.ai/v1
 \`\`\`
 
 ## Authentication
@@ -1314,111 +1378,81 @@ Official SDKs available:
 ## Support
 
 For API support:
-- Documentation: docs.repwell.com/api
-- Email: api-support@repwell.com
+- Documentation: docs.repwell.ai/api
+- Email: api-support@repwell.ai
         `,
       },
       {
         id: "zapier",
-        title: "Zapier Integration",
+        title: "Zapier & Automation",
         slug: "zapier",
-        description: "Connect with thousands of apps via Zapier",
-        tags: ["integrations", "zapier", "automation"],
+        description: "Connect RepWell to Zapier and other tools using webhooks and the REST API",
+        tags: ["integrations", "zapier", "automation", "webhooks", "api"],
         content: `
-# Zapier Integration
+# Zapier & Automation
 
-Connect RepWell with thousands of apps using Zapier.
+RepWell has a native Zapier app for RepWell triggers and create actions. The app is pending Zapier directory publication, so it is available by invite link until listing approval. You can also use **Webhooks by Zapier** with RepWell outbound endpoints today.
 
-## What is Zapier?
+## How it works
 
-Zapier lets you connect RepWell with 5,000+ apps to automate workflows without code. Create "Zaps" that trigger actions based on events.
+- **Native RepWell app:** Authenticate with a RepWell API key. Zapier sends it as \`X-API-Key\`.
+- **RepWell triggers:** \`review.published\`, \`review.negative\`, \`review.responded\`, \`survey.completed\`, and \`contact.created\`.
+- **RepWell actions:** \`create_contact\` and \`trigger_survey\`.
+- **Fallback:** Use **Webhooks by Zapier** to catch outbound RepWell events or call RepWell REST endpoints directly.
 
-## Getting Started
+## Set up the native RepWell app
 
-### Step 1: Create Zapier Account
-Sign up at zapier.com if you don't have an account.
+1. Open the RepWell Zapier invite link while directory publication is pending.
+2. Choose RepWell as the trigger or action app.
+3. Paste a scoped RepWell API key when Zapier asks you to connect.
+4. Pick a trigger or action, map the fields, test the Zap, and turn it on.
 
-### Step 2: Connect RepWell
-1. Search for "RepWell" in Zapier
-2. Click **Connect Account**
-3. Enter your API key
-4. Test the connection
+### Native triggers
 
-## Available Triggers
+| Trigger | Event |
+|---|---|
+| New Review | \`review.published\` |
+| Negative Review | \`review.negative\` |
+| Review Response | \`review.responded\` |
+| Survey Completed | \`survey.completed\` |
+| New Contact | \`contact.created\` |
 
-### New Review
-Fires when a new review is received:
-- Review text
-- Star rating
-- Reviewer name
-- Loan officer
-- Timestamp
+### Native actions
 
-### Survey Completed
-Fires when a customer completes a survey:
-- Response data
-- Survey template
-- Customer email
-- Completion time
+| Action | RepWell endpoint |
+|---|---|
+| Create Contact | \`POST /api/v1/contacts\` |
+| Trigger Survey | \`POST /api/v1/surveys\` |
 
-### Low Rating Alert
-Fires for reviews below a threshold:
-- Rating value
-- Review content
-- Customer details
+## Send RepWell events to Zapier
 
-## Available Actions
+1. In Zapier, create a Zap with the **Webhooks by Zapier → Catch Hook** trigger and copy the generated URL.
+2. In RepWell, go to **Settings → Webhooks** and add an endpoint with that URL.
+3. Choose which events to send.
+4. Save, then send a test event to confirm Zapier receives the payload.
 
-### Send Survey
-Trigger a survey to a customer:
-- Customer email (required)
-- Customer name
-- Loan officer
-- Template selection
+See the [Webhooks guide](/docs/integrations/webhooks) for the full event list and payload format.
 
-### Create Contact
-Add a new contact to RepWell:
-- Email address
-- Name
-- Phone number
-- Custom fields
+## Trigger RepWell actions from Zapier
 
-## Example Zaps
+1. Add a **Webhooks by Zapier → Custom Request** action to your Zap.
+2. Point it at the relevant RepWell REST API endpoint.
+3. Add an \`X-API-Key\` header using a key from **Settings → API**.
+4. Map fields from the previous step into the request body.
 
-### CRM to Survey
-When a deal closes in your CRM:
-1. Trigger: Deal closed in [CRM]
-2. Action: Send survey in RepWell
+See [API Authentication](/docs/developers/authentication) to create and use API keys.
 
-### Review to Slack
-Get notified of new reviews:
-1. Trigger: New review in RepWell
-2. Action: Send message to Slack channel
+## Example automations
 
-### Low Rating to Email
-Alert team of negative feedback:
-1. Trigger: Low rating alert in RepWell
-2. Action: Send email via Gmail
+- **CRM deal closed → send a survey:** Catch the CRM event in Zapier, then call the RepWell API to send a review request.
+- **New review → Slack:** Send a RepWell new-review webhook to Zapier, then post to a Slack channel.
+- **Negative review → email the team:** Send a \`review.negative\` event to Zapier, then send an email via Gmail.
 
-## Best Practices
+## Best practices
 
-### Test Your Zaps
-Always test before going live:
-- Use test data
-- Verify correct mapping
-- Check all conditions
-
-### Monitor Zap History
-Keep tabs on your automations:
-- Review task history
-- Check for errors
-- Optimize performance
-
-### Handle Errors
-Set up error notifications:
-- Email alerts for failures
-- Retry failed tasks
-- Log issues for debugging
+- Verify the webhook signature on incoming events (see the Webhooks guide).
+- Store your API key as a Zapier secret; never hard-code it.
+- Test each Zap with sample data before turning it on.
         `,
       },
     ],
@@ -1460,7 +1494,7 @@ Create an API key from your dashboard:
 Test your API key by listing your surveys:
 
 \`\`\`bash
-curl -X GET "https://api.repwell.com/v1/surveys" \\
+curl -X GET "https://api.repwell.ai/v1/surveys" \\
   -H "Authorization: Bearer rw_live_xxxxx" \\
   -H "Content-Type: application/json"
 \`\`\`
@@ -1470,7 +1504,7 @@ curl -X GET "https://api.repwell.com/v1/surveys" \\
 Send a survey to a customer:
 
 \`\`\`bash
-curl -X POST "https://api.repwell.com/v1/surveys" \\
+curl -X POST "https://api.repwell.ai/v1/surveys" \\
   -H "Authorization: Bearer rw_live_xxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1486,7 +1520,7 @@ curl -X POST "https://api.repwell.com/v1/surveys" \\
 Fetch reviews for your organization:
 
 \`\`\`bash
-curl -X GET "https://api.repwell.com/v1/reviews?status=published" \\
+curl -X GET "https://api.repwell.ai/v1/reviews?status=published" \\
   -H "Authorization: Bearer rw_live_xxxxx"
 \`\`\`
 
@@ -1538,6 +1572,148 @@ Errors include a code and message to help you debug:
         `,
       },
       {
+        id: "public-api-v2",
+        title: "Public API v2",
+        slug: "public-api-v2",
+        description: "Use RepWell's open and keyed public API v2 for professional review data",
+        tags: ["developers", "api", "v2", "agents"],
+        content: `
+# Public API v2
+
+RepWell public API v2 is designed for developer integrations and AI agent workflows that need verified professional reputation data.
+
+## Base URLs
+
+- Production app base: \`https://repwell.ai/api/v2\`
+- OpenAPI JSON: [/api/openapi-v2.json](/api/openapi-v2.json)
+- OpenAPI schema alias: [/api/v2/schema](/api/v2/schema)
+- Agent discovery file: [/llms.txt](/llms.txt)
+
+## Tiers
+
+### Open tier
+
+The open tier does not require an API key. It supports professional discovery and is rate limited to 60 requests per minute per IP address.
+
+### Keyed tier
+
+The keyed tier requires an API key in the \`Authorization\` header and is rate limited to 300 requests per minute per API key.
+
+\`\`\`http
+Authorization: Bearer rw_live_xxxxx
+\`\`\`
+
+Create and rotate keys in [Workspace API Keys](/dashboard/organization?tab=api). The older settings API key route redirects there.
+
+## Endpoints
+
+| Method | Endpoint | Tier | Description |
+|---|---|---|---|
+| \`GET\` | \`/api/v2/professionals\` | Open | Search active professionals by name, industry, location, rating, page, and sort order |
+| \`GET\` | \`/api/v2/professionals/{id}\` | Keyed | Full professional profile with recent approved reviews and reputation stats |
+| \`GET\` | \`/api/v2/professionals/{id}/reviews\` | Keyed | Paginated approved reviews for one professional |
+| \`GET\` | \`/api/v2/companies\` | Keyed | Company list with aggregate team reputation metrics |
+| \`GET\` | \`/api/v2/companies/{id}\` | Keyed | Company detail with team roster summary |
+| \`GET\` | \`/api/v2/reviews\` | Keyed | Cross-professional approved review search by keyword, platform, rating, date, industry, and location |
+
+## Browser-agent tools (WebMCP)
+
+Public professional pages (\`/pro/{slug}\`) and organization pages (\`/org/{slug}\`) register read-only WebMCP tools when a browser exposes \`navigator.modelContext\`. Browsers without that API skip registration silently.
+
+Available tools:
+
+| Tool | Input | Data returned |
+|---|---|---|
+| \`searchProfessionals\` | \`name?\`, \`industry?\`, \`location?\`, \`min_rating?\` | Open-tier professional search results from \`/api/v2/professionals\` |
+| \`getProfessionalProfile\` | \`id\` | Open-tier professional profile summary fields |
+| \`getProfessionalReviews\` | \`id\`, \`page?\`, \`per_page?\` | Approved public review summaries, capped at 10 reviews per page |
+| \`getCompanyProfile\` | \`id\` | Public company profile summary fields |
+
+Security notes:
+- Client-side WebMCP tools never receive an API key.
+- Professional detail, professional reviews, and company detail use \`/api/webmcp/*\` server proxies so keyed v2 endpoints are not called from the browser.
+- The professional profile proxy intentionally returns only open-tier fields even though the shipped v2 profile endpoint is keyed.
+- Proxies require the server-only WebMCP internal API key env var and apply a 60 requests/minute per-origin limit using the \`webmcp-origin\` bucket. Provision a read-only scoped key. To rotate it, replace the Vercel environment variable and redeploy.
+
+## curl example
+
+\`\`\`bash
+curl "https://repwell.ai/api/v2/professionals?name=jane+smith&industry=mortgage" \\
+  -H "Accept: application/json"
+\`\`\`
+
+## Python example
+
+\`\`\`python
+import requests
+
+response = requests.get(
+    "https://repwell.ai/api/v2/professionals/pro_123/reviews",
+    headers={"Authorization": "Bearer rw_live_xxxxx"},
+    params={"per_page": 25, "sort_by": "date_desc"},
+    timeout=10,
+)
+response.raise_for_status()
+print(response.json())
+\`\`\`
+
+## JavaScript example
+
+\`\`\`js
+const response = await fetch(
+  "https://repwell.ai/api/v2/reviews?keyword=responsive&min_rating=4",
+  {
+    headers: {
+      Authorization: \`Bearer \${process.env.REPWELL_API_KEY}\`,
+      Accept: "application/json",
+    },
+  }
+);
+
+if (!response.ok) {
+  throw new Error(\`RepWell API error: \${response.status}\`);
+}
+
+const data = await response.json();
+\`\`\`
+
+## Response shape
+
+\`\`\`json
+{
+  "data": [
+    {
+      "id": "pro_123",
+      "full_name": "Jane Smith",
+      "title": "Mortgage Advisor",
+      "company_name": "Summit Mortgage",
+      "industry": "mortgage",
+      "location": "Chicago, IL",
+      "average_rating": 4.9,
+      "total_reviews": 47,
+      "profile_url": "https://repwell.ai/pro/jane-smith"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "per_page": 20,
+    "total_pages": 1
+  }
+}
+\`\`\`
+
+## Rate limits
+
+| Tier | Limit | Key |
+|---|---|---|
+| Open | 60 requests/minute | IP address |
+| Keyed | 300 requests/minute | API key |
+
+When the limit is exceeded, the API returns \`429\` with a \`Retry-After\` header.
+        `,
+      },
+      {
         id: "authentication",
         title: "Authentication",
         slug: "authentication",
@@ -1560,7 +1736,7 @@ RepWell uses prefixed API keys to distinguish environments:
 Include your API key in the \`Authorization\` header:
 
 \`\`\`bash
-curl -X GET "https://api.repwell.com/v1/surveys" \\
+curl -X GET "https://api.repwell.ai/v1/surveys" \\
   -H "Authorization: Bearer rw_live_xxxxx" \\
   -H "Content-Type: application/json"
 \`\`\`
@@ -1626,7 +1802,7 @@ Use webhooks to trigger surveys from your CRM or business system. When a transac
 Send POST requests to trigger surveys:
 
 \`\`\`
-POST https://api.repwell.com/api/webhooks/survey-trigger
+POST https://api.repwell.ai/api/webhooks/survey-trigger
 \`\`\`
 
 Include your API key in the \`Authorization\` header or as a \`secret_key\` parameter in the request body.
@@ -1636,7 +1812,7 @@ Include your API key in the \`Authorization\` header or as a \`secret_key\` para
 Authenticate webhook requests using your API key:
 
 \`\`\`bash
-curl -X POST "https://api.repwell.com/api/webhooks/survey-trigger" \\
+curl -X POST "https://api.repwell.ai/api/webhooks/survey-trigger" \\
   -H "Authorization: Bearer rw_live_xxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1705,6 +1881,67 @@ Trigger a new survey to be sent:
 }
 \`\`\`
 
+## Outbound Webhooks
+
+RepWell can also send signed event notifications to your application. Create an outbound endpoint in **Settings → Webhooks**, choose the events to send, and copy the signing secret when it is shown.
+
+### Events
+
+| Event | When it fires |
+|---|---|
+| \`review.published\` | A review is published |
+| \`review.negative\` | A negative review is detected or published |
+| \`review.responded\` | A review response is recorded |
+| \`survey.completed\` | A customer completes a survey |
+| \`contact.created\` | A contact is created |
+
+### Envelope
+
+\`\`\`json
+{
+  "id": "evt_123",
+  "type": "review.published",
+  "created_at": "2026-07-08T12:00:00.000Z",
+  "organization_id": "org_123",
+  "data": {
+    "review_id": "rev_123",
+    "rating": 5,
+    "customer_name": "Jordan Lee"
+  }
+}
+\`\`\`
+
+### Headers
+
+| Header | Description |
+|---|---|
+| \`X-RepWell-Event\` | Event type |
+| \`X-RepWell-Delivery\` | Unique delivery ID |
+| \`X-RepWell-Signature\` | \`sha256=\` plus HMAC-SHA256 of the raw request body |
+
+### Signature verification
+
+\`\`\`ts
+import { createHmac, timingSafeEqual } from "crypto";
+
+export function verifyRepWellSignature(
+  rawBody: Buffer,
+  signatureHeader: string,
+  secret: string
+) {
+  const expected =
+    "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");
+
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(signatureHeader);
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}
+\`\`\`
+
 ## Next Steps
 
 - Learn about [Authentication](/docs/developers/authentication) and API key scopes
@@ -1744,7 +1981,7 @@ Answers to frequently asked questions about RepWell.
 Yes, go to **Settings** > **Profile** > **Email** to update your email address. You'll need to verify the new email.
 
 ### How do I delete my account?
-Contact support at support@repwell.com to request account deletion. Note that this action is permanent.
+Contact support at ${SUPPORT_EMAIL} to request account deletion. Note that this action is permanent.
 
 ## Surveys
 
@@ -1787,7 +2024,7 @@ RepWell works on:
 - Edge (latest 2 versions)
 
 ### Is there a mobile app?
-Yes, RepWell has mobile apps for iOS and Android. Download from the App Store or Google Play.
+There is no native mobile app yet. RepWell is a fully responsive web app, so you can use it in any mobile browser and add it to your home screen for quick access.
 
 ### How secure is my data?
 We use:
@@ -1890,7 +2127,7 @@ Each survey link is single-use. If the customer needs to retake:
 ## Contact Support
 
 If you can't resolve your issue:
-- Email: support@repwell.com
+- Email: ${SUPPORT_EMAIL}
 - Live chat: Available in-app
 - Phone: See contact page
         `,

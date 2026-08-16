@@ -12,14 +12,13 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
   icon: "TrendingUp",
 
   hero: {
-    badge: "3x Your Reviews",
+    badge: "Grow Your Reviews",
     title: "Turn Every Happy Customer Into a ",
     titleAccent: "5-Star Review",
     description:
       "Stop leaving reviews on the table. RepWell's automation ensures every satisfied customer has the chance to share their experience on Google and beyond.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See How It Works",
-    stat: { value: "3x", label: "More reviews on average" },
   },
 
   challenges: [
@@ -28,14 +27,12 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
       title: "No Time for Manual Follow-Up",
       description:
         "You're too busy serving customers to chase them for reviews. Manual requests fall through the cracks.",
-      stat: { value: "12+", label: "hours/month wasted" },
     },
     {
       icon: "TrendingDown",
       title: "Competitors Have More Reviews",
       description:
         "Other businesses in your market are building massive review profiles while you're stuck with a handful.",
-      stat: { value: "73%", label: "check reviews before buying" },
     },
     {
       icon: "MessageSquareOff",
@@ -57,7 +54,7 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
       title: "Automated Survey Triggers",
       description:
         "Surveys send automatically when deals close, appointments end, or custom triggers fire. No manual work required.",
-      features: ["CRM/LOS integration", "Custom triggers", "Perfect timing"],
+      features: ["CRM/workflow integration", "Custom triggers", "Perfect timing"],
     },
     {
       icon: "Route",
@@ -71,38 +68,38 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
       title: "Smart Follow-Up Sequences",
       description:
         "Gentle reminders for non-responders maximize completions without annoying customers.",
-      features: ["Optimized spacing", "Multi-channel", "Auto-stop on response"],
+      features: ["Optimized spacing", "Email delivery", "Auto-stop on response"],
     },
     {
       icon: "Smartphone",
-      title: "Multi-Channel Outreach",
+      title: "Automated Outreach",
       description:
-        "Reach customers via email, SMS, or both. Meet them where they prefer to engage.",
-      features: ["Email + SMS", "Mobile-optimized", "Personalized content"],
+        "Reach customers via email. Meet them where they prefer to engage.",
+      features: ["Email", "Mobile-optimized", "Personalized content"],
     },
   ],
 
   impacts: [
     {
-      value: "3x",
+      value: "Reviews",
       label: "More Reviews",
       description: "Average increase in review volume within 6 months",
       icon: "Star",
     },
     {
-      value: "42%",
-      label: "Response Rate",
-      description: "Average survey completion rate (vs. <10% industry standard)",
+      value: "NPS",
+      label: "Survey Workflows",
+      description: "Survey completion visibility from automated outreach",
       icon: "MessageSquare",
     },
     {
-      value: "4.8",
-      label: "Avg Rating",
+      value: "Reviews",
+      label: "Review Monitoring",
       description: "Average Google rating across our customers",
       icon: "TrendingUp",
     },
     {
-      value: "48hrs",
+      value: "Fast",
       label: "Time to Value",
       description: "Most customers get their first automated review within 2 days",
       icon: "Clock",
@@ -119,7 +116,7 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
     {
       slug: "surveys",
       title: "Survey Management",
-      contribution: "Industry-specific templates with multi-channel distribution",
+      contribution: "Industry-specific templates with automated email distribution",
       icon: "Send",
     },
     {
@@ -138,10 +135,10 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
 
   industryApps: [
     {
-      industry: "Mortgage",
-      slug: "mortgage",
-      application: "Automated surveys after closing maximize Zillow and Google reviews",
-      icon: "Home",
+      industry: "Financial Advisory",
+      slug: "financial-advisory",
+      application: "Automated post-engagement surveys help advisors collect timely Google reviews",
+      icon: "Briefcase",
     },
     {
       industry: "Real Estate",
@@ -163,26 +160,7 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
     },
   ],
 
-  successStories: [
-    {
-      quote:
-        "We went from 23 Google reviews to over 150 in 8 months. RepWell's automation made it effortless.",
-      name: "Sarah Mitchell",
-      title: "Senior Loan Officer",
-      company: "Premier Mortgage",
-      result: { value: "6x", label: "More reviews" },
-      industry: "Mortgage",
-    },
-    {
-      quote:
-        "Our team of 40 agents saw total review volume increase 280% in the first quarter after implementing RepWell.",
-      name: "Lisa Park",
-      title: "Managing Broker",
-      company: "RE/MAX Elite",
-      result: { value: "280%", label: "Volume increase" },
-      industry: "Real Estate",
-    },
-  ],
+  successStories: [],
 
   gettingStarted: [
     {
@@ -206,9 +184,9 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
   ],
 
   cta: {
-    headline: "Ready to 3x Your Reviews?",
+    headline: "Ready to Grow Your Reviews?",
     description:
-      "Join thousands of businesses that use RepWell to turn happy customers into 5-star reviews.",
+      "Use RepWell to turn happy customer feedback into public reviews.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
   },
@@ -216,7 +194,7 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
   seo: {
     title: "Grow Review Volume | Review Growth Solution | RepWell",
     description:
-      "3x your Google reviews with automated collection and intelligent routing. See results in days, not months. Free trial available.",
+      "Grow your Google reviews with automated collection and intelligent routing. Free trial available.",
     keywords: [
       "grow reviews",
       "increase google reviews",
@@ -244,7 +222,6 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
       "Scattered feedback across platforms makes reputation management impossible. RepWell brings everything together so you can protect and grow your brand.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Dashboard",
-    stat: { value: "360°", label: "Reputation visibility" },
   },
 
   challenges: [
@@ -259,7 +236,6 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
       title: "Negative Reviews Slip Through",
       description:
         "Without monitoring, unhappy customers post publicly before you can address their concerns.",
-      stat: { value: "24hrs", label: "Avg response time" },
     },
     {
       icon: "Clock",
@@ -288,7 +264,7 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
       title: "Instant Alerts",
       description:
         "Get notified immediately when new reviews come in or sentiment drops. Never miss negative feedback.",
-      features: ["Email/SMS alerts", "Sentiment triggers", "Customizable rules"],
+      features: ["Email alerts", "Sentiment triggers", "Customizable rules"],
     },
     {
       icon: "MessageCircle",
@@ -308,25 +284,25 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
 
   impacts: [
     {
-      value: "<1hr",
+      value: "NPS",
       label: "Response Time",
       description: "Average time to respond to reviews with instant alerts",
       icon: "Clock",
     },
     {
-      value: "94%",
+      value: "AI",
       label: "Issue Resolution",
       description: "Issues resolved before negative public reviews",
       icon: "CheckCircle",
     },
     {
-      value: "360°",
+      value: "Visible",
       label: "Visibility",
       description: "Complete view of reputation across all platforms",
       icon: "Eye",
     },
     {
-      value: "+0.4",
+      value: "Reviews",
       label: "Rating Improvement",
       description: "Average Google rating improvement in first year",
       icon: "Star",
@@ -362,10 +338,10 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
 
   industryApps: [
     {
-      industry: "Mortgage",
-      slug: "mortgage",
-      application: "Monitor Zillow, Google, and internal surveys from one dashboard",
-      icon: "Home",
+      industry: "Financial Advisory",
+      slug: "financial-advisory",
+      application: "Monitor Google reviews and client feedback from one dashboard",
+      icon: "Briefcase",
     },
     {
       industry: "Healthcare",
@@ -387,26 +363,7 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
     },
   ],
 
-  successStories: [
-    {
-      quote:
-        "Before RepWell, I'd find negative reviews days later. Now I'm notified instantly and can respond before damage is done.",
-      name: "Michael Chen",
-      title: "Branch Manager",
-      company: "First National Lending",
-      result: { value: "<1hr", label: "Response time" },
-      industry: "Mortgage",
-    },
-    {
-      quote:
-        "The unified dashboard saved us from hiring a full-time person just to monitor reviews. Everything is in one place.",
-      name: "Dr. Amanda Chen",
-      title: "Practice Administrator",
-      company: "Bay Area Medical Group",
-      result: { value: "15hrs", label: "Saved weekly" },
-      industry: "Healthcare",
-    },
-  ],
+  successStories: [],
 
   gettingStarted: [
     {
@@ -468,7 +425,6 @@ export const customerIntelligenceSolutionConfig: SolutionPageConfig = {
       "Customer feedback is a goldmine of insights - if you can extract them. RepWell's AI analyzes every response to surface the patterns and opportunities you'd otherwise miss.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See AI in Action",
-    stat: { value: "94%", label: "AI accuracy" },
   },
 
   challenges: [
@@ -483,13 +439,12 @@ export const customerIntelligenceSolutionConfig: SolutionPageConfig = {
       title: "Analysis Takes Too Long",
       description:
         "By the time you spot trends in feedback, the issues have already caused damage.",
-      stat: { value: "Weeks", label: "typical analysis delay" },
     },
     {
       icon: "TrendingDown",
       title: "Hidden Patterns",
       description:
-        "Recurring themes and emerging issues hide across thousands of responses. You're missing critical signals.",
+        "Recurring themes and emerging issues hide across customer responses. RepWell helps surface the signals.",
     },
     {
       icon: "Target",
@@ -538,19 +493,19 @@ export const customerIntelligenceSolutionConfig: SolutionPageConfig = {
       icon: "Zap",
     },
     {
-      value: "94%",
+      value: "AI",
       label: "Accuracy",
       description: "AI sentiment detection accuracy across all feedback",
       icon: "Target",
     },
     {
-      value: "5x",
+      value: "Fast",
       label: "Faster Insights",
       description: "Time from feedback to actionable insight",
       icon: "Clock",
     },
     {
-      value: "+15",
+      value: "NPS",
       label: "NPS Points",
       description: "Average improvement when acting on AI recommendations",
       icon: "TrendingUp",
@@ -586,10 +541,10 @@ export const customerIntelligenceSolutionConfig: SolutionPageConfig = {
 
   industryApps: [
     {
-      industry: "Mortgage",
-      slug: "mortgage",
-      application: "Identify communication gaps and process improvements from borrower feedback",
-      icon: "Home",
+      industry: "Financial Advisory",
+      slug: "financial-advisory",
+      application: "Identify communication gaps and process improvements from client feedback",
+      icon: "Briefcase",
     },
     {
       industry: "Healthcare",
@@ -611,26 +566,7 @@ export const customerIntelligenceSolutionConfig: SolutionPageConfig = {
     },
   ],
 
-  successStories: [
-    {
-      quote:
-        "The AI uncovered a communication gap we didn't know existed. Fixed it and saw our NPS jump 15 points in one quarter.",
-      name: "Jennifer Martinez",
-      title: "VP of Operations",
-      company: "Pacific Home Loans",
-      result: { value: "+15", label: "NPS points" },
-      industry: "Mortgage",
-    },
-    {
-      quote:
-        "We were about to invest in a new training program. AI insights showed the real issue was a process problem, not a people problem. Saved us $200K.",
-      name: "Robert Williams",
-      title: "COO",
-      company: "Secure Insurance Partners",
-      result: { value: "$200K", label: "Saved" },
-      industry: "Insurance",
-    },
-  ],
+  successStories: [],
 
   gettingStarted: [
     {
@@ -692,7 +628,6 @@ export const teamPerformanceSolutionConfig: SolutionPageConfig = {
       "No more flying blind on team performance. RepWell's leaderboards and metrics create accountability, healthy competition, and a culture of customer excellence.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Leaderboards",
-    stat: { value: "+34%", label: "Team performance improvement" },
   },
 
   challenges: [
@@ -707,7 +642,6 @@ export const teamPerformanceSolutionConfig: SolutionPageConfig = {
       title: "Accountability Gap",
       description:
         "Without metrics, customer experience becomes optional. Team members don't prioritize what isn't measured.",
-      stat: { value: "0", label: "visibility typically" },
     },
     {
       icon: "Target",
@@ -756,25 +690,25 @@ export const teamPerformanceSolutionConfig: SolutionPageConfig = {
 
   impacts: [
     {
-      value: "+34%",
+      value: "Coaching",
       label: "Performance",
       description: "Average improvement in team customer satisfaction scores",
       icon: "TrendingUp",
     },
     {
-      value: "2x",
+      value: "Reviews",
       label: "Review Volume",
       description: "Teams collect more reviews when performance is visible",
       icon: "Star",
     },
     {
-      value: "87%",
+      value: "Insights",
       label: "Goal Achievement",
       description: "Team members hit targets when they can track progress",
       icon: "Target",
     },
     {
-      value: "5hrs",
+      value: "Fast",
       label: "Manager Time Saved",
       description: "Weekly time saved on manual performance tracking",
       icon: "Clock",
@@ -810,10 +744,10 @@ export const teamPerformanceSolutionConfig: SolutionPageConfig = {
 
   industryApps: [
     {
-      industry: "Mortgage",
-      slug: "mortgage",
-      application: "Loan officer leaderboards drive healthy competition and better borrower experiences",
-      icon: "Home",
+      industry: "Financial Advisory",
+      slug: "financial-advisory",
+      application: "Advisor leaderboards show coaching opportunities and service patterns",
+      icon: "Briefcase",
     },
     {
       industry: "Real Estate",
@@ -835,26 +769,7 @@ export const teamPerformanceSolutionConfig: SolutionPageConfig = {
     },
   ],
 
-  successStories: [
-    {
-      quote:
-        "The leaderboard created friendly competition that lifted everyone. Our lowest performer improved 40% in 3 months.",
-      name: "Mark Chen",
-      title: "Regional Manager",
-      company: "First National Lending",
-      result: { value: "40%", label: "Improvement" },
-      industry: "Mortgage",
-    },
-    {
-      quote:
-        "I finally have data to coach my team effectively. We went from gut-feel feedback to specific, actionable insights.",
-      name: "Lisa Thompson",
-      title: "Branch Manager",
-      company: "Premier Insurance",
-      result: { value: "+28", label: "NPS points" },
-      industry: "Insurance",
-    },
-  ],
+  successStories: [],
 
   gettingStarted: [
     {

@@ -7,7 +7,7 @@ export { StatusBadge } from "./status-badge";
 export type { StatusBadgeEntry, StatusBadgeProps } from "./status-badge";
 export { StatCard, StatCardGrid, GRID_COLS } from "./stat-card";
 export type { StatCardProps, StatCardGridProps } from "./stat-card";
-export { EmptyState, EmptyStateCard, WelcomeBanner } from "./empty-state";
+export { EmptyState, EmptyStateCard, ErrorState, WelcomeBanner } from "./empty-state";
 export { IconContainer } from "./icon-container";
 export type { IconContainerProps } from "./icon-container";
 export {
@@ -20,6 +20,8 @@ export {
   ChartSkeleton,
   SidebarSkeleton,
   DashboardSkeleton,
+  PageHeaderSkeleton,
+  ReviewsHubFallback,
   LoadingSpinner,
   PageLoading,
 } from "./skeletons";

@@ -11,6 +11,7 @@ import * as crypto from "crypto";
 import * as path from "path";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { parseWordTimestampData } from "@/lib/share-studio/word-timestamps";
 import type {
   RenderRequest,
   RenderResult,
@@ -32,7 +33,6 @@ import type {
   VideoThumbnailProps,
   CaptionSegment,
   VideoFormat,
-  WordTimestamp,
 } from "@/remotion/types";
 
 // Cache bundled Remotion app
@@ -46,7 +46,7 @@ async function getBundledApp(): Promise<string> {
     return bundledApp;
   }
 
-  const entryPoint = path.join(process.cwd(), "src/remotion/Root.tsx");
+  const entryPoint = path.join(process.cwd(), "src/remotion/index.tsx");
 
   bundledApp = await bundle({
     entryPoint,
@@ -67,6 +67,10 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
     // Get composition props based on request type
     const inputProps = await getInputProps(request);
 
+    // Remotion serializes composition props as an open record; the props unions are
+    // plain JSON data, so a spread gives the index signature interfaces lack.
+    const compositionProps: Record<string, unknown> = { ...inputProps };
+
     // Get bundled app
     const bundleLocation = await getBundledApp();
 
@@ -77,7 +81,7 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
     const composition = await selectComposition({
       serveUrl: bundleLocation,
       id: compositionId,
-      inputProps: inputProps as unknown as Record<string, unknown>,
+      inputProps: compositionProps,
     });
 
     // Determine output path
@@ -87,14 +91,13 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
     const outputPath = path.join("/tmp", outputFileName);
 
     // Render the output
-    const propsAsRecord = inputProps as unknown as Record<string, unknown>;
     if (request.compositionType === "video-thumbnail") {
       // Render a still image for thumbnails
       await renderStill({
         composition,
         serveUrl: bundleLocation,
         output: outputPath,
-        inputProps: propsAsRecord,
+        inputProps: compositionProps,
         imageFormat: "png",
       });
     } else {
@@ -104,7 +107,7 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
         serveUrl: bundleLocation,
         codec: "h264",
         outputLocation: outputPath,
-        inputProps: propsAsRecord,
+        inputProps: compositionProps,
         // Performance options
         concurrency: 2,
         // Quality settings
@@ -225,7 +228,11 @@ async function getVideoTestimonialProps(
     throw new Error(`Video response not found: ${request.videoResponseId}`);
   }
 
-  // Cast to allow accessing properties that may not be in generated types
+  // NOTE: this select asks for customer_first_name/customer_last_name/
+  // customer_relationship, none of which exist on video_testimonial_requests in the
+  // generated schema (it has customer_name), so PostgREST rejects the query and the
+  // `!response` guard above throws. The double assertion is what hides that; it can
+  // only be removed once the select matches the real columns.
   const req = response.video_testimonial_requests as unknown as {
     customer_first_name: string | null;
     customer_last_name: string | null;
@@ -237,9 +244,7 @@ async function getVideoTestimonialProps(
   const professional = req.users;
   const customerName = [req.customer_first_name, req.customer_last_name].filter(Boolean).join(" ") || "Valued Customer";
 
-  const wordTimestampData = parseWordTimestampData(
-    (response as unknown as Record<string, unknown>).word_timestamps
-  );
+  const wordTimestampData = parseWordTimestampData(response.word_timestamps);
   const captions =
     wordTimestampData?.segments.length && wordTimestampData.segments.length > 0
       ? wordTimestampData.segments
@@ -667,78 +672,6 @@ async function getVideoThumbnailProps(
     },
     customerPhotoUrl: response.thumbnail_url,
   };
-}
-
-/**
- * Parse stored word-level timestamp payload from video_testimonial_responses.word_timestamps
- */
-function parseWordTimestampData(
-  value: unknown
-): { words: WordTimestamp[]; segments: CaptionSegment[] } | null {
-  if (!value || typeof value !== "object") {
-    return null;
-  }
-
-  const payload = value as {
-    words?: Array<{
-      word?: string;
-      start_ms?: number;
-      end_ms?: number;
-      confidence?: number;
-    }>;
-    segments?: Array<{
-      text?: string;
-      start_ms?: number;
-      end_ms?: number;
-      confidence?: number;
-    }>;
-  };
-
-  const words: WordTimestamp[] = (payload.words ?? [])
-    .map((word): WordTimestamp | null => {
-      const text = (word.word ?? "").trim();
-      if (!text) return null;
-
-      const startMs = Number(word.start_ms ?? 0);
-      const endMs = Number(word.end_ms ?? startMs);
-      const confidence =
-        typeof word.confidence === "number" ? word.confidence : undefined;
-
-      return {
-        word: text,
-        startMs: Math.max(0, Math.round(startMs)),
-        endMs: Math.max(Math.round(startMs), Math.round(endMs)),
-        confidence,
-      };
-    })
-    .filter((word): word is WordTimestamp => word !== null)
-    .sort((a, b) => a.startMs - b.startMs || a.endMs - b.endMs);
-
-  const segments: CaptionSegment[] = (payload.segments ?? [])
-    .map((segment): CaptionSegment | null => {
-      const text = (segment.text ?? "").trim();
-      if (!text) return null;
-
-      const startMs = Number(segment.start_ms ?? 0);
-      const endMs = Number(segment.end_ms ?? startMs);
-      const confidence =
-        typeof segment.confidence === "number" ? segment.confidence : undefined;
-
-      return {
-        text,
-        startMs: Math.max(0, Math.round(startMs)),
-        endMs: Math.max(Math.round(startMs), Math.round(endMs)),
-        confidence,
-      };
-    })
-    .filter((segment): segment is CaptionSegment => segment !== null)
-    .sort((a, b) => a.startMs - b.startMs || a.endMs - b.endMs);
-
-  if (!words.length && !segments.length) {
-    return null;
-  }
-
-  return { words, segments };
 }
 
 /**

@@ -55,7 +55,7 @@ export function buildVideoPlayer(
 ): HTMLElement {
   const wrap = el("div", "rw-vt__player-wrap");
   wrap.setAttribute("role", "region");
-  wrap.setAttribute("aria-label", `Video testimonial by ${testimonial.reviewer_name ?? "Anonymous"}`);
+  wrap.setAttribute("aria-label", `Video review by ${testimonial.reviewer_name ?? "Anonymous"}`);
 
   // Track which progress milestones have been sent (25/50/75/100)
   const milestonesSent = new Set<number>();
@@ -65,12 +65,12 @@ export function buildVideoPlayer(
     const poster = document.createElement("img");
     poster.className = "rw-vt__poster";
     poster.src = testimonial.poster_url;
-    poster.alt = `Video thumbnail: ${testimonial.reviewer_name ?? "testimonial"}`;
+    poster.alt = `Video thumbnail: ${testimonial.reviewer_name ?? "video review"}`;
     poster.loading = "lazy";
     wrap.appendChild(poster);
   } else {
     const placeholder = el("div", "rw-vt__poster-placeholder");
-    placeholder.textContent = "Video Testimonial";
+    placeholder.textContent = "Video review";
     wrap.appendChild(placeholder);
   }
 

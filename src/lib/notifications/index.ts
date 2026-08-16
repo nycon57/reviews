@@ -21,12 +21,18 @@ export {
   getUnreadNotificationCount,
   markNotificationsAsRead,
   archiveNotification,
+  unarchiveNotification,
   getNotificationPreferences,
   updateNotificationPreferences,
+  testSlackWebhook,
+} from "./actions";
+
+export {
   createNotification,
   sendSlackNotification,
-  testSlackWebhook,
   getPendingDigestNotifications,
   markDigestSent,
   getUsersNeedingDigest,
-} from "./actions";
+} from "./system-actions";
+
+export { NOTIFICATION_TYPE_CONFIG, getNotificationTypeConfig } from "./config";

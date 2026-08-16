@@ -23,13 +23,14 @@ export interface UserContext {
 
 // Permission identifiers
 export const PERMISSIONS = {
-  // Management features (enterprise only, manager+)
+  // Management features
   VIEW_TEAM: "view:team",
   MANAGE_TEAM: "manage:team",
   VIEW_EX_SURVEYS: "view:ex_surveys",
   MANAGE_EX_SURVEYS: "manage:ex_surveys",
   VIEW_CAMPAIGNS: "view:campaigns",
   MANAGE_CAMPAIGNS: "manage:campaigns",
+  VIEW_REPORTS: "view:reports",
 
   // Organization settings (enterprise admin only)
   VIEW_ORGANIZATION: "view:organization",
@@ -60,6 +61,7 @@ export const PERMISSIONS = {
   VIEW_TRENDS: "view:trends",
   VIEW_TESTIMONIALS: "view:testimonials",
   VIEW_VIDEO_TESTIMONIALS: "view:video_testimonials",
+  VIEW_SHARE_STUDIO: "view:share_studio",
   SEND_SURVEY: "send:survey",
   VIEW_SETTINGS: "view:settings",
   VIEW_HELP: "view:help",
@@ -92,6 +94,11 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
     case PERMISSIONS.MANAGE_CAMPAIGNS:
       // Only enterprise managers/admins can access these
       return isEnterprise && isManagerOrAbove;
+
+    case PERMISSIONS.VIEW_REPORTS:
+      // Mirrors the Reports page guard: individual admins and enterprise
+      // managers/admins can generate team/performance reports.
+      return isAdmin || isManager;
 
     // === Organization view: individual users + enterprise admins ===
     case PERMISSIONS.VIEW_ORGANIZATION:
@@ -134,6 +141,9 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
     case PERMISSIONS.VIEW_SETTINGS:
     case PERMISSIONS.VIEW_HELP:
       return true;
+
+    case PERMISSIONS.VIEW_SHARE_STUDIO:
+      return _isIndividual || (isEnterprise && isManagerOrAbove);
 
     default:
       return false;

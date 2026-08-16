@@ -39,7 +39,7 @@ const featureCategories = [
     icon: Star,
     title: "Automated Review Collection",
     tabName: "Reviews",
-    description: "Perfectly-timed surveys sent when loans close, with smart reminders that maximize response rates without annoying clients.",
+    description: "Perfectly-timed surveys sent when customer interactions wrap up, with smart reminders that maximize feedback without annoying clients.",
     features: [
       { icon: Star, title: "Automated Surveys", description: "Send surveys at the perfect moment with automatic reminders for maximum response rates." },
       { icon: Send, title: "Multi-channel Distribution", description: "Reach customers via email, SMS, or QR codes - wherever they are most responsive." },
@@ -61,7 +61,7 @@ const featureCategories = [
       { icon: TrendingUp, title: "Performance Reports", description: "Generate detailed reports for individuals, teams, or the entire organization." },
       { icon: Award, title: "Leaderboards", description: "Motivate teams with gamification and competitive leaderboards." },
     ],
-    stat: { value: "42%", label: "avg response rate" },
+    stat: { value: "Live", label: "feedback dashboards" },
     image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop&q=80",
   },
   {
@@ -76,7 +76,7 @@ const featureCategories = [
       { icon: FileText, title: "Testimonial Generator", description: "Extract and format marketing-ready testimonials from positive reviews." },
       { icon: TrendingUp, title: "AI Insights", description: "Discover themes and improvement opportunities with AI-powered analysis." },
     ],
-    stat: { value: "94%", label: "accuracy rate" },
+    stat: { value: "AI", label: "theme detection" },
     image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=800&fit=crop&q=80",
   },
   {
@@ -91,7 +91,7 @@ const featureCategories = [
       { icon: Users, title: "Video Testimonials", description: "Capture and edit video testimonials from satisfied clients." },
       { icon: Bell, title: "Social Media Sharing", description: "Automated social media sharing to amplify your best reviews." },
     ],
-    stat: { value: "+300%", label: "review volume increase" },
+    stat: { value: "Share", label: "review highlights" },
     image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=1200&h=800&fit=crop&q=80",
   },
   {
@@ -184,7 +184,7 @@ function FeaturesHero() {
             className="hidden lg:block"
           >
             <BrowserMockup
-              url="app.repwell.com/dashboard"
+              url="repwell.ai/dashboard"
               className="shadow-2xl"
             >
               <div className="aspect-[16/10] bg-gradient-to-br from-repwell-sage-100/50 to-white p-6">
@@ -201,10 +201,10 @@ function FeaturesHero() {
                 </div>
                 <div className="grid grid-cols-4 gap-4 mb-6">
                   {[
-                    { label: "Total Reviews", value: "1,234" },
-                    { label: "Avg Rating", value: "4.8" },
-                    { label: "NPS Score", value: "72" },
-                    { label: "Response Rate", value: "45%" },
+                    { label: "Review Flow", value: "Live" },
+                    { label: "AI Insights", value: "Ready" },
+                    { label: "NPS Signals", value: "Trend" },
+                    { label: "Team Tasks", value: "Open" },
                   ].map((stat, i) => (
                     <div key={i} className="bg-white rounded-lg p-3 shadow-sm">
                       <div className="text-xs text-repwell-teal-400 mb-1">{stat.label}</div>
@@ -510,7 +510,15 @@ export function FeaturesPageClient() {
       />
 
       {/* Stats */}
-      <StatsSectionDark heading="Powering Reputation Growth" />
+      <StatsSectionDark
+        heading="Powering Reputation Growth"
+        stats={[
+          { value: "Reviews", label: "Collection workflows" },
+          { value: "NPS", label: "Survey builder" },
+          { value: "AI", label: "Feedback insights" },
+          { value: "Teams", label: "Profile management" },
+        ]}
+      />
 
       {/* CTA */}
       <CTASection variant="gradient" />

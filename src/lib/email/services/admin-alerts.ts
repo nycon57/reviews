@@ -201,7 +201,7 @@ async function queueAlertForDigest(
   severity: AdminAlertSeverity,
   title: string,
   message: string,
-  metadata: Record<string, unknown>
+  metadata: AlertEmailData
 ): Promise<boolean> {
   // Use untyped client since admin_alert_queue isn't in generated types yet
   const supabase = createUntypedAdminClient();
@@ -360,7 +360,7 @@ export async function sendAdminAlert<T extends AlertEmailData>(
               severity,
               digestInfo.title,
               digestInfo.message,
-              emailData as unknown as Record<string, unknown>
+              emailData
             );
             if (queued) {
               result.queued++;
@@ -376,6 +376,7 @@ export async function sendAdminAlert<T extends AlertEmailData>(
         const html = await renderAlertEmail(alertType, emailData);
         const templateName = alertTypeToTemplate[alertType];
 
+        // Operational admin alert; leave direct because it is not A/B material.
         const { data: sendData, error: sendError } = await resend.emails.send({
           from: getFromAddress(),
           to: recipient.email,

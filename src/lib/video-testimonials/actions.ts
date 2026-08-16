@@ -1,11 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { after } from "next/server";
+import {
+  createAdminClient,
+  createUntypedAdminClient,
+  type UntypedSupabaseClient,
+} from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { queueClipRender } from "@/lib/share-studio/service";
+import { getCelebrationThreshold } from "@/lib/reviews/asset-kit";
 import { z } from "zod";
 import type { Json, Database } from "@/types/database.types";
 import { sendInitialVideoTestimonialEmailImmediately } from "./queue-service";
+import { findOrCreateContact } from "@/lib/contacts/actions";
 import { IMMEDIATE_SEND_THRESHOLD } from "./types";
 
 // Status type from database enum
@@ -112,7 +120,7 @@ export type BulkCreateInput = z.infer<typeof bulkCreateSchema>;
 // ============================================================================
 
 function getRequestUrl(token: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   return `${baseUrl}/video-testimonial/${token}`;
 }
 
@@ -164,8 +172,10 @@ async function createAuditLogEntry(
   }
 ): Promise<void> {
   try {
-    // Cast to any as organization_audit_logs table is not in generated types yet
-    await (supabase as unknown as { from: (table: string) => { insert: (data: Record<string, unknown>) => Promise<unknown> } })
+    // SAFETY: organization_audit_logs is not in the generated Database types yet, so the same
+    // admin connection is re-viewed through the untyped client surface rather than swapped for a
+    // different one.
+    await (supabase as UntypedSupabaseClient)
       .from("organization_audit_logs")
       .insert({
         organization_id: params.organizationId,
@@ -288,12 +298,38 @@ export async function createVideoTestimonialRequest(
     const nowIso = new Date().toISOString();
     const initialStatus = validated.data.sendImmediately ? "pending" : "queued";
 
-    // Create the video testimonial request
-    const { data: request, error: requestError } = await supabase
+    // Resolve (or create) the Contact for this acquisition request (ADR 0004).
+    // Owner = the professional the request is for; inline name/email/phone stay
+    // on the request as the immutable Send-Time Snapshot. Resilient: a contacts
+    // hiccup must not block the send — suppression is enforced at send time.
+    let contactId: string | null = null;
+    try {
+      const { contact } = await findOrCreateContact(
+        userData.organization_id,
+        {
+          email: validated.data.customerEmail,
+          name: validated.data.customerName,
+          phone: validated.data.customerPhone || null,
+        },
+        validated.data.loanOfficerId,
+        "video_testimonial"
+      );
+      contactId = contact.id;
+    } catch (contactError) {
+      console.error(
+        "createVideoTestimonialRequest: contact resolution failed",
+        contactError
+      );
+    }
+
+    // Create the video testimonial request. Untyped admin client because
+    // contact_id is a new column not yet in the generated types.
+    const { data: request, error: requestError } = await createUntypedAdminClient()
       .from("video_testimonial_requests")
       .insert({
         organization_id: userData.organization_id,
         user_id: validated.data.loanOfficerId,
+        contact_id: contactId,
         created_by: user.id,
         customer_name: validated.data.customerName,
         customer_email: validated.data.customerEmail,
@@ -1170,10 +1206,7 @@ export async function getVideoTestimonialQueue(params?: {
     }
 
     const items: VideoTestimonialQueueItem[] = (data || []).map((item) => {
-      const request = item.video_testimonial_requests as unknown as {
-        customer_name: string;
-        customer_email: string;
-      };
+      const request = item.video_testimonial_requests;
 
       return {
         id: item.id,
@@ -1268,6 +1301,7 @@ export interface VideoTestimonialResponse {
   loanOfficerId: string;
   videoUrl: string;
   videoPath: string;
+  videoPreviewUrl?: string | null;
   thumbnailUrl: string | null;
   durationSeconds: number | null;
   fileSizeBytes: number | null;
@@ -1281,6 +1315,8 @@ export interface VideoTestimonialResponse {
   keyPhrases: string[] | null;
   sentimentScore: number | null;
   sentimentLabel: string | null;
+  customerRating: number | null;
+  quarantined: boolean;
   approvalStatus: VideoTestimonialApprovalStatus;
   approvedAt: string | null;
   rejectionReason: string | null;
@@ -1374,6 +1410,8 @@ export async function getVideoTestimonialResponses(params?: {
         key_phrases,
         sentiment_score,
         sentiment_label,
+        customer_rating,
+        quarantined,
         approval_status,
         approved_at,
         rejection_reason,
@@ -1491,47 +1529,56 @@ export async function getVideoTestimonialResponses(params?: {
     stats.averageDuration =
       stats.total > 0 ? Math.round(stats.totalDuration / stats.total) : 0;
 
-    const responses: VideoTestimonialResponse[] = (data || []).map((res) => {
-      const request = res.video_testimonial_requests as unknown as {
-        customer_name: string;
-        customer_email: string;
-      };
+    const responses: VideoTestimonialResponse[] = await Promise.all(
+      (data || []).map(async (res) => {
+        const request = res.video_testimonial_requests;
+        let videoPreviewUrl: string | null = null;
+        if (res.video_path) {
+          const { data: signedPreview } = await supabase.storage
+            .from("video-testimonials")
+            .createSignedUrl(res.video_path.replace(/^\/+/, ""), 3600);
+          videoPreviewUrl = signedPreview?.signedUrl ?? null;
+        }
 
-      return {
-        id: res.id,
-        requestId: res.request_id,
-        organizationId: res.organization_id,
-        loanOfficerId: res.user_id,
-        videoUrl: res.video_url,
-        videoPath: res.video_path,
-        thumbnailUrl: res.thumbnail_url,
-        durationSeconds: res.duration_seconds,
-        fileSizeBytes: res.file_size_bytes,
-        mimeType: res.mime_type,
-        width: res.width,
-        height: res.height,
-        transcription: res.transcription,
-        transcriptionStatus: res.transcription_status,
-        aiGeneratedText: res.ai_generated_text,
-        aiGenerationStatus: res.ai_generation_status,
-        keyPhrases: res.key_phrases,
-        sentimentScore: res.sentiment_score,
-        sentimentLabel: res.sentiment_label,
-        approvalStatus: res.approval_status,
-        approvedAt: res.approved_at,
-        rejectionReason: res.rejection_reason,
-        managerNotes: res.manager_notes,
-        changesRequestedAt: res.changes_requested_at,
-        publishedAt: res.published_at,
-        publishedPlatforms: res.published_platforms,
-        submittedAt: res.submitted_at,
-        createdAt: res.created_at,
-        customerName: request.customer_name,
-        customerEmail: request.customer_email,
-        loanOfficerName: undefined,
-        loanOfficerUserId: res.user_id,
-      };
-    });
+        return {
+          id: res.id,
+          requestId: res.request_id,
+          organizationId: res.organization_id,
+          loanOfficerId: res.user_id,
+          videoUrl: res.video_url,
+          videoPath: res.video_path,
+          videoPreviewUrl,
+          thumbnailUrl: res.thumbnail_url,
+          durationSeconds: res.duration_seconds,
+          fileSizeBytes: res.file_size_bytes,
+          mimeType: res.mime_type,
+          width: res.width,
+          height: res.height,
+          transcription: res.transcription,
+          transcriptionStatus: res.transcription_status,
+          aiGeneratedText: res.ai_generated_text,
+          aiGenerationStatus: res.ai_generation_status,
+          keyPhrases: res.key_phrases,
+          sentimentScore: res.sentiment_score,
+          sentimentLabel: res.sentiment_label,
+          customerRating: res.customer_rating,
+          quarantined: res.quarantined ?? false,
+          approvalStatus: res.approval_status,
+          approvedAt: res.approved_at,
+          rejectionReason: res.rejection_reason,
+          managerNotes: res.manager_notes,
+          changesRequestedAt: res.changes_requested_at,
+          publishedAt: res.published_at,
+          publishedPlatforms: res.published_platforms,
+          submittedAt: res.submitted_at,
+          createdAt: res.created_at,
+          customerName: request.customer_name,
+          customerEmail: request.customer_email,
+          loanOfficerName: undefined,
+          loanOfficerUserId: res.user_id,
+        };
+      })
+    );
 
     return {
       success: true,
@@ -1608,10 +1655,7 @@ export async function getVideoTestimonialResponse(
       return { success: false, error: "Video not found" };
     }
 
-    const request = res.video_testimonial_requests as unknown as {
-      customer_name: string;
-      customer_email: string;
-    };
+    const request = res.video_testimonial_requests;
 
     const response: VideoTestimonialResponse = {
       id: res.id,
@@ -1633,6 +1677,8 @@ export async function getVideoTestimonialResponse(
       keyPhrases: res.key_phrases,
       sentimentScore: res.sentiment_score,
       sentimentLabel: res.sentiment_label,
+      customerRating: res.customer_rating,
+      quarantined: res.quarantined ?? false,
       approvalStatus: res.approval_status,
       approvedAt: res.approved_at,
       rejectionReason: res.rejection_reason,
@@ -1713,6 +1759,10 @@ export async function updateVideoApprovalStatus(
         id,
         approval_status,
         user_id,
+        review_id,
+        quarantined,
+        approved_at,
+        customer_rating,
         video_testimonial_requests!inner(customer_name)
       `)
       .eq("id", responseId)
@@ -1722,15 +1772,6 @@ export async function updateVideoApprovalStatus(
     if (existingError || !existing) {
       return { success: false, error: "Video not found" };
     }
-
-    // State machine validation - define valid transitions
-    const validTransitions: Record<string, string[]> = {
-      pending: ["approved", "rejected", "changes_requested"],
-      changes_requested: ["approved", "rejected", "changes_requested"],
-      approved: ["published"],
-      rejected: [], // Terminal state
-      published: [], // Terminal state
-    };
 
     const adminSupabase = createAdminClient();
     const now = new Date().toISOString();
@@ -1743,39 +1784,36 @@ export async function updateVideoApprovalStatus(
     switch (action) {
       case "approve":
         newStatus = "approved";
-        // Validate state transition
-        if (!validTransitions[existing.approval_status]?.includes(newStatus)) {
-          if (existing.approval_status === "approved") {
-            return { success: true }; // Idempotent - already approved
-          }
-          return { success: false, error: `Cannot approve video with status "${existing.approval_status}"` };
+        if (existing.approval_status === "approved") {
+          return { success: true };
         }
         updateData.approval_status = newStatus;
         updateData.approved_at = now;
         updateData.approved_by = user.id;
         updateData.rejection_reason = null;
         updateData.manager_notes = options?.managerNotes || null;
+        updateData.published_at = null;
+        // Approving a quarantined (low path) response lifts the quarantine
+        if (existing.quarantined) {
+          updateData.quarantined = false;
+        }
         if (options?.editedAiText) {
           updateData.ai_generated_text = options.editedAiText;
         }
         break;
       case "reject":
         newStatus = "rejected";
-        // Validate state transition
-        if (!validTransitions[existing.approval_status]?.includes(newStatus)) {
-          if (existing.approval_status === "rejected") {
-            return { success: true }; // Idempotent - already rejected
-          }
-          return { success: false, error: `Cannot reject video with status "${existing.approval_status}"` };
+        if (existing.approval_status === "rejected") {
+          return { success: true };
         }
         updateData.approval_status = newStatus;
         updateData.rejection_reason = options?.reason || null;
         updateData.manager_notes = options?.managerNotes || null;
+        updateData.published_at = null;
         break;
       case "request_changes":
         newStatus = "changes_requested";
-        // Validate state transition
-        if (!validTransitions[existing.approval_status]?.includes(newStatus)) {
+        if (existing.approval_status === "published") {
           return { success: false, error: `Cannot request changes for video with status "${existing.approval_status}"` };
         }
         updateData.approval_status = newStatus;
@@ -1785,13 +1823,15 @@ export async function updateVideoApprovalStatus(
         break;
       case "publish":
         if (existing.approval_status === "published") {
-          return { success: true }; // Idempotent - already published
-        }
-        if (existing.approval_status !== "approved") {
-          return { success: false, error: `Cannot publish video with status "${existing.approval_status}". Video must be approved first.` };
+          return { success: true };
         }
         newStatus = "published";
         updateData.approval_status = newStatus;
+        updateData.approved_at = existing.approved_at || now;
+        updateData.approved_by = user.id;
+        updateData.rejection_reason = null;
+        updateData.manager_notes = options?.managerNotes || null;
+        updateData.quarantined = false;
         updateData.published_at = now;
         break;
       default:
@@ -1806,6 +1846,79 @@ export async function updateVideoApprovalStatus(
     if (updateError) {
       console.error("Error updating video approval status:", updateError);
       return { success: false, error: "Failed to update status" };
+    }
+
+    // Video lifecycle is decoupled from the canonical review (publish
+    // inversion): the review publishes via machine screening, and video
+    // approve/publish only gates VIDEO surfaces. Only a video rejection
+    // still pulls the linked review down.
+    if (existing.review_id) {
+      if (action === "reject") {
+        const { error: reviewSyncError } = await adminSupabase
+          .from("reviews")
+          .update({
+            status: "rejected",
+            rejection_reason: `Video testimonial rejected: ${options?.reason || "No reason provided"}`,
+            is_published: false,
+            published_at: null,
+            updated_at: now,
+          })
+          .eq("id", existing.review_id);
+
+        if (reviewSyncError) {
+          console.error(
+            "Unified review: failed to sync review rejection for video testimonial:",
+            reviewSyncError
+          );
+        }
+      } else if (options?.editedAiText) {
+        // Published review text is immutable — only quarantined (pending)
+        // reviews accept edited AI text.
+        const { error: textSyncError } = await adminSupabase
+          .from("reviews")
+          .update({ text: options.editedAiText, updated_at: now })
+          .eq("id", existing.review_id)
+          .eq("status", "pending");
+
+        if (textSyncError) {
+          console.error(
+            "Unified review: failed to sync edited AI text for video testimonial:",
+            textSyncError
+          );
+        }
+      }
+    }
+
+    // Asset Kit auto-generation (CONTEXT.md § Asset Generation): approving a
+    // video at or above the org's celebration threshold queues the default
+    // 9:16 Clip. Idempotent, so re-approvals don't re-render. Below-threshold
+    // approvals stay manual via the asset creator.
+    if (action === "approve" || action === "publish") {
+      const customerRating =
+        typeof existing.customer_rating === "number" ? existing.customer_rating : null;
+      const organizationId = userData.organization_id;
+      const actorUserId = user.id;
+
+      after(async () => {
+        try {
+          const threshold = await getCelebrationThreshold(organizationId);
+          if (customerRating === null || customerRating < threshold) return;
+
+          await queueClipRender({
+            organizationId,
+            videoResponseId: responseId,
+            actorUserId,
+            options: { format: "9:16" },
+            idempotent: true,
+          });
+        } catch (err) {
+          console.error("Asset kit: failed to queue clip render on approval", {
+            responseId,
+            organizationId,
+            error: err,
+          });
+        }
+      });
     }
 
     // Create audit log entry
@@ -1825,7 +1938,7 @@ export async function updateVideoApprovalStatus(
     });
 
     // Send notification to user for relevant actions
-    const request = existing.video_testimonial_requests as unknown as { customer_name: string };
+    const request = existing.video_testimonial_requests;
 
     if (existing.user_id && ["approve", "reject", "request_changes"].includes(action)) {
       const notificationTitles: Record<string, string> = {
@@ -1844,7 +1957,9 @@ export async function updateVideoApprovalStatus(
 
       // Create in-app notification (don't block on failure)
       try {
-        await (adminSupabase as unknown as { from: (table: string) => { insert: (data: Record<string, unknown>) => Promise<unknown> } })
+        // SAFETY: the notifications table is not in the generated Database types yet; this is the
+        // same admin connection viewed through the untyped client surface.
+        await (adminSupabase as UntypedSupabaseClient)
           .from("notifications")
           .insert({
             user_id: existing.user_id,
@@ -1907,7 +2022,7 @@ export async function deleteVideoTestimonialResponse(
     // Get the response to get the video path
     const { data: response, error: responseError } = await supabase
       .from("video_testimonial_responses")
-      .select("id, video_path")
+      .select("id, video_path, review_id")
       .eq("id", responseId)
       .eq("organization_id", userData.organization_id)
       .single();
@@ -1934,6 +2049,22 @@ export async function deleteVideoTestimonialResponse(
     if (deleteError) {
       console.error("Error deleting video testimonial response:", deleteError);
       return { success: false, error: "Failed to delete video" };
+    }
+
+    // Unified review model (ADR 0002): the function hard-deletes the video,
+    // so hard-delete the canonical review with it. Legacy rows have no link.
+    if (response.review_id) {
+      const { error: reviewDeleteError } = await adminSupabase
+        .from("reviews")
+        .delete()
+        .eq("id", response.review_id);
+
+      if (reviewDeleteError) {
+        console.error(
+          "Unified review: failed to delete review linked to video testimonial:",
+          reviewDeleteError
+        );
+      }
     }
 
     // Create audit log entry
@@ -2068,7 +2199,7 @@ export async function updateVideoAIText(
     // Verify the response belongs to the organization
     const { data: existing, error: existingError } = await supabase
       .from("video_testimonial_responses")
-      .select("id, ai_generated_text")
+      .select("id, ai_generated_text, review_id")
       .eq("id", responseId)
       .eq("organization_id", userData.organization_id)
       .single();
@@ -2090,6 +2221,27 @@ export async function updateVideoAIText(
     if (updateError) {
       console.error("Error updating AI text:", updateError);
       return { success: false, error: "Failed to update AI text" };
+    }
+
+    // Unified review model (ADR 0002): keep the canonical review text in
+    // sync — but only while the review is quarantined (pending). Published
+    // review text is immutable.
+    if (existing.review_id) {
+      const { error: reviewSyncError } = await adminSupabase
+        .from("reviews")
+        .update({
+          text: aiText,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", existing.review_id)
+        .eq("status", "pending");
+
+      if (reviewSyncError) {
+        console.error(
+          "Unified review: failed to sync review text for video testimonial:",
+          reviewSyncError
+        );
+      }
     }
 
     // Create audit log entry
@@ -2273,6 +2425,8 @@ export async function getVideosPendingApproval(params?: {
         key_phrases,
         sentiment_score,
         sentiment_label,
+        customer_rating,
+        quarantined,
         approval_status,
         approved_at,
         rejection_reason,
@@ -2329,10 +2483,7 @@ export async function getVideosPendingApproval(params?: {
     });
 
     const responses: VideoTestimonialResponse[] = (data || []).map((res) => {
-      const request = res.video_testimonial_requests as unknown as {
-        customer_name: string;
-        customer_email: string;
-      };
+      const request = res.video_testimonial_requests;
 
       return {
         id: res.id,
@@ -2354,6 +2505,8 @@ export async function getVideosPendingApproval(params?: {
         keyPhrases: res.key_phrases,
         sentimentScore: res.sentiment_score,
         sentimentLabel: res.sentiment_label,
+        customerRating: res.customer_rating,
+        quarantined: res.quarantined ?? false,
         approvalStatus: res.approval_status,
         approvedAt: res.approved_at,
         rejectionReason: res.rejection_reason,

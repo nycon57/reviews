@@ -154,24 +154,28 @@ export const useWorkflowState = create<WorkflowState>((set, get) => ({
       }
       const snapshot = isFirstInBurst ? createSnapshot(get().nodes, get().edges) : null;
 
-      set((state) => ({
-        nodes: state.nodes.map((node) =>
-          node.id === id
-            ? {
-                ...node,
-                data: {
-                  ...node.data,
-                  ...data,
-                },
-              }
-            : node
-        ),
-        isDirty: true,
-        redoStack: [],
-        ...(snapshot ? {
-          undoStack: state.undoStack.concat(snapshot).slice(-HISTORY_LIMIT),
-        } : {}),
-      }));
+      set((state) => {
+        const next: Partial<WorkflowState> = {
+          nodes: state.nodes.map((node) =>
+            node.id === id
+              ? {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    ...data,
+                  },
+                }
+              : node
+          ),
+          isDirty: true,
+          redoStack: [],
+        };
+        // Only the first edit in a debounce burst pushes an undo entry.
+        if (snapshot) {
+          next.undoStack = state.undoStack.concat(snapshot).slice(-HISTORY_LIMIT);
+        }
+        return next;
+      });
 
       updateNodeDebounceTimer = setTimeout(() => {
         updateNodeDebounceTimer = null;

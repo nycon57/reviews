@@ -8,6 +8,7 @@ import {
   Chats as MessageSquare,
 } from "@phosphor-icons/react/dist/ssr";
 import {
+  getRecognitionBadges,
   getRecognitions,
   getManagerFeedback,
   initializeDefaultBadges,
@@ -51,9 +52,9 @@ function ReadOnlyManagerFeedbackList({
 }
 
 async function RecognitionFeedSection() {
+  let result: Awaited<ReturnType<typeof getRecognitions>>;
   try {
-    const result = await getRecognitions({ limit: 10 });
-    return <ReadOnlyRecognitionFeed initialRecognitions={result.data} />;
+    result = await getRecognitions({ limit: 10 });
   } catch (err) {
     console.error("Failed to load recognitions:", err);
     return (
@@ -62,12 +63,13 @@ async function RecognitionFeedSection() {
       </div>
     );
   }
+  return <ReadOnlyRecognitionFeed initialRecognitions={result.data} />;
 }
 
 async function ManagerFeedbackSection({ currentUserId }: { currentUserId: string }) {
+  let result: Awaited<ReturnType<typeof getManagerFeedback>>;
   try {
-    const result = await getManagerFeedback({ limit: 10 });
-    return <ReadOnlyManagerFeedbackList initialFeedback={result.data} currentUserId={currentUserId} />;
+    result = await getManagerFeedback({ limit: 10 });
   } catch (err) {
     console.error("Failed to load manager feedback:", err);
     return (
@@ -76,6 +78,18 @@ async function ManagerFeedbackSection({ currentUserId }: { currentUserId: string
       </div>
     );
   }
+  return <ReadOnlyManagerFeedbackList initialFeedback={result.data} currentUserId={currentUserId} />;
+}
+
+async function ensureRecognitionBadges() {
+  let result = await getRecognitionBadges();
+
+  if (result.success && (result.data?.length ?? 0) === 0) {
+    await initializeDefaultBadges({ skipExistingCheck: true });
+    result = await getRecognitionBadges();
+  }
+
+  return result;
 }
 
 export default async function RecognitionPage() {
@@ -84,8 +98,7 @@ export default async function RecognitionPage() {
   const userId = ctx.userId;
   const isManager = isManagerOrAbove(ctx);
 
-  // Initialize default badges if needed
-  await initializeDefaultBadges();
+  await ensureRecognitionBadges();
 
   return (
     <div className="flex-1 space-y-6">

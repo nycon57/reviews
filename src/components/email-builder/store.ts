@@ -217,8 +217,8 @@ export const useEditorStore = create<EditorState>((set, _get) => ({
       id: generateId(),
       type,
       props: { ...def.defaultProps },
-      ...(def.isContainer ? { children: [] } : {}),
     };
+    if (def.isContainer) newBlock.children = [];
     set((state) => ({
       ...pushHistory(state),
       document: {

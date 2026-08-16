@@ -98,12 +98,11 @@ export function EmailBuilderPage({
     }
     // Already in Waypoint editor format
     if (isEditorFormat(doc)) {
-      resetDocument(doc as unknown as TReaderDocument);
+      resetDocument(doc);
     }
     // System B (EmailDocument) format → convert to editor format
     else if (isEmailDocumentFormat(doc)) {
-      const converted = emailDocumentToEditorDocument(doc);
-      resetDocument(converted as unknown as TReaderDocument);
+      resetDocument(emailDocumentToEditorDocument(doc));
     }
     // Unknown format
     else {
@@ -118,9 +117,9 @@ export function EmailBuilderPage({
     try {
       const editorDoc = useEditorDocumentStore.getState().document;
       // Convert Waypoint format → System B for rendering/storage
-      const docToSave = isEditorFormat(editorDoc)
-        ? editorDocumentToEmailDocument(editorDoc as Record<string, { type: string; data: Record<string, unknown> }>)
-        : (editorDoc as unknown as EmailDocument);
+      const docToSave = isEmailDocumentFormat(editorDoc)
+        ? editorDoc
+        : editorDocumentToEmailDocument(editorDoc);
 
       if (templateId) {
         await updateTemplate(templateId, {
@@ -137,7 +136,7 @@ export function EmailBuilderPage({
         });
         setTemplateId(created.id);
         toast({ title: "Template created" });
-        window.history.replaceState(null, "", `/dashboard/emails/${created.id}`);
+        window.history.replaceState(null, "", `/dashboard/campaigns/templates/${created.id}`);
       }
     } catch (err) {
       toast({
@@ -222,7 +221,7 @@ export function EmailBuilderPage({
         {/* Top bar */}
         <div className="flex h-12 shrink-0 items-center gap-3 border-b border-border bg-background px-3">
           {/* Back button */}
-          <Link href="/dashboard/emails">
+          <Link href="/dashboard/campaigns?tab=templates">
             <Button variant="ghost" size="sm">
               <ArrowLeft size={16} className="mr-1" />
               Back
@@ -319,9 +318,9 @@ export function EmailBuilderPage({
             <SendTestEmailDialog
               getDocument={() => {
                 const editorDoc = useEditorDocumentStore.getState().document;
-                return isEditorFormat(editorDoc)
-                  ? editorDocumentToEmailDocument(editorDoc as Record<string, { type: string; data: Record<string, unknown> }>)
-                  : (editorDoc as unknown as EmailDocument);
+                return isEmailDocumentFormat(editorDoc)
+                  ? editorDoc
+                  : editorDocumentToEmailDocument(editorDoc);
               }}
               subject={subject}
               onSaveFirst={handleSave}

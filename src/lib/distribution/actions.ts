@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { z } from "zod";
 import { randomBytes } from "crypto";
@@ -13,6 +13,8 @@ import {
 import { sendSurveyInvitationEmail } from "@/lib/email";
 import { emailConfig } from "@/lib/email/client";
 import type { SurveyInvitationEmailData } from "@/lib/email/types";
+import { findOrCreateContact } from "@/lib/contacts/actions";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 import type { Json } from "@/types/database.types";
 
 // Input validation schemas
@@ -61,7 +63,8 @@ export interface DistributionQueueItem {
 
 // Create a survey and add it to the distribution queue
 export async function createSurveyAndQueue(
-  input: CreateSurveyInput
+  input: CreateSurveyInput,
+  options?: { suppressReviewRequestSentEvent?: boolean }
 ): Promise<ActionResult<SendSurveyResult>> {
   try {
     const validated = createSurveyInputSchema.safeParse(input);
@@ -194,13 +197,38 @@ export async function createSurveyAndQueue(
       return { success: false, error: "No active survey template found" };
     }
 
-    // Create the survey
-    const { data: survey, error: surveyError } = await supabase
+    // Resolve (or create) the Contact for this acquisition request (ADR 0004).
+    // Owner = the professional the survey is for (surveys.user_id). The inline
+    // name/email/phone stay on the survey as the immutable Send-Time Snapshot;
+    // contact_id links to the living Contact for dedup and suppression. Kept
+    // resilient: a contacts hiccup must not block the revenue-path send — the
+    // send-time suppression check keys off the email regardless of linkage.
+    let contactId: string | null = null;
+    try {
+      const { contact } = await findOrCreateContact(
+        userData.organization_id,
+        {
+          email: validated.data.customerEmail,
+          name: validated.data.customerName,
+          phone: validated.data.customerPhone,
+        },
+        validated.data.loanOfficerId,
+        "survey"
+      );
+      contactId = contact.id;
+    } catch (contactError) {
+      console.error("createSurveyAndQueue: contact resolution failed", contactError);
+    }
+
+    // Create the survey. Uses the untyped admin client because contact_id is a
+    // new column not yet in the generated types (house pattern for new columns).
+    const { data: survey, error: surveyError } = await createUntypedAdminClient()
       .from("surveys")
       .insert({
         organization_id: userData.organization_id,
         template_id: surveyTemplateId,
         user_id: validated.data.loanOfficerId,
+        contact_id: contactId,
         customer_name: validated.data.customerName,
         customer_email: validated.data.customerEmail,
         customer_phone: validated.data.customerPhone,
@@ -244,6 +272,21 @@ export async function createSurveyAndQueue(
     }
 
     revalidatePath("/dashboard/surveys");
+
+    if (!options?.suppressReviewRequestSentEvent) {
+      void capturePostHogEvent({
+        distinctId: user.id,
+        event: "review_request_sent",
+        properties: {
+          channel: "email",
+          bulk: false,
+          send_immediately: validated.data.sendImmediately,
+          survey_id: survey.id,
+        },
+        groups: { organization: userData.organization_id },
+        logContext: "create survey request",
+      });
+    }
 
     // If send immediately is requested, process now
     if (validated.data.sendImmediately && queueItem) {
@@ -360,17 +403,13 @@ export async function sendSurveyManually(
       return { success: false, error: rateCheck.reason || "Rate limit exceeded" };
     }
 
-    const loanOfficer = survey.users as unknown as {
-      id: string;
-      full_name: string;
-      photo_url: string | null;
-    };
+    // SAFETY: every survey is created with a `user_id` (see createSurveyAndQueue)
+    // and better-auth writes `full_name` at signup, so PostgREST always returns a
+    // named loan officer for an existing survey row. Both columns are nullable at
+    // the schema level, which is all the generated row type can express.
+    const loanOfficer = survey.users as { id: string; full_name: string; photo_url: string | null };
 
-    const organization = survey.organizations as unknown as {
-      id: string;
-      name: string;
-      logo_url: string | null;
-    };
+    const organization = survey.organizations;
 
     const surveyUrl = `${emailConfig.baseUrl}/survey/${survey.token}`;
 
@@ -407,6 +446,18 @@ export async function sendSurveyManually(
       await scheduleReminders(survey.id, userData.organization_id);
 
       revalidatePath("/dashboard/surveys");
+
+      void capturePostHogEvent({
+        distinctId: user.id,
+        event: "review_request_sent",
+        properties: {
+          channel: "email",
+          bulk: false,
+          survey_id: survey.id,
+        },
+        groups: { organization: userData.organization_id },
+        logContext: "manual survey send",
+      });
 
       return {
         success: true,
@@ -540,7 +591,9 @@ export async function getSurveysForDistribution(params?: {
     }
 
     const surveys = (data || []).map((survey) => {
-      const user = survey.users as unknown as { full_name: string };
+      // SAFETY: see sendSurveyManually — surveys always carry a `user_id` and
+      // users always carry a `full_name`, so the embedded row is present here.
+      const user = survey.users as { full_name: string };
       return {
         id: survey.id,
         token: survey.token,
@@ -730,11 +783,10 @@ export async function getDistributionQueue(params?: {
     }
 
     const items: DistributionQueueItem[] = (data || []).map((item) => {
-      const survey = item.surveys as unknown as {
-        customer_name: string;
-        customer_email: string;
-        users: { full_name: string };
-      };
+      const survey = item.surveys;
+      // SAFETY: see sendSurveyManually — surveys always carry a `user_id` and
+      // users always carry a `full_name`, so the embedded row is present here.
+      const loanOfficer = survey.users as { full_name: string };
 
       return {
         id: item.id,
@@ -747,7 +799,7 @@ export async function getDistributionQueue(params?: {
         errorMessage: item.error_message,
         customerName: survey.customer_name,
         customerEmail: survey.customer_email,
-        loanOfficerName: survey.users.full_name,
+        loanOfficerName: loanOfficer.full_name,
       };
     });
 

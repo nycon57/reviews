@@ -3,7 +3,6 @@ export { CategoryFilter } from "./category-filter";
 export { SocialShare } from "./social-share";
 export { RelatedPosts } from "./related-posts";
 export { mdxComponents } from "./mdx-components";
-export { JsonLd } from "./json-ld";
 export { BlogHero } from "./blog-hero";
 export { FeaturedPostCard } from "./featured-post-card";
 export { BlogTableOfContents } from "./blog-table-of-contents";

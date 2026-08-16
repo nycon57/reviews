@@ -26,29 +26,21 @@ export type {
   TeamComparisonRow,
   GeneratedReport,
   ReportCSVRow,
+  ReportExportPayload,
   PDFReportData,
-  GenerateReportRequest,
-  ExportReportRequest,
-  ScheduleReportRequest,
-  ShareReportRequest,
-  CreateTemplateRequest,
-  UpdateTemplateRequest,
 } from "./types";
 
 // Engine (server actions)
 export {
   getReportTemplate,
   getReportTemplates,
+  generateReportForOrg,
   generateReport,
-  createReportTemplate,
   initializeDefaultTemplates,
 } from "./engine";
 
 // Export functions (server actions)
-export {
-  exportReportToCSV,
-  generateReportHTML,
-} from "./export";
+export { exportReportToCSV } from "./export";
 
 // Actions (server actions)
 export {
@@ -57,9 +49,11 @@ export {
   deleteScheduledReport,
   getScheduledReports,
   createReportShare,
+  createReportShareForOrg,
   getReportShareByToken,
   revokeReportShare,
   getReportShares,
   exportAndRecordReport,
+  exportAndRecordReportForOrg,
   getReportExports,
 } from "./actions";

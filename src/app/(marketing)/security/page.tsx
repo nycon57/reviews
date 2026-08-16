@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { StructuredData } from "@/components/seo/structured-data";
+import { getBaseUrl } from "@/lib/seo";
 import { SecurityPageClient } from "./security-client";
 
 export const metadata: Metadata = {
@@ -15,24 +17,23 @@ export const metadata: Metadata = {
 };
 
 export default function SecurityPage() {
+  const baseUrl = getBaseUrl();
+
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            name: "Security & Compliance",
-            description:
-              "Learn how RepWell protects your data with enterprise-grade security, SOC 2 compliance, encryption, and comprehensive data handling practices.",
-            url: "https://repwell.com/security",
-            publisher: {
-              "@type": "Organization",
-              name: "RepWell",
-              url: "https://repwell.com",
-            },
-          }),
+      <StructuredData
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "Security & Compliance",
+          description:
+            "Learn how RepWell protects your data with enterprise-grade security, SOC 2 compliance, encryption, and comprehensive data handling practices.",
+          url: `${baseUrl}/security`,
+          publisher: {
+            "@type": "Organization",
+            name: "RepWell",
+            url: baseUrl,
+          },
         }}
       />
       <SecurityPageClient />

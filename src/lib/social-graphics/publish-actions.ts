@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { getAuthedContext } from "./actions";
+import { requireCronSecretRequest } from "@/lib/auth/server-action-guards";
 import type { ActionResult, SocialConnection, SocialPost } from "./types";
 
 const GRAPHICS_PATH = "/dashboard/social-graphics";
@@ -11,7 +12,8 @@ function socialDb() {
   return createUntypedAdminClient();
 }
 
-const POST_FIELDS = "id, platform, status, caption, platform_post_url, error_message, scheduled_for, published_at, created_at";
+const POST_FIELDS =
+  "id, platform, status, caption, platform_post_url, error_message, scheduled_for, published_at, created_at";
 
 export async function getSocialConnections(): Promise<ActionResult<SocialConnection[]>> {
   const auth = await getAuthedContext();
@@ -218,6 +220,12 @@ export async function retryPost(postId: string): Promise<ActionResult<SocialPost
 }
 
 export async function executeScheduledPosts(): Promise<ActionResult<number>> {
+  try {
+    await requireCronSecretRequest();
+  } catch {
+    return { success: false, error: "Unauthorized" };
+  }
+
   const db = socialDb();
   const now = new Date().toISOString();
 

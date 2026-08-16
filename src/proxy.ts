@@ -1,10 +1,6 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
-
-// Feature flag for Better Auth migration
-const USE_BETTER_AUTH = process.env.USE_BETTER_AUTH === "true";
 
 // Role-based access control configuration
 type UserRole = "admin" | "manager" | "user";
@@ -22,6 +18,14 @@ interface RouteConfig {
   requiresEnterprise?: boolean;
   /** Requires admin role within enterprise account */
   requiresEnterpriseAdmin?: boolean;
+  /**
+   * Requires org-admin access: individual account owners (their own admin) OR
+   * enterprise admins. Mirrors `requireIndividualOrEnterpriseAdmin` so the
+   * middleware and the page guard agree (ADR 0007).
+   */
+  requiresOrgAdmin?: boolean;
+  /** Requires RepWell platform staff access */
+  requiresPlatformAdmin?: boolean;
 }
 
 // Tier hierarchy for comparison
@@ -33,22 +37,27 @@ const TIER_LEVELS: Record<SubscriptionTier, number> = {
 
 // Routes that require specific roles, subscription tiers, or account types
 const roleProtectedRoutes: RouteConfig[] = [
+  // RepWell platform staff tooling
+  { path: "/staff", requiresPlatformAdmin: true },
+
   // Enterprise-only management routes (hidden from individual users)
-  { path: "/dashboard/team", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
+  { path: "/dashboard/people", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/campaigns", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/approvals", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
+  { path: "/dashboard/share-studio", allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/ex-surveys", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
-  { path: "/dashboard/employees", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
+  { path: "/dashboard/analytics/team", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/recognition", requiresEnterprise: true },
   { path: "/dashboard/analytics/leaderboard", requiresEnterprise: true },
 
-  // Enterprise admin only routes
-  { path: "/dashboard/organization", requiresEnterpriseAdmin: true },
+  // Org-admin routes: individual owners AND enterprise admins (ADR 0007 —
+  // individuals reach their own Workspace/org area; the page guard agrees).
+  { path: "/dashboard/organization", requiresOrgAdmin: true },
   // Note: /dashboard/surveys access control is handled at the page level (open to individuals + enterprise admins)
 
   // Pro tier features (available to pro individuals and all enterprise users)
   { path: "/dashboard/insights", minTier: "pro" },
-  { path: "/dashboard/geo", minTier: "pro" },
+  { path: "/dashboard/analytics/website", minTier: "pro" },
 ];
 
 // Paths that are part of the onboarding flow
@@ -91,51 +100,38 @@ async function getBetterAuthUser(request: NextRequest) {
   }
 }
 
-/**
- * Get user from Supabase Auth (legacy)
- */
-async function getSupabaseUser(request: NextRequest, response: NextResponse) {
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-        },
-      },
-    }
-  );
+async function getPlatformAdminFlag(
+  userId: string
+): Promise<boolean> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (!supabaseUrl || !supabaseKey) {
+    console.error(`[Middleware] Missing Supabase config for platform staff lookup`);
+    return false;
+  }
 
-  return { user, supabase };
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  // Untyped client: users.is_platform_admin is added by the pending staff
+  // migration and is not in generated database types yet.
+  const { data, error } = await supabase
+    .from("users")
+    .select("is_platform_admin")
+    .eq("id", userId)
+    .limit(1);
+
+  if (error) {
+    console.error(`[Middleware] Platform staff query error:`, error.message);
+    return false;
+  }
+
+  return data?.[0]?.is_platform_admin === true;
 }
 
 export async function proxy(request: NextRequest) {
@@ -158,25 +154,16 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // Get authenticated user based on auth system
-  let user: { id: string; email?: string | null } | null = null;
-  // Use union type to support both createClient (service_role) and createServerClient (SSR)
-  let supabase: ReturnType<typeof createServerClient<Database>> | ReturnType<typeof createClient<Database>> | null = null;
-
-  if (USE_BETTER_AUTH) {
-    // Use Better Auth
-    user = await getBetterAuthUser(request);
-  } else {
-    // Use Supabase Auth (legacy)
-    const result = await getSupabaseUser(request, response);
-    user = result.user;
-    supabase = result.supabase;
-  }
+  const user: { id: string; email?: string | null } | null = await getBetterAuthUser(request);
+  let supabase: ReturnType<typeof createClient<Database>> | null = null;
 
   // Protected routes - require authentication
-  const protectedPaths = ["/dashboard", "/reviews", "/surveys", "/analytics", "/team", "/settings", "/profile"];
+  const protectedPaths = ["/dashboard", "/staff", "/reviews", "/surveys", "/analytics", "/team", "/settings", "/profile"];
   const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
   const isOnboardingPath = onboardingPaths.some((path) => request.nextUrl.pathname.startsWith(path));
+  const routeConfig = roleProtectedRoutes.find((route) =>
+    request.nextUrl.pathname.startsWith(route.path)
+  );
 
   if (isProtectedPath && !user) {
     const redirectUrl = new URL("/login", request.url);
@@ -184,18 +171,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // For database queries, create a Supabase client if we haven't already
-  // Use service role key when Better Auth is enabled (bypasses RLS since session token isn't set)
+  // For database queries, use service role key with code-level org checks.
   // IMPORTANT: Use createClient (not createServerClient) for service_role to properly bypass RLS
   if (!supabase && user) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = USE_BETTER_AUTH
-      ? process.env.SUPABASE_SERVICE_ROLE_KEY
-      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       console.error(`[Middleware] Missing Supabase config: url=${!!supabaseUrl}, key=${!!supabaseKey}`);
-    } else if (USE_BETTER_AUTH) {
+    } else {
       // Use createClient directly for service_role - it properly sets both apikey and Authorization headers
       // createServerClient from @supabase/ssr doesn't correctly bypass RLS with service_role
       supabase = createClient<Database>(supabaseUrl, supabaseKey, {
@@ -204,33 +188,18 @@ export async function proxy(request: NextRequest) {
           persistSession: false,
         },
       });
-    } else {
-      // For Supabase Auth, use the SSR client with cookies
-      supabase = createServerClient<Database>(
-        supabaseUrl,
-        supabaseKey,
-        {
-          cookies: {
-            get(name: string) {
-              return request.cookies.get(name)?.value;
-            },
-            set() {},
-            remove() {},
-          },
-        }
-      );
     }
   }
 
   // Fetch user data once for both onboarding and access checks
-  let cachedUserData: { role: string | null; organization_id: string | null; individual_organization_id: string | null; address: unknown } | null = null;
+  let cachedUserData: { role: string | null; organization_id: string | null } | null = null;
   let cachedOrgData: { subscription_tier: string | null; account_type: string | null; onboarding_status: string | null } | null = null;
 
   if (user && supabase && isProtectedPath) {
     // Fetch user data using .limit(1) instead of .single() to avoid PGRST116 errors
     const { data: userRows, error: userQueryError } = await supabase
       .from("users")
-      .select("role, organization_id, individual_organization_id, address")
+      .select("role, organization_id")
       .eq("id", user.id)
       .limit(1);
 
@@ -239,7 +208,9 @@ export async function proxy(request: NextRequest) {
     } else if (userRows && userRows.length > 0) {
       cachedUserData = userRows[0];
 
-      // Fetch organization data if user has an enterprise organization
+      // Single path (ADR 0006): every account has one organizations row, and
+      // account_type discriminates individual vs enterprise. subscription_tier
+      // and onboarding_status are read straight from it for both.
       if (cachedUserData?.organization_id) {
         const { data: orgRows, error: orgQueryError } = await supabase
           .from("organizations")
@@ -252,36 +223,12 @@ export async function proxy(request: NextRequest) {
         } else if (orgRows && orgRows.length > 0) {
           cachedOrgData = orgRows[0];
         }
-      } else if (cachedUserData?.individual_organization_id) {
-        // Individual user — fetch onboarding_status from individual_organizations
-        const { data: indivOrgRows, error: indivOrgError } = await supabase
-          .from("individual_organizations")
-          .select("name, onboarding_status")
-          .eq("id", cachedUserData.individual_organization_id)
-          .limit(1);
-
-        if (indivOrgError) {
-          console.error(`[Middleware] Individual org query error:`, indivOrgError.message);
-        }
-
-        const indivOnboardingStatus = (indivOrgRows?.[0] as Record<string, unknown>)?.onboarding_status as string | null;
-
-        // Use address from the initial users query as fallback for profile completion check
-        const hasAddress = cachedUserData.address &&
-          typeof cachedUserData.address === "object" &&
-          (cachedUserData.address as Record<string, unknown>).city;
-
-        cachedOrgData = {
-          subscription_tier: "basic",
-          account_type: "individual",
-          onboarding_status: (indivOnboardingStatus !== null && indivOnboardingStatus !== '') ? indivOnboardingStatus : (hasAddress ? "completed" : "payment_complete"),
-        };
       }
     }
   }
 
   // Check onboarding status for protected paths (not onboarding paths themselves)
-  if (user && isProtectedPath && !isOnboardingPath && cachedOrgData) {
+  if (user && isProtectedPath && !isOnboardingPath && !routeConfig?.requiresPlatformAdmin && cachedOrgData) {
     const onboardingStatus = (cachedOrgData.onboarding_status || "pending") as OnboardingStatus;
 
     // If onboarding not completed, redirect to onboarding
@@ -292,12 +239,15 @@ export async function proxy(request: NextRequest) {
 
   // Role-based and subscription-based access control for authenticated users
   if (user && supabase && isProtectedPath) {
-    // Find if current path requires role-based or subscription-based access
-    const routeConfig = roleProtectedRoutes.find((route) =>
-      request.nextUrl.pathname.startsWith(route.path)
-    );
+    if (routeConfig?.allowedRoles || routeConfig?.minTier || routeConfig?.requiresEnterprise || routeConfig?.requiresEnterpriseAdmin || routeConfig?.requiresOrgAdmin || routeConfig?.requiresPlatformAdmin) {
+      if (routeConfig.requiresPlatformAdmin) {
+        const isStaff = await getPlatformAdminFlag(user.id);
 
-    if (routeConfig?.allowedRoles || routeConfig?.minTier || routeConfig?.requiresEnterprise || routeConfig?.requiresEnterpriseAdmin) {
+        if (!isStaff) {
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+      }
+
       // Default to "user" role if not set (consistent with access module)
       // Also handle legacy "loan_officer" role by treating it as "user"
       const rawRole = cachedUserData?.role;
@@ -319,6 +269,19 @@ export async function proxy(request: NextRequest) {
       // Check if route requires enterprise admin
       if (routeConfig.requiresEnterpriseAdmin) {
         if (accountType !== "enterprise" || userRole !== "admin") {
+          const redirectUrl = new URL("/dashboard", request.url);
+          redirectUrl.searchParams.set("error", "admin_only");
+          return NextResponse.redirect(redirectUrl);
+        }
+      }
+
+      // Check if route requires org-admin access (individual owners OR
+      // enterprise admins). Enterprise non-admins are bounced; individuals pass.
+      if (routeConfig.requiresOrgAdmin) {
+        const isOrgAdmin =
+          accountType === "individual" ||
+          (accountType === "enterprise" && userRole === "admin");
+        if (!isOrgAdmin) {
           const redirectUrl = new URL("/dashboard", request.url);
           redirectUrl.searchParams.set("error", "admin_only");
           return NextResponse.redirect(redirectUrl);
@@ -363,12 +326,6 @@ export async function proxy(request: NextRequest) {
 
   if (isAuthPath && user) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  // Reset password page requires an authenticated session (from recovery email)
-  // For Better Auth, this is handled differently - the token is in the URL
-  if (!USE_BETTER_AUTH && request.nextUrl.pathname === "/reset-password" && !user) {
-    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return response;

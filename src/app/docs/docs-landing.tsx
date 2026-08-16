@@ -48,7 +48,7 @@ const quickStartLinks = [
   {
     title: "Contact Support",
     description: "Get help from our team",
-    href: "mailto:support@repwell.com",
+    href: "mailto:support@repwell.ai",
     icon: ChatCircle,
   },
 ];
@@ -194,7 +194,7 @@ export function DocsLanding() {
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <a
-            href="mailto:support@repwell.com"
+            href="mailto:support@repwell.ai"
             className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-body-sm font-medium text-repwell-teal-500 transition-colors hover:bg-background"
           >
             <ChatCircle size={16} />

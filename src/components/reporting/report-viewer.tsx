@@ -38,14 +38,14 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { CHART_COLORS, PIE_COLORS } from "@/components/analytics/chart-primitives";
+import { PERFORMANCE_STATUS_META } from "@/lib/reporting/templates";
 import type { GeneratedReport, TeamComparisonRow } from "@/lib/reporting/types";
 
 interface ReportViewerProps {
   report: GeneratedReport;
   className?: string;
 }
-
-const _COLORS = ["#10b981", "#6366f1", "#f59e0b", "#ef4444"];
 
 function MetricCard({
   title,
@@ -84,7 +84,9 @@ function MetricCard({
           <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
             {getTrendIcon()}
             {change !== undefined && (
-              <span className={cn(change > 0 ? "text-green-500" : change < 0 ? "text-red-500" : "")}>
+              <span
+                className={cn(change > 0 ? "text-green-500" : change < 0 ? "text-red-500" : "")}
+              >
                 {change > 0 ? "+" : ""}
                 {change.toFixed(1)}
                 {suffix} vs prev period
@@ -98,17 +100,18 @@ function MetricCard({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    excellent: "bg-green-100 text-green-700",
-    good: "bg-blue-100 text-blue-700",
-    needs_attention: "bg-yellow-100 text-yellow-700",
-    at_risk: "bg-red-100 text-red-700",
-  };
+function StatusBadge({ status }: { status: TeamComparisonRow["performanceStatus"] }) {
+  const statusMeta = PERFORMANCE_STATUS_META[status];
 
   return (
-    <Badge className={cn("font-medium capitalize", colors[status] || colors.good)}>
-      {status.replace("_", " ")}
+    <Badge
+      className="font-medium capitalize"
+      style={{
+        backgroundColor: statusMeta.backgroundColor,
+        color: statusMeta.color,
+      }}
+    >
+      {statusMeta.label}
     </Badge>
   );
 }
@@ -119,17 +122,17 @@ export function ReportViewer({ report, className }: ReportViewerProps) {
   // Prepare chart data
   const npsDistributionData = npsBreakdown
     ? [
-        { name: "Promoters", value: npsBreakdown.promoters, color: "#10b981" },
-        { name: "Passives", value: npsBreakdown.passives, color: "#6366f1" },
-        { name: "Detractors", value: npsBreakdown.detractors, color: "#ef4444" },
+        { name: "Promoters", value: npsBreakdown.promoters, color: PIE_COLORS[0] },
+        { name: "Passives", value: npsBreakdown.passives, color: PIE_COLORS[1] },
+        { name: "Detractors", value: npsBreakdown.detractors, color: PIE_COLORS[3] },
       ]
     : [];
 
   const csatDistributionData = csatMetrics
     ? [
-        { name: "Satisfied", value: csatMetrics.satisfiedCount, color: "#10b981" },
-        { name: "Neutral", value: csatMetrics.neutralCount, color: "#f59e0b" },
-        { name: "Dissatisfied", value: csatMetrics.dissatisfiedCount, color: "#ef4444" },
+        { name: "Satisfied", value: csatMetrics.satisfiedCount, color: PIE_COLORS[0] },
+        { name: "Neutral", value: csatMetrics.neutralCount, color: PIE_COLORS[2] },
+        { name: "Dissatisfied", value: csatMetrics.dissatisfiedCount, color: PIE_COLORS[3] },
       ]
     : [];
 
@@ -139,9 +142,7 @@ export function ReportViewer({ report, className }: ReportViewerProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{report.templateName}</h2>
-          <p className="text-muted-foreground">
-            {executiveSummary.periodLabel}
-          </p>
+          <p className="text-muted-foreground">{executiveSummary.periodLabel}</p>
         </div>
         <p className="text-sm text-muted-foreground">
           Generated: {format(report.generatedAt, "MMM d, yyyy 'at' h:mm a")}
@@ -225,24 +226,39 @@ export function ReportViewer({ report, className }: ReportViewerProps) {
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-green-500" />
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: npsDistributionData[0]?.color }}
+                        />
                         <span className="text-sm">Promoters (9-10)</span>
                       </div>
-                      <span className="font-medium">{npsBreakdown.promoterPercentage.toFixed(1)}%</span>
+                      <span className="font-medium">
+                        {npsBreakdown.promoterPercentage.toFixed(1)}%
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-indigo-500" />
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: npsDistributionData[1]?.color }}
+                        />
                         <span className="text-sm">Passives (7-8)</span>
                       </div>
-                      <span className="font-medium">{npsBreakdown.passivePercentage.toFixed(1)}%</span>
+                      <span className="font-medium">
+                        {npsBreakdown.passivePercentage.toFixed(1)}%
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-red-500" />
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: npsDistributionData[2]?.color }}
+                        />
                         <span className="text-sm">Detractors (0-6)</span>
                       </div>
-                      <span className="font-medium">{npsBreakdown.detractorPercentage.toFixed(1)}%</span>
+                      <span className="font-medium">
+                        {npsBreakdown.detractorPercentage.toFixed(1)}%
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -282,24 +298,39 @@ export function ReportViewer({ report, className }: ReportViewerProps) {
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-green-500" />
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: csatDistributionData[0]?.color }}
+                        />
                         <span className="text-sm">Satisfied (4-5)</span>
                       </div>
-                      <span className="font-medium">{csatMetrics.satisfiedPercentage.toFixed(1)}%</span>
+                      <span className="font-medium">
+                        {csatMetrics.satisfiedPercentage.toFixed(1)}%
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-yellow-500" />
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: csatDistributionData[1]?.color }}
+                        />
                         <span className="text-sm">Neutral (3)</span>
                       </div>
-                      <span className="font-medium">{csatMetrics.neutralPercentage.toFixed(1)}%</span>
+                      <span className="font-medium">
+                        {csatMetrics.neutralPercentage.toFixed(1)}%
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full bg-red-500" />
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: csatDistributionData[2]?.color }}
+                        />
                         <span className="text-sm">Dissatisfied (1-2)</span>
                       </div>
-                      <span className="font-medium">{csatMetrics.dissatisfiedPercentage.toFixed(1)}%</span>
+                      <span className="font-medium">
+                        {csatMetrics.dissatisfiedPercentage.toFixed(1)}%
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -334,9 +365,9 @@ export function ReportViewer({ report, className }: ReportViewerProps) {
                       <Line
                         type="monotone"
                         dataKey="value"
-                        stroke="#6366f1"
+                        stroke={CHART_COLORS[1]}
                         strokeWidth={2}
-                        dot={{ fill: "#6366f1" }}
+                        dot={{ fill: CHART_COLORS[1] }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -359,7 +390,7 @@ export function ReportViewer({ report, className }: ReportViewerProps) {
                       <XAxis dataKey="date" className="text-xs" />
                       <YAxis className="text-xs" />
                       <Tooltip />
-                      <Bar dataKey="value" fill="#10b981" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="value" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

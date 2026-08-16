@@ -1,16 +1,11 @@
-"use server";
-
-import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  sendSurveyInvitationEmail,
-  sendSurveyReminderEmail,
-} from "@/lib/email";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { sendSurveyInvitationEmail, sendSurveyReminderEmail } from "@/lib/email";
 import { emailConfig } from "@/lib/email/client";
-import type {
-  SurveyInvitationEmailData,
-  SurveyReminderEmailData,
-} from "@/lib/email/types";
+import type { SurveyInvitationEmailData, SurveyReminderEmailData } from "@/lib/email/types";
+import { guardAcquisitionSend } from "@/lib/contacts/send-guard";
+import { resolveContactUnsubscribeUrl } from "@/lib/contacts/tokens";
 import { TIER_LIMITS, type SubscriptionTier } from "@/lib/organization/types";
+import { toOneEmbed } from "@/lib/supabase/to-one-embed";
 
 export interface QueueItem {
   id: string;
@@ -20,9 +15,25 @@ export interface QueueItem {
   scheduled_at: string;
 }
 
+/** Loan officer joined onto a survey for invitation and reminder sends. */
+export interface SurveyLoanOfficer {
+  id: string;
+  full_name: string;
+  email: string;
+  photo_url: string | null;
+}
+
+/** Organization joined onto a survey for invitation and reminder branding. */
+export interface SurveyOrganization {
+  id: string;
+  name: string;
+  logo_url: string | null;
+}
+
 export interface SurveyWithDetails {
   id: string;
   token: string;
+  contact_id: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;
@@ -33,17 +44,8 @@ export interface SurveyWithDetails {
   expires_at: string | null;
   transaction_type: string | null;
   source_metadata: Record<string, unknown> | null;
-  loan_officer: {
-    id: string;
-    full_name: string;
-    email: string;
-    photo_url: string | null;
-  };
-  organization: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-  };
+  loan_officer: SurveyLoanOfficer;
+  organization: SurveyOrganization;
 }
 
 // Check if organization is within rate limits
@@ -146,10 +148,9 @@ export async function checkRateLimit(
 }
 
 // Get survey details for sending
-export async function getSurveyForSending(
-  surveyId: string
-): Promise<SurveyWithDetails | null> {
-  const supabase = createAdminClient();
+export async function getSurveyForSending(surveyId: string): Promise<SurveyWithDetails | null> {
+  // Untyped client: contact_id is a new column not yet in the generated types.
+  const supabase = createUntypedAdminClient();
 
   const { data: survey, error } = await supabase
     .from("surveys")
@@ -157,6 +158,7 @@ export async function getSurveyForSending(
       `
       id,
       token,
+      contact_id,
       customer_name,
       customer_email,
       customer_phone,
@@ -188,22 +190,13 @@ export async function getSurveyForSending(
     return null;
   }
 
-  const loanOfficer = survey.users as unknown as {
-    id: string;
-    full_name: string;
-    email: string;
-    photo_url: string | null;
-  };
-
-  const organization = survey.organizations as unknown as {
-    id: string;
-    name: string;
-    logo_url: string | null;
-  };
+  const loanOfficer = toOneEmbed<SurveyLoanOfficer>(survey.users);
+  const organization = toOneEmbed<SurveyOrganization>(survey.organizations);
 
   return {
     id: survey.id,
     token: survey.token,
+    contact_id: (survey.contact_id as string | null) ?? null,
     customer_name: survey.customer_name,
     customer_email: survey.customer_email,
     customer_phone: survey.customer_phone,
@@ -290,10 +283,7 @@ export async function processQueueItem(
     return { success: true };
   }
 
-  if (
-    survey.expires_at &&
-    new Date(survey.expires_at) < new Date()
-  ) {
+  if (survey.expires_at && new Date(survey.expires_at) < new Date()) {
     await supabase
       .from("survey_distribution_queue")
       .update({
@@ -305,6 +295,45 @@ export async function processQueueItem(
 
     return { success: true };
   }
+
+  // Send-time suppression gate (ADR 0004): the single check every acquisition
+  // send must pass. Both the initial invitation and reminders flow through here,
+  // so one gate covers them. A suppressed send is cancelled (not retried) and
+  // recorded via guardAcquisitionSend so it never vanishes silently.
+  const sendKind = item.type === "initial" ? "survey_invitation" : "survey_reminder";
+  const suppressed = await guardAcquisitionSend({
+    organizationId: survey.organization.id,
+    email: survey.customer_email,
+    channel: "email",
+    sendKind,
+    contactId: survey.contact_id,
+    sourceTable: "survey_distribution_queue",
+    sourceId: item.id,
+  });
+  if (suppressed) {
+    await supabase
+      .from("survey_distribution_queue")
+      .update({
+        status: "cancelled",
+        error_message: "Suppressed: recipient unsubscribed (email)",
+        processed_at: new Date().toISOString(),
+      })
+      .eq("id", item.id);
+    // Suppression is org-wide and durable — cancel any pending reminders too.
+    await supabase
+      .from("survey_distribution_queue")
+      .update({ status: "cancelled" })
+      .eq("survey_id", item.survey_id)
+      .eq("status", "pending");
+    return { success: true };
+  }
+
+  // Contact-scoped unsubscribe link for the acquisition email footer (ADR 0004);
+  // falls back to the legacy email-preferences link when the survey has no
+  // linked Contact (legacy rows).
+  const contactUnsubscribeUrl = survey.contact_id
+    ? ((await resolveContactUnsubscribeUrl(survey.contact_id)) ?? undefined)
+    : undefined;
 
   const surveyUrl = `${emailConfig.baseUrl}/survey/${survey.token}`;
 
@@ -327,6 +356,7 @@ export async function processQueueItem(
       loanOfficerId: survey.loan_officer.id,
       surveyId: survey.id,
       customTemplateId,
+      unsubscribeUrl: contactUnsubscribeUrl,
     };
 
     result = await sendSurveyInvitationEmail(emailData);
@@ -358,6 +388,7 @@ export async function processQueueItem(
       organizationId: survey.organization.id,
       loanOfficerId: survey.loan_officer.id,
       surveyId: survey.id,
+      unsubscribeUrl: contactUnsubscribeUrl,
     };
 
     result = await sendSurveyReminderEmail(emailData);
@@ -383,12 +414,12 @@ export async function processQueueItem(
       processed_at: new Date().toISOString(),
       retry_count: result.success
         ? undefined
-        : (await supabase
+        : await supabase
             .from("survey_distribution_queue")
             .select("retry_count")
             .eq("id", item.id)
             .single()
-            .then((r) => (r.data?.retry_count ?? 0) + 1)),
+            .then((r) => (r.data?.retry_count ?? 0) + 1),
     })
     .eq("id", item.id);
 
@@ -452,9 +483,7 @@ export async function scheduleReminders(
 }
 
 // Get pending queue items ready to process
-export async function getPendingQueueItems(
-  limit: number = 50
-): Promise<QueueItem[]> {
+export async function getPendingQueueItems(limit: number = 50): Promise<QueueItem[]> {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
@@ -502,8 +531,7 @@ export async function processDistributionQueue(
       }
     } catch (error) {
       results.failed++;
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       results.errors.push(`${item.survey_id}: ${errorMessage}`);
     }
   }
@@ -512,9 +540,7 @@ export async function processDistributionQueue(
 }
 
 // Cancel pending distributions for a survey
-export async function cancelPendingDistributions(
-  surveyId: string
-): Promise<{ cancelled: number }> {
+export async function cancelPendingDistributions(surveyId: string): Promise<{ cancelled: number }> {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
@@ -587,8 +613,7 @@ export async function getDistributionStats(
 
   for (const item of data) {
     if (item.status === "sent") stats.sent++;
-    else if (item.status === "pending" || item.status === "processing")
-      stats.pending++;
+    else if (item.status === "pending" || item.status === "processing") stats.pending++;
     else if (item.status === "failed") stats.failed++;
     else if (item.status === "cancelled") stats.cancelled++;
 

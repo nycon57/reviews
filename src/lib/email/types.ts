@@ -155,7 +155,11 @@ export type EmailTemplate =
   | "referral_reminder"
   | "referral_leaderboard"
   // Profile referral introduction email (public profile page)
-  | "profile_referral_introduction";
+  | "profile_referral_introduction"
+  // Review verification email (direct review submissions)
+  | "review_verification"
+  | "review_video_upsell"
+  | "review_dispute_escalation";
 
 // Base email data
 export interface BaseEmailData {
@@ -164,6 +168,13 @@ export interface BaseEmailData {
   organizationId?: string;
   loanOfficerId?: string;
   surveyId?: string;
+  /**
+   * Optional footer unsubscribe URL. Only ACQUISITION emails (survey/video
+   * invitations and reminders, review→video upsell) honor this — the send path
+   * supplies the Contact-scoped /u/c/[token] link (ADR 0004). When omitted, the
+   * builder falls back to the legacy email-preferences link.
+   */
+  unsubscribeUrl?: string;
 }
 
 // Survey invitation email data
@@ -1180,7 +1191,8 @@ export interface WeeklySummaryLOEmailData extends WeeklySummaryEmailBaseData {
 
   // Response metrics
   responseRate: number;
-  averageResponseTime: string;
+  /** Mean time-to-respond label (e.g. "6 hours"); null when not computable. */
+  averageResponseTime: string | null;
 
   // Pending actions
   pendingReviewResponses: number;
@@ -1225,7 +1237,8 @@ export interface WeeklySummaryManagerEmailData extends WeeklySummaryEmailBaseDat
 
   // Team response metrics
   teamResponseRate: number;
-  teamAverageResponseTime: string;
+  /** Mean team time-to-respond label (e.g. "6 hours"); null when not computable. */
+  teamAverageResponseTime: string | null;
 
   // Top performers (top 3)
   topPerformers: Array<{
@@ -2163,6 +2176,21 @@ export interface AdminAlertDigestItem {
   actionUrl: string;
 }
 
+// Email deliverability health summary included in the digest when an org's
+// failed-send count in the window crosses its threshold (Grill #2.7).
+export interface AdminAlertEmailHealthTemplate {
+  templateName: string;
+  count: number;
+}
+
+export interface AdminAlertEmailHealth {
+  failedCount: number;
+  threshold: number;
+  windowHours: number;
+  topTemplates: AdminAlertEmailHealthTemplate[];
+  analyticsUrl: string;
+}
+
 // Daily digest of all admin alerts
 export interface AdminAlertDigestEmailData extends BaseEmailData {
   recipientName: string;
@@ -2175,6 +2203,8 @@ export interface AdminAlertDigestEmailData extends BaseEmailData {
   dashboardUrl: string;
   alertSettingsUrl: string;
   unsubscribeUrl: string;
+  /** Present only when the org exceeded its failed-send threshold in the window. */
+  emailHealth?: AdminAlertEmailHealth;
 }
 
 // Admin alert preferences (mirrors database table)
@@ -2342,153 +2372,6 @@ export interface ReferralSocialMessages {
   };
 }
 
-// Base referral email data (shared across all referral emails)
-export interface ReferralEmailBaseData extends BaseEmailData {
-  referrerFirstName: string;
-  referrerFullName: string;
-  referrerEmail: string;
-  organizationName: string;
-  organizationLogoUrl?: string;
-  referralLink: string;
-  referralCode: string;
-  dashboardUrl: string;
-  referralProgramUrl: string;
-  unsubscribeUrl: string;
-}
-
-// Referral invite email (sent by referrer to friends)
-export interface ReferralInviteEmailData extends ReferralEmailBaseData {
-  recipientName?: string;
-  recipientEmail: string;
-  personalMessage?: string;
-  rewardForReferrer: string;
-  rewardForFriend: string;
-  signupUrl: string;
-  socialShareLinks?: ReferralSocialShareLinks;
-  socialMessages?: ReferralSocialMessages;
-}
-
-// Referrer notification when friend signs up
-export interface ReferralFriendSignedUpEmailData extends ReferralEmailBaseData {
-  friendName: string;
-  friendEmail: string;
-  signedUpAt: string;
-  totalReferrals: number;
-  pendingRewards: number;
-  nextMilestone?: {
-    referralsNeeded: number;
-    reward: string;
-  };
-}
-
-// Referrer notification when friend converts to paid
-export interface ReferralFriendConvertedEmailData extends ReferralEmailBaseData {
-  friendName: string;
-  friendPlanName: string;
-  convertedAt: string;
-  rewardEarned: string;
-  rewardType: "credit" | "discount" | "cash" | "points";
-  rewardValue: number;
-  totalRewardsEarned: number;
-  totalSuccessfulReferrals: number;
-}
-
-// Reward earned notification (referral credit/discount)
-export interface ReferralRewardEarnedEmailData extends ReferralEmailBaseData {
-  rewardDescription: string;
-  rewardType: "credit" | "discount" | "cash" | "points";
-  rewardValue: number;
-  rewardExpiresAt?: string;
-  howToRedeem: string;
-  redeemUrl: string;
-  totalRewardsEarned: number;
-  availableBalance: number;
-  friendName?: string;
-}
-
-// Referral program reminder (for inactive referrers)
-export interface ReferralReminderEmailData extends ReferralEmailBaseData {
-  daysSinceLastReferral: number;
-  totalReferrals: number;
-  pendingRewards: number;
-  potentialEarnings: string;
-  rewardPerReferral: string;
-  socialShareLinks?: ReferralSocialShareLinks;
-  socialMessages?: ReferralSocialMessages;
-  topReferrerStats?: {
-    name: string;
-    referrals: number;
-  };
-}
-
-// Referral leaderboard update (top referrers)
-export interface ReferralLeaderboardEmailData extends ReferralEmailBaseData {
-  leaderboardPeriod: "weekly" | "monthly" | "all_time";
-  periodStartDate: string;
-  periodEndDate: string;
-  userRank: number;
-  userReferrals: number;
-  previousRank?: number;
-  rankChange?: "up" | "down" | "same";
-  topReferrers: Array<{
-    rank: number;
-    name: string;
-    referrals: number;
-    reward?: string;
-    isCurrentUser?: boolean;
-  }>;
-  referralsToNextRank?: number;
-  leaderboardRewards?: Array<{
-    rank: string;
-    reward: string;
-  }>;
-  socialShareLinks?: ReferralSocialShareLinks;
-}
-
-// Referral tracking record (from database)
-export interface ReferralRecord {
-  id: string;
-  referrer_user_id: string;
-  referred_user_id?: string;
-  referral_code: string;
-  referral_link: string;
-  status: "pending" | "signed_up" | "converted" | "rewarded" | "expired";
-  invite_sent_at?: string;
-  signed_up_at?: string;
-  converted_at?: string;
-  reward_issued_at?: string;
-  reward_type?: "credit" | "discount" | "cash" | "points";
-  reward_value?: number;
-  reward_expires_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Referral program settings (per organization)
-export interface ReferralProgramSettings {
-  enabled: boolean;
-  rewardType: "credit" | "discount" | "cash" | "points";
-  referrerReward: number;
-  friendReward: number;
-  rewardExpirationDays?: number;
-  maxReferralsPerUser?: number;
-  requirePaidConversion: boolean;
-  customMessaging?: {
-    inviteSubject?: string;
-    inviteBody?: string;
-    socialMessages?: ReferralSocialMessages;
-  };
-}
-
-// Union type for all referral email data
-export type ReferralEmailData =
-  | ReferralInviteEmailData
-  | ReferralFriendSignedUpEmailData
-  | ReferralFriendConvertedEmailData
-  | ReferralRewardEarnedEmailData
-  | ReferralReminderEmailData
-  | ReferralLeaderboardEmailData;
-
 // =============================================================================
 // PROFILE REFERRAL INTRODUCTION EMAIL (Public profile page)
 // =============================================================================
@@ -2497,6 +2380,50 @@ export interface ProfileReferralIntroductionReview {
   customerName: string;
   rating: number;
   text: string;
+}
+
+// =============================================================================
+// REVIEW VERIFICATION EMAIL (Direct review submissions)
+// =============================================================================
+
+export interface ReviewVerificationEmailData extends BaseEmailData {
+  reviewId: string;
+  customerName?: string;
+  professionalName: string;
+  rating: number;
+  reviewText: string;
+  verifyUrl: string;
+  organizationName?: string;
+}
+
+// =============================================================================
+// REVIEW VIDEO UPSELL EMAIL (Invite published text reviewers to record video)
+// =============================================================================
+
+export interface ReviewVideoUpsellEmailData extends BaseEmailData {
+  reviewId: string;
+  customerName?: string;
+  professionalName: string;
+  requestUrl: string;
+  organizationName?: string;
+}
+
+// =============================================================================
+// REVIEW DISPUTE ESCALATION EMAIL (Individual account disputes to RepWell team)
+// =============================================================================
+
+export interface ReviewDisputeEscalationEmailData extends BaseEmailData {
+  flagId: string;
+  reviewId: string;
+  organizationName: string;
+  reporterName?: string;
+  reporterEmail?: string;
+  reasonLabel: string;
+  details?: string;
+  rating: number;
+  customerName?: string;
+  reviewExcerpt: string;
+  reviewUrl: string;
 }
 
 export interface ProfileReferralIntroductionEmailData extends BaseEmailData {

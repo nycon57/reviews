@@ -16,6 +16,7 @@ import {
 } from "./dom-helpers";
 import { createEqualHousingLenderSVG } from "../assets/equal-housing-lender";
 import { setLocale, t } from "../i18n";
+import { formatEmbedSource } from "./source-labels";
 
 // ── Main render ─────────────────────────────────────────────────────
 
@@ -110,7 +111,7 @@ export function renderWidget(
 
       // Source badge
       if (content?.showSource !== false && review.source) {
-        card.appendChild(text("span", `${t("via")} ${review.source}`, "rw-review__source"));
+        card.appendChild(text("span", `${t("via")} ${formatEmbedSource(review.source)}`, "rw-review__source"));
       }
 
       list.appendChild(card);
@@ -155,7 +156,7 @@ export function renderWidget(
     const branding = el("div", "rw-branding");
     branding.textContent = `${t("poweredBy")} `;
     const link = document.createElement("a");
-    link.href = "https://repwell.com";
+    link.href = "https://repwell.ai";
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.textContent = "RepWell";

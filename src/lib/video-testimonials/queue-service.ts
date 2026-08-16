@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import {
   sendVideoTestimonialInvitationEmail,
   sendVideoTestimonialReminderEmail,
@@ -8,6 +8,8 @@ import type {
   VideoTestimonialInvitationEmailData,
   VideoTestimonialReminderEmailData,
 } from "@/lib/email/types";
+import { guardAcquisitionSend } from "@/lib/contacts/send-guard";
+import { resolveContactUnsubscribeUrl } from "@/lib/contacts/tokens";
 
 // ============================================================================
 // Types
@@ -25,6 +27,7 @@ export interface VideoTestimonialQueueItem {
 export interface VideoTestimonialRequestWithDetails {
   id: string;
   token: string;
+  contact_id: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;
@@ -223,12 +226,21 @@ async function cancelQueueItem(
 }
 
 /**
+ * PostgREST returns a to-one embed (`organizations!inner (...)`) as a single object, but without
+ * generated table types the client widens it to an array. Normalise both shapes to the object.
+ */
+function firstEmbedded<T>(embed: T | T[]): T {
+  return Array.isArray(embed) ? embed[0] : embed;
+}
+
+/**
  * Get video testimonial request details for sending
  */
 export async function getVideoTestimonialRequestForSending(
   requestId: string
 ): Promise<VideoTestimonialRequestWithDetails | null> {
-  const supabase = createAdminClient();
+  // Untyped client: contact_id is a new column not yet in the generated types.
+  const supabase = createUntypedAdminClient();
 
   // Fetch request + organization (no user_id FK exists, so query user separately)
   const { data: request, error } = await supabase
@@ -237,6 +249,7 @@ export async function getVideoTestimonialRequestForSending(
       `
       id,
       token,
+      contact_id,
       user_id,
       customer_name,
       customer_email,
@@ -276,15 +289,12 @@ export async function getVideoTestimonialRequestForSending(
     return null;
   }
 
-  const organization = request.organizations as unknown as {
-    id: string;
-    name: string;
-    logo_url: string | null;
-  };
+  const organization = firstEmbedded(request.organizations);
 
   return {
     id: request.id,
     token: request.token,
+    contact_id: (request.contact_id as string | null) ?? null,
     customer_name: request.customer_name,
     customer_email: request.customer_email,
     customer_phone: request.customer_phone,
@@ -408,6 +418,35 @@ export async function processVideoTestimonialQueueItem(
     return { success: true };
   }
 
+  // Send-time suppression gate (ADR 0004): one check covers the invitation and
+  // both reminders since all video sends flow through here. A suppressed send is
+  // cancelled (not retried) and recorded via guardAcquisitionSend.
+  const sendKind = item.type === "initial" ? "video_invitation" : "video_reminder";
+  const suppressed = await guardAcquisitionSend({
+    organizationId: request.organization.id,
+    email: request.customer_email,
+    channel: "email",
+    sendKind,
+    contactId: request.contact_id,
+    sourceTable: "video_testimonial_queue",
+    sourceId: item.id,
+  });
+  if (suppressed) {
+    await cancelQueueItem(item.id, "Suppressed: recipient unsubscribed (email)");
+    // Suppression is org-wide and durable — cancel any pending items too.
+    await supabase
+      .from("video_testimonial_queue")
+      .update({ status: "cancelled" })
+      .eq("request_id", item.request_id)
+      .eq("status", "pending");
+    return { success: true };
+  }
+
+  // Contact-scoped unsubscribe link for the acquisition email footer (ADR 0004).
+  const contactUnsubscribeUrl = request.contact_id
+    ? (await resolveContactUnsubscribeUrl(request.contact_id)) ?? undefined
+    : undefined;
+
   const requestUrl = `${emailConfig.baseUrl}/video-testimonial/${request.token}`;
 
   // Send email based on type
@@ -427,6 +466,7 @@ export async function processVideoTestimonialQueueItem(
       organizationId: request.organization.id,
       loanOfficerId: request.loan_officer.id,
       requestId: request.id,
+      unsubscribeUrl: contactUnsubscribeUrl,
     };
 
     result = await sendVideoTestimonialInvitationEmail(emailData);
@@ -459,6 +499,7 @@ export async function processVideoTestimonialQueueItem(
       organizationId: request.organization.id,
       loanOfficerId: request.loan_officer.id,
       requestId: request.id,
+      unsubscribeUrl: contactUnsubscribeUrl,
     };
 
     result = await sendVideoTestimonialReminderEmail(emailData);
@@ -580,6 +621,41 @@ export async function sendInitialVideoTestimonialEmailImmediately(
     return { success: false, error: "Request expired" };
   }
 
+  // Send-time suppression gate (ADR 0004). A suppressed immediate send cancels
+  // the request (and any scheduled reminders) and records the skip — it never
+  // silently drops.
+  const suppressed = await guardAcquisitionSend({
+    organizationId: request.organization.id,
+    email: request.customer_email,
+    channel: "email",
+    sendKind: "video_invitation",
+    contactId: request.contact_id,
+    sourceTable: "video_testimonial_requests",
+    sourceId: request.id,
+  });
+  if (suppressed) {
+    const nowIso = new Date().toISOString();
+    await supabase
+      .from("video_testimonial_requests")
+      .update({
+        status: "cancelled",
+        last_transition_at: nowIso,
+        last_transition_source: "immediate_send",
+        last_transition_reason: "Suppressed: recipient unsubscribed (email)",
+      } as Record<string, unknown>)
+      .eq("id", requestId);
+    await supabase
+      .from("video_testimonial_queue")
+      .update({ status: "cancelled" })
+      .eq("request_id", requestId)
+      .eq("status", "pending");
+    return { success: true };
+  }
+
+  const contactUnsubscribeUrl = request.contact_id
+    ? (await resolveContactUnsubscribeUrl(request.contact_id)) ?? undefined
+    : undefined;
+
   const requestUrl = `${emailConfig.baseUrl}/video-testimonial/${request.token}`;
 
   // Send the email
@@ -596,6 +672,7 @@ export async function sendInitialVideoTestimonialEmailImmediately(
     organizationId: request.organization.id,
     loanOfficerId: request.loan_officer.id,
     requestId: request.id,
+    unsubscribeUrl: contactUnsubscribeUrl,
   };
 
   console.error("[VideoTestimonial] Sending email", {

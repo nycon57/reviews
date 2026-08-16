@@ -18,11 +18,6 @@ import {
   Bell,
   Check,
   Checks as CheckCheck,
-  Star,
-  Warning as AlertTriangle,
-  Chats as MessageSquare,
-  Trophy,
-  FileText,
   Archive,
   CaretLeft as ChevronLeft,
   CaretRight as ChevronRight,
@@ -30,14 +25,15 @@ import {
   Tray as Inbox,
   Funnel as Filter,
 } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import { NOTIFICATION_TYPE_CONFIG, getNotificationTypeConfig } from "@/lib/notifications/config";
 import type { NotificationWithDetails, NotificationType } from "@/lib/notifications/types";
 import {
   getNotifications,
   markNotificationsAsRead,
-  archiveNotification,
 } from "@/lib/notifications/actions";
-import { formatDistanceToNow, format } from "date-fns";
+import { useArchivableNotifications } from "./use-archivable-notifications";
+import { format } from "date-fns";
 
 interface NotificationsListProps {
   initialNotifications: NotificationWithDetails[];
@@ -45,51 +41,19 @@ interface NotificationsListProps {
   initialUnreadCount: number;
 }
 
-const notificationIcons: Record<NotificationType, React.ElementType> = {
-  new_review: Star,
-  negative_review: AlertTriangle,
-  review_approved: Check,
-  review_rejected: AlertTriangle,
-  response_posted: MessageSquare,
-  badge_earned: Trophy,
-  milestone_reached: Trophy,
-  mention: MessageSquare,
-  report_ready: FileText,
-  digest: FileText,
-  system: Bell,
-};
-
-const notificationColors: Record<NotificationType, string> = {
-  new_review: "bg-amber-100 text-amber-600",
-  negative_review: "bg-red-100 text-red-600",
-  review_approved: "bg-green-100 text-green-600",
-  review_rejected: "bg-red-100 text-red-600",
-  response_posted: "bg-blue-100 text-blue-600",
-  badge_earned: "bg-purple-100 text-purple-600",
-  milestone_reached: "bg-purple-100 text-purple-600",
-  mention: "bg-blue-100 text-blue-600",
-  report_ready: "bg-indigo-100 text-indigo-600",
-  digest: "bg-indigo-100 text-indigo-600",
-  system: "bg-muted text-muted-foreground",
-};
-
-const notificationTypeLabels: Record<NotificationType, string> = {
-  new_review: "New Review",
-  negative_review: "Negative Review",
-  review_approved: "Review Approved",
-  review_rejected: "Review Rejected",
-  response_posted: "Response Posted",
-  badge_earned: "Badge Earned",
-  milestone_reached: "Milestone Reached",
-  mention: "Mention",
-  report_ready: "Report Ready",
-  digest: "Digest",
-  system: "System",
-};
-
 type FilterType = "all" | "unread" | NotificationType;
 
 const PAGE_SIZE = 20;
+const TYPE_FILTERS: NotificationType[] = [
+  "new_review",
+  "negative_review",
+  "review_approved",
+  "response_posted",
+  "badge_earned",
+  "mention",
+  "report_ready",
+  "system",
+];
 
 export function NotificationsList({
   initialNotifications,
@@ -97,7 +61,10 @@ export function NotificationsList({
   initialUnreadCount,
 }: NotificationsListProps) {
   const [notifications, setNotifications] = React.useState<NotificationWithDetails[]>(initialNotifications);
+  const [defaultNotifications, setDefaultNotifications] =
+    React.useState<NotificationWithDetails[]>(initialNotifications);
   const [total, setTotal] = React.useState(initialTotal);
+  const [defaultTotal, setDefaultTotal] = React.useState(initialTotal);
   const [unreadCount, setUnreadCount] = React.useState(initialUnreadCount);
   const [loading, setLoading] = React.useState(false);
   const [filter, setFilter] = React.useState<FilterType>("all");
@@ -115,6 +82,7 @@ export function NotificationsList({
       limit: PAGE_SIZE,
       offset,
       unreadOnly: filter === "unread",
+      type: filter !== "all" && filter !== "unread" ? filter : undefined,
     });
     setNotifications(result.notifications);
     setTotal(result.total);
@@ -122,27 +90,37 @@ export function NotificationsList({
     setSelectedIds(new Set());
   }, [filter, page]);
 
-  // Filter client-side for type filters (server handles unread filter)
-  const displayedNotifications = React.useMemo(() => {
-    if (filter === "all" || filter === "unread") {
-      return notifications;
+  // The server now filters by type and unread state, so render the fetched list
+  // directly (client-side filtering produced wrong counts and pagination).
+  const displayedNotifications = notifications;
+
+  // Restore the server-rendered first page when returning to the default view —
+  // done during render (prev-comparison) so stale filtered rows never paint.
+  const isDefaultView = filter === "all" && page === 1;
+  const [prevIsDefaultView, setPrevIsDefaultView] = React.useState(true);
+  if (isDefaultView !== prevIsDefaultView) {
+    setPrevIsDefaultView(isDefaultView);
+    if (isDefaultView) {
+      setNotifications(defaultNotifications);
+      setTotal(defaultTotal);
+      setSelectedIds(new Set());
     }
-    return notifications.filter((n) => n.type === filter);
-  }, [notifications, filter]);
+  }
 
   React.useEffect(() => {
-    if (filter === "all" && page === 1) {
-      // Use initial data
-      return;
+    if (!isDefaultView) {
+      fetchNotifications();
     }
-    fetchNotifications();
-  }, [filter, page, fetchNotifications]);
+  }, [isDefaultView, fetchNotifications]);
 
   const handleMarkAllAsRead = async () => {
     setBulkActioning(true);
     const result = await markNotificationsAsRead();
     if (result.success) {
       setNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
+      );
+      setDefaultNotifications((prev) =>
         prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
       );
       setUnreadCount(0);
@@ -157,6 +135,11 @@ export function NotificationsList({
     const result = await markNotificationsAsRead(ids);
     if (result.success) {
       setNotifications((prev) =>
+        prev.map((n) =>
+          selectedIds.has(n.id) ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
+        )
+      );
+      setDefaultNotifications((prev) =>
         prev.map((n) =>
           selectedIds.has(n.id) ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
         )
@@ -178,21 +161,25 @@ export function NotificationsList({
           n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
         )
       );
+      setDefaultNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notificationId ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
+        )
+      );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     }
   };
 
-  const handleArchive = async (notificationId: string) => {
-    const result = await archiveNotification(notificationId);
-    if (result.success) {
-      const notification = notifications.find((n) => n.id === notificationId);
-      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-      setTotal((prev) => prev - 1);
-      if (notification && !notification.is_read) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
-    }
-  };
+  const { handleArchive } = useArchivableNotifications({
+    notifications,
+    setNotifications,
+    setUnreadCount,
+    defaultNotifications,
+    setDefaultNotifications,
+    setSelectedIds,
+    setTotal,
+    setDefaultTotal,
+  });
 
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) => {
@@ -262,20 +249,17 @@ export function NotificationsList({
                   setPage(1);
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" aria-label="Filter notifications">
                   <SelectValue placeholder="Filter notifications" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Notifications</SelectItem>
                   <SelectItem value="unread">Unread Only</SelectItem>
-                  <SelectItem value="new_review">New Reviews</SelectItem>
-                  <SelectItem value="negative_review">Negative Reviews</SelectItem>
-                  <SelectItem value="review_approved">Review Approved</SelectItem>
-                  <SelectItem value="response_posted">Responses</SelectItem>
-                  <SelectItem value="badge_earned">Badges</SelectItem>
-                  <SelectItem value="mention">Mentions</SelectItem>
-                  <SelectItem value="report_ready">Reports</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  {TYPE_FILTERS.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {NOTIFICATION_TYPE_CONFIG[type].label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -341,6 +325,7 @@ export function NotificationsList({
                   id="select-all"
                   checked={selectedIds.size === displayedNotifications.length && displayedNotifications.length > 0}
                   onCheckedChange={toggleSelectAll}
+                  aria-label="Select all notifications"
                 />
                 <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
                   Select all
@@ -416,9 +401,7 @@ function NotificationRow({
   onMarkAsRead,
   onArchive,
 }: NotificationRowProps) {
-  const Icon = notificationIcons[notification.type as NotificationType] || Bell;
-  const colorClass = notificationColors[notification.type as NotificationType] || notificationColors.system;
-  const typeLabel = notificationTypeLabels[notification.type as NotificationType] || notification.type;
+  const { icon: Icon, colorClass, label: typeLabel } = getNotificationTypeConfig(notification.type);
 
   const content = (
     <div
@@ -433,6 +416,7 @@ function NotificationRow({
           checked={selected}
           onCheckedChange={() => onToggleSelect()}
           onClick={(e) => e.stopPropagation()}
+          aria-label={`Select notification: ${notification.title}`}
         />
       </div>
 
@@ -461,7 +445,7 @@ function NotificationRow({
                 {typeLabel}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                {formatRelativeTime(notification.created_at)}
               </span>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(notification.created_at), "MMM d, yyyy h:mm a")}
@@ -482,6 +466,7 @@ function NotificationRow({
                   onMarkAsRead();
                 }}
                 title="Mark as read"
+                aria-label={`Mark notification as read: ${notification.title}`}
               >
                 <Check className="h-4 w-4" />
               </Button>
@@ -496,6 +481,7 @@ function NotificationRow({
                 onArchive();
               }}
               title="Archive"
+              aria-label={`Archive notification: ${notification.title}`}
             >
               <Archive className="h-4 w-4" />
             </Button>

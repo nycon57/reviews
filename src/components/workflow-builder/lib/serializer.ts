@@ -213,20 +213,6 @@ function serializeConditions(conditions: WorkflowCondition[] | undefined): Recor
 }
 
 function buildStepFromActionNode(node: WorkflowNode, step: number): Record<string, unknown> {
-  if (node.type === "action-sms") {
-    return {
-      step,
-      template: { name: node.data.smsTemplateName || "sms_template" },
-      delay: { value: 0, unit: "hours" },
-      channelConfig: {
-        channel: "sms",
-        smsTemplate: { templateId: node.data.smsTemplateName || "sms_template" },
-        fallbackChannel: node.data.fallbackToEmail ? "email" : undefined,
-      },
-      description: `Send SMS${node.data.smsTemplateName ? ` (${String(node.data.smsTemplateName)})` : ""}`,
-    };
-  }
-
   if (node.type === "action-survey") {
     return {
       step,
@@ -253,17 +239,9 @@ function buildStepFromActionNode(node: WorkflowNode, step: number): Record<strin
       delay: { value: 0, unit: "hours" },
       smartChannel: {
         strategy: node.data.strategy || "best_available",
-        smsRequirements: node.data.smsRequirements || {
-          requireConsent: true,
-          requirePhoneNumber: true,
-          respectQuietHours: true,
-        },
       },
       channelConfig: {
         channel: "email",
-        smsTemplate: node.data.smsTemplateName
-          ? { templateId: String(node.data.smsTemplateName) }
-          : undefined,
       },
       description: "Smart send action",
     };
@@ -541,7 +519,6 @@ export function canvasToSequenceDefinition(
 // ============================================================================
 
 function inferActionTypeFromStep(step: Record<string, unknown>): WorkflowNodeType {
-  const channelConfig = (step.channelConfig || {}) as { channel?: unknown; smsTemplate?: unknown };
   const smartChannel = (step.smartChannel || {}) as { strategy?: unknown };
   const surveyConfig = step.surveyConfig as Record<string, unknown> | undefined;
 
@@ -551,10 +528,6 @@ function inferActionTypeFromStep(step: Record<string, unknown>): WorkflowNodeTyp
 
   if (smartChannel.strategy) {
     return "action-smart";
-  }
-
-  if (channelConfig.channel === "sms" || channelConfig.smsTemplate) {
-    return "action-sms";
   }
 
   return "action-email";
@@ -732,13 +705,8 @@ export function sequenceDefinitionToCanvas(definition: unknown): {
     actionNode.id = `action_${index + 1}`;
 
     const template = toRecord(step.template);
-    const channelConfig = toRecord(step.channelConfig);
 
-    if (actionType === "action-sms") {
-      const smsTemplate = toRecord(channelConfig.smsTemplate);
-      actionNode.data.smsTemplateName = String(smsTemplate.templateId || "");
-      actionNode.data.fallbackToEmail = Boolean(channelConfig.fallbackChannel === "email");
-    } else if (actionType === "action-survey") {
+    if (actionType === "action-survey") {
       actionNode.data.emailTemplateId = String(template.customTemplateId || "");
       const surveyConfig = toRecord(step.surveyConfig);
       actionNode.data.surveyTemplateId = String(surveyConfig.surveyTemplateId || "");
@@ -748,8 +716,6 @@ export function sequenceDefinitionToCanvas(definition: unknown): {
       actionNode.data.emailTemplateId = String(template.customTemplateId || "");
       const smartChannel = toRecord(step.smartChannel);
       actionNode.data.strategy = smartChannel.strategy as WorkflowNodeData["strategy"];
-      actionNode.data.smsRequirements = toRecord(smartChannel.smsRequirements) as WorkflowNodeData["smsRequirements"];
-      actionNode.data.smsTemplateName = String(toRecord(channelConfig.smsTemplate).templateId || "");
     } else {
       // action-email
       actionNode.data.emailTemplateId = String(template.customTemplateId || "");

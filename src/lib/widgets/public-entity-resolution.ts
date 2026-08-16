@@ -62,7 +62,7 @@ async function userExistsInOrganization(organizationId: string, userId: string):
     .from("users")
     .select("id")
     .eq("id", userId)
-    .or(`organization_id.eq.${organizationId},individual_organization_id.eq.${organizationId}`)
+    .eq("organization_id", organizationId)
     .maybeSingle();
 
   return !error && !!data;

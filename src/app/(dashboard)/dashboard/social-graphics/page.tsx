@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GraphicsList } from "@/components/social-graphics/graphics-list";
+import { checkPageAccess } from "@/lib/access";
 import { getGraphics, getReviewsForGeneration } from "@/lib/social-graphics/actions";
 
 export const metadata = {
@@ -45,7 +46,9 @@ function GraphicsListSkeleton() {
   );
 }
 
-export default function SocialGraphicsPage() {
+export default async function SocialGraphicsPage() {
+  await checkPageAccess({ minRole: "manager" });
+
   return (
     <div className="flex-1 py-8">
       <Suspense fallback={<GraphicsListSkeleton />}>

@@ -9,7 +9,6 @@ import {
   DASHBOARD_COMMON_PAGES,
   DASHBOARD_PRO_PAGES,
   DASHBOARD_ENTERPRISE_PAGES,
-  DASHBOARD_ADMIN_PAGES,
   TEST_USERS,
 } from "../helpers/pages";
 import { expectPageLoaded } from "../helpers/assertions";
@@ -55,7 +54,7 @@ test.describe("Individual Basic — pro pages show upgrade", () => {
 });
 
 test.describe("Individual Basic — enterprise pages redirect", () => {
-  for (const pg of [...DASHBOARD_ENTERPRISE_PAGES, ...DASHBOARD_ADMIN_PAGES]) {
+  for (const pg of DASHBOARD_ENTERPRISE_PAGES) {
     test(`${pg.name} redirects away`, async ({ page }) => {
       await page.goto(pg.path, { waitUntil: "commit" });
       await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});

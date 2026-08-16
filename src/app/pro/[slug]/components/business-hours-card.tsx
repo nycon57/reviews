@@ -1,6 +1,4 @@
-"use client";
-
-import { Clock } from "@phosphor-icons/react";
+import { Clock } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { BusinessHours } from "@/lib/seo/actions";

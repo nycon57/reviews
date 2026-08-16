@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { admin, magicLink } from "better-auth/plugins";
 import { Pool } from "pg";
 import { nextCookies } from "better-auth/next-js";
-import { getResendClient, emailConfig, getFromAddress } from "@/lib/email/client";
+import { getResendClient, getFromAddress } from "@/lib/email/client";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -17,7 +17,6 @@ function createPool() {
 
   // Parse the connection URL
   const url = new URL(connectionUrl);
-  const [username, projectRef] = url.username.split(".");
 
   // Log connection info only in development for debugging
   if (process.env.NODE_ENV === "development") {
@@ -49,6 +48,94 @@ function getPool(): Pool {
   return pool;
 }
 
+const LOCAL_AUTH_HOSTS = [
+  "localhost",
+  "localhost:*",
+  "127.0.0.1",
+  "127.0.0.1:*",
+  "[::1]",
+  "[::1]:*",
+];
+
+const LOCAL_AUTH_ORIGINS = [
+  "http://localhost:*",
+  "http://127.0.0.1:*",
+  "http://[::1]:*",
+];
+
+// Only trust loopback origins/hosts outside production. Preview builds also run
+// with NODE_ENV="production" but are served from real domains, so dropping the
+// localhost entries there is behaviour-neutral while closing the prod hole.
+const ALLOW_LOCAL_AUTH_ORIGINS = process.env.NODE_ENV !== "production";
+
+// CUTOVER REQUIREMENT: Better Auth is the only auth system now. The signing
+// secret has no safe fallback, so production must set it explicitly.
+const CONFIGURED_BETTER_AUTH_SECRET = (() => {
+  const value = process.env.BETTER_AUTH_SECRET;
+  if (process.env.NODE_ENV === "production" && !value) {
+    throw new Error("BETTER_AUTH_SECRET is required in production for Better Auth");
+  }
+  return value;
+})();
+
+// The auth base URL follows the app's canonical URL: prefer an explicit
+// BETTER_AUTH_URL, else the app-wide NEXT_PUBLIC_APP_URL (already required for
+// canonicals/OG). Only fall back to localhost outside production — a prod
+// build with neither configured is a misconfiguration we fail loudly on.
+function getConfiguredAppUrl() {
+  const configured = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+  if (configured) return configured;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "BETTER_AUTH_URL or NEXT_PUBLIC_APP_URL is required in production for Better Auth"
+    );
+  }
+  return "http://localhost:3000";
+}
+
+function getConfiguredAppOrigin() {
+  try {
+    return new URL(getConfiguredAppUrl()).origin;
+  } catch {
+    return null;
+  }
+}
+
+function isLocalAuthOrigin(origin: string) {
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "http:" &&
+      (url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "::1")
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Trusted origins that never vary between requests: the configured app origin
+// plus (outside production) the loopback origins. Computed once at module load.
+const CONFIGURED_APP_ORIGIN = getConfiguredAppOrigin();
+const STATIC_TRUSTED_AUTH_ORIGINS: string[] = [
+  ...(ALLOW_LOCAL_AUTH_ORIGINS ? LOCAL_AUTH_ORIGINS : []),
+  ...(CONFIGURED_APP_ORIGIN ? [CONFIGURED_APP_ORIGIN] : []),
+];
+
+function getTrustedAuthOrigins(request?: Request) {
+  const requestOrigin = request?.headers.get("origin");
+
+  if (ALLOW_LOCAL_AUTH_ORIGINS && requestOrigin && isLocalAuthOrigin(requestOrigin)) {
+    return [...STATIC_TRUSTED_AUTH_ORIGINS, requestOrigin];
+  }
+
+  return STATIC_TRUSTED_AUTH_ORIGINS;
+}
+
+// Outside production BETTER_AUTH_SECRET may be unset (see above); leave `secret` off
+// the options entirely in that case rather than passing it as undefined.
+const secretOption: { secret?: string } = {};
+if (CONFIGURED_BETTER_AUTH_SECRET) secretOption.secret = CONFIGURED_BETTER_AUTH_SECRET;
+
 /**
  * Better Auth configuration for RepWell
  *
@@ -58,12 +145,19 @@ function getPool(): Pool {
  * - New tables: sessions, accounts, verifications (created by migration)
  */
 export const auth = betterAuth({
+  ...secretOption,
+
+  baseURL: {
+    allowedHosts: LOCAL_AUTH_HOSTS,
+    fallback: getConfiguredAppUrl(),
+    protocol: "auto",
+  },
+
   database: getPool(),
 
-  // Use Next.js cookies for SSR support
+  // Use Next.js cookies for SSR support. Better Auth 1.6 requires cookie
+  // integration plugins to run last so framework cookie forwarding is complete.
   plugins: [
-    nextCookies(),
-
     // Admin plugin for user management and impersonation
     admin({
       impersonationSessionDuration: 60 * 60, // 1 hour
@@ -114,6 +208,8 @@ export const auth = betterAuth({
       },
       expiresIn: 60 * 15, // 15 minutes
     }),
+
+    nextCookies(),
   ],
 
   // Email and password authentication
@@ -309,9 +405,7 @@ export const auth = betterAuth({
   },
 
   // Trusted origins for CSRF
-  trustedOrigins: [
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  ],
+  trustedOrigins: getTrustedAuthOrigins,
 
   // Database hooks for custom logic
   databaseHooks: {

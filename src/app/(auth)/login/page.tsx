@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -20,7 +20,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Form,
@@ -41,11 +40,13 @@ import {
 
 type AuthMode = "password" | "magic-link";
 
+const MAGIC_LINK_RESEND_COOLDOWN_SECONDS = 60;
+
 function LoginPageFallback() {
   return (
     <Card>
       <CardHeader variant="plain" className="text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <h1 className="text-2xl font-semibold leading-none tracking-tight text-heading-accent">Welcome back</h1>
         <CardDescription>
           Sign in to your account to continue
         </CardDescription>
@@ -74,11 +75,19 @@ function LoginContent() {
   const [mode, setMode] = useState<AuthMode>("password");
   const [isLoading, setIsLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const redirectTo = searchParams.get("redirect") || "/dashboard";
   const reason = searchParams.get("reason");
+
+  // Tick down the magic-link resend cooldown once per second.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   // Password form
   const passwordForm = useForm<SignInInput>({
@@ -127,11 +136,13 @@ function LoginContent() {
   };
 
   const onMagicLinkSubmit = async (data: MagicLinkInput) => {
+    if (isLoading || resendCooldown > 0) return;
     setIsLoading(true);
     try {
       const result = await unifiedSignInWithMagicLink(data);
       if (result.success) {
         setMagicLinkSent(true);
+        setResendCooldown(MAGIC_LINK_RESEND_COOLDOWN_SECONDS);
         toast({
           title: "Magic link sent!",
           description: "Check your email for a sign-in link.",
@@ -161,7 +172,7 @@ function LoginContent() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Mail className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Check your email</CardTitle>
+          <h1 className="text-2xl font-semibold leading-none tracking-tight text-heading-accent">Check your email</h1>
           <CardDescription>
             We&apos;ve sent a magic link to{" "}
             <span className="font-medium text-foreground">
@@ -187,10 +198,10 @@ function LoginContent() {
             Didn&apos;t receive the email?{" "}
             <button
               onClick={() => onMagicLinkSubmit(magicLinkForm.getValues())}
-              className="text-primary hover:underline"
-              disabled={isLoading}
+              className="font-medium text-repwell-teal-400 underline disabled:opacity-60 disabled:no-underline"
+              disabled={isLoading || resendCooldown > 0}
             >
-              Resend
+              {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend"}
             </button>
           </p>
         </CardFooter>
@@ -201,7 +212,7 @@ function LoginContent() {
   return (
     <Card>
       <CardHeader variant="plain" className="text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <h1 className="text-2xl font-semibold leading-none tracking-tight text-heading-accent">Welcome back</h1>
         <CardDescription>
           Sign in to your account to continue
         </CardDescription>
@@ -252,17 +263,17 @@ function LoginContent() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
                         <Input
                           type="email"
                           placeholder="you@example.com"
                           className="pl-10"
                           {...field}
                         />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -281,17 +292,17 @@ function LoginContent() {
                         Forgot password?
                       </Link>
                     </div>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
                         <Input
                           type="password"
                           placeholder="Enter your password"
                           className="pl-10"
                           {...field}
                         />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -320,17 +331,17 @@ function LoginContent() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
                         <Input
                           type="email"
                           placeholder="you@example.com"
                           className="pl-10"
                           {...field}
                         />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -355,7 +366,7 @@ function LoginContent() {
       <CardFooter>
         <p className="w-full text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-primary hover:underline">
+          <Link href="/signup" className="font-medium text-repwell-teal-400 underline">
             Sign up
           </Link>
         </p>

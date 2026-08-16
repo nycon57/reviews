@@ -46,7 +46,7 @@ describe("transcribeWithWordTimestamps", () => {
     const deepgram = vi.fn().mockRejectedValue(new Error("Deepgram unavailable"));
     const gemini = vi.fn().mockResolvedValue(buildResult({ provider: "gemini" }));
 
-    const result = await transcribeWithWordTimestamps("https://example.com/audio.webm", {
+    const result = await transcribeWithWordTimestamps("https://example.supabase.co/audio.webm", {
       durationSeconds: 12,
       providers: { deepgram, gemini },
     });
@@ -64,7 +64,7 @@ describe("transcribeWithWordTimestamps", () => {
     const deepgram = vi.fn().mockResolvedValue(buildResult({ provider: "deepgram", model: "nova-2" }));
     const gemini = vi.fn().mockResolvedValue(buildResult());
 
-    const result = await transcribeWithWordTimestamps("https://example.com/audio.mp4", {
+    const result = await transcribeWithWordTimestamps("https://example.supabase.co/audio.mp4", {
       providers: { deepgram, gemini },
     });
 
@@ -83,7 +83,7 @@ describe("transcribeWithWordTimestamps", () => {
 
   it("rejects unsupported formats with status 400", async () => {
     await expect(
-      transcribeWithWordTimestamps("https://example.com/audio.flac", {
+      transcribeWithWordTimestamps("https://example.supabase.co/audio.flac", {
         providers: { gemini: vi.fn().mockResolvedValue(buildResult()) },
       })
     ).rejects.toMatchObject({ statusCode: 400 });
@@ -91,7 +91,7 @@ describe("transcribeWithWordTimestamps", () => {
 
   it("rejects media longer than 60 minutes with status 413", async () => {
     await expect(
-      transcribeWithWordTimestamps("https://example.com/audio.webm", {
+      transcribeWithWordTimestamps("https://example.supabase.co/audio.webm", {
         durationSeconds: 3601,
         providers: { gemini: vi.fn().mockResolvedValue(buildResult()) },
       })
@@ -109,7 +109,7 @@ describe("transcribeWithWordTimestamps", () => {
       })
     );
 
-    const result = await transcribeWithWordTimestamps("https://example.com/audio.webm", {
+    const result = await transcribeWithWordTimestamps("https://example.supabase.co/audio.webm", {
       providers: { gemini },
     });
 
@@ -123,7 +123,7 @@ describe("transcribeWithWordTimestamps", () => {
     delete process.env.GEMINI_API_KEY;
 
     await expect(
-      transcribeWithWordTimestamps("https://example.com/audio.webm")
+      transcribeWithWordTimestamps("https://example.supabase.co/audio.webm")
     ).rejects.toMatchObject({
       statusCode: 503,
     } satisfies Partial<WordTimestampTranscriptionError>);

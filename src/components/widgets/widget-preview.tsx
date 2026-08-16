@@ -330,8 +330,8 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
         loan_type: r.loan_type ?? "purchase",
         first_time_homebuyer: r.first_time_homebuyer ?? false,
       }))
-    : expectsRealData
-      ? [] // Don't fall back to sample data when real data is expected
+    : expectsRealData && liveData
+      ? [] // Real data loaded but empty — show the "no reviews" state, not samples
       : sampleReviews;
 
   const reviewPreviewKey = `${lang}:${
@@ -347,16 +347,9 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
     );
   }
 
-  // Show "selecting entity" message when auto-select is in progress
-  if ((entityType === "user" || entityType === "branch") && !entityId) {
-    const entityLabel = entityType === "user" ? "professional" : "branch";
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Loader2 size={20} className="animate-spin text-muted-foreground mb-2" />
-        <span className="text-xs text-muted-foreground">Selecting {entityLabel}...</span>
-      </div>
-    );
-  }
+  // When no entity is selected yet (user/branch templates), fall through to the
+  // sample-data preview so the builder shows representative review cards instead
+  // of a blank/spinner state — consistent with the badge/banner previews.
 
   // Show error state when fetch failed
   if (fetchError) {

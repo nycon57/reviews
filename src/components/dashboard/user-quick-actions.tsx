@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import {
   Star,
@@ -23,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useOrigin } from "@/hooks/use-origin";
 
 interface QuickAction {
   icon: React.ReactNode;
@@ -36,20 +38,15 @@ interface QuickAction {
 interface UserQuickActionsProps {
   profileSlug: string | null;
   userName: string | null;
+  userId?: string | null;
 }
 
-export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProps) {
+export function UserQuickActions({ profileSlug, userName, userId }: UserQuickActionsProps) {
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const requestButtonRef = useRef<HTMLButtonElement>(null);
   const [copied, setCopied] = useState(false);
-  const [profileUrl, setProfileUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (profileSlug) {
-      setProfileUrl(`${window.location.origin}/pro/${profileSlug}`);
-    } else {
-      setProfileUrl(null);
-    }
-  }, [profileSlug]);
+  const origin = useOrigin();
+  const profileUrl = origin && profileSlug ? `${origin}/pro/${profileSlug}` : null;
 
   const actions: QuickAction[] = [
     {
@@ -209,6 +206,7 @@ export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProp
             return (
               <button
                 key={action.title}
+                ref={action.title === "Send Review Request" ? requestButtonRef : undefined}
                 type="button"
                 onClick={action.onClick}
                 className={`${cardClassName} w-full text-left`}
@@ -234,6 +232,8 @@ export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProp
         open={requestDialogOpen}
         onOpenChange={setRequestDialogOpen}
         onSuccess={() => setRequestDialogOpen(false)}
+        currentUserId={userId}
+        restoreFocusRef={requestButtonRef}
       />
     </>
   );

@@ -17,16 +17,17 @@ import {
   Star,
   Check,
   X,
-  PencilSimple as Edit2,
   DotsThree as MoreHorizontal,
   Archive,
   Flag,
   Chats as MessageSquare,
   Sparkle as Sparkles,
   ShareNetwork,
+  Eye,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { Review, AggregatedReview } from "@/lib/reviews/types";
+import { ReviewStatusBadge } from "@/components/reviews/review-status-badge";
 import { useReviewQueue } from "./review-queue-context";
 import { CreateSmartLinkModal } from "@/components/share-studio/create-smart-link-modal";
 import { motion } from "framer-motion";
@@ -44,19 +45,20 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString();
 }
 
-function getStatusBadge(status: Review["status"]) {
-  switch (status) {
-    case "pending":
-      return <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50">Pending</Badge>;
-    case "approved":
-      return <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">Approved</Badge>;
-    case "rejected":
-      return <Badge variant="outline" className="border-red-500 text-red-600 bg-red-50">Rejected</Badge>;
-    case "archived":
-      return <Badge variant="outline" className="border-border text-muted-foreground">Archived</Badge>;
-    default:
-      return null;
-  }
+const MODERATION_REASON_LABELS: Record<string, string> = {
+  profanity: "Profanity",
+  pii_email: "PII: email",
+  pii_phone: "PII: phone",
+  pii_ssn: "PII: SSN",
+  pii_address: "PII: address",
+  spam_links: "Spam: links",
+  spam_repetition: "Spam: repetition",
+  ai_flagged: "AI flagged",
+  screen_error: "Screen error",
+};
+
+function formatModerationReason(reason: string): string {
+  return MODERATION_REASON_LABELS[reason] ?? reason.replace(/_/g, " ");
 }
 
 export function ReviewListItem({ review }: { review: Review | AggregatedReview }) {
@@ -72,19 +74,16 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
       layout
       variants={fadeInUp}
       exit={{ opacity: 0, scale: 0.95, transition: transitions.fast }}
-      className={cn(
-        "flex gap-4 p-4 transition-colors hover:bg-muted/50",
-        !state.isPendingMode && "cursor-pointer"
-      )}
-      onClick={() => !state.isPendingMode && router.push(`/dashboard/reviews/${review.id}`)}
+      className="flex gap-4 p-4 transition-colors hover:bg-muted/50"
     >
-      <div className="flex items-start pt-1" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-start pt-1">
         <Checkbox
           checked={state.selectedIds.has(review.id)}
           onCheckedChange={() => actions.toggleSelection(review.id)}
+          aria-label={`Select review from ${review.customerName || "Anonymous"}`}
         />
       </div>
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-repwell-teal-500 shrink-0">
         {review.customerName && review.customerName.trim()
           ? review.customerName.trim().split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
           : "?"}
@@ -98,11 +97,11 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
                 &middot; {formatDate(review.reviewDate)}
               </span>
               {isFeatured && <Flag className="h-4 w-4 text-amber-500 fill-amber-500" />}
-              {hasResponse && <MessageSquare className="h-4 w-4 text-green-500" />}
+              {hasResponse && <MessageSquare className="h-4 w-4 text-green-700" />}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5" role="img" aria-label={`${review.rating} out of 5 stars`}>
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
@@ -110,7 +109,7 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
                 />
               ))}
             </div>
-            {getStatusBadge(review.status)}
+            <ReviewStatusBadge status={review.status} />
             <SourceIcon source={review.source} />
           </div>
         </div>
@@ -118,6 +117,20 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
           <p className="text-sm text-muted-foreground line-clamp-2">{review.text}</p>
         ) : (
           <p className="text-sm text-muted-foreground/60 italic">No written review provided</p>
+        )}
+        {/* Machine-screening reasons for quarantined reviews */}
+        {review.status === "pending" && (review.moderationReasons?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {review.moderationReasons!.map((reason) => (
+              <Badge
+                key={reason}
+                variant="outline"
+                className="border-border/60 text-xs font-normal text-muted-foreground"
+              >
+                {formatModerationReason(reason)}
+              </Badge>
+            ))}
+          </div>
         )}
         {/* Response display */}
         {hasResponse && (() => {
@@ -140,29 +153,23 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
             </div>
           );
         })()}
-        <div className="flex items-center justify-end pt-2" onClick={(e) => e.stopPropagation()}>
-          {/* Pending mode: inline Approve/Reject for quick triage */}
-          {review.status === "pending" && state.isPendingMode && (
-            <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => actions.handleApprove(review)} disabled={state.isPending}>
-                <Check className="mr-1 h-3 w-3" />Approve
-              </Button>
-              <Button size="sm" variant="destructive" onClick={() => actions.setRejectingReview(review)} disabled={state.isPending}>
-                <X className="mr-1 h-3 w-3" />Reject
-              </Button>
-            </div>
-          )}
-
+        <div className="flex items-center justify-end gap-2 pt-2">
           {/* Ellipsis menu — state-based actions */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
+              <Button size="sm" variant="ghost" aria-label={`Actions for review from ${review.customerName || "Anonymous"}`}>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => actions.openEditDialog(review)}>
-                <Edit2 className="mr-2 h-4 w-4" />Edit
-              </DropdownMenuItem>
-
+              {!state.isPendingMode && (
+                <>
+                  <DropdownMenuItem onClick={() => router.push(`/dashboard/reviews/${review.id}`)}>
+                    <Eye className="mr-2 h-4 w-4" />View details
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               {review.status === "approved" && (
                 <>
                   <DropdownMenuItem onClick={() => actions.handleToggleFeatured(review.id, !isFeatured)}>
@@ -177,10 +184,10 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
               {review.status === "pending" && !state.isPendingMode && (
                 <>
                   <DropdownMenuItem onClick={() => actions.handleApprove(review)}>
-                    <Check className="mr-2 h-4 w-4" />Approve
+                    <Check className="mr-2 h-4 w-4" />Publish
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => actions.setRejectingReview(review)} className="text-red-600">
-                    <X className="mr-2 h-4 w-4" />Reject
+                    <X className="mr-2 h-4 w-4" />Remove
                   </DropdownMenuItem>
                 </>
               )}
@@ -194,7 +201,7 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
                 <>
                   <DropdownMenuSeparator />
                   <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                    <span className="font-medium">Reason:</span> {review.rejectionReason}
+                    <span className="font-medium">Removal reason:</span> {review.rejectionReason}
                   </div>
                 </>
               )}

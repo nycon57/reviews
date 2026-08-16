@@ -6,6 +6,7 @@ import {
   processRecoveryEmail2Queue,
   expireOldAbandonedActions,
 } from "@/lib/email/abandoned-action-recovery-service";
+import { withCronHeartbeat } from "@/lib/cron/heartbeat";
 
 // Zod schema for query parameters
 const cronParamsSchema = z.object({
@@ -49,10 +50,7 @@ function verifyCronSecret(request: NextRequest): boolean {
   }
 
   try {
-    return timingSafeEqual(
-      Buffer.from(authHeader, "utf8"),
-      Buffer.from(expectedHeader, "utf8")
-    );
+    return timingSafeEqual(Buffer.from(authHeader, "utf8"), Buffer.from(expectedHeader, "utf8"));
   } catch {
     return false;
   }
@@ -93,116 +91,93 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    // Validate and parse query params with Zod
-    const url = new URL(request.url);
-    const parseResult = cronParamsSchema.safeParse({
-      batch_size: url.searchParams.get("batch_size") ?? undefined,
-      email_1_only: url.searchParams.get("email_1_only") ?? undefined,
-      email_2_only: url.searchParams.get("email_2_only") ?? undefined,
-      skip_expire: url.searchParams.get("skip_expire") ?? undefined,
-    });
+  return withCronHeartbeat("process-abandoned-actions", async () => {
+    try {
+      // Validate and parse query params with Zod
+      const url = new URL(request.url);
+      const parseResult = cronParamsSchema.safeParse({
+        batch_size: url.searchParams.get("batch_size") ?? undefined,
+        email_1_only: url.searchParams.get("email_1_only") ?? undefined,
+        email_2_only: url.searchParams.get("email_2_only") ?? undefined,
+        skip_expire: url.searchParams.get("skip_expire") ?? undefined,
+      });
 
-    if (!parseResult.success) {
+      if (!parseResult.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: parseResult.error.errors[0]?.message || "Invalid parameters",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const {
+        batch_size: batchSize,
+        email_1_only: email1Only,
+        email_2_only: email2Only,
+        skip_expire: skipExpire,
+      } = parseResult.data;
+
+      const response: {
+        success: boolean;
+        email1Queue?: {
+          processed: number;
+          failed: number;
+          skipped: number;
+          errors: string[];
+        };
+        email2Queue?: {
+          processed: number;
+          failed: number;
+          skipped: number;
+          errors: string[];
+        };
+        expiredActions?: number;
+        timestamp: string;
+      } = {
+        success: true,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Process email 1 queue (unless email_2_only is true)
+      if (!email2Only) {
+        const email1Result = await processRecoveryEmail1Queue(batchSize);
+        response.email1Queue = email1Result;
+      }
+
+      // Process email 2 queue (unless email_1_only is true)
+      if (!email1Only) {
+        const email2Result = await processRecoveryEmail2Queue(batchSize);
+        response.email2Queue = email2Result;
+      }
+
+      // Expire old actions (unless skip_expire is true)
+      if (!skipExpire) {
+        const expiredCount = await expireOldAbandonedActions();
+        response.expiredActions = expiredCount;
+      }
+
+      return NextResponse.json(response);
+    } catch (error) {
+      console.error("Abandoned action recovery cron job error:", error);
+
       return NextResponse.json(
         {
           success: false,
-          error: parseResult.error.errors[0]?.message || "Invalid parameters",
+          error: error instanceof Error ? error.message : "Unknown error",
           timestamp: new Date().toISOString(),
         },
-        { status: 400 }
+        { status: 500 }
       );
     }
-
-    const {
-      batch_size: batchSize,
-      email_1_only: email1Only,
-      email_2_only: email2Only,
-      skip_expire: skipExpire,
-    } = parseResult.data;
-
-    const response: {
-      success: boolean;
-      email1Queue?: {
-        processed: number;
-        failed: number;
-        skipped: number;
-        errors: string[];
-      };
-      email2Queue?: {
-        processed: number;
-        failed: number;
-        skipped: number;
-        errors: string[];
-      };
-      expiredActions?: number;
-      timestamp: string;
-    } = {
-      success: true,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Process email 1 queue (unless email_2_only is true)
-    if (!email2Only) {
-      const email1Result = await processRecoveryEmail1Queue(batchSize);
-      response.email1Queue = email1Result;
-    }
-
-    // Process email 2 queue (unless email_1_only is true)
-    if (!email1Only) {
-      const email2Result = await processRecoveryEmail2Queue(batchSize);
-      response.email2Queue = email2Result;
-    }
-
-    // Expire old actions (unless skip_expire is true)
-    if (!skipExpire) {
-      const expiredCount = await expireOldAbandonedActions();
-      response.expiredActions = expiredCount;
-    }
-
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error("Abandoned action recovery cron job error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
-  }
+  });
 }
 
-/**
- * GET /api/cron/process-abandoned-actions
- *
- * Health check endpoint for the abandoned action recovery processor.
- * Returns the current status of the endpoint.
- */
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-abandoned-actions",
-    description: "Abandoned action recovery email processor",
-    schedule: "Every 5 minutes for queue processing",
-    features: [
-      "Recovery email 1: 1 hour after action start",
-      "Recovery email 2: 24 hours after action start",
-      "Action expiration: 7 days without completion",
-      "Tracks: survey_creation, survey_send, video_request, billing_upgrade, profile_completion, integration_setup",
-    ],
-    query_params: {
-      batch_size: "Number of actions to process per queue (default: 50, max: 100)",
-      email_1_only: "Only process email 1 queue (default: false)",
-      email_2_only: "Only process email 2 queue (default: false)",
-      skip_expire: "Skip expiring old actions (default: false)",
-    },
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

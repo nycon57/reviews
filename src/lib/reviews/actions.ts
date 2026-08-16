@@ -4,9 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import type { Json } from "@/types/database.types";
-import type { Review, ActionResult, AutoApprovalRule } from "./types";
-import { DEFAULT_AUTO_APPROVAL_RULES } from "./types";
+import type { Review, ReviewSource, ActionResult } from "./types";
+import { publishReviewIfClean, type PublishReviewScreening } from "./publish";
 
 // Get user's role and organization ID
 async function getUserContext() {
@@ -69,12 +68,90 @@ async function requireManagerRole(): Promise<{
   };
 }
 
+async function requireReviewPublishingAccess(reviewId: string): Promise<{
+  userId: string;
+  organizationId: string;
+  existingReview: {
+    id: string;
+    status: string | null;
+    user_id: string | null;
+    rating: number;
+    customer_name: string | null;
+    text: string | null;
+  };
+} | null> {
+  const context = await getUserContext();
+
+  if (!context?.organization_id) {
+    return null;
+  }
+
+  const supabase = createAdminClient();
+  const { data: existingReview } = await supabase
+    .from("reviews")
+    .select("id, status, user_id, rating, customer_name, text")
+    .eq("id", reviewId)
+    .eq("organization_id", context.organization_id)
+    .single();
+
+  if (!existingReview) {
+    return null;
+  }
+
+  const canManageOrg = ["admin", "manager"].includes(context.role);
+  const ownsReview = existingReview.user_id === context.id;
+
+  if (!canManageOrg && !ownsReview) {
+    return null;
+  }
+
+  return {
+    userId: context.id,
+    organizationId: context.organization_id,
+    existingReview,
+  };
+}
+
+const STAFF_RELEASE_SCREENING: PublishReviewScreening = {
+  mode: "precomputed",
+  result: {
+    verdict: "pass",
+    reasons: [],
+    provider: "baseline",
+  },
+};
+
+async function publishStaffReleasedReview(params: {
+  review: {
+    id: string;
+    user_id: string | null;
+    rating: number;
+    customer_name: string | null;
+    text: string | null;
+  };
+  organizationId: string;
+  actorUserId: string;
+  now?: string;
+}) {
+  return publishReviewIfClean({
+    reviewId: params.review.id,
+    organizationId: params.organizationId,
+    ownerUserId: params.review.user_id ?? params.actorUserId,
+    rating: params.review.rating,
+    customerName: params.review.customer_name,
+    reviewText: params.review.text,
+    screening: STAFF_RELEASE_SCREENING,
+    actorUserId: params.actorUserId,
+    now: params.now,
+  });
+}
+
 // Get pending reviews for approval queue
 export async function getPendingReviews(params?: {
   loanOfficerId?: string;
   minRating?: number;
   maxRating?: number;
-  source?: string;
+  source?: ReviewSource | "all";
   page?: number;
   limit?: number;
 }): Promise<ActionResult<{ reviews: Review[]; total: number }>> {
@@ -139,7 +216,7 @@ export async function getPendingReviews(params?: {
   if (params?.maxRating) {
     query = query.lte("rating", params.maxRating);
   }
-  if (params?.source) {
+  if (params?.source && params.source !== "all") {
     query = query.eq("source", params.source);
   }
 
@@ -151,25 +228,16 @@ export async function getPendingReviews(params?: {
   }
 
   const reviews: Review[] = (data || []).map((row) => {
-    const loanOfficer = row.users as unknown as {
-      id: string;
-      full_name: string;
-      email: string;
-      avatar_url: string | null;
-    };
-
-    const surveyResponse = row.survey_responses as unknown as {
-      id: string;
-      overall_rating: number | null;
-      nps_score: number | null;
-      testimonial_text: string | null;
-    } | null;
+    // The select embeds both relations, so PostgREST already types them precisely; a review
+    // whose user_id is null simply carries no loan officer.
+    const loanOfficer = row.users;
+    const surveyResponse = row.survey_responses;
 
     return {
       id: row.id,
       organizationId: row.organization_id,
       loanOfficerId: row.user_id,
-      source: row.source,
+      source: row.source as ReviewSource,
       rating: row.rating,
       title: row.title,
       text: row.text,
@@ -183,12 +251,14 @@ export async function getPendingReviews(params?: {
       publishedAt: row.published_at,
       reviewDate: row.review_date,
       createdAt: row.created_at!,
-      loanOfficer: {
-        id: loanOfficer.id,
-        fullName: loanOfficer.full_name,
-        email: loanOfficer.email,
-        avatarUrl: loanOfficer.avatar_url,
-      },
+      loanOfficer: loanOfficer
+        ? {
+            id: loanOfficer.id,
+            fullName: loanOfficer.full_name ?? "",
+            email: loanOfficer.email,
+            avatarUrl: loanOfficer.avatar_url,
+          }
+        : undefined,
       surveyResponse: surveyResponse
         ? {
             id: surveyResponse.id,
@@ -210,7 +280,7 @@ export async function getPendingReviews(params?: {
 export async function getReviews(params?: {
   status?: "pending" | "approved" | "rejected" | "archived" | "all";
   loanOfficerId?: string;
-  source?: string;
+  source?: ReviewSource | "all";
   page?: number;
   limit?: number;
 }): Promise<ActionResult<{ reviews: Review[]; total: number }>> {
@@ -273,7 +343,7 @@ export async function getReviews(params?: {
   if (params?.loanOfficerId) {
     query = query.eq("user_id", params.loanOfficerId);
   }
-  if (params?.source) {
+  if (params?.source && params.source !== "all") {
     query = query.eq("source", params.source);
   }
 
@@ -285,25 +355,16 @@ export async function getReviews(params?: {
   }
 
   const reviews: Review[] = (data || []).map((row) => {
-    const loanOfficer = row.users as unknown as {
-      id: string;
-      full_name: string;
-      email: string;
-      avatar_url: string | null;
-    };
-
-    const surveyResponse = row.survey_responses as unknown as {
-      id: string;
-      overall_rating: number | null;
-      nps_score: number | null;
-      testimonial_text: string | null;
-    } | null;
+    // The select embeds both relations, so PostgREST already types them precisely; a review
+    // whose user_id is null simply carries no loan officer.
+    const loanOfficer = row.users;
+    const surveyResponse = row.survey_responses;
 
     return {
       id: row.id,
       organizationId: row.organization_id,
       loanOfficerId: row.user_id,
-      source: row.source,
+      source: row.source as ReviewSource,
       rating: row.rating,
       title: row.title,
       text: row.text,
@@ -317,12 +378,14 @@ export async function getReviews(params?: {
       publishedAt: row.published_at,
       reviewDate: row.review_date,
       createdAt: row.created_at!,
-      loanOfficer: {
-        id: loanOfficer.id,
-        fullName: loanOfficer.full_name,
-        email: loanOfficer.email,
-        avatarUrl: loanOfficer.avatar_url,
-      },
+      loanOfficer: loanOfficer
+        ? {
+            id: loanOfficer.id,
+            fullName: loanOfficer.full_name ?? "",
+            email: loanOfficer.email,
+            avatarUrl: loanOfficer.avatar_url,
+          }
+        : undefined,
       surveyResponse: surveyResponse
         ? {
             id: surveyResponse.id,
@@ -341,9 +404,7 @@ export async function getReviews(params?: {
 }
 
 // Get a single review by ID
-export async function getReviewById(
-  reviewId: string
-): Promise<ActionResult<Review>> {
+export async function getReviewById(reviewId: string): Promise<ActionResult<Review>> {
   const context = await requireManagerRole();
   if (!context) {
     return { success: false, error: "Unauthorized - Manager role required" };
@@ -394,25 +455,16 @@ export async function getReviewById(
     return { success: false, error: "Review not found" };
   }
 
-  const loanOfficer = data.users as unknown as {
-    id: string;
-    full_name: string;
-    email: string;
-    avatar_url: string | null;
-  };
-
-  const surveyResponse = data.survey_responses as unknown as {
-    id: string;
-    overall_rating: number | null;
-    nps_score: number | null;
-    testimonial_text: string | null;
-  } | null;
+  // The select embeds both relations, so PostgREST already types them precisely; a review
+  // whose user_id is null simply carries no loan officer.
+  const loanOfficer = data.users;
+  const surveyResponse = data.survey_responses;
 
   const review: Review = {
     id: data.id,
     organizationId: data.organization_id,
     loanOfficerId: data.user_id,
-    source: data.source,
+    source: data.source as ReviewSource,
     rating: data.rating,
     title: data.title,
     text: data.text,
@@ -426,12 +478,14 @@ export async function getReviewById(
     publishedAt: data.published_at,
     reviewDate: data.review_date,
     createdAt: data.created_at!,
-    loanOfficer: {
-      id: loanOfficer.id,
-      fullName: loanOfficer.full_name,
-      email: loanOfficer.email,
-      avatarUrl: loanOfficer.avatar_url,
-    },
+    loanOfficer: loanOfficer
+      ? {
+          id: loanOfficer.id,
+          fullName: loanOfficer.full_name ?? "",
+          email: loanOfficer.email,
+          avatarUrl: loanOfficer.avatar_url,
+        }
+      : undefined,
     surveyResponse: surveyResponse
       ? {
           id: surveyResponse.id,
@@ -448,63 +502,42 @@ export async function getReviewById(
 // Approve review schema
 const approveReviewSchema = z.object({
   reviewId: z.string().uuid(),
-  editedText: z.string().optional(),
-  publish: z.boolean().default(true),
   notes: z.string().optional(),
 });
 
-// Approve a review
+// Release a machine-quarantined review. Under the auto-publish model
+// 'pending' means quarantined-awaiting-human-release, so approving always
+// publishes.
 export async function approveReview(
   input: z.infer<typeof approveReviewSchema>
 ): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
   const validated = approveReviewSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
   }
 
-  const { reviewId, editedText, publish } = validated.data;
-  const supabase = createAdminClient();
-
-  // Verify review belongs to organization
-  const { data: existingReview } = await supabase
-    .from("reviews")
-    .select("id, organization_id, status")
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId)
-    .single();
-
-  if (!existingReview) {
-    return { success: false, error: "Review not found" };
+  const { reviewId } = validated.data;
+  const access = await requireReviewPublishingAccess(reviewId);
+  if (!access) {
+    return { success: false, error: "Unauthorized to publish this review" };
   }
 
-  // Update the review
-  const updateData: Record<string, unknown> = {
-    status: "approved",
-    approved_at: new Date().toISOString(),
-    approved_by: context.userId,
-    rejection_reason: null,
-  };
-
-  if (editedText !== undefined) {
-    updateData.text = editedText;
+  if (access.existingReview.status !== "pending") {
+    return { success: false, error: "Only quarantined reviews can be released" };
   }
 
-  if (publish) {
-    updateData.is_published = true;
-    updateData.published_at = new Date().toISOString();
-  }
+  try {
+    const result = await publishStaffReleasedReview({
+      review: access.existingReview,
+      organizationId: access.organizationId,
+      actorUserId: access.userId,
+      now: new Date().toISOString(),
+    });
 
-  const { error } = await supabase
-    .from("reviews")
-    .update(updateData)
-    .eq("id", reviewId);
-
-  if (error) {
+    if (result.outcome !== "published" && result.outcome !== "already_published") {
+      return { success: false, error: "Failed to approve review" };
+    }
+  } catch (error) {
     console.error("Error approving review:", error);
     return { success: false, error: "Failed to approve review" };
   }
@@ -523,30 +556,25 @@ const rejectReviewSchema = z.object({
 export async function rejectReview(
   input: z.infer<typeof rejectReviewSchema>
 ): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
   const validated = rejectReviewSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
   }
 
   const { reviewId, reason } = validated.data;
-  const supabase = createAdminClient();
-
-  // Verify review belongs to organization
-  const { data: existingReview } = await supabase
-    .from("reviews")
-    .select("id, organization_id")
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId)
-    .single();
-
-  if (!existingReview) {
-    return { success: false, error: "Review not found" };
+  const access = await requireReviewPublishingAccess(reviewId);
+  if (!access) {
+    return { success: false, error: "Unauthorized to reject this review" };
   }
+
+  if (access.existingReview.status !== "pending") {
+    return {
+      success: false,
+      error: "Live reviews can only be removed through a dispute.",
+    };
+  }
+
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("reviews")
@@ -556,7 +584,9 @@ export async function rejectReview(
       is_published: false,
       published_at: null,
     })
-    .eq("id", reviewId);
+    .eq("id", reviewId)
+    .eq("organization_id", access.organizationId)
+    .eq("status", "pending");
 
   if (error) {
     console.error("Error rejecting review:", error);
@@ -577,49 +607,21 @@ const updateReviewTextSchema = z.object({
 export async function updateReviewText(
   input: z.infer<typeof updateReviewTextSchema>
 ): Promise<ActionResult> {
-  const context = await requireManagerRole();
+  const context = await requireOrgUser();
   if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
+    return { success: false, error: "Unauthorized" };
   }
 
   const validated = updateReviewTextSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
   }
-
-  const { reviewId, text } = validated.data;
-  const supabase = createAdminClient();
-
-  // Verify review belongs to organization
-  const { data: existingReview } = await supabase
-    .from("reviews")
-    .select("id, organization_id")
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId)
-    .single();
-
-  if (!existingReview) {
-    return { success: false, error: "Review not found" };
-  }
-
-  const { error } = await supabase
-    .from("reviews")
-    .update({ text })
-    .eq("id", reviewId);
-
-  if (error) {
-    console.error("Error updating review text:", error);
-    return { success: false, error: "Failed to update review text" };
-  }
-
-  revalidatePath("/dashboard/reviews");
-  return { success: true };
+  return { success: false, error: "Review text cannot be edited" };
 }
 
-// Bulk approve reviews
+// Bulk release machine-quarantined reviews (always publishes)
 export async function bulkApproveReviews(
-  reviewIds: string[],
-  publish: boolean = true
+  reviewIds: string[]
 ): Promise<ActionResult<{ approved: number; failed: number }>> {
   const context = await requireManagerRole();
   if (!context) {
@@ -631,37 +633,59 @@ export async function bulkApproveReviews(
   }
 
   const supabase = createAdminClient();
-  let approved = 0;
-  let failed = 0;
+  const now = new Date().toISOString();
 
-  const updateData: Record<string, unknown> = {
-    status: "approved",
-    approved_at: new Date().toISOString(),
-    approved_by: context.userId,
-    rejection_reason: null,
-  };
-
-  if (publish) {
-    updateData.is_published = true;
-    updateData.published_at = new Date().toISOString();
-  }
-
-  // Process reviews
+  // Only quarantined (pending) reviews can be released
   const { data, error } = await supabase
     .from("reviews")
-    .update(updateData)
+    .select("id, user_id, rating, customer_name, text")
     .in("id", reviewIds)
     .eq("organization_id", context.organizationId)
-    .eq("status", "pending")
-    .select("id");
+    .eq("status", "pending");
 
   if (error) {
     console.error("Error bulk approving reviews:", error);
     return { success: false, error: "Failed to approve reviews" };
   }
 
-  approved = data?.length || 0;
-  failed = reviewIds.length - approved;
+  const pendingReviews = data ?? [];
+  const chunks: Array<typeof pendingReviews> = [];
+  for (let index = 0; index < pendingReviews.length; index += 5) {
+    chunks.push(pendingReviews.slice(index, index + 5));
+  }
+
+  const publishResults: Array<{
+    reviewId: string;
+    outcome: string | null;
+    error: unknown;
+  }> = [];
+  for (const chunk of chunks) {
+    const chunkResults = await Promise.all(
+      chunk.map(async (review) => {
+        try {
+          const result = await publishStaffReleasedReview({
+            review,
+            organizationId: context.organizationId,
+            actorUserId: context.userId,
+            now,
+          });
+          return { reviewId: review.id, outcome: result.outcome, error: null };
+        } catch (error) {
+          console.error("Error bulk approving review:", {
+            reviewId: review.id,
+            error,
+          });
+          return { reviewId: review.id, outcome: null, error };
+        }
+      })
+    );
+    publishResults.push(...chunkResults);
+  }
+
+  const approved = publishResults.filter(
+    (result) => result.outcome === "published" || result.outcome === "already_published"
+  ).length;
+  const failed = reviewIds.length - approved;
 
   revalidatePath("/dashboard/reviews");
   return { success: true, data: { approved, failed } };
@@ -708,151 +732,15 @@ export async function bulkRejectReviews(
   const rejected = data?.length || 0;
   const failed = reviewIds.length - rejected;
 
+  if (rejected === 0) {
+    return {
+      success: false,
+      error: "Live reviews can only be removed through a dispute.",
+    };
+  }
+
   revalidatePath("/dashboard/reviews");
   return { success: true, data: { rejected, failed } };
-}
-
-// Revert review to pending status
-export async function revertToPending(reviewId: string): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
-  const supabase = createAdminClient();
-
-  const { error } = await supabase
-    .from("reviews")
-    .update({
-      status: "pending",
-      approved_at: null,
-      approved_by: null,
-      rejection_reason: null,
-      is_published: false,
-      published_at: null,
-    })
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId);
-
-  if (error) {
-    console.error("Error reverting review:", error);
-    return { success: false, error: "Failed to revert review" };
-  }
-
-  revalidatePath("/dashboard/reviews");
-  return { success: true };
-}
-
-// Get auto-approval rules for organization
-export async function getAutoApprovalRules(): Promise<
-  ActionResult<AutoApprovalRule[]>
-> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
-  const supabase = createAdminClient();
-
-  const { data: org, error } = await supabase
-    .from("organizations")
-    .select("settings")
-    .eq("id", context.organizationId)
-    .single();
-
-  if (error) {
-    console.error("Error fetching organization settings:", error);
-    return { success: false, error: "Failed to fetch auto-approval rules" };
-  }
-
-  const settings = (org?.settings as Record<string, unknown>) || {};
-  const rules = (settings.autoApprovalRules as AutoApprovalRule[]) || DEFAULT_AUTO_APPROVAL_RULES;
-
-  return { success: true, data: rules };
-}
-
-// Update auto-approval rules
-export async function updateAutoApprovalRules(
-  rules: AutoApprovalRule[]
-): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
-  const supabase = createAdminClient();
-
-  // Get current settings
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("settings")
-    .eq("id", context.organizationId)
-    .single();
-
-  const currentSettings = (org?.settings as Record<string, unknown>) || {};
-  const updatedSettings = {
-    ...currentSettings,
-    autoApprovalRules: rules,
-  } as unknown as Json;
-
-  const { error } = await supabase
-    .from("organizations")
-    .update({ settings: updatedSettings })
-    .eq("id", context.organizationId);
-
-  if (error) {
-    console.error("Error updating auto-approval rules:", error);
-    return { success: false, error: "Failed to update auto-approval rules" };
-  }
-
-  return { success: true };
-}
-
-// Apply auto-approval rules to a review (called when review is created)
-export async function applyAutoApprovalRules(
-  reviewId: string,
-  organizationId: string,
-  rating: number
-): Promise<{ autoApproved: boolean }> {
-  const adminClient = createAdminClient();
-
-  // Get organization settings
-  const { data: org } = await adminClient
-    .from("organizations")
-    .select("settings")
-    .eq("id", organizationId)
-    .single();
-
-  const settings = (org?.settings as Record<string, unknown>) || {};
-  const rules = (settings.autoApprovalRules as AutoApprovalRule[]) || DEFAULT_AUTO_APPROVAL_RULES;
-
-  // Check if any enabled rule matches
-  let shouldAutoApprove = false;
-
-  for (const rule of rules) {
-    if (!rule.enabled) continue;
-
-    if (rule.type === "rating" && rule.config.minRating) {
-      if (rating >= rule.config.minRating) {
-        shouldAutoApprove = true;
-        break;
-      }
-    }
-  }
-
-  if (shouldAutoApprove) {
-    await adminClient
-      .from("reviews")
-      .update({
-        status: "approved",
-        approved_at: new Date().toISOString(),
-        is_published: true,
-        published_at: new Date().toISOString(),
-      })
-      .eq("id", reviewId);
-  }
-
-  return { autoApproved: shouldAutoApprove };
 }
 
 // Get review statistics for dashboard
@@ -985,17 +873,14 @@ export async function getReviewSummary(opts: {
   const averageRating =
     ratingsOnly.length > 0
       ? Math.round(
-          (ratingsOnly.reduce((sum, r) => sum + (r.rating as number), 0) /
-            ratingsOnly.length) *
-            10
+          (ratingsOnly.reduce((sum, r) => sum + (r.rating as number), 0) / ratingsOnly.length) * 10
         ) / 10
       : 0;
 
   const withResponse = reviews.filter(
     (r) => r.response_text && r.response_text.trim().length > 0
   ).length;
-  const responseRate =
-    totalReviews > 0 ? Math.round((withResponse / totalReviews) * 1000) / 10 : 0;
+  const responseRate = totalReviews > 0 ? Math.round((withResponse / totalReviews) * 1000) / 10 : 0;
 
   // NPS: 5-star mapping — 5 = promoter, 4 = passive, 1-3 = detractor
   let promoters = 0;
@@ -1006,11 +891,7 @@ export async function getReviewSummary(opts: {
     else if (rating <= 3) detractors++;
   }
   const npsScore =
-    ratingsOnly.length > 0
-      ? Math.round(
-          ((promoters - detractors) / ratingsOnly.length) * 100
-        )
-      : 0;
+    ratingsOnly.length > 0 ? Math.round(((promoters - detractors) / ratingsOnly.length) * 100) : 0;
 
   return {
     success: true,

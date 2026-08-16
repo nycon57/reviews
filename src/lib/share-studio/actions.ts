@@ -2,13 +2,36 @@
 
 import { revalidatePath } from "next/cache";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { getAccessContext } from "@/lib/access";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import {
   createRenderJob,
   ensureSmartLinkForSource,
   getShareStudioAssetsBySource,
+  getRenderJob,
+  queueClipRender,
+  kickRenderWorker,
 } from "@/lib/share-studio/service";
+import {
+  SHARE_STUDIO_HUB_PATH,
+  bulkUpdateSmartLinksForOrganization,
+  deleteShareStudioAssetForOrganization,
+  getSmartLinkAnalyticsForOrganization,
+  listShareStudioAssetsForOrganization,
+  listSmartLinksForOrganization,
+} from "@/lib/share-studio/hub-service";
+import type { ActionResult } from "@/lib/types/action-result";
+import type {
+  ShareStudioAssetsInput,
+  ShareStudioAssetsResult,
+  SmartLinkAnalyticsResult,
+  SmartLinkBulkAction,
+  SmartLinksListInput,
+  SmartLinksListResult,
+} from "@/lib/share-studio/hub-types";
+import type { ClipRenderOptions } from "@/lib/share-studio/clip-renderer";
 import { resolveBrandTokens } from "@/lib/share-studio/template-resolver";
 import { renderStillWithSatori } from "@/lib/share-studio/satori-renderer";
 import { renderTemplateToPng } from "@/lib/share-studio/templates/svg-renderer";
@@ -60,6 +83,33 @@ async function getAuthenticatedOrganizationContext(): Promise<{
   return {
     userId: user.id,
     organizationId: profile.organization_id as string,
+  };
+}
+
+async function getShareStudioHubActionContext(): Promise<
+  | {
+      ok: true;
+      userId: string;
+      organizationId: string;
+    }
+  | {
+      ok: false;
+      error: string;
+    }
+> {
+  const ctx = await getAccessContext();
+  if (!ctx) {
+    return { ok: false, error: "Could not load user profile" };
+  }
+
+  if (!hasPermission(ctx, PERMISSIONS.VIEW_SHARE_STUDIO)) {
+    return { ok: false, error: "You do not have permission to manage Share Studio." };
+  }
+
+  return {
+    ok: true,
+    userId: ctx.userId,
+    organizationId: ctx.organizationId,
   };
 }
 
@@ -123,6 +173,119 @@ export async function ensureVideoSmartLink(
   }
 }
 
+export async function listSmartLinks(
+  input: SmartLinksListInput = {}
+): Promise<ActionResult<SmartLinksListResult>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await listSmartLinksForOrganization(context.organizationId, input);
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to load Smart Links",
+    };
+  }
+}
+
+export async function bulkUpdateSmartLinks(input: {
+  ids: string[];
+  action: SmartLinkBulkAction;
+}): Promise<ActionResult<{ updated: number }>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await bulkUpdateSmartLinksForOrganization({
+      organizationId: context.organizationId,
+      ids: input.ids,
+      action: input.action,
+    });
+    revalidatePath(SHARE_STUDIO_HUB_PATH);
+    revalidatePath("/dashboard/reviews");
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to update Smart Links",
+    };
+  }
+}
+
+export async function getSmartLinkAnalytics(
+  linkId: string
+): Promise<ActionResult<SmartLinkAnalyticsResult>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await getSmartLinkAnalyticsForOrganization({
+      organizationId: context.organizationId,
+      linkId,
+    });
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to load Smart Link analytics",
+    };
+  }
+}
+
+export async function listShareStudioAssets(
+  input: ShareStudioAssetsInput = {}
+): Promise<ActionResult<ShareStudioAssetsResult>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await listShareStudioAssetsForOrganization(
+      context.organizationId,
+      input
+    );
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to load Share Studio assets",
+    };
+  }
+}
+
+export async function deleteShareStudioAsset(
+  assetId: string
+): Promise<ActionResult<{ deleted: boolean }>> {
+  const context = await getShareStudioHubActionContext();
+  if (!context.ok) {
+    return { success: false, error: context.error };
+  }
+
+  try {
+    const data = await deleteShareStudioAssetForOrganization({
+      organizationId: context.organizationId,
+      assetId,
+    });
+    revalidatePath(SHARE_STUDIO_HUB_PATH);
+    revalidatePath("/dashboard/reviews");
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to delete asset",
+    };
+  }
+}
+
 export async function getShareAssetsForReviewSource(reviewId: string) {
   const context = await getAuthenticatedOrganizationContext();
   if (!context) return null;
@@ -180,11 +343,7 @@ async function queueRenderJobForSource(input: {
     revalidatePath("/dashboard/share-studio");
 
     // Fire-and-forget: trigger render worker immediately for faster processing
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
-    fetch(`${appUrl}/api/cron/share-render-jobs`, {
-      method: "POST",
-      headers: { "x-cron-secret": process.env.CRON_SECRET || "" },
-    }).catch(() => {});
+    kickRenderWorker();
 
     return {
       success: true,
@@ -197,6 +356,149 @@ async function queueRenderJobForSource(input: {
       error: err instanceof Error ? err.message : "Failed to queue render job",
     };
   }
+}
+
+/**
+ * Queue a Clip render (branded VideoTestimonial composition) for a video
+ * testimonial response. Used by the asset creator / tweak panel; always
+ * renders, even when a kit clip already exists (regenerate).
+ */
+export async function queueClipRenderJob(
+  videoResponseId: string,
+  options: ClipRenderOptions & { musicTrackId?: string }
+): Promise<QueueRenderAssetResult> {
+  const context = await getAuthenticatedOrganizationContext();
+  if (!context) {
+    return { success: false, error: "Could not load user profile" };
+  }
+
+  // Music is resolved server-side from the curated library; clients send a
+  // track id, never a URL, so the render pipeline only plays approved audio.
+  const { musicTrackId, ...clipOptions } = options;
+  clipOptions.music = "off";
+  if (musicTrackId) {
+    const tracks = await getClipMusicTracks();
+    const track = tracks.find((candidate) => candidate.id === musicTrackId);
+    if (!track) {
+      return { success: false, error: "Selected music track is unavailable" };
+    }
+    clipOptions.music = { url: track.url };
+  }
+
+  try {
+    const result = await queueClipRender({
+      organizationId: context.organizationId,
+      videoResponseId,
+      actorUserId: context.userId,
+      options: { ...clipOptions },
+      idempotent: false,
+    });
+
+    revalidatePath("/dashboard/share-studio");
+
+    return {
+      success: true,
+      jobId: result.jobId ?? undefined,
+      proofItemId: result.proofItemId,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to queue clip render",
+    };
+  }
+}
+
+export interface ClipMusicTrack {
+  id: string;
+  name: string;
+  mood: string;
+  description: string | null;
+  url: string;
+  durationSeconds: number | null;
+}
+
+/** Curated background-music library shown in the asset creator. */
+export async function getClipMusicTracks(): Promise<ClipMusicTrack[]> {
+  const context = await getAuthenticatedOrganizationContext();
+  if (!context) return [];
+
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("clip_music_tracks")
+    .select("id, name, mood, description, url, duration_seconds")
+    .eq("is_active", true)
+    .order("sort_order");
+
+  if (error) {
+    console.error("[share-studio] Failed to load clip music tracks:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row) => ({
+    id: String(row.id),
+    name: String(row.name),
+    mood: String(row.mood),
+    description: (row.description as string | null) ?? null,
+    url: String(row.url),
+    durationSeconds:
+      typeof row.duration_seconds === "number"
+        ? row.duration_seconds
+        : row.duration_seconds
+          ? Number(row.duration_seconds)
+          : null,
+  }));
+}
+
+export interface RenderJobStatusResult {
+  status: "queued" | "processing" | "completed" | "failed" | "not_found";
+  errorMessage: string | null;
+  asset: { url: string; mimeType: string | null } | null;
+}
+
+/** Poll a render job until it resolves; used by the asset creator modal. */
+export async function getRenderJobStatus(
+  jobId: string
+): Promise<RenderJobStatusResult> {
+  const context = await getAuthenticatedOrganizationContext();
+  if (!context) {
+    return { status: "not_found", errorMessage: "Not authenticated", asset: null };
+  }
+
+  const job = await getRenderJob(context.organizationId, jobId);
+  if (!job) {
+    return { status: "not_found", errorMessage: null, asset: null };
+  }
+
+  const rawStatus = String(job.status ?? "queued");
+  const status: RenderJobStatusResult["status"] = [
+    "queued",
+    "processing",
+    "completed",
+    "failed",
+  ].includes(rawStatus)
+    ? (rawStatus as RenderJobStatusResult["status"])
+    : "queued";
+
+  const assets = job.proof_assets as
+    | Array<{ asset_url?: string | null; mime_type?: string | null; id?: string }>
+    | { asset_url?: string | null; mime_type?: string | null }
+    | null;
+  const outputAssetId = job.output_asset_id as string | null;
+  const assetList = Array.isArray(assets) ? assets : assets ? [assets] : [];
+  const matched =
+    assetList.find((a) => "id" in a && a.id === outputAssetId) ??
+    assetList[assetList.length - 1] ??
+    null;
+
+  return {
+    status,
+    errorMessage: (job.error_message as string | null) ?? null,
+    asset:
+      status === "completed" && matched?.asset_url
+        ? { url: String(matched.asset_url), mimeType: matched.mime_type ?? null }
+        : null,
+  };
 }
 
 export async function queueReviewRenderJob(

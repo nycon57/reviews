@@ -6,7 +6,7 @@ import { unifiedGetUser } from "@/lib/auth/actions";
 import { EditMemberContent } from "./edit-member-content";
 
 export const metadata = {
-  title: "Edit Team Member | RepWell",
+  title: "Edit Member | RepWell",
   description: "Edit team member profile and settings",
 };
 
@@ -36,16 +36,16 @@ export default async function EditMemberPage({
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-heading-accent">
-            Edit Team Member
+            Edit Member
           </h1>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Link
-              href="/dashboard/team"
+              href="/dashboard/people"
               className="hover:text-foreground transition-colors"
             >
               <span className="flex items-center gap-1">
                 <Users className="h-3.5 w-3.5" />
-                Team
+                People
               </span>
             </Link>
             <span>/</span>

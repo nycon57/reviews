@@ -95,7 +95,7 @@ describe("WidgetPreview layout", () => {
     expect(firstCard).not.toBeNull();
     expect(region?.style.padding).toBe("28px");
     expect(region?.style.borderRadius).toBe("20px");
-    expect(firstCard?.className).toContain("shadow-sm");
+    expect(firstCard?.className).toContain("shadow-md");
     expect(firstCard?.className).not.toContain("bg-gray-50");
   });
 

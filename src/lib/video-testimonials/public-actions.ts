@@ -1,6 +1,8 @@
 "use server";
 
+import { after } from "next/server";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { requireCronSecretRequest } from "@/lib/auth/server-action-guards";
 import { z } from "zod";
 import { cache } from "react";
 import type { Json } from "@/types/database.types";
@@ -17,14 +19,19 @@ import {
   type CreateUploadUrlsResult,
   type SubmitVideoInput,
   type VideoSubmissionResult,
+  type ShareKit,
+  type PassthroughPlatform,
 } from "./types";
+import { createChatCompletion, isAIEnabled } from "@/lib/ai/client";
 import { generateReviewFromTranscript } from "@/lib/ai/transcript-to-review";
+import { publishReviewIfClean } from "@/lib/reviews/publish";
 import { transcribeWithWordTimestamps } from "@/lib/share-studio/transcription-service";
 import { ensureSmartLinkForSource } from "@/lib/share-studio/service";
 import {
   sendVideoTestimonialPendingApprovalEmail,
   sendVideoTestimonialReceivedEmail,
 } from "@/lib/email";
+import { getCelebrationThreshold } from "@/lib/reviews/asset-kit";
 
 // ============================================================================
 // Validation Schemas
@@ -38,6 +45,11 @@ const customerInfoSchema = z.object({
   relationship: z.enum(VALID_RELATIONSHIPS, {
     errorMap: () => ({ message: "Please select a valid relationship type" }),
   }),
+  rating: z
+    .number({ invalid_type_error: "Please rate your experience" })
+    .int()
+    .min(1, "Please rate your experience")
+    .max(5, "Rating must be between 1 and 5"),
 });
 
 const consentSchema = z
@@ -84,34 +96,28 @@ const createUploadUrlsSchema = z.object({
   fileSizeBytes: z.number().int().positive().optional(),
 });
 
-const recordConsentEventSchema = z.object({
-  requestId: z.string().uuid("Invalid request ID"),
-  responseId: z.string().uuid("Invalid response ID").optional(),
-  consentType: z.enum([
-    "name_image_likeness_voice",
-    "usage_rights",
-    "ai_text_generation",
-    "marketing",
-  ]),
-  granted: z.boolean(),
-  consentVersion: z.string().min(1, "Consent version is required"),
-  legalTextSnapshot: z.string().min(1, "Legal text snapshot is required"),
-  clientInfo: z
-    .object({
-      ipAddress: z.string().max(64).optional().nullable(),
-      userAgent: z.string().max(500).optional().nullable(),
-      locale: z.string().max(50).optional().nullable(),
-    })
-    .optional(),
-});
-
 // ============================================================================
 // Type Helpers
 // ============================================================================
 
-type UserData = { id: string; full_name: string; photo_url: string | null; title: string | null };
-type OrganizationData = { id: string; name: string; logo_url: string | null; primary_color: string | null };
-type RequestSourceMetadata = { customer_display_name?: string; customer_relationship?: string } | null;
+type RequestSourceMetadata = {
+  customer_display_name?: string;
+  customer_relationship?: string;
+  customer_rating?: number;
+  share_caption?: string;
+} | null;
+
+/**
+ * Reads the `source_metadata` JSON column into the shape this module writes. Rows holding
+ * any other JSON shape read back as absent metadata rather than as a lying object type.
+ */
+function readSourceMetadata(value: Json | null | undefined): RequestSourceMetadata {
+  if (!(value instanceof Object) || Array.isArray(value)) return null;
+  // SAFETY: the guard above leaves only JSON objects, and every writer of
+  // video_testimonial_requests.source_metadata stores this shape; each field is optional, so a
+  // row missing any of them still satisfies the type.
+  return value as RequestSourceMetadata;
+}
 
 type ConsentType =
   | "name_image_likeness_voice"
@@ -236,43 +242,6 @@ async function recordConsentEvents(params: {
   return data.map((event) => event.id);
 }
 
-export async function recordConsentEvent(
-  input: z.infer<typeof recordConsentEventSchema>
-): Promise<ActionResult<{ consentEventId: string }>> {
-  try {
-    const parsed = recordConsentEventSchema.safeParse(input);
-    if (!parsed.success) {
-      return { success: false, error: parsed.error.errors[0]?.message || "Invalid consent event payload" };
-    }
-
-    const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from("testimonial_consent_events")
-      .insert({
-        request_id: parsed.data.requestId,
-        response_id: parsed.data.responseId || null,
-        consent_type: parsed.data.consentType,
-        granted: parsed.data.granted,
-        consent_version: parsed.data.consentVersion,
-        legal_text_snapshot: parsed.data.legalTextSnapshot,
-        ip_address: parsed.data.clientInfo?.ipAddress || null,
-        user_agent: parsed.data.clientInfo?.userAgent || null,
-        locale: parsed.data.clientInfo?.locale || null,
-      })
-      .select("id")
-      .single();
-
-    if (error || !data) {
-      return { success: false, error: error?.message || "Failed to record consent event" };
-    }
-
-    return { success: true, data: { consentEventId: data.id } };
-  } catch (error) {
-    console.error("Error recording consent event:", error);
-    return { success: false, error: "Failed to record consent event" };
-  }
-}
-
 // ============================================================================
 // Public Server Actions
 // ============================================================================
@@ -292,13 +261,19 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
     const supabase = createAdminClient();
     const { data: request, error: requestError } = await supabase
       .from("video_testimonial_requests")
-      .select(`
+      .select(
+        `
         id, token, status, max_duration_seconds, prompt_text, expires_at,
         submitted_at, opened_at, customer_name, customer_email,
         user_id, organization_id,
-        users!user_id (id, full_name, photo_url, title),
+        users!user_id (
+          id, full_name, photo_url, title, phone, address,
+          cta_button_text, cta_button_url, linkedin_url, facebook_url,
+          instagram_url, twitter_url, personal_website_url, zillow_profile_url
+        ),
         organizations!inner (id, name, logo_url, primary_color)
-      `)
+      `
+      )
       .eq("token", token)
       .single();
 
@@ -333,8 +308,8 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
         .eq("id", request.id);
     }
 
-    const professional = request.users as unknown as UserData;
-    const organization = request.organizations as unknown as OrganizationData;
+    const professional = request.users;
+    const organization = request.organizations;
 
     return {
       success: true,
@@ -350,9 +325,25 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
         customerEmail: request.customer_email,
         professional: {
           id: professional.id,
-          fullName: professional.full_name,
+          fullName: professional.full_name ?? "",
           photoUrl: validateSafeUrl(professional.photo_url),
           title: professional.title,
+          phone: professional.phone,
+          address:
+            (professional.address as {
+              street?: string;
+              city?: string;
+              state?: string;
+              zip?: string;
+            } | null) || null,
+          ctaText: professional.cta_button_text,
+          ctaUrl: validateSafeUrl(professional.cta_button_url),
+          linkedinUrl: validateSafeUrl(professional.linkedin_url),
+          facebookUrl: validateSafeUrl(professional.facebook_url),
+          instagramUrl: validateSafeUrl(professional.instagram_url),
+          twitterUrl: validateSafeUrl(professional.twitter_url),
+          personalWebsiteUrl: validateSafeUrl(professional.personal_website_url),
+          zillowUrl: validateSafeUrl(professional.zillow_profile_url),
         },
         organization: {
           id: organization.id,
@@ -374,14 +365,15 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
  */
 export async function submitCustomerInfoAndConsent(
   input: SubmitCustomerInfoInput
-): Promise<ActionResult<{ requestId: string }>> {
+): Promise<ActionResult<{ requestId: string; celebration: boolean }>> {
   try {
     const validated = submitCustomerInfoSchema.safeParse(input);
     if (!validated.success) {
       return { success: false, error: validated.error.errors[0]?.message || "Validation failed" };
     }
 
-    const { token, customerInfo, consents, consentVersion, legalTextSnapshotHash, clientInfo } = validated.data;
+    const { token, customerInfo, consents, consentVersion, legalTextSnapshotHash, clientInfo } =
+      validated.data;
     const supabase = createAdminClient();
     const normalizedConsents = {
       nilConsent: consents.nilConsent === true || consents.videoRecordingConsent === true,
@@ -396,7 +388,7 @@ export async function submitCustomerInfoAndConsent(
 
     const { data: request, error: requestError } = await supabase
       .from("video_testimonial_requests")
-      .select("id, status, expires_at, submitted_at")
+      .select("id, status, expires_at, submitted_at, organization_id")
       .eq("token", token)
       .single();
 
@@ -423,6 +415,7 @@ export async function submitCustomerInfoAndConsent(
         source_metadata: {
           customer_display_name: customerInfo.displayName,
           customer_relationship: customerInfo.relationship,
+          customer_rating: customerInfo.rating,
           consent_version: effectiveConsentVersion,
           consent_snapshot_hash: consentSnapshotHash,
           consent_updated_at: now,
@@ -439,7 +432,10 @@ export async function submitCustomerInfoAndConsent(
 
     if (updateError || !updatedData) {
       console.error("Error updating video testimonial request:", updateError);
-      return { success: false, error: "Unable to save your information. The request may have been updated." };
+      return {
+        success: false,
+        error: "Unable to save your information. The request may have been updated.",
+      };
     }
 
     await recordConsentEvents({
@@ -449,7 +445,12 @@ export async function submitCustomerInfoAndConsent(
       clientInfo,
     });
 
-    return { success: true, data: { requestId: request.id } };
+    const threshold = await getCelebrationThreshold(request.organization_id);
+
+    return {
+      success: true,
+      data: { requestId: request.id, celebration: customerInfo.rating >= threshold },
+    };
   } catch (error) {
     console.error("Error submitting customer info and consent:", error);
     return { success: false, error: "Failed to submit your information" };
@@ -495,14 +496,16 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
     const supabase = createAdminClient();
     const { data: video, error: videoError } = await supabase
       .from("video_testimonial_responses")
-      .select(`
+      .select(
+        `
         id, video_url, video_path, thumbnail_url, duration_seconds, transcription,
         ai_generated_text, key_phrases, sentiment_label, submitted_at, published_at,
         approval_status, user_id, organization_id,
         video_testimonial_requests!inner (customer_name, source_metadata),
         users!user_id (id, full_name, photo_url, title),
         organizations!inner (id, name, logo_url, primary_color)
-      `)
+      `
+      )
       .eq("id", videoId)
       .eq("approval_status", "published")
       .single();
@@ -520,9 +523,10 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
       return { success: false, error: "Failed to load video" };
     }
 
-    const request = video.video_testimonial_requests as unknown as { customer_name: string; source_metadata: RequestSourceMetadata };
-    const professional = video.users as unknown as UserData;
-    const organization = video.organizations as unknown as OrganizationData;
+    const request = video.video_testimonial_requests;
+    const sourceMetadata = readSourceMetadata(request.source_metadata);
+    const professional = video.users;
+    const organization = video.organizations;
 
     trackVideoView(videoId).catch(console.error);
 
@@ -540,12 +544,12 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
         submittedAt: video.submitted_at,
         publishedAt: video.published_at,
         customer: {
-          displayName: request.source_metadata?.customer_display_name || request.customer_name,
-          relationship: request.source_metadata?.customer_relationship || null,
+          displayName: sourceMetadata?.customer_display_name || request.customer_name,
+          relationship: sourceMetadata?.customer_relationship || null,
         },
         professional: {
           id: professional.id,
-          fullName: professional.full_name,
+          fullName: professional.full_name ?? "",
           photoUrl: validateSafeUrl(professional.photo_url),
           title: professional.title,
         },
@@ -563,8 +567,9 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
   }
 });
 
-async function trackVideoView(videoId: string): Promise<void> {
-  console.log(`Video view: ${videoId} at ${new Date().toISOString()}`);
+async function trackVideoView(_videoId: string): Promise<void> {
+  // No-op stub: view tracking has no server-side sink yet. Kept as an awaited
+  // hook so callers stay unchanged when analytics wiring lands.
 }
 
 /**
@@ -572,16 +577,18 @@ async function trackVideoView(videoId: string): Promise<void> {
  */
 export const getPublicVideoMetadata = cache(async function getPublicVideoMetadataImpl(
   videoId: string
-): Promise<ActionResult<{
-  title: string;
-  description: string;
-  customerName: string;
-  professionalName: string;
-  organizationName: string;
-  thumbnailUrl: string | null;
-  durationSeconds: number | null;
-  publishedAt: string | null;
-}>> {
+): Promise<
+  ActionResult<{
+    title: string;
+    description: string;
+    customerName: string;
+    professionalName: string;
+    organizationName: string;
+    thumbnailUrl: string | null;
+    durationSeconds: number | null;
+    publishedAt: string | null;
+  }>
+> {
   try {
     if (!videoId) {
       return { success: false, error: "Video ID is required" };
@@ -590,12 +597,14 @@ export const getPublicVideoMetadata = cache(async function getPublicVideoMetadat
     const supabase = createAdminClient();
     const { data: video, error: videoError } = await supabase
       .from("video_testimonial_responses")
-      .select(`
+      .select(
+        `
         id, thumbnail_url, duration_seconds, ai_generated_text, published_at, approval_status,
         video_testimonial_requests!inner (customer_name, source_metadata),
         users!user_id (full_name),
         organizations!inner (name)
-      `)
+      `
+      )
       .eq("id", videoId)
       .eq("approval_status", "published")
       .single();
@@ -604,22 +613,24 @@ export const getPublicVideoMetadata = cache(async function getPublicVideoMetadat
       return { success: false, error: "Video testimonial not found" };
     }
 
-    const request = video.video_testimonial_requests as unknown as { customer_name: string; source_metadata: { customer_display_name?: string } | null };
-    const professional = video.users as unknown as { full_name: string };
-    const organization = video.organizations as unknown as { name: string };
+    const request = video.video_testimonial_requests;
+    const organization = video.organizations;
 
-    const customerName = request.source_metadata?.customer_display_name || request.customer_name;
+    const customerName =
+      readSourceMetadata(request.source_metadata)?.customer_display_name || request.customer_name;
+    const professionalName = video.users.full_name ?? "";
     const description = video.ai_generated_text
-      ? video.ai_generated_text.substring(0, 155) + (video.ai_generated_text.length > 155 ? "..." : "")
-      : `Watch ${customerName}'s video testimonial about their experience with ${professional.full_name} at ${organization.name}.`;
+      ? video.ai_generated_text.substring(0, 155) +
+        (video.ai_generated_text.length > 155 ? "..." : "")
+      : `Watch ${customerName}'s video testimonial about their experience with ${professionalName} at ${organization.name}.`;
 
     return {
       success: true,
       data: {
-        title: `${customerName}'s Experience with ${professional.full_name}`,
+        title: `${customerName}'s Experience with ${professionalName}`,
         description,
         customerName,
-        professionalName: professional.full_name,
+        professionalName,
         organizationName: organization.name,
         thumbnailUrl: validateSafeUrl(video.thumbnail_url),
         durationSeconds: video.duration_seconds,
@@ -640,7 +651,7 @@ export type SharePlatform = "facebook" | "linkedin" | "twitter" | "link" | "embe
 
 export async function trackVideoShare(
   videoId: string,
-  platform: SharePlatform
+  _platform: SharePlatform
 ): Promise<ActionResult<void>> {
   try {
     if (!videoId) {
@@ -659,7 +670,8 @@ export async function trackVideoShare(
       return { success: false, error: "Video not found" };
     }
 
-    console.log(`Video share: ${videoId} on ${platform} at ${new Date().toISOString()}`);
+    // No-op stub: share tracking has no server-side sink yet. The video is
+    // validated above; the platform is accepted for when analytics wiring lands.
     return { success: true };
   } catch (error) {
     console.error("Error tracking video share:", error);
@@ -694,7 +706,7 @@ export async function generateShareLink(
       actorUserId: (video.user_id as string | null) ?? null,
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
     return { success: true, data: { shareUrl: `${baseUrl}${ensured.url}` } };
   } catch (error) {
     console.error("Error generating share link:", error);
@@ -946,7 +958,7 @@ async function notifyVideoSubmitted(params: {
   durationSeconds: number;
 }) {
   const supabase = createAdminClient();
-  const dashboardBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const dashboardBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const { owner, managers } = await getVideoNotificationRecipients({
     organizationId: params.organizationId,
     ownerUserId: params.ownerUserId,
@@ -1020,7 +1032,7 @@ async function notifyVideoReadyForApproval(params: {
   durationSeconds: number | null;
 }) {
   const supabase = createAdminClient();
-  const dashboardBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const dashboardBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const { owner, managers } = await getVideoNotificationRecipients({
     organizationId: params.organizationId,
     ownerUserId: params.ownerUserId,
@@ -1065,7 +1077,7 @@ async function notifyVideoReadyForApproval(params: {
         owner_user_id: params.ownerUserId,
         created_at: now,
       } as Json,
-    }))
+    })),
   ];
 
   await supabase.from("notifications").insert(inAppRows);
@@ -1088,6 +1100,43 @@ async function notifyVideoReadyForApproval(params: {
         })
       )
   );
+}
+
+/**
+ * Alert the professional that a low-rated (quarantined) video came in.
+ * Low Path comms per ADR 0001: the response sits in quarantine until reviewed.
+ */
+async function notifyVideoLowRating(params: {
+  responseId: string;
+  requestId: string;
+  organizationId: string;
+  ownerUserId: string;
+  customerName: string;
+  rating: number;
+}) {
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+
+  const { error } = await supabase.from("notifications").insert({
+    user_id: params.ownerUserId,
+    organization_id: params.organizationId,
+    type: "video_low_rating",
+    title: "A video testimonial needs your attention",
+    message: `${params.customerName} rated their experience ${params.rating} out of 5. The video is on hold until you review it.`,
+    action_url: `/dashboard/reviews/${params.responseId}?type=video`,
+    metadata: {
+      event: "video_low_rating",
+      response_id: params.responseId,
+      request_id: params.requestId,
+      customer_name: params.customerName,
+      rating: params.rating,
+      created_at: now,
+    } as Json,
+  });
+
+  if (error) {
+    console.error("Error creating low-rating notification:", error);
+  }
 }
 
 async function notifyVideoProcessingFailure(params: {
@@ -1172,12 +1221,14 @@ export async function submitVideoTestimonial(
     // Get and validate request
     const { data: request, error: requestError } = await supabase
       .from("video_testimonial_requests")
-      .select(`
+      .select(
+        `
         id, status, organization_id, user_id, customer_name, customer_email,
         expires_at, submitted_at, source_metadata,
         users!user_id (full_name, email),
         organizations!inner(name)
-      `)
+      `
+      )
       .eq("token", token)
       .single();
 
@@ -1253,6 +1304,14 @@ export async function submitVideoTestimonial(
       return { success: false, error: "Required consent records are incomplete" };
     }
 
+    // Copy the customer rating captured at consent time onto the response and
+    // quarantine low-path submissions (ADR 0001: distribution gate, not retention).
+    const sourceMetadata = readSourceMetadata(request.source_metadata);
+    const customerRating =
+      typeof sourceMetadata?.customer_rating === "number" ? sourceMetadata.customer_rating : null;
+    const celebrationThreshold = await getCelebrationThreshold(request.organization_id);
+    const quarantined = customerRating !== null && customerRating < celebrationThreshold;
+
     // Create response record with queued status for AI processing
     const now = new Date().toISOString();
     const { data: response, error: responseError } = await supabase
@@ -1272,6 +1331,8 @@ export async function submitVideoTestimonial(
         height: input.mediaMetadata?.height || null,
         mime_type: effectiveMimeType,
         media_codec: input.mediaMetadata?.codec || null,
+        customer_rating: customerRating,
+        quarantined,
         consent_given: true,
         consent_timestamp: consentSnapshot.consentCapturedAt,
         marketing_consent: consentSnapshot.marketingConsentGranted,
@@ -1348,8 +1409,8 @@ export async function submitVideoTestimonial(
       return { success: false, error: "This video testimonial has already been submitted" };
     }
 
-    const owner = request.users as unknown as { full_name: string | null; email: string | null };
-    const organization = request.organizations as unknown as { name: string };
+    const owner = request.users;
+    const organization = request.organizations;
     await notifyVideoSubmitted({
       responseId: response.id,
       requestId: request.id,
@@ -1362,9 +1423,26 @@ export async function submitVideoTestimonial(
       durationSeconds,
     });
 
-    // AI processing is now handled by a background worker via cron job
-    // The worker will poll for responses with transcription_status="pending"
-    // and process them asynchronously
+    if (quarantined && customerRating !== null) {
+      await notifyVideoLowRating({
+        responseId: response.id,
+        requestId: request.id,
+        organizationId: request.organization_id,
+        ownerUserId: request.user_id,
+        customerName: request.customer_name,
+        rating: customerRating,
+      });
+    }
+
+    // Kick AI processing as soon as the response is committed; the cron worker
+    // remains the retry backstop for anything this pass misses.
+    after(async () => {
+      try {
+        await processVideoTestimonialAIQueueInternal(3);
+      } catch (error) {
+        console.error("Post-submit AI processing kick failed:", error);
+      }
+    });
 
     return {
       success: true,
@@ -1402,12 +1480,131 @@ export interface AIProcessingResult {
 }
 
 /**
+ * Create the canonical reviews row for a video testimonial response (ADR 0002).
+ *
+ * A video testimonial is a review with media attached: once the AI review
+ * draft exists and the customer left a rating, the response gets a
+ * `reviews` row (source='video_testimonial') and a `review_id` back-link.
+ * Idempotent — skipped when `review_id` is already set. Legacy responses
+ * without a customer rating get no review row (`reviews.rating` is NOT NULL).
+ *
+ * Publish inversion: the shared review publish helper machine-screens the text
+ * and, on a pass verdict, publishes immediately at ANY rating — the customer
+ * already approved this text in-flow. A quarantine verdict leaves the review
+ * status='pending' (machine-quarantined awaiting human release). The video
+ * `quarantined` flag is NOT consulted here; it only gates video surfaces.
+ *
+ * Never throws — failures are logged so the AI job itself is not marked
+ * as failed over a sync problem.
+ */
+async function createCanonicalReviewForResponse(params: {
+  responseId: string;
+  organizationId: string;
+  ownerUserId: string;
+  customerName: string;
+  reviewText: string;
+}): Promise<void> {
+  try {
+    const supabase = createAdminClient();
+
+    const { data: response, error: responseError } = await supabase
+      .from("video_testimonial_responses")
+      .select("id, customer_rating, review_id, request_id, sentiment_score, sentiment_label")
+      .eq("id", params.responseId)
+      .single();
+
+    if (responseError || !response) {
+      console.error(
+        "Unified review: failed to load video response for review creation:",
+        responseError
+      );
+      return;
+    }
+
+    // Idempotent: a canonical review already exists for this response
+    if (response.review_id) {
+      return;
+    }
+
+    // Legacy rows without a customer rating stay video-only records
+    if (typeof response.customer_rating !== "number") {
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const { data: request } = await supabase
+      .from("video_testimonial_requests")
+      .select("customer_email")
+      .eq("id", response.request_id)
+      .maybeSingle();
+
+    const untypedAdmin = createUntypedAdminClient();
+    const { data: review, error: insertError } = await untypedAdmin
+      .from("reviews")
+      .insert({
+        source: "video_testimonial",
+        source_review_id: params.responseId,
+        organization_id: params.organizationId,
+        user_id: params.ownerUserId,
+        rating: response.customer_rating,
+        text: params.reviewText,
+        customer_name: params.customerName,
+        customer_email:
+          (request as { customer_email?: string | null } | null)?.customer_email ?? null,
+        sentiment_score: response.sentiment_score,
+        sentiment_label: response.sentiment_label,
+        review_date: now,
+        status: "pending",
+        is_published: false,
+      })
+      .select("id")
+      .single();
+
+    if (insertError || !review) {
+      console.error(
+        "Unified review: failed to create canonical review for video response:",
+        insertError
+      );
+      return;
+    }
+
+    const reviewId = String((review as { id: string }).id);
+
+    const { error: backlinkError } = await supabase
+      .from("video_testimonial_responses")
+      .update({ review_id: reviewId, updated_at: now })
+      .eq("id", params.responseId);
+
+    if (backlinkError) {
+      console.error(
+        "Unified review: failed to store review_id back-link on video response:",
+        backlinkError
+      );
+    }
+
+    await publishReviewIfClean({
+      reviewId,
+      organizationId: params.organizationId,
+      ownerUserId: params.ownerUserId,
+      customerName: params.customerName,
+      rating: response.customer_rating,
+      reviewText: params.reviewText,
+      screening: {
+        mode: "compute",
+        text: params.reviewText,
+        customerName: params.customerName,
+      },
+    });
+  } catch (error) {
+    console.error("Unified review: error creating canonical review:", error);
+  }
+}
+
+/**
  * Process a single video testimonial AI job
  * Called by background worker to transcribe video and generate review
  */
-export async function processVideoTestimonialAIJob(
-  job: AIProcessingJob
-): Promise<AIProcessingResult> {
+async function processVideoTestimonialAIJob(job: AIProcessingJob): Promise<AIProcessingResult> {
   const supabase = createAdminClient();
   const untypedSupabase = createUntypedAdminClient();
   const {
@@ -1451,13 +1648,12 @@ export async function processVideoTestimonialAIJob(
         provider: transcriptionResult.provider,
         model: transcriptionResult.model,
         created_at: new Date().toISOString(),
-        flagged_word_count: transcriptionResult.words.filter(
-          (word) => word.flagged_for_review
-        ).length,
+        flagged_word_count: transcriptionResult.words.filter((word) => word.flagged_for_review)
+          .length,
       } as Json;
 
       // Update transcription status
-      await untypedSupabase
+      const { error: transcriptionUpdateError } = await untypedSupabase
         .from("video_testimonial_responses")
         .update({
           transcription: transcription,
@@ -1467,6 +1663,10 @@ export async function processVideoTestimonialAIJob(
           updated_at: new Date().toISOString(),
         })
         .eq("id", responseId);
+
+      if (transcriptionUpdateError) {
+        throw new Error(`Failed to persist transcription: ${transcriptionUpdateError.message}`);
+      }
 
       // Generate review from transcription
       if (transcription && transcription.trim().length > 0) {
@@ -1490,6 +1690,16 @@ export async function processVideoTestimonialAIJob(
               updated_at: new Date().toISOString(),
             })
             .eq("id", responseId);
+
+          // Unified review model (ADR 0002): a video testimonial with a
+          // customer rating becomes a canonical reviews row.
+          await createCanonicalReviewForResponse({
+            responseId,
+            organizationId,
+            ownerUserId,
+            customerName,
+            reviewText: generatedReview,
+          });
 
           await supabase
             .from("video_testimonial_requests")
@@ -1525,6 +1735,18 @@ export async function processVideoTestimonialAIJob(
             })
             .eq("id", responseId);
         }
+      } else {
+        // No usable speech in the video: close out generation so pollers
+        // (share kit, recapture sweep) don't wait on it forever.
+        await supabase
+          .from("video_testimonial_responses")
+          .update({
+            ai_generation_status: "failed",
+            processing_error_stage: "generation",
+            processing_error_code: "NO_SPEECH_DETECTED",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", responseId);
       }
 
       return {
@@ -1580,26 +1802,27 @@ export async function processVideoTestimonialAIJob(
  * Get pending AI processing jobs
  * Returns video testimonial responses that need transcription/review generation
  */
-export async function getPendingAIProcessingJobs(
-  limit: number = 10
-): Promise<AIProcessingJob[]> {
+async function getPendingAIProcessingJobs(limit: number = 10): Promise<AIProcessingJob[]> {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("video_testimonial_responses")
-    .select(`
+    .select(
+      `
       id,
       request_id,
       organization_id,
       user_id,
       video_url,
+      video_path,
       duration_seconds,
       video_testimonial_requests!inner (
         customer_name,
         source_metadata,
         users!user_id (full_name, email)
       )
-    `)
+    `
+    )
     .eq("transcription_status", "pending")
     .order("created_at", { ascending: true })
     .limit(limit);
@@ -1609,25 +1832,39 @@ export async function getPendingAIProcessingJobs(
     return [];
   }
 
-  return data.map((row) => {
-    const request = row.video_testimonial_requests as unknown as {
-      customer_name: string;
-      source_metadata: { customer_display_name?: string } | null;
-      users: { full_name: string; email: string | null };
-    };
+  return Promise.all(
+    data.map(async (row) => {
+      const request = row.video_testimonial_requests;
 
-    return {
-      responseId: row.id,
-      requestId: row.request_id,
-      organizationId: row.organization_id,
-      ownerUserId: row.user_id,
-      ownerEmail: request.users.email,
-      videoUrl: row.video_url,
-      durationSeconds: row.duration_seconds,
-      customerName: request.source_metadata?.customer_display_name || request.customer_name,
-      ownerName: request.users.full_name,
-    };
-  });
+      // The bucket is private, so the stored public URL is not fetchable by
+      // transcription providers. Mint a fresh signed URL from the storage path.
+      let videoUrl = row.video_url;
+      if (row.video_path) {
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from("video-testimonials")
+          .createSignedUrl(row.video_path.replace(/^\/+/, ""), 3600);
+        if (signedUrlData?.signedUrl) {
+          videoUrl = signedUrlData.signedUrl;
+        } else {
+          console.error(`Error creating signed URL for AI job ${row.id}:`, signedUrlError);
+        }
+      }
+
+      return {
+        responseId: row.id,
+        requestId: row.request_id,
+        organizationId: row.organization_id,
+        ownerUserId: row.user_id,
+        ownerEmail: request.users.email,
+        videoUrl,
+        durationSeconds: row.duration_seconds,
+        customerName:
+          readSourceMetadata(request.source_metadata)?.customer_display_name ||
+          request.customer_name,
+        ownerName: request.users.full_name ?? "",
+      };
+    })
+  );
 }
 
 /**
@@ -1635,6 +1872,18 @@ export async function getPendingAIProcessingJobs(
  * Called by cron job to process pending transcription/review jobs
  */
 export async function processVideoTestimonialAIQueue(
+  batchSize: number = 10
+): Promise<{ processed: number; failed: number; errors: string[] }> {
+  try {
+    await requireCronSecretRequest();
+  } catch {
+    return { processed: 0, failed: 0, errors: ["Unauthorized"] };
+  }
+
+  return processVideoTestimonialAIQueueInternal(batchSize);
+}
+
+async function processVideoTestimonialAIQueueInternal(
   batchSize: number = 10
 ): Promise<{ processed: number; failed: number; errors: string[] }> {
   const jobs = await getPendingAIProcessingJobs(batchSize);
@@ -1664,4 +1913,357 @@ export async function processVideoTestimonialAIQueue(
   }
 
   return results;
+}
+
+// ============================================================================
+// Thank-You Screen Actions (Share Kit, Passthrough, Private Feedback)
+// ============================================================================
+
+const FALLBACK_CAPTION_TEMPLATE = (professionalName: string) =>
+  `I just shared my experience working with ${professionalName}. Here's my story.`;
+
+function storagePathFromPublicUrl(url: string | null): string | null {
+  if (!url) return null;
+  const marker = "/video-testimonials/";
+  const index = url.indexOf(marker);
+  return index === -1 ? null : url.slice(index + marker.length);
+}
+
+/** Generate a first-person share caption from the customer's transcript. */
+async function generateShareCaption(params: {
+  transcription: string;
+  customerName: string;
+  professionalName: string;
+}): Promise<string> {
+  if (!isAIEnabled()) {
+    return FALLBACK_CAPTION_TEMPLATE(params.professionalName);
+  }
+
+  const systemPrompt = `You write a short social media caption for a customer who just recorded a video testimonial about a professional they worked with.
+Write in the customer's own first-person voice ("I", "my"), as if they are posting the video themselves.
+Warm, genuine, specific to what they actually said. One or two sentences, under 220 characters.
+No hashtags, no emojis, no em dashes. Mention the professional by first name.
+Respond with JSON: { "caption": "your caption here" }`;
+
+  const userPrompt = [
+    `Customer: ${params.customerName}`,
+    `Professional: ${params.professionalName}`,
+    `Transcript of the customer's video: "${params.transcription}"`,
+  ].join("\n");
+
+  try {
+    const response = await createChatCompletion(systemPrompt, userPrompt);
+    const parsed = JSON.parse(response) as { caption?: string };
+    const caption = (parsed.caption || "").trim();
+    return caption || FALLBACK_CAPTION_TEMPLATE(params.professionalName);
+  } catch (error) {
+    console.error("Error generating share caption:", error);
+    return FALLBACK_CAPTION_TEMPLATE(params.professionalName);
+  }
+}
+
+/**
+ * Build the share kit for the high-path thank-you screen.
+ * Returns status "preparing" until transcription and the review draft are
+ * done; public smart links are only created after approval/quarantine checks pass.
+ */
+export async function getShareKit(token: string): Promise<ActionResult<ShareKit>> {
+  try {
+    if (!token) {
+      return { success: false, error: "Token is required" };
+    }
+
+    const supabase = createAdminClient();
+    const { data: request, error: requestError } = await supabase
+      .from("video_testimonial_requests")
+      .select(
+        `
+        id, organization_id, user_id, customer_name, source_metadata,
+        users!user_id (full_name, google_place_id, zillow_profile_url)
+      `
+      )
+      .eq("token", token)
+      .single();
+
+    if (requestError || !request) {
+      return { success: false, error: "Video testimonial request not found" };
+    }
+
+    const { data: response, error: responseError } = await supabase
+      .from("video_testimonial_responses")
+      .select(
+        "id, transcription, transcription_status, ai_generated_text, ai_generation_status, thumbnail_url, approval_status, customer_rating, quarantined"
+      )
+      .eq("request_id", request.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (responseError || !response) {
+      return { success: false, error: "Video testimonial response not found" };
+    }
+
+    const owner = request.users;
+    const sourceMetadata = readSourceMetadata(request.source_metadata);
+    const customerName = sourceMetadata?.customer_display_name || request.customer_name;
+    const professionalName = owner.full_name || "your professional";
+
+    let smartLinkUrl: string | null = null;
+    const rating = typeof response.customer_rating === "number" ? response.customer_rating : null;
+    const celebrationThreshold = await getCelebrationThreshold(request.organization_id);
+    const approvedForPublicShare =
+      ["approved", "published"].includes(String(response.approval_status ?? "")) ||
+      (rating !== null && rating >= celebrationThreshold);
+    const smartLinkPendingApproval = response.quarantined === true || !approvedForPublicShare;
+
+    if (!smartLinkPendingApproval) {
+      try {
+        const ensured = await ensureSmartLinkForSource({
+          organizationId: request.organization_id,
+          sourceType: "video_testimonial",
+          sourceId: response.id,
+          actorUserId: request.user_id,
+        });
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
+        smartLinkUrl = `${baseUrl}${ensured.url}`;
+      } catch (error) {
+        console.error("Error ensuring smart link for share kit:", error);
+      }
+    }
+
+    // The bucket is private; mint a short-lived signed URL for the thumbnail.
+    let thumbnailUrl: string | null = null;
+    const thumbnailPath = storagePathFromPublicUrl(response.thumbnail_url);
+    if (thumbnailPath) {
+      const { data: signedThumb, error: signedThumbError } = await supabase.storage
+        .from("video-testimonials")
+        .createSignedUrl(thumbnailPath, 3600);
+      if (signedThumb?.signedUrl) {
+        thumbnailUrl = signedThumb.signedUrl;
+      } else if (signedThumbError) {
+        console.error("Error signing thumbnail URL for share kit:", signedThumbError);
+      }
+    }
+
+    const kitBase = {
+      smartLinkUrl,
+      smartLinkPendingApproval,
+      thumbnailUrl,
+      reviewText: response.ai_generated_text,
+      googleReviewUrl: owner.google_place_id
+        ? `https://search.google.com/local/writereview?placeid=${encodeURIComponent(owner.google_place_id)}`
+        : null,
+      zillowUrl: validateSafeUrl(owner.zillow_profile_url),
+    };
+
+    // Caption needs the transcript; until then the kit is still being prepared.
+    const transcriptionReady =
+      response.transcription_status === "completed" &&
+      !!response.transcription &&
+      response.transcription.trim().length > 0;
+    const reviewReady = response.ai_generation_status === "completed";
+
+    // Processing dead-ended (no speech, provider failure): serve a basic kit
+    // with the fallback caption instead of leaving the customer polling.
+    const processingFailed =
+      response.transcription_status === "failed" || response.ai_generation_status === "failed";
+    if (processingFailed && !reviewReady) {
+      return {
+        success: true,
+        data: {
+          ...kitBase,
+          status: "ready",
+          caption: FALLBACK_CAPTION_TEMPLATE(professionalName),
+          reviewText: null,
+        },
+      };
+    }
+
+    if (!transcriptionReady || !reviewReady) {
+      return {
+        success: true,
+        data: {
+          ...kitBase,
+          status: "preparing",
+          caption: null,
+        },
+      };
+    }
+
+    let caption = sourceMetadata?.share_caption || null;
+    if (!caption) {
+      caption = await generateShareCaption({
+        transcription: response.transcription as string,
+        customerName,
+        professionalName,
+      });
+
+      // Cache the caption so polling does not regenerate it.
+      const { error: cacheError } = await supabase
+        .from("video_testimonial_requests")
+        .update({
+          source_metadata: { ...(sourceMetadata || {}), share_caption: caption } as Json,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", request.id);
+      if (cacheError) {
+        console.error("Error caching share caption:", cacheError);
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        ...kitBase,
+        status: "ready",
+        caption,
+      },
+    };
+  } catch (error) {
+    console.error("Error building share kit:", error);
+    return { success: false, error: "Failed to load share details" };
+  }
+}
+
+/**
+ * Record that the customer clicked a platform passthrough button.
+ * Keeps the first click so the recapture email sweep can skip them.
+ */
+export async function recordPassthroughClick(
+  token: string,
+  platform: PassthroughPlatform
+): Promise<ActionResult> {
+  try {
+    if (!token || (platform !== "google" && platform !== "zillow")) {
+      return { success: false, error: "Invalid passthrough payload" };
+    }
+
+    const supabase = createAdminClient();
+    const { data: request, error: requestError } = await supabase
+      .from("video_testimonial_requests")
+      .select("id")
+      .eq("token", token)
+      .single();
+
+    if (requestError || !request) {
+      return { success: false, error: "Video testimonial request not found" };
+    }
+
+    const { data: response, error: responseError } = await supabase
+      .from("video_testimonial_responses")
+      .select("id, platform_passthrough_clicked_at")
+      .eq("request_id", request.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (responseError || !response) {
+      return { success: false, error: "Video testimonial response not found" };
+    }
+
+    if (!response.platform_passthrough_clicked_at) {
+      const { error: updateError } = await supabase
+        .from("video_testimonial_responses")
+        .update({
+          platform_passthrough_clicked_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", response.id);
+
+      if (updateError) {
+        console.error("Error recording passthrough click:", updateError);
+        return { success: false, error: "Failed to record passthrough click" };
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error recording passthrough click:", error);
+    return { success: false, error: "Failed to record passthrough click" };
+  }
+}
+
+const privateFeedbackSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  text: z
+    .string()
+    .min(1, "Feedback is required")
+    .max(2000, "Feedback must be less than 2000 characters"),
+});
+
+/**
+ * Store low-path private feedback on the response and alert the professional.
+ * Private feedback goes only to the professional; it is never published.
+ */
+export async function submitPrivateFeedback(token: string, text: string): Promise<ActionResult> {
+  try {
+    const parsed = privateFeedbackSchema.safeParse({ token, text });
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Invalid feedback" };
+    }
+
+    const supabase = createAdminClient();
+    const { data: request, error: requestError } = await supabase
+      .from("video_testimonial_requests")
+      .select("id, organization_id, user_id, customer_name, source_metadata")
+      .eq("token", parsed.data.token)
+      .single();
+
+    if (requestError || !request) {
+      return { success: false, error: "Video testimonial request not found" };
+    }
+
+    const { data: response, error: responseError } = await supabase
+      .from("video_testimonial_responses")
+      .select("id")
+      .eq("request_id", request.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (responseError || !response) {
+      return { success: false, error: "Video testimonial response not found" };
+    }
+
+    const { error: updateError } = await supabase
+      .from("video_testimonial_responses")
+      .update({
+        private_feedback: parsed.data.text.trim(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", response.id);
+
+    if (updateError) {
+      console.error("Error storing private feedback:", updateError);
+      return { success: false, error: "Failed to save your feedback" };
+    }
+
+    const sourceMetadata = readSourceMetadata(request.source_metadata);
+    const customerName = sourceMetadata?.customer_display_name || request.customer_name;
+    const now = new Date().toISOString();
+    const { error: notifyError } = await supabase.from("notifications").insert({
+      user_id: request.user_id,
+      organization_id: request.organization_id,
+      type: "video_private_feedback",
+      title: "Private feedback from a customer",
+      message: `${customerName} left private feedback alongside their video testimonial.`,
+      action_url: `/dashboard/reviews/${response.id}?type=video`,
+      metadata: {
+        event: "video_private_feedback",
+        response_id: response.id,
+        request_id: request.id,
+        customer_name: customerName,
+        created_at: now,
+      } as Json,
+    });
+
+    if (notifyError) {
+      console.error("Error creating private feedback notification:", notifyError);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error submitting private feedback:", error);
+    return { success: false, error: "Failed to send your feedback" };
+  }
 }

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getPublicBranchProfile } from "@/lib/seo/actions";
 import {
@@ -6,9 +7,11 @@ import {
   getBaseUrl,
   generateBranchProfilePageSchema,
 } from "@/lib/seo";
+import { logAgentVisit } from "@/lib/agents/detection";
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import { BranchProfileContent } from "./branch-profile-content";
 import { buildBranchBreadcrumbs } from "@/lib/directory/breadcrumb-utils";
+import { getBranchPublicPath } from "@/lib/branches/utils";
 
 interface PageProps {
   params: Promise<{
@@ -52,6 +55,7 @@ export default async function BranchProfilePage({ params }: PageProps) {
 
   const { branch, organization, professionals, reviews, is_enterprise } = result.data;
   const baseUrl = getBaseUrl();
+  logAgentVisit(`${getBranchPublicPath(branch)}`, await headers());
 
   // Build breadcrumbs
   const breadcrumbs = buildBranchBreadcrumbs(
@@ -100,6 +104,7 @@ export default async function BranchProfilePage({ params }: PageProps) {
         reviews={reviews}
         breadcrumbs={breadcrumbs}
         isEnterprise={is_enterprise}
+        profileUrl={`${baseUrl}${getBranchPublicPath(branch)}`}
       />
     </>
   );

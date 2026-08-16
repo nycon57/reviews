@@ -557,11 +557,14 @@ test.describe("Survey Submission", () => {
     // Wait for the submission to occur
     await page.waitForTimeout(3000);
 
-    // Verify a POST was captured (the body format depends on Next.js RSC encoding)
-    if (capturedBody) {
-      expect(capturedBody).toBeTruthy();
+    // Verify a POST was captured (the body format depends on Next.js RSC encoding).
+    // capturedBody is mutated inside the route handler closure, which control-flow
+    // analysis can't see — so it narrows to null here. Widen it back to read it.
+    const body = capturedBody as string | null;
+    if (body) {
+      expect(body).toBeTruthy();
       // The body should contain the token and answer data in some form
-      expect(capturedBody).toContain("test-token-abc");
+      expect(body).toContain("test-token-abc");
     }
   });
 

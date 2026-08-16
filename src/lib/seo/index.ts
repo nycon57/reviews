@@ -26,6 +26,9 @@ export {
   generateAggregateRatingSchema,
   generateReviewSchema,
   generateReviewListSchema,
+  generateOrganizationReviewSnippetSchema,
+  generateVideoObjectSchema,
+  generateVideoTestimonialReviewSchema,
   generateBreadcrumbSchema,
   generateProfilePageSchema,
   generateLocalBusinessSchema,
@@ -34,6 +37,7 @@ export {
   generateOrganizationWithRatingSchema,
   generateOrganizationReviewSchema,
   generateOrganizationProfilePageSchema,
+  generateFAQPageSchema,
   serializeSchemas,
 } from "./schema-generators";
 

@@ -1,11 +1,15 @@
 /**
- * VideoTestimonial Composition
+ * VideoTestimonial Composition ("Clip")
  *
  * Full branded video testimonial with:
  * - Animated intro (org logo, professional name/photo)
+ * - Trimmed source video (auto-trim handled upstream via trimStartMs/trimEndMs)
+ * - Adaptive framing: portrait sources fill the frame, landscape sources sit
+ *   in a styled card on the brand background
  * - TikTok-style animated captions
+ * - Ducked background music bed
  * - AI quote highlight segment
- * - Branded outro with CTA
+ * - End Card with the professional's contact block + smart-link QR
  */
 
 import {
@@ -13,18 +17,29 @@ import {
   useVideoConfig,
   AbsoluteFill,
   Sequence,
-  Video,
+  OffthreadVideo,
+  Audio,
   interpolate,
   spring,
 } from "remotion";
 import type { VideoTestimonialProps } from "../types";
-import { REPWELL_COLORS } from "../types";
-import { secondsToFrames } from "../utils/timing";
+import { REPWELL_COLORS, getPlayedDurationMs } from "../types";
+import { secondsToFrames, calculateQuoteDurationSec } from "../utils/timing";
 import { withOpacity } from "../utils/colors";
 import { BrandedIntro } from "../components/BrandedIntro";
 import { BrandedOutro } from "../components/BrandedOutro";
+import { EndCard } from "../components/EndCard";
 import { AnimatedCaptions } from "../components/AnimatedCaptions";
 import { QuoteReveal } from "../components/QuoteReveal";
+
+const MIN_VIDEO_SEGMENT_SEC = 5;
+
+/** Aspect ratio of the output frame for a format. */
+function formatAspect(format: "16:9" | "1:1" | "9:16"): number {
+  if (format === "9:16") return 9 / 16;
+  if (format === "1:1") return 1;
+  return 16 / 9;
+}
 
 export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
   videoUrl,
@@ -41,15 +56,22 @@ export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
   showIntro,
   showOutro,
   videoDurationMs,
+  trimStartMs = 0,
+  trimEndMs,
+  sourceWidth,
+  sourceHeight,
+  framing = "crop",
+  music,
+  endCard,
 }) => {
-  const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Calculate segment timings
+  // Calculate segment timings (must mirror calculateVideoTestimonialDuration)
+  const playedMs = getPlayedDurationMs({ videoDurationMs, trimStartMs, trimEndMs });
   const introDurationSec = showIntro ? 3 : 0;
   const outroDurationSec = showOutro ? 3 : 0;
-  const quoteDurationSec = aiQuote ? 4 : 0;
-  const videoDurationSec = videoDurationMs / 1000;
+  const quoteDurationSec = calculateQuoteDurationSec(aiQuote);
+  const videoDurationSec = Math.max(playedMs / 1000, MIN_VIDEO_SEGMENT_SEC);
 
   const introFrames = secondsToFrames(introDurationSec, fps);
   const videoFrames = secondsToFrames(videoDurationSec, fps);
@@ -62,45 +84,49 @@ export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
   const quoteStart = videoStart + videoFrames;
   const outroStart = quoteStart + quoteFrames;
 
-  // Layout adjustments based on format
   const isVertical = format === "9:16";
-  const isSquare = format === "1:1";
 
-  // Video container styles based on format
-  const getVideoContainerStyles = (): React.CSSProperties => {
-    if (isVertical) {
-      return {
-        width: "100%",
-        height: "60%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: REPWELL_COLORS.teal[500],
-      };
-    }
-    if (isSquare) {
-      return {
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: REPWELL_COLORS.teal[500],
-      };
-    }
-    // 16:9
-    return {
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: REPWELL_COLORS.teal[500],
-    };
-  };
+  // Framing: "crop" always fills the frame (centered cover crop), "card"
+  // always uses the styled card, "auto" falls back to the aspect heuristic
+  // (full-bleed only when the source roughly matches the output frame).
+  const sourceAspect =
+    sourceWidth && sourceHeight && sourceHeight > 0
+      ? sourceWidth / sourceHeight
+      : 16 / 9;
+  const aspectRatio = sourceAspect / formatAspect(format);
+  const autoFullBleed = aspectRatio > 0.82 && aspectRatio < 1.22;
+  const fullBleed =
+    framing === "crop" ? true : framing === "card" ? false : autoFullBleed;
+
+  // Music bed: full volume on intro/quote/outro, ducked under speech.
+  const speechEnd = videoStart + videoFrames;
+  const musicPeak = Math.min(1, Math.max(0, music?.volume ?? 0.3));
+  const musicDucked = musicPeak * 0.25;
+  const rampFrames = Math.floor(fps * 0.5);
 
   return (
     <AbsoluteFill style={{ backgroundColor: REPWELL_COLORS.teal[500] }}>
+      {/* Music bed */}
+      {music?.url && (
+        <Audio
+          src={music.url}
+          loop
+          volume={(f) =>
+            interpolate(
+              f,
+              [
+                videoStart - rampFrames,
+                videoStart,
+                speechEnd,
+                speechEnd + rampFrames,
+              ],
+              [musicPeak, musicDucked, musicDucked, musicPeak],
+              { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+            )
+          }
+        />
+      )}
+
       {/* Intro Sequence */}
       {showIntro && (
         <Sequence from={introStart} durationInFrames={introFrames} name="Intro">
@@ -118,42 +144,37 @@ export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
 
       {/* Video Content Sequence */}
       <Sequence from={videoStart} durationInFrames={videoFrames} name="Video">
-        <AbsoluteFill style={getVideoContainerStyles()}>
-          {/* Video Player */}
-          <VideoWithTransition
-            videoUrl={videoUrl}
-            fps={fps}
-            videoStart={videoStart}
-            videoFrames={videoFrames}
-            frame={frame}
-          />
+        <VideoSegment
+          videoUrl={videoUrl}
+          fps={fps}
+          videoFrames={videoFrames}
+          trimStartMs={trimStartMs}
+          playedMs={playedMs}
+          fullBleed={fullBleed}
+          sourceAspect={sourceAspect}
+          isVertical={isVertical}
+          customer={customer}
+          loanOfficer={loanOfficer}
+          organization={organization}
+        />
 
-          {/* Animated Captions Overlay */}
-          {showCaptions &&
-            ((wordTimestamps?.length ?? 0) > 0 || captions.length > 0) && (
+        {/* Animated Captions Overlay */}
+        {showCaptions &&
+          ((wordTimestamps?.length ?? 0) > 0 || captions.length > 0) && (
             <AnimatedCaptions
               captions={captions}
               wordTimestamps={wordTimestamps}
               startFrame={0}
+              timeOffsetMs={trimStartMs}
+              maxSourceMs={trimStartMs + playedMs}
               highlightColor={organization.primaryColor || REPWELL_COLORS.teal[300]}
               textColor={REPWELL_COLORS.white}
-              fontSize={isVertical ? 36 : 48}
-              bottomOffset={isVertical ? 25 : 15}
+              fontSize={isVertical ? 44 : 48}
+              bottomOffset={fullBleed ? (isVertical ? 22 : 12) : isVertical ? 28 : 10}
               maxWidth={isVertical ? 90 : 80}
-              style={template === "minimal" ? "minimal" : "default"}
+              style={template === "minimal" || !fullBleed ? "minimal" : "default"}
             />
           )}
-
-          {/* Customer Info Overlay (for vertical format) */}
-          {isVertical && (
-            <CustomerInfoOverlay
-              customer={customer}
-              loanOfficer={loanOfficer}
-              frame={frame - videoStart}
-              fps={fps}
-            />
-          )}
-        </AbsoluteFill>
       </Sequence>
 
       {/* AI Quote Highlight Sequence */}
@@ -169,16 +190,25 @@ export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
         </Sequence>
       )}
 
-      {/* Outro Sequence */}
+      {/* Outro Sequence: End Card with contact + QR, generic outro fallback */}
       {showOutro && (
         <Sequence from={outroStart} durationInFrames={outroFrames} name="Outro">
-          <BrandedOutro
-            organization={organization}
-            ctaText="Ready to share your story?"
-            format={format}
-            startFrame={0}
-            durationFrames={outroFrames}
-          />
+          {endCard ? (
+            <EndCard
+              contact={endCard}
+              organization={organization}
+              format={format}
+              startFrame={0}
+            />
+          ) : (
+            <BrandedOutro
+              organization={organization}
+              ctaText={`Work with ${loanOfficer.fullName.split(" ")[0]}`}
+              format={format}
+              startFrame={0}
+              durationFrames={outroFrames}
+            />
+          )}
         </Sequence>
       )}
     </AbsoluteFill>
@@ -186,34 +216,48 @@ export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
 };
 
 /**
- * Video player with fade transitions
+ * Source video with trim + adaptive framing + fade transitions.
  */
-const VideoWithTransition: React.FC<{
+const VideoSegment: React.FC<{
   videoUrl: string;
   fps: number;
-  videoStart: number;
   videoFrames: number;
-  frame: number;
-}> = ({ videoUrl, fps, videoStart, videoFrames, frame }) => {
-  const relativeFrame = frame - videoStart;
+  trimStartMs: number;
+  playedMs: number;
+  fullBleed: boolean;
+  sourceAspect: number;
+  isVertical: boolean;
+  customer: { displayName: string; relationship: string | null };
+  loanOfficer: { fullName: string };
+  organization: { primaryColor: string };
+}> = ({
+  videoUrl,
+  fps,
+  videoFrames,
+  trimStartMs,
+  playedMs,
+  fullBleed,
+  sourceAspect,
+  isVertical,
+  customer,
+  loanOfficer,
+  organization,
+}) => {
+  const frame = useCurrentFrame();
 
-  // Fade in
-  const fadeIn = interpolate(relativeFrame, [0, fps * 0.5], [0, 1], {
+  const fadeIn = interpolate(frame, [0, fps * 0.5], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-
-  // Fade out
   const fadeOut = interpolate(
-    relativeFrame,
+    frame,
     [videoFrames - fps * 0.5, videoFrames],
     [1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
-
   const opacity = Math.min(fadeIn, fadeOut);
 
-  // If no video URL, show placeholder
+  // If no video URL, show placeholder (studio preview)
   if (!videoUrl) {
     return (
       <AbsoluteFill
@@ -238,50 +282,123 @@ const VideoWithTransition: React.FC<{
     );
   }
 
+  const startFrom = Math.floor((trimStartMs / 1000) * fps);
+  const endAt = startFrom + Math.ceil((playedMs / 1000) * fps);
+
+  const video = (
+    <OffthreadVideo
+      src={videoUrl}
+      startFrom={startFrom}
+      endAt={endAt}
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: fullBleed ? "cover" : "contain",
+      }}
+    />
+  );
+
+  if (fullBleed) {
+    return (
+      <AbsoluteFill style={{ opacity }}>
+        {video}
+        {isVertical && (
+          <CustomerInfoChip
+            customer={customer}
+            loanOfficer={loanOfficer}
+            frame={frame}
+            fps={fps}
+            bottom="34%"
+          />
+        )}
+      </AbsoluteFill>
+    );
+  }
+
+  // Styled card: source video in a rounded frame on the brand-dark
+  // background, sized to the source aspect so nothing is cropped. The
+  // customer chip sits directly under the card; captions own the bottom.
   return (
-    <AbsoluteFill style={{ opacity }}>
-      <Video
-        src={videoUrl}
+    <AbsoluteFill
+      style={{
+        opacity,
+        background: `linear-gradient(180deg, ${REPWELL_COLORS.teal[500]}, ${withOpacity(
+          organization.primaryColor || REPWELL_COLORS.teal[400],
+          0.55
+        )})`,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: isVertical ? "flex-start" : "center",
+        gap: 28,
+        padding: isVertical ? "16% 44px 0" : "48px",
+      }}
+    >
+      <div
         style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
+          width: isVertical ? "100%" : "auto",
+          height: isVertical ? "auto" : "78%",
+          aspectRatio: `${sourceAspect}`,
+          maxWidth: "100%",
+          maxHeight: isVertical ? "52%" : "78%",
+          borderRadius: 24,
+          overflow: "hidden",
+          boxShadow: "0 18px 48px rgba(0,0,0,0.35)",
         }}
-      />
+      >
+        {video}
+      </div>
+
+      {isVertical && (
+        <CustomerInfoChip
+          customer={customer}
+          loanOfficer={loanOfficer}
+          frame={frame}
+          fps={fps}
+        />
+      )}
     </AbsoluteFill>
   );
 };
 
 /**
- * Customer info overlay for vertical format
+ * Customer identity chip shown on vertical formats. Positioned absolutely
+ * when `bottom` is given (full-bleed), otherwise flows after the video card.
  */
-const CustomerInfoOverlay: React.FC<{
+const CustomerInfoChip: React.FC<{
   customer: { displayName: string; relationship: string | null };
   loanOfficer: { fullName: string };
   frame: number;
   fps: number;
-}> = ({ customer, loanOfficer, frame, fps }) => {
+  bottom?: string;
+}> = ({ customer, loanOfficer, frame, fps, bottom }) => {
   const opacity = interpolate(frame, [fps * 0.5, fps * 1], [0, 1], {
     extrapolateRight: "clamp",
   });
 
+  const containerStyle: React.CSSProperties = {
+    padding: "0 24px",
+    opacity,
+    display: "flex",
+    justifyContent: "center",
+  };
+
+  // Pinned to the bottom of the frame only when the caller supplies an offset.
+  if (bottom) {
+    containerStyle.position = "absolute";
+    containerStyle.bottom = bottom;
+    containerStyle.left = 0;
+    containerStyle.right = 0;
+  }
+
   return (
-    <div
-      style={{
-        position: "absolute",
-        bottom: "35%",
-        left: 0,
-        right: 0,
-        padding: "0 24px",
-        opacity,
-      }}
-    >
+    <div style={containerStyle}>
       <div
         style={{
           background: withOpacity(REPWELL_COLORS.teal[500], 0.9),
           borderRadius: "12px",
-          padding: "16px 20px",
-          backdropFilter: "blur(8px)",
+          padding: "14px 20px",
+          textAlign: "center",
         }}
       >
         <div
@@ -294,26 +411,15 @@ const CustomerInfoOverlay: React.FC<{
         >
           {customer.displayName}
         </div>
-        {customer.relationship && (
-          <div
-            style={{
-              fontFamily: "'Source Sans 3', system-ui, sans-serif",
-              fontSize: 14,
-              color: withOpacity(REPWELL_COLORS.white, 0.8),
-              marginTop: "4px",
-            }}
-          >
-            {customer.relationship}
-          </div>
-        )}
         <div
           style={{
             fontFamily: "'Source Sans 3', system-ui, sans-serif",
-            fontSize: 12,
-            color: withOpacity(REPWELL_COLORS.white, 0.6),
-            marginTop: "8px",
+            fontSize: 13,
+            color: withOpacity(REPWELL_COLORS.white, 0.7),
+            marginTop: 4,
           }}
         >
+          {customer.relationship ? `${customer.relationship} · ` : ""}
           Review for {loanOfficer.fullName}
         </div>
       </div>
@@ -431,7 +537,7 @@ const AttributionReveal: React.FC<{
           color: REPWELL_COLORS.white,
         }}
       >
-        — {name}
+        {name}
       </div>
     </div>
   );

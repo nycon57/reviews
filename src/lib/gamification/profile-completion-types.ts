@@ -110,7 +110,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 50,
     isRequired: false,
     tip: "Upload a professional headshot with good lighting and a neutral background",
-    linkUrl: "/dashboard/profile",
+    linkUrl: "/dashboard/settings",
     linkLabel: "Upload Photo",
   },
   {
@@ -139,7 +139,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 25,
     isRequired: false,
     tip: "Add a direct phone number where clients can reach you",
-    linkUrl: "/dashboard/profile",
+    linkUrl: "/dashboard/settings",
     linkLabel: "Add Phone",
   },
   {
@@ -150,7 +150,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 25,
     isRequired: false,
     tip: "Include your official job title to establish credibility",
-    linkUrl: "/dashboard/profile",
+    linkUrl: "/dashboard/settings",
     linkLabel: "Add Title",
   },
 
@@ -163,7 +163,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 75,
     isRequired: false,
     tip: "Write 2-3 paragraphs about your experience, specializations, and what makes you unique",
-    linkUrl: "/dashboard/profile",
+    linkUrl: "/dashboard/settings",
     linkLabel: "Write Bio",
   },
   {
@@ -174,7 +174,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 50,
     isRequired: false,
     tip: "Add your NMLS ID for compliance and to help clients verify your credentials",
-    linkUrl: "/dashboard/profile",
+    linkUrl: "/dashboard/settings",
     linkLabel: "Add NMLS ID",
   },
   {
@@ -185,7 +185,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 25,
     isRequired: false,
     tip: "Associate yourself with your branch for better team coordination",
-    linkUrl: "/dashboard/profile",
+    linkUrl: "/dashboard/settings",
     linkLabel: "Set Branch",
   },
   {
@@ -196,7 +196,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 25,
     isRequired: false,
     tip: "Add your office address for clients who prefer in-person meetings",
-    linkUrl: "/dashboard/profile",
+    linkUrl: "/dashboard/settings",
     linkLabel: "Add Address",
   },
 
@@ -209,7 +209,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 100,
     isRequired: false,
     tip: "Link your Google Business Profile to automatically sync reviews and boost visibility",
-    linkUrl: "/dashboard/integrations/google",
+    linkUrl: "/dashboard/organization?tab=integrations",
     linkLabel: "Connect Google",
   },
   {
@@ -220,7 +220,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 100,
     isRequired: false,
     tip: "Add your Zillow profile URL to aggregate reviews from multiple platforms",
-    linkUrl: "/dashboard/profile",
+    linkUrl: "/dashboard/settings",
     linkLabel: "Add Zillow URL",
   },
   {
@@ -231,7 +231,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 50,
     isRequired: false,
     tip: "Connect your LinkedIn to build professional credibility",
-    linkUrl: "/dashboard/profile",
+    linkUrl: "/dashboard/settings",
     linkLabel: "Add LinkedIn",
   },
   {
@@ -242,7 +242,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 50,
     isRequired: false,
     tip: "Connect Facebook, Twitter, or Instagram to automatically share testimonials",
-    linkUrl: "/dashboard/social",
+    linkUrl: "/dashboard/organization?tab=integrations",
     linkLabel: "Connect Social",
   },
 
@@ -255,7 +255,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 75,
     isRequired: false,
     tip: "Request reviews from satisfied clients to build social proof",
-    linkUrl: "/dashboard/distribution",
+    linkUrl: "/dashboard/surveys",
     linkLabel: "Request Reviews",
   },
   {
@@ -277,7 +277,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 50,
     isRequired: false,
     tip: "Share your testimonials on social media to expand your reach",
-    linkUrl: "/dashboard/social",
+    linkUrl: "/dashboard/organization?tab=integrations",
     linkLabel: "Share Testimonials",
   },
   {
@@ -288,7 +288,7 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 25,
     isRequired: false,
     tip: "Follow up with clients to encourage survey completion",
-    linkUrl: "/dashboard/distribution",
+    linkUrl: "/dashboard/surveys",
     linkLabel: "Send Surveys",
   },
 ];

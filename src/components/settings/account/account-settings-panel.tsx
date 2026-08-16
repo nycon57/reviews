@@ -1,19 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { User, CreditCard, Bell, LinkSimple } from '@phosphor-icons/react';
+import { User, Bell, LinkSimple } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { ProfileTab } from '@/app/(dashboard)/dashboard/settings/components/profile-tab';
-import { BillingTab } from '@/app/(dashboard)/dashboard/settings/components/billing-tab';
 import { NotificationsTab } from '@/app/(dashboard)/dashboard/settings/components/notifications-tab';
 import { SmartLinksTab } from '@/app/(dashboard)/dashboard/settings/components/smart-links-tab';
 import type { UserProfileData } from '@/lib/auth/profile-schemas';
 
-export type AccountSubTab = 'profile' | 'billing' | 'notifications' | 'smart-links';
+// Personal-only (ADR 0007 "Me vs Us"). Billing moved to Workspace.
+export type AccountSubTab = 'profile' | 'notifications' | 'smart-links';
 
 const subTabs: { value: AccountSubTab; label: string; icon: React.ElementType }[] = [
   { value: 'profile', label: 'Profile', icon: User },
-  { value: 'billing', label: 'Billing', icon: CreditCard },
   { value: 'notifications', label: 'Notifications', icon: Bell },
   { value: 'smart-links', label: 'Smart Links', icon: LinkSimple },
 ];
@@ -69,7 +68,6 @@ export function AccountSettingsPanel({
             isAdmin={profile.role === 'admin'}
           />
         )}
-        {activeSubTab === 'billing' && <BillingTab />}
         {activeSubTab === 'notifications' && <NotificationsTab />}
         {activeSubTab === 'smart-links' && <SmartLinksTab />}
       </div>

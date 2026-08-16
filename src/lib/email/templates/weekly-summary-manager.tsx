@@ -59,7 +59,7 @@ export function WeeklySummaryManagerEmail({
 
     // Team response metrics
     teamResponseRate,
-    teamAverageResponseTime: _teamAverageResponseTime,
+    teamAverageResponseTime,
 
     // Performers
     topPerformers,
@@ -145,6 +145,14 @@ export function WeeklySummaryManagerEmail({
               value: `${teamResponseRate}%`,
               label: "Response Rate",
             },
+            ...(teamAverageResponseTime
+              ? [
+                  {
+                    value: teamAverageResponseTime,
+                    label: "Avg Response Time",
+                  },
+                ]
+              : []),
           ]}
         />
       </SingleColumnLayout>

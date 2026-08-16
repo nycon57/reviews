@@ -19,11 +19,11 @@ import {
   getSurveysForDistribution,
   resendSurvey,
 } from "@/lib/distribution/actions";
-import { formatDistanceToNow } from "date-fns";
 import { SendReviewRequestDialog } from "@/components/requests/send-review-request-dialog";
 import { Plus } from "@phosphor-icons/react";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatedList, AnimatedItem } from "@/components/motion";
+import { formatRelativeTime } from "@/lib/utils";
 
 interface QueueItem {
   id: string;
@@ -314,7 +314,7 @@ export function DistributionDashboard() {
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Scheduled: {formatDistanceToNow(new Date(item.scheduled_at), { addSuffix: true })}
+                          Scheduled: {formatRelativeTime(item.scheduled_at)}
                           {item.retry_count && item.retry_count > 0 && (
                             <span className="ml-2 text-orange-600">
                               (Retry #{item.retry_count})
@@ -368,8 +368,8 @@ export function DistributionDashboard() {
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {survey.sent_at
-                            ? `Sent ${formatDistanceToNow(new Date(survey.sent_at), { addSuffix: true })}`
-                            : `Created ${formatDistanceToNow(new Date(survey.created_at || ""), { addSuffix: true })}`}
+                            ? `Sent ${formatRelativeTime(survey.sent_at)}`
+                            : `Created ${formatRelativeTime(survey.created_at || "")}`}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

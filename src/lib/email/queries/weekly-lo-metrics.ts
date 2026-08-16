@@ -6,6 +6,10 @@
 
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import type { WeeklySummaryLOEmailData } from "../types";
+import {
+  averageResponseTimeLabel,
+  type ReviewResponseTiming,
+} from "./response-time";
 
 interface LOMetricsQueryResult {
   success: boolean;
@@ -309,6 +313,17 @@ export async function fetchWeeklyLOMetrics(
         ? Math.round(((respondedReviewsCount || 0) / totalReviewsCount) * 100)
         : 0;
 
+    // Real mean time-to-respond across this member's responded reviews.
+    const { data: responseTimings } = await supabase
+      .from("reviews")
+      .select("response_at, published_at, review_date")
+      .eq("user_id", loanOfficerId)
+      .not("response_at", "is", null);
+
+    const averageResponseTime = averageResponseTimeLabel(
+      (responseTimings || []) as ReviewResponseTiming[]
+    );
+
     return {
       success: true,
       data: {
@@ -333,7 +348,7 @@ export async function fetchWeeklyLOMetrics(
 
         // Response metrics
         responseRate,
-        averageResponseTime: "< 24 hours", // Placeholder - would need response time tracking
+        averageResponseTime,
 
         // Pending actions
         pendingReviewResponses: pendingResponsesResult.count || 0,

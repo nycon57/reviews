@@ -3,7 +3,6 @@
 import { useState, useTransition, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,12 +30,17 @@ import {
   Copy,
   Link as LinkIcon,
 } from "@phosphor-icons/react";
-import { formatDistanceToNow } from "date-fns";
-import type { RecentReview } from "@/lib/dashboard";
+import type { RecentReview, RecentReviewStatusFilter } from "@/lib/dashboard";
 import { getUserRecentReviews } from "@/lib/dashboard";
 import { useToast } from "@/hooks/use-toast";
 import { ensureReviewSmartLink } from "@/lib/share-studio/actions";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
+import { formatRelativeTime } from "@/lib/utils";
 import { AnimatedTransition, AnimatedList, AnimatedItem } from "@/components/motion";
+import {
+  REVIEW_STATUS_FILTER_LABELS,
+  ReviewStatusBadge,
+} from "@/components/reviews/review-status-badge";
 
 interface RecentReviewsProps {
   initialReviews: RecentReview[];
@@ -56,13 +60,10 @@ export function UserRecentReviews({
   const handleFilterChange = (value: string) => {
     setStatusFilter(value);
     startTransition(async () => {
-      const result = await getUserRecentReviews(userId, 10);
+      const status = value === "all" ? undefined : (value as RecentReviewStatusFilter);
+      const result = await getUserRecentReviews(userId, 10, status);
       if (result.success && result.data) {
-        if (value === "all") {
-          setReviews(result.data);
-        } else {
-          setReviews(result.data.filter((r) => r.status === value));
-        }
+        setReviews(result.data);
       }
     });
   };
@@ -129,6 +130,10 @@ export function UserRecentReviews({
     const text = buildShareText(review);
     try {
       await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied!",
+        description: "Review text copied to clipboard.",
+      });
     } catch {
       toast({
         title: "Copy failed",
@@ -155,15 +160,21 @@ export function UserRecentReviews({
         </CardTitle>
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={handleFilterChange}>
-            <SelectTrigger className="h-8 w-[100px]">
+            <SelectTrigger className="h-8 w-[132px]" aria-label="Filter recent reviews by status">
               <Filter className="mr-1 h-3 w-3" />
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="approved">
+                {REVIEW_STATUS_FILTER_LABELS.approved}
+              </SelectItem>
+              <SelectItem value="pending">
+                {REVIEW_STATUS_FILTER_LABELS.pending}
+              </SelectItem>
+              <SelectItem value="rejected">
+                {REVIEW_STATUS_FILTER_LABELS.rejected}
+              </SelectItem>
             </SelectContent>
           </Select>
           <Button variant="ghost" size="sm" asChild>
@@ -203,7 +214,7 @@ export function UserRecentReviews({
                 <Button variant="default" size="sm" asChild>
                   <a href="/dashboard/reviews?tab=requests">
                     <Send className="mr-1.5 h-3.5 w-3.5" />
-                    Send Survey
+                    Send review request
                   </a>
                 </Button>
                 <Button variant="outline" size="sm" asChild>
@@ -231,21 +242,13 @@ export function UserRecentReviews({
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-heading">
-                          {review.customerName || "Anonymous"}
-                        </span>
-                        <Badge
-                          variant={
-                            review.status === "approved"
-                              ? "default"
-                              : review.status === "pending"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                          className="h-5 text-xs"
+                        <a
+                          href={`/dashboard/reviews/${review.id}`}
+                          className="rounded-sm font-medium text-heading transition-colors hover:text-repwell-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         >
-                          {review.status}
-                        </Badge>
+                          {review.customerName || "Anonymous"}
+                        </a>
+                        <ReviewStatusBadge status={review.status} className="h-5 text-xs" />
                       </div>
                       <div className="flex items-center gap-1">
                         {Array.from({ length: 5 }).map((_, i) => (
@@ -267,14 +270,12 @@ export function UserRecentReviews({
                     )}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-repwell-teal-300">
-                        {formatDistanceToNow(new Date(review.reviewDate), {
-                          addSuffix: true,
-                        })}
+                        {formatRelativeTime(review.reviewDate)}
                         {review.source !== "internal" && (
-                          <span className="ml-2 capitalize">via {review.source}</span>
+                          <span className="ml-2">via {formatReviewSource(review.source)}</span>
                         )}
                       </span>
-                      <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="flex shrink-0 gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100 group-focus-within:opacity-100">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -282,6 +283,7 @@ export function UserRecentReviews({
                               size="icon"
                               className="h-7 w-7"
                               title="Share review"
+                              aria-label={`Share review from ${review.customerName || "anonymous customer"}`}
                             >
                               <Share2 className="h-3.5 w-3.5" />
                             </Button>
@@ -299,7 +301,7 @@ export function UserRecentReviews({
                               <FacebookLogo className="mr-2 h-4 w-4" />
                               Share to Facebook
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleCopyReview(review)}>
+                            <DropdownMenuItem onClick={() => void handleCopyReview(review)}>
                               <Copy className="mr-2 h-4 w-4" />
                               Copy review text
                             </DropdownMenuItem>
@@ -317,7 +319,10 @@ export function UserRecentReviews({
                           asChild
                           title="Respond"
                         >
-                          <a href={`/dashboard/reviews?id=${review.id}`}>
+                          <a
+                            href={`/dashboard/reviews/${review.id}`}
+                            aria-label={`Respond to review from ${review.customerName || "anonymous customer"}`}
+                          >
                             <MessageCircle className="h-3.5 w-3.5" />
                           </a>
                         </Button>

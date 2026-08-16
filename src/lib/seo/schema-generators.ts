@@ -15,6 +15,7 @@ import type {
   LocalBusinessSchema,
   OpeningHoursSpecificationSchema,
 } from "./types";
+import { getProfessionalDateModified } from "./date-modified";
 
 // Industry display labels and slugs for breadcrumbs
 const industryLabels: Record<string, string> = {
@@ -111,6 +112,7 @@ export interface SchemaProfessional {
   nmls_id?: string | null;
   average_rating: number | null;
   total_reviews: number | null;
+  updated_at?: string | null;
 }
 
 /** @deprecated Use SchemaProfessional instead */
@@ -136,8 +138,86 @@ export interface SchemaReview {
   rating: number;
   text: string | null;
   review_date: string;
+  updated_at?: string | null;
   is_published?: boolean;
   status?: string;
+}
+
+interface OrganizationReviewSchemaInput {
+  organizationName: string;
+  organizationUrl?: string;
+  authorName: string;
+  rating: number;
+  reviewBody?: string | null;
+  datePublished?: string | null;
+  publisherName?: string;
+}
+
+interface VideoObjectSchemaInput {
+  name: string;
+  description: string;
+  thumbnailUrl?: string | null;
+  uploadDate?: string | null;
+  durationSeconds?: number | null;
+  contentUrl?: string | null;
+  embedUrl?: string | null;
+  publisherName?: string | null;
+  publisherLogoUrl?: string | null;
+  authorName?: string | null;
+  aboutName?: string | null;
+  aboutJobTitle?: string | null;
+  aboutOrganizationName?: string | null;
+}
+
+interface VideoTestimonialReviewSchemaInput {
+  authorName: string;
+  organizationName: string;
+  organizationLogoUrl?: string | null;
+  reviewBody?: string | null;
+  videoContentUrl?: string | null;
+  videoThumbnailUrl?: string | null;
+  videoDurationSeconds?: number | null;
+}
+
+interface FAQPageSchemaInput {
+  question: string;
+  answer: string;
+}
+
+interface FAQPageSchema {
+  "@context": "https://schema.org";
+  "@type": "FAQPage";
+  mainEntity: Array<{
+    "@type": "Question";
+    name: string;
+    acceptedAnswer: {
+      "@type": "Answer";
+      text: string;
+    };
+  }>;
+}
+
+function durationToIso8601(durationSeconds?: number | null): string | undefined {
+  if (!durationSeconds || durationSeconds <= 0) return undefined;
+
+  const minutes = Math.floor(durationSeconds / 60);
+  const seconds = Math.floor(durationSeconds % 60);
+  return `PT${minutes}M${seconds}S`;
+}
+
+export function generateFAQPageSchema(items: readonly FAQPageSchemaInput[]): FAQPageSchema {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
 }
 
 /**
@@ -146,9 +226,11 @@ export interface SchemaReview {
 export function generatePersonSchema(
   professional: SchemaProfessional,
   organization: SchemaOrganization | null,
-  baseUrl: string
+  baseUrl: string,
+  reviews: SchemaReview[] = []
 ): PersonWithRatingSchema {
   const profileUrl = `${baseUrl}/pro/${professional.slug || professional.id}`;
+  const dateModified = getProfessionalDateModified(professional, reviews);
 
   // Parse address if available
   const address = professional.address as ProfessionalAddress | null;
@@ -183,9 +265,15 @@ export function generatePersonSchema(
     "@type": "Person",
     name: professional.full_name,
     jobTitle: professional.title || "Professional",
-    description: professional.bio || `${professional.full_name} is a professional helping clients with their needs.`,
+    description:
+      professional.bio ||
+      `${professional.full_name} is a professional helping clients with their needs.`,
     url: profileUrl,
   };
+
+  if (dateModified) {
+    (schema as PersonWithRatingSchema & { dateModified: string }).dateModified = dateModified;
+  }
 
   // Add optional fields only if they have values
   if (professional.photo_url) {
@@ -242,7 +330,11 @@ export function generateAggregateRatingSchema(
   professional: SchemaProfessional,
   baseUrl: string
 ): AggregateRatingSchema | null {
-  if (!professional.average_rating || !professional.total_reviews || professional.total_reviews === 0) {
+  if (
+    !professional.average_rating ||
+    !professional.total_reviews ||
+    professional.total_reviews === 0
+  ) {
     return null;
   }
 
@@ -260,6 +352,24 @@ export function generateAggregateRatingSchema(
     worstRating: 1,
     ratingCount: professional.total_reviews,
     reviewCount: professional.total_reviews,
+  };
+}
+
+export function buildAggregateRatingSchema(
+  averageRating: number | null | undefined,
+  totalReviews: number | null | undefined
+) {
+  if (!averageRating || !totalReviews || totalReviews === 0) {
+    return null;
+  }
+
+  return {
+    "@type": "AggregateRating",
+    ratingValue: Number(averageRating),
+    bestRating: 5,
+    worstRating: 1,
+    ratingCount: totalReviews,
+    reviewCount: totalReviews,
   };
 }
 
@@ -316,6 +426,108 @@ export function generateReviewListSchema(
     .map((review) => generateReviewSchema(review, professional, organization, baseUrl));
 }
 
+export function generateOrganizationReviewSnippetSchema(
+  input: OrganizationReviewSchemaInput
+): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Review",
+    author: {
+      "@type": "Person",
+      name: input.authorName,
+    },
+    itemReviewed: {
+      "@type": "Organization",
+      name: input.organizationName,
+      url: input.organizationUrl,
+    },
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: input.rating,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    reviewBody: input.reviewBody || undefined,
+    datePublished: input.datePublished || undefined,
+    publisher: input.publisherName
+      ? {
+          "@type": "Organization",
+          name: input.publisherName,
+        }
+      : undefined,
+  };
+}
+
+export function generateVideoObjectSchema(input: VideoObjectSchemaInput): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: input.name,
+    description: input.description,
+    thumbnailUrl: input.thumbnailUrl || undefined,
+    uploadDate: input.uploadDate || undefined,
+    duration: durationToIso8601(input.durationSeconds),
+    contentUrl: input.contentUrl || undefined,
+    embedUrl: input.embedUrl || undefined,
+    publisher: input.publisherName
+      ? {
+          "@type": "Organization",
+          name: input.publisherName,
+          logo: input.publisherLogoUrl
+            ? {
+                "@type": "ImageObject",
+                url: input.publisherLogoUrl,
+              }
+            : undefined,
+        }
+      : undefined,
+    author: input.authorName
+      ? {
+          "@type": "Person",
+          name: input.authorName,
+        }
+      : undefined,
+    about: input.aboutName
+      ? {
+          "@type": "Person",
+          name: input.aboutName,
+          jobTitle: input.aboutJobTitle || "Professional",
+          worksFor: input.aboutOrganizationName
+            ? {
+                "@type": "Organization",
+                name: input.aboutOrganizationName,
+              }
+            : undefined,
+        }
+      : undefined,
+  };
+}
+
+export function generateVideoTestimonialReviewSchema(
+  input: VideoTestimonialReviewSchemaInput
+): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Review",
+    author: {
+      "@type": "Person",
+      name: input.authorName,
+    },
+    itemReviewed: {
+      "@type": "LocalBusiness",
+      name: input.organizationName,
+      image: input.organizationLogoUrl || undefined,
+    },
+    reviewBody: input.reviewBody || undefined,
+    video: {
+      "@type": "VideoObject",
+      contentUrl: input.videoContentUrl || undefined,
+      thumbnailUrl: input.videoThumbnailUrl || undefined,
+      duration: durationToIso8601(input.videoDurationSeconds),
+    },
+  };
+}
+
 /**
  * Generate BreadcrumbList schema for navigation
  */
@@ -347,7 +559,7 @@ export function generateProfilePageSchema(
   const schemas: object[] = [];
 
   // Person schema with embedded aggregate rating
-  schemas.push(generatePersonSchema(professional, organization, baseUrl));
+  schemas.push(generatePersonSchema(professional, organization, baseUrl, reviews));
 
   // Individual review schemas (limit to most recent 10 for performance)
   const publishedReviews = reviews

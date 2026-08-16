@@ -27,10 +27,13 @@ import {
   compareNavItems,
 } from "@/config/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { BRAND_LOGO_URL } from "@/lib/brand";
 
 interface MobileMenuProps {
   className?: string;
 }
+
+type PhosphorExport = (typeof PhosphorIcons)[keyof typeof PhosphorIcons];
 
 // Dynamic icon component
 function DynamicIcon({
@@ -40,12 +43,12 @@ function DynamicIcon({
   name: string;
   className?: string;
 }) {
-  const IconComponent = (
-    PhosphorIcons as unknown as Record<
-      string,
-      React.ComponentType<{ className?: string }>
-    >
-  )[name];
+  const icons: Record<string, PhosphorExport> = PhosphorIcons;
+  // SAFETY: `name` comes from nav config that only ever names glyph exports, and every glyph in
+  // this namespace is a component accepting a className. An unmatched name renders nothing.
+  const IconComponent = icons[name] as
+    | React.ComponentType<{ className?: string }>
+    | undefined;
   if (!IconComponent) return null;
   return <IconComponent className={className} />;
 }
@@ -136,7 +139,7 @@ export function MobileMenu({ className }: MobileMenuProps) {
         <SheetHeader className="border-b px-4 py-3">
           <SheetTitle className="flex items-center">
             <Image
-              src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+              src={BRAND_LOGO_URL}
               alt="RepWell"
               width={120}
               height={28}
@@ -284,36 +287,6 @@ export function MobileMenu({ className }: MobileMenuProps) {
               )}
             >
               Directory
-            </Link>
-            <Link
-              href="/about"
-              onClick={handleNavClick}
-              className={cn(
-                linkStyles,
-                isActive("/about") && "bg-accent text-accent-foreground"
-              )}
-            >
-              About
-            </Link>
-            <Link
-              href="/blog"
-              onClick={handleNavClick}
-              className={cn(
-                linkStyles,
-                isActive("/blog") && "bg-accent text-accent-foreground"
-              )}
-            >
-              Blog
-            </Link>
-            <Link
-              href="/developers"
-              onClick={handleNavClick}
-              className={cn(
-                linkStyles,
-                isActive("/developers") && "bg-accent text-accent-foreground"
-              )}
-            >
-              Developers
             </Link>
             <Link
               href="/contact"

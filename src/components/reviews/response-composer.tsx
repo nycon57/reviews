@@ -55,6 +55,7 @@ interface ResponseComposerProps {
   onSuccess?: () => void;
   onCancel?: () => void;
   hasAiAccess?: boolean;
+  draftOnly?: boolean;
 }
 
 export function ResponseComposer({
@@ -62,6 +63,7 @@ export function ResponseComposer({
   onSuccess,
   onCancel,
   hasAiAccess = true,
+  draftOnly = false,
 }: ResponseComposerProps) {
   const [isPending, startTransition] = useTransition();
   const [responseText, setResponseText] = useState("");
@@ -164,6 +166,10 @@ export function ResponseComposer({
 
   const handlePostResponse = () => {
     if (!responseText.trim()) return;
+    if (draftOnly) {
+      setError("Only draft responses can be saved until the review is published");
+      return;
+    }
 
     startTransition(async () => {
       setError(null);
@@ -212,15 +218,28 @@ export function ResponseComposer({
 
   return (
     <div className="space-y-4">
-      {/* Template Selection */}
+      {draftOnly && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-200">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">Draft-only response</p>
+            <p className="text-xs">
+              This review isn't public yet — your response will be saved as a
+              draft and published with it.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Canned responses */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            Response Templates
+            Canned responses
           </label>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[140px] h-8 text-xs">
+            <SelectTrigger className="w-[140px] h-8 text-xs" aria-label="Filter canned responses by category">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
@@ -276,18 +295,18 @@ export function ResponseComposer({
 
       {/* AI Suggestion */}
       {hasAiAccess ? (
-        <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium text-purple-900">AI Response Suggestion</span>
+              <Sparkles className="h-4 w-4 text-repwell-teal-300" />
+              <span className="text-sm font-medium text-heading">Generated response</span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Generate a response based on the review content
+              Draft from the review content, then edit before posting
             </p>
           </div>
           <Select value={aiTone} onValueChange={(v) => setAiTone(v as typeof aiTone)}>
-            <SelectTrigger className="w-[120px] h-8 text-xs">
+            <SelectTrigger className="w-[120px] h-8 text-xs" aria-label="AI response tone">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -324,7 +343,7 @@ export function ResponseComposer({
             </p>
           </div>
           <Button variant="outline" size="sm" asChild className="h-8 shrink-0">
-            <Link href="/dashboard/settings?tab=billing">
+            <Link href="/dashboard/organization?tab=billing">
               Upgrade
             </Link>
           </Button>
@@ -334,10 +353,12 @@ export function ResponseComposer({
       {/* Response Editor */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Response</label>
+          <label htmlFor="review-response-text" className="text-sm font-medium">Response</label>
           <span className="text-xs text-muted-foreground">{wordCount} words</span>
         </div>
         <Textarea
+          id="review-response-text"
+          aria-label="Review response"
           placeholder="Write your response to this review..."
           value={responseText}
           onChange={(e) => {
@@ -363,11 +384,12 @@ export function ResponseComposer({
       </AnimatedPresence>
 
       {/* Actions */}
-      <div className="flex items-center justify-between pt-2">
-        <Button variant="ghost" size="sm" onClick={onCancel}>
-          Cancel
-        </Button>
-
+      <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+        {onCancel && (
+          <Button variant="ghost" size="sm" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
         <div className="flex items-center gap-2">
           <TooltipProvider>
             <Tooltip>
@@ -383,36 +405,42 @@ export function ResponseComposer({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p className="text-xs">Save as draft to continue later</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  onClick={handlePostResponse}
-                  disabled={isPending || !responseText.trim()}
-                >
-                  {isPending ? (
-                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4 mr-1.5" />
-                  )}
-                  Post Response
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
                 <p className="text-xs">
-                  {review.source === "google"
-                    ? "Post response to Google"
-                    : "Post response to this review"}
+                  {draftOnly
+                    ? "Save as a draft until the review is published"
+                    : "Save as draft to continue later"}
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {!draftOnly && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={handlePostResponse}
+                    disabled={isPending || !responseText.trim()}
+                  >
+                    {isPending ? (
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4 mr-1.5" />
+                    )}
+                    Post Response
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">
+                    {review.source === "google"
+                      ? "Post response to Google"
+                      : "Post response to this review"}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </div>
     </div>

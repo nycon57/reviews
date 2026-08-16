@@ -87,7 +87,7 @@ export function IntegrationsPageContent() {
           Check your platform&apos;s documentation for how to add custom HTML.
           If you need assistance,{" "}
           <a
-            href="mailto:support@repwell.com"
+            href="mailto:support@repwell.ai"
             className="text-heading underline underline-offset-2 hover:text-repwell-teal-600"
           >
             contact support

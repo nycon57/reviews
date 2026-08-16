@@ -159,7 +159,7 @@ export async function getApiKeys(
     }
 
     const apiKeys = (data || []).map((row) =>
-      mapRowToApiKey(row as unknown as ApiKeyRow)
+      mapRowToApiKey(row)
     );
 
     return { success: true, data: apiKeys };
@@ -194,7 +194,7 @@ export async function getApiKey(id: string): Promise<ActionResult<ApiKey>> {
 
     return {
       success: true,
-      data: mapRowToApiKey(data as unknown as ApiKeyRow),
+      data: mapRowToApiKey(data),
     };
   } catch (error) {
     console.error('Error fetching API key:', error);
@@ -259,12 +259,12 @@ export async function createApiKey(
       return { success: false, error: 'Failed to create API key' };
     }
 
-    revalidatePath('/dashboard/settings/api-keys');
+    revalidatePath('/dashboard/organization');
 
     return {
       success: true,
       data: {
-        apiKey: mapRowToApiKey(data as unknown as ApiKeyRow),
+        apiKey: mapRowToApiKey(data),
         rawKey, // Only returned on creation!
       },
     };
@@ -332,11 +332,11 @@ export async function updateApiKey(
       return { success: false, error: 'Failed to update API key' };
     }
 
-    revalidatePath('/dashboard/settings/api-keys');
+    revalidatePath('/dashboard/organization');
 
     return {
       success: true,
-      data: mapRowToApiKey(data as unknown as ApiKeyRow),
+      data: mapRowToApiKey(data),
     };
   } catch (error) {
     console.error('Error updating API key:', error);
@@ -366,7 +366,7 @@ export async function deleteApiKey(id: string): Promise<ActionResult> {
       return { success: false, error: 'Failed to delete API key' };
     }
 
-    revalidatePath('/dashboard/settings/api-keys');
+    revalidatePath('/dashboard/organization');
 
     return { success: true };
   } catch (error) {
@@ -401,10 +401,8 @@ export async function rotateApiKey(
       return { success: false, error: 'API key not found' };
     }
 
-    const existing = existingKey as unknown as ApiKeyRow;
-
     // Generate new key with same environment
-    const environment = (existing.environment || 'live') as 'live' | 'test';
+    const environment = (existingKey.environment || 'live') as 'live' | 'test';
     const { rawKey, keyHash, keyPrefix } = generateApiKey(environment);
 
     // Use admin client for transaction
@@ -415,16 +413,16 @@ export async function rotateApiKey(
       .from('api_keys')
       .insert({
         organization_id: auth.organizationId,
-        name: `${existing.name} (rotated)`,
-        description: existing.description,
+        name: `${existingKey.name} (rotated)`,
+        description: existingKey.description,
         key_hash: keyHash,
         key_prefix: keyPrefix,
-        scopes: existing.scopes || existing.permissions,
-        permissions: existing.scopes || existing.permissions,
+        scopes: existingKey.scopes || existingKey.permissions,
+        permissions: existingKey.scopes || existingKey.permissions,
         environment,
-        rate_limit: existing.rate_limit,
+        rate_limit: existingKey.rate_limit,
         is_active: true,
-        expires_at: existing.expires_at,
+        expires_at: existingKey.expires_at,
         created_by: auth.userId,
         rotated_from: id,
         rotated_at: new Date().toISOString(),
@@ -443,12 +441,12 @@ export async function rotateApiKey(
       .update({ is_active: false })
       .eq('id', id);
 
-    revalidatePath('/dashboard/settings/api-keys');
+    revalidatePath('/dashboard/organization');
 
     return {
       success: true,
       data: {
-        apiKey: mapRowToApiKey(newKey as unknown as ApiKeyRow),
+        apiKey: mapRowToApiKey(newKey),
         rawKey,
       },
     };

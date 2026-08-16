@@ -14,10 +14,12 @@ import {
   Link as Link2,
   Check,
   Medal,
+  VideoCamera,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 
 import { cn, getInitials } from "@/lib/utils";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,12 +51,22 @@ export const SOURCE_CONFIG: Record<string, { icon: string; name: string; url?: s
 
 export function SourceIcon({ source }: { source: string }) {
   const normalizedSource = source.toLowerCase();
+  const sourceLabel = formatReviewSource(source);
 
   // Map internal/survey sources to RepWell
   const mappedSource =
     normalizedSource === "internal" || normalizedSource === "survey"
       ? "repwell"
       : normalizedSource;
+
+  if (mappedSource === "video_testimonial") {
+    return (
+      <Badge variant="outline" className="gap-1 text-xs">
+        <VideoCamera className="h-3 w-3" weight="duotone" />
+        {sourceLabel}
+      </Badge>
+    );
+  }
 
   const config = SOURCE_CONFIG[mappedSource];
 
@@ -91,7 +103,7 @@ export function SourceIcon({ source }: { source: string }) {
 
   return (
     <Badge variant="outline" className="text-xs">
-      {source}
+      {sourceLabel}
     </Badge>
   );
 }
@@ -143,7 +155,7 @@ export interface ReviewItemProps {
   review: ReviewItemData;
   respondentName?: string;
   attribution?: ReviewItemAttribution;
-  /** Label before the loan officer name in attribution (default: "Review for") */
+  /** Label before the professional name in attribution (default: "Review for") */
   attributionLabel?: string;
   shareConfig?: { profileUrl: string; subjectName: string; reviewUrl?: string | null };
   onFlag?: (reviewId: string) => void;
@@ -243,7 +255,7 @@ export function ReviewItem({
               {review.rating}/5
             </span>
           </div>
-          <p className="mt-1 text-sm text-repwell-teal-300">
+          <p className="mt-1 text-sm text-repwell-teal-400">
             {review.customer_name || "Anonymous"}
             {review.customer_location && (
               <span> - {review.customer_location}</span>
@@ -273,7 +285,7 @@ export function ReviewItem({
 
       {/* Attribution + Actions row */}
       {(attribution || shareLinks || onFlag) && (
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-repwell-teal-300">
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-repwell-teal-400">
           {attribution && (
             <>
               <Link
@@ -398,7 +410,7 @@ export function ReviewItem({
       {/* Response box */}
       {review.response_text && (
         <div className="mt-4 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 p-3">
-          <p className="text-xs font-medium text-repwell-teal-300 mb-1">
+          <p className="text-xs font-medium text-repwell-teal-400 mb-1">
             Response from {respondentName || "the team"}
           </p>
           <p className="text-sm text-label">{review.response_text}</p>

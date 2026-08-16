@@ -66,7 +66,7 @@ function createMockQueryChain(finalResult: {
   // Terminal methods return the final result
   chain.single.mockResolvedValue(finalResult);
   chain.maybeSingle.mockResolvedValue(finalResult);
-  chain.then.mockImplementation((resolve: (value: unknown) => unknown) =>
+  chain.then.mockImplementation((resolve: (value: unknown) => void) =>
     Promise.resolve(finalResult).then(resolve)
   );
 
@@ -142,11 +142,11 @@ describe("listWidgetVersions", () => {
     }
   });
 
-  it("allows individual accounts using individual_organization_id", async () => {
+  it("allows individual accounts via organizations.account_type", async () => {
     const individualUserData = {
-      organization_id: null,
-      individual_organization_id: "org-individual-001",
+      organization_id: "org-individual-001",
       role: "user",
+      organizations: { account_type: "individual" },
     };
     const userChain = createMockQueryChain({ data: individualUserData, error: null });
     const widgetChain = createMockQueryChain({ data: { id: "widget-001" }, error: null });

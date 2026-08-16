@@ -21,6 +21,7 @@ import {
   formatDate,
   previewT,
 } from "./shared";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 import { SourceBadge } from "./shared-components";
 import {
   applyFeaturedStyle,
@@ -222,12 +223,13 @@ function SourceBreakdownSection({ sources, starFilled, starEmpty, lang }: {
       <div className="flex flex-col gap-2.5">
         {sources.map((src) => {
           const iconData = SOURCE_ICONS[src.source] ?? { bg: "#6b7280", letter: src.source[0]?.toUpperCase() ?? "?" };
+          const sourceLabel = SOURCE_LABELS[src.source] ?? formatReviewSource(src.source);
           return (
             <div key={src.source} className="flex items-center gap-2.5">
               {iconData.icon ? (
                 <img
                   src={iconData.icon}
-                  alt={SOURCE_LABELS[src.source] ?? src.source}
+                  alt={sourceLabel}
                   className="w-8 h-8 rounded-md object-contain flex-shrink-0"
                 />
               ) : (
@@ -243,7 +245,7 @@ function SourceBreakdownSection({ sources, starFilled, starEmpty, lang }: {
                   className="block text-[13px] font-semibold"
                   style={getPreviewBodyStyle("var(--rw-text, #1a1a2e)")}
                 >
-                  {SOURCE_LABELS[src.source] ?? src.source}
+                  {sourceLabel}
                 </span>
                 <span className="text-[11px] text-gray-400" style={getPreviewMetaStyle("#9ca3af", 0.79)}>
                   {src.count} {previewT(lang, "reviews")} &middot; {src.average.toFixed(1)} {previewT(lang, "avgSuffix")}
@@ -624,7 +626,7 @@ export function CompanyReviewPreview({
         >
           {previewT(lang, "poweredBy")}{" "}
           <a
-            href="https://repwell.com"
+            href="https://repwell.ai"
             target="_blank"
             rel="noopener noreferrer"
             className="no-underline hover:underline"

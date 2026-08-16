@@ -46,7 +46,6 @@ export {
   generateFAQPageSchema,
   generateFAQPageJsonLd,
   generateBreadcrumbListSchema,
-  generateProductSchema,
 } from "./schema-generators";
 
 // All configs indexed by slug for route lookup

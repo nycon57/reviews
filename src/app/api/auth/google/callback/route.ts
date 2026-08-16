@@ -13,14 +13,14 @@ export async function GET(request: NextRequest) {
   if (error) {
     console.error('Google OAuth error:', error);
     return NextResponse.redirect(
-      `${appUrl}/dashboard/settings?google_error=${encodeURIComponent(error)}`
+      `${appUrl}/dashboard/organization?tab=integrations&google_error=${encodeURIComponent(error)}`
     );
   }
 
   // Validate required parameters
   if (!code || !state) {
     return NextResponse.redirect(
-      `${appUrl}/dashboard/settings?google_error=${encodeURIComponent('Missing OAuth parameters')}`
+      `${appUrl}/dashboard/organization?tab=integrations&google_error=${encodeURIComponent('Missing OAuth parameters')}`
     );
   }
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
   if (!result.success) {
     return NextResponse.redirect(
-      `${appUrl}/dashboard/settings?google_error=${encodeURIComponent(result.error || 'Authentication failed')}`
+      `${appUrl}/dashboard/organization?tab=integrations&google_error=${encodeURIComponent(result.error || 'Authentication failed')}`
     );
   }
 
@@ -40,6 +40,6 @@ export async function GET(request: NextRequest) {
 
   // Redirect to settings with success message
   return NextResponse.redirect(
-    `${appUrl}/dashboard/settings?google_success=true&connection_id=${result.data!.connectionId}`
+    `${appUrl}/dashboard/organization?tab=integrations&google_success=true&connection_id=${result.data!.connectionId}`
   );
 }

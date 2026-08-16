@@ -17,9 +17,16 @@ const WIDGETS_PATH = "/dashboard/widgets";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type WidgetRow = Record<string, any>;
 
+/** A JSON object as stored in a jsonb column. */
+type JsonObject = { [key: string]: Json | undefined };
+
+function isJsonObject(value: Json | undefined): value is JsonObject {
+  return value instanceof Object && !Array.isArray(value);
+}
+
 // ── Types ──────────────────────────────────────────────────────────────
 
-export interface AbTestConfig {
+export type AbTestConfig = {
   enabled: boolean;
   splitPercent: number; // Percentage of traffic going to variant B (0-100)
   variantWidgetId: string; // UUID of the variant widget_configs row
@@ -27,7 +34,7 @@ export interface AbTestConfig {
   status: "running" | "completed" | "cancelled";
   winnerId?: string; // UUID of winner widget, set when test concludes
   completedAt?: string; // ISO timestamp
-}
+};
 
 export interface AbTestSummary {
   testId: string; // parent widget ID
@@ -49,7 +56,7 @@ export interface AbTestSummary {
 
 export interface CreateAbTestInput {
   parentWidgetId: string; // UUID of the base widget
-  variantConfig: Record<string, unknown>; // Config overrides for the variant
+  variantConfig: JsonObject; // Config overrides for the variant
   variantName?: string;
   splitPercent?: number; // Default 50
 }
@@ -175,7 +182,7 @@ export async function createAbTest(
     }
 
     // Create variant widget as a copy with config overrides
-    const existingWidgetConfig = (parent.config ?? {}) as Record<string, unknown>;
+    const existingWidgetConfig = isJsonObject(parent.config) ? parent.config : {};
     const mergedConfig = deepMerge(existingWidgetConfig, input.variantConfig);
 
     const variantName = input.variantName || `${parent.name} (Variant B)`;
@@ -192,7 +199,7 @@ export async function createAbTest(
         widget_type: parent.widget_type,
         entity_type: parent.entity_type,
         entity_id: parent.entity_id,
-        config: mergedConfig as unknown as Json,
+        config: mergedConfig,
         allowed_domains: parent.allowed_domains,
         enable_structured_data: parent.enable_structured_data,
         structured_data_type: parent.structured_data_type,
@@ -232,7 +239,7 @@ export async function createAbTest(
     const { data: updatedParent, error: updateErr } = await supabase
       .from("widget_configs")
       .update({
-        ab_test_config: abTestConfig as unknown as Json,
+        ab_test_config: abTestConfig,
         updated_at: new Date().toISOString(),
       })
       .eq("id", parent.id)
@@ -454,7 +461,7 @@ export async function declareWinner(
             status: "completed",
             winnerId: variant.id,
             completedAt: now,
-          } as unknown as Json,
+          },
           ab_test_group: null,
           updated_at: now,
           version: (parent.version ?? 1) + 1,
@@ -475,7 +482,7 @@ export async function declareWinner(
             status: "completed",
             winnerId: parent.id,
             completedAt: now,
-          } as unknown as Json,
+          },
           ab_test_group: null,
           updated_at: now,
         })
@@ -544,7 +551,7 @@ export async function cancelAbTest(
           enabled: false,
           status: "cancelled",
           completedAt: now,
-        } as unknown as Json,
+        },
         ab_test_group: null,
         updated_at: now,
       })
@@ -595,7 +602,9 @@ export async function getPublicAbTestConfig(
 
   if (!(parent as WidgetRow | null)?.ab_test_config) return null;
 
-  const abConfig = (parent as WidgetRow).ab_test_config as unknown as AbTestConfig;
+  // SAFETY: the guard above proved ab_test_config is present, and every writer in this module
+  // stores an AbTestConfig into that column.
+  const abConfig = (parent as WidgetRow).ab_test_config as AbTestConfig;
   if (!abConfig.enabled || abConfig.status !== "running") return null;
 
   // Get variant widget slug
@@ -616,29 +625,15 @@ export async function getPublicAbTestConfig(
 
 // ── Utility ─────────────────────────────────────────────────────────────
 
-function deepMerge(
-  target: Record<string, unknown>,
-  source: Record<string, unknown>
-): Record<string, unknown> {
-  const result = { ...target };
+function deepMerge(target: JsonObject, source: JsonObject): JsonObject {
+  const result: JsonObject = { ...target };
   for (const key of Object.keys(source)) {
     const sourceVal = source[key];
     const targetVal = target[key];
-    if (
-      sourceVal &&
-      typeof sourceVal === "object" &&
-      !Array.isArray(sourceVal) &&
-      targetVal &&
-      typeof targetVal === "object" &&
-      !Array.isArray(targetVal)
-    ) {
-      result[key] = deepMerge(
-        targetVal as Record<string, unknown>,
-        sourceVal as Record<string, unknown>
-      );
-    } else {
-      result[key] = sourceVal;
-    }
+    result[key] =
+      isJsonObject(sourceVal) && isJsonObject(targetVal)
+        ? deepMerge(targetVal, sourceVal)
+        : sourceVal;
   }
   return result;
 }

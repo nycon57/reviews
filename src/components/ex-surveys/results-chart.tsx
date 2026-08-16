@@ -8,9 +8,7 @@ interface EXResultsChartProps {
   responses: EXSurveyResponse[];
 }
 
-interface ExtendedAnswer extends EXSurveyAnswer {
-  questionText?: string;
-}
+type ExtendedAnswer = { [K in keyof EXSurveyAnswer]: EXSurveyAnswer[K] } & { questionText?: string };
 
 export function EXResultsChart({ responses }: EXResultsChartProps) {
   if (responses.length === 0) {
@@ -28,7 +26,9 @@ export function EXResultsChart({ responses }: EXResultsChartProps) {
   responses.forEach((response) => {
     if (!response.answers) return;
 
-    const answers = response.answers as unknown as ExtendedAnswer[];
+    // SAFETY: EXSurveyResponse types answers as loose JSON records; every writer of the column
+    // stores EXSurveyAnswer objects, optionally carrying the rendered questionText.
+    const answers = response.answers as ExtendedAnswer[];
     answers.forEach((answer) => {
       if (!questionStats[answer.questionId]) {
         questionStats[answer.questionId] = {

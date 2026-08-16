@@ -1,5 +1,6 @@
 "use server";
 
+import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/types/database.types";
 import type { IndustryType } from "@/lib/industry/types";
@@ -27,6 +28,8 @@ export interface PublicBranch {
   google_maps_url: string | null;
   photo_url: string | null;
   cover_image_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
   average_rating: number | null;
   total_reviews: number | null;
   total_members: number | null;
@@ -82,6 +85,14 @@ export interface PublicBranchProfileData {
   is_pro: boolean;
 }
 
+export interface PublicBranchOgCardData {
+  branch: Pick<
+    PublicBranch,
+    "name" | "photo_url" | "cover_image_url" | "average_rating" | "total_reviews"
+  >;
+  organization: Pick<Organization, "name"> | null;
+}
+
 export interface BusinessHours {
   monday?: { open: string; close: string } | null;
   tuesday?: { open: string; close: string } | null;
@@ -126,6 +137,7 @@ export type PublicLoanOfficerListItem = PublicProfessionalListItem;
 // Full interface for profile views with customization fields
 export interface PublicProfessional extends PublicProfessionalListItem {
   slug: string | null;
+  updated_at: string | null;
   branch_id: string | null;
   google_maps_url: string | null;
   // Profile customization fields
@@ -150,6 +162,7 @@ export interface PublicReview {
   text: string | null;
   title: string | null;
   review_date: string;
+  updated_at: string | null;
   source: string;
   response_text: string | null;
   featured: boolean;
@@ -185,6 +198,14 @@ export interface PublicProfessionalProfileData {
 /** @deprecated Use PublicProfessionalProfileData instead */
 export type PublicLOProfileData = PublicProfessionalProfileData;
 
+export interface PublicProfessionalOgCardData {
+  professional: Pick<
+    PublicProfessional,
+    "full_name" | "title" | "photo_url" | "average_rating" | "total_reviews"
+  >;
+  organization: Pick<OrgDisplay, "name"> | null;
+}
+
 /**
  * Check if a string is a valid UUID v4
  */
@@ -198,7 +219,7 @@ function isUUID(str: string): boolean {
  * Get a public professional profile by user ID or slug
  * @param slugOrId Either a user ID (UUID) or a slug (e.g., "john-smith")
  */
-export async function getPublicLOProfile(
+export const getPublicLOProfile = cache(async function getPublicLOProfile(
   slugOrId: string
 ): Promise<{ success: boolean; data?: PublicLOProfileData; error?: string }> {
   try {
@@ -234,11 +255,10 @@ export async function getPublicLOProfile(
           personal_website_url,
           average_rating,
           total_reviews,
+          updated_at,
           nps_score,
           is_active,
           organization_id,
-          individual_organization_id,
-          individual_branch_id,
           banner_url,
           cta_button_text,
           cta_button_url,
@@ -249,7 +269,16 @@ export async function getPublicLOProfile(
           featured_review_ids,
           industry,
           latitude,
-          longitude
+          longitude,
+          organizations!inner (
+            id,
+            name,
+            logo_url,
+            domain,
+            slug,
+            account_type,
+            subscription_tier
+          )
         `
         )
     )
@@ -260,57 +289,17 @@ export async function getPublicLOProfile(
       return { success: false, error: "Professional not found" };
     }
 
-    // Must have either an enterprise org or an individual org
-    if (!user.organization_id && !user.individual_organization_id) {
+    // Every account has one organizations row (ADR 0006).
+    if (!user.organization_id) {
       return { success: false, error: "Professional not associated with an organization" };
     }
 
     // Use avatar_url (from settings) or photo_url as fallback
     const photoUrl = user.avatar_url || user.photo_url;
 
-    // Dual-path org fetch: enterprise org via organization_id, else individual org
-    type OrgInfo = {
-      id: string;
-      name: string;
-      logo_url: string | null;
-      domain: string | null;
-      slug: string | null;
-      account_type: string | null;
-      subscription_tier: string | null;
-    };
-    let organization: OrgInfo | null = null;
-    let isIndividual = false;
-
-    if (user.organization_id) {
-      const { data: orgData, error: orgError } = await supabase
-        .from("organizations")
-        .select("id, name, logo_url, domain, slug, account_type, subscription_tier")
-        .eq("id", user.organization_id)
-        .single();
-      if (orgError) {
-        console.error("Error fetching organization:", orgError.message);
-      }
-      organization = orgData as OrgInfo | null;
-      isIndividual = organization?.account_type === "individual";
-    } else if (user.individual_organization_id) {
-      const { data: indivOrgData } = await supabase
-        .from("individual_organizations")
-        .select("id, name, slug")
-        .eq("id", user.individual_organization_id)
-        .single();
-      if (indivOrgData) {
-        organization = {
-          id: indivOrgData.id,
-          name: indivOrgData.name,
-          logo_url: null,
-          domain: null,
-          slug: indivOrgData.slug,
-          account_type: "individual",
-          subscription_tier: null,
-        };
-        isIndividual = true;
-      }
-    }
+    // Single path (ADR 0006): the org is embedded via organizations!inner.
+    const organization = user.organizations;
+    const isIndividual = organization?.account_type === "individual";
 
     // Fetch published reviews (user_id references users table)
     const { data: reviews } = await supabase
@@ -326,6 +315,7 @@ export async function getPublicLOProfile(
         review_date,
         source,
         response_text,
+        updated_at,
         featured
       `
       )
@@ -352,6 +342,7 @@ export async function getPublicLOProfile(
           review_date,
           source,
           response_text,
+          updated_at,
           featured
         `
         )
@@ -394,22 +385,9 @@ export async function getPublicLOProfile(
         branchAddress = branch.address;
         googleMapsUrl = branch.google_maps_url;
       }
-    } else if (user.individual_branch_id) {
-      // Fallback: individual branches (no hours_of_operation or google_maps_url columns)
-      const { data: indivBranch } = await supabase
-        .from("individual_branches")
-        .select("name, slug, latitude, longitude, address")
-        .eq("id", user.individual_branch_id)
-        .single();
-
-      if (indivBranch) {
-        branchName = indivBranch.name;
-        branchSlug = indivBranch.slug;
-        branchLatitude = indivBranch.latitude;
-        branchLongitude = indivBranch.longitude;
-        branchAddress = indivBranch.address as typeof branchAddress;
-      }
     }
+    // Individual accounts have no branch (branches are enterprise-only, ADR 0006);
+    // their location lives on the users row (latitude/longitude/address above).
 
     return {
       success: true,
@@ -435,6 +413,7 @@ export async function getPublicLOProfile(
           personal_website_url: user.personal_website_url ?? null,
           average_rating: user.average_rating,
           total_reviews: user.total_reviews,
+          updated_at: user.updated_at,
           nps_score: user.nps_score,
           latitude: user.latitude ?? branchLatitude,
           longitude: user.longitude ?? branchLongitude,
@@ -474,7 +453,60 @@ export async function getPublicLOProfile(
   } catch {
     return { success: false, error: "Failed to load profile" };
   }
-}
+});
+
+export const getPublicProfessionalOgCardData = cache(async function getPublicProfessionalOgCardData(
+  slugOrId: string
+): Promise<{ success: boolean; data?: PublicProfessionalOgCardData; error?: string }> {
+  try {
+    const supabase = createAdminClient();
+    const lookupField = isUUID(slugOrId) ? "id" : "slug";
+
+    const { data: user, error } = await applyPublicProfessionalFilters(
+      supabase
+        .from("users")
+        .select(
+          `
+          full_name,
+          title,
+          photo_url,
+          avatar_url,
+          average_rating,
+          total_reviews,
+          organizations!inner (
+            name,
+            account_type,
+            subscription_tier
+          )
+        `
+        )
+    )
+      .eq(lookupField, slugOrId)
+      .single();
+
+    if (error || !user) {
+      return { success: false, error: "Professional not found" };
+    }
+
+    const organization = user.organizations as { name: string } | null;
+
+    return {
+      success: true,
+      data: {
+        professional: {
+          full_name: user.full_name || "Unknown",
+          title: user.title,
+          photo_url: user.avatar_url || user.photo_url,
+          average_rating: user.average_rating,
+          total_reviews: user.total_reviews,
+        },
+        organization: organization ? { name: organization.name } : null,
+      },
+    };
+  } catch {
+    return { success: false, error: "Failed to load profile card data" };
+  }
+});
 
 /**
  * Get a list of public professionals for an organization
@@ -535,7 +567,7 @@ export async function getPublicLOList(
           nps_score,
           latitude,
           longitude,
-          organizations (
+          organizations!inner (
             account_type,
             subscription_tier
           )
@@ -590,7 +622,7 @@ export async function getAllPublicLOIds(): Promise<string[]> {
     const { data, error } = await applyPublicProfessionalFilters(
       supabase
         .from("users")
-        .select("id")
+        .select("id, organizations!inner(account_type)")
     );
 
     if (error || !data) {
@@ -614,7 +646,7 @@ export async function getAllPublicUserSlugs(): Promise<string[]> {
     const { data, error } = await applyPublicProfessionalFilters(
       supabase
         .from("users")
-        .select("slug")
+        .select("slug, organizations!inner(account_type)")
     ).not("slug", "is", null);
 
     if (error || !data) {
@@ -655,7 +687,7 @@ export async function getAllOrganizationSlugs(): Promise<string[]> {
  * @param slugOrId Either a branch UUID or a global_slug (e.g., "boston-downtown-summit-mortgage-group")
  * @returns Branch profile data, with redirectSlug if UUID was used and branch has a global_slug
  */
-export async function getPublicBranchProfile(
+export const getPublicBranchProfile = cache(async function getPublicBranchProfile(
   slugOrId: string
 ): Promise<{ success: boolean; data?: PublicBranchProfileData; redirectSlug?: string; error?: string }> {
   try {
@@ -677,6 +709,8 @@ export async function getPublicBranchProfile(
         google_maps_url,
         photo_url,
         cover_image_url,
+        latitude,
+        longitude,
         average_rating,
         total_reviews,
         total_members,
@@ -773,7 +807,10 @@ export async function getPublicBranchProfile(
           phone,
           nmls_id,
           average_rating,
-          total_reviews
+          total_reviews,
+          organizations!inner (
+            account_type
+          )
         `
         )
     )
@@ -871,6 +908,8 @@ export async function getPublicBranchProfile(
           google_maps_url: branch.google_maps_url,
           photo_url: branch.photo_url,
           cover_image_url: branch.cover_image_url,
+          latitude: branch.latitude,
+          longitude: branch.longitude,
           average_rating: branch.average_rating,
           total_reviews: branch.total_reviews,
           total_members: branch.total_members,
@@ -890,7 +929,94 @@ export async function getPublicBranchProfile(
   } catch {
     return { success: false, error: "Failed to load branch profile" };
   }
-}
+});
+
+export const getPublicBranchOgCardData = cache(async function getPublicBranchOgCardData(
+  slugOrId: string
+): Promise<{ success: boolean; data?: PublicBranchOgCardData; error?: string }> {
+  try {
+    const supabase = createAdminClient();
+    type BranchOgRow = Pick<
+      PublicBranch,
+      "name" | "slug" | "global_slug" | "photo_url" | "cover_image_url" | "average_rating" | "total_reviews"
+    > & { organization_id: string };
+    const branchSelect = `
+      name,
+      slug,
+      global_slug,
+      photo_url,
+      cover_image_url,
+      average_rating,
+      total_reviews,
+      organization_id
+    `;
+
+    const isSlugUuid = isUUID(slugOrId);
+    let branch: BranchOgRow | null = null;
+
+    if (isSlugUuid) {
+      const { data } = await supabase
+        .from("branches")
+        .select(branchSelect)
+        .eq("id", slugOrId)
+        .eq("is_active", true)
+        .eq("is_public", true)
+        .single();
+
+      branch = data as BranchOgRow | null;
+    } else {
+      const { data: branchByGlobalSlug } = await supabase
+        .from("branches")
+        .select(branchSelect)
+        .eq("global_slug", slugOrId)
+        .eq("is_active", true)
+        .eq("is_public", true)
+        .maybeSingle();
+
+      if (branchByGlobalSlug) {
+        branch = branchByGlobalSlug as BranchOgRow;
+      } else {
+        const { data: slugMatches } = await supabase
+          .from("branches")
+          .select(branchSelect)
+          .eq("slug", slugOrId)
+          .eq("is_active", true)
+          .eq("is_public", true)
+          .limit(2);
+
+        if ((slugMatches?.length ?? 0) === 1) {
+          branch = slugMatches?.[0] as BranchOgRow;
+        }
+      }
+    }
+
+    if (!branch) {
+      return { success: false, error: "Branch not found" };
+    }
+
+    const { data: organization } = await supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", branch.organization_id)
+      .single();
+
+    return {
+      success: true,
+      data: {
+        branch: {
+          name: branch.name,
+          photo_url: branch.photo_url,
+          cover_image_url: branch.cover_image_url,
+          average_rating: branch.average_rating,
+          total_reviews: branch.total_reviews,
+        },
+        organization: organization ? { name: organization.name } : null,
+      },
+    };
+  } catch {
+    return { success: false, error: "Failed to load branch card data" };
+  }
+});
 
 /**
  * Get all public branch IDs for sitemap generation
@@ -1049,10 +1175,42 @@ export interface PublicOrganizationProfileData {
   testimonials: PublicOrgTestimonial[];
 }
 
+export interface PublicOrganizationOgCardData {
+  organization: Pick<
+    PublicOrganization,
+    "name" | "logo_url" | "aggregate_rating" | "total_reviews"
+  >;
+}
+
+/** The organization columns the public profile page reads. */
+type PublicOrganizationRow = {
+  id: string;
+  name: string;
+  slug: string;
+  domain: string | null;
+  logo_url: string | null;
+  avatar_url: string | null;
+  banner_url: string | null;
+  primary_color: string | null;
+  description: string | null;
+  mission_statement: string | null;
+  headquarters_address: { street?: string; city?: string; state?: string; zip?: string } | null;
+  phone: string | null;
+  email: string | null;
+  website_url: string | null;
+  linkedin_url: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  twitter_url: string | null;
+  headquarters_branch_id: string | null;
+  account_type: string | null;
+  subscription_tier: string | null;
+};
+
 /**
  * Get a public Organization profile by slug
  */
-export async function getPublicOrganizationProfile(
+export const getPublicOrganizationProfile = cache(async function getPublicOrganizationProfile(
   slug: string
 ): Promise<{ success: boolean; data?: PublicOrganizationProfileData; error?: string }> {
   try {
@@ -1091,39 +1249,19 @@ export async function getPublicOrganizationProfile(
       .eq("slug", slug)
       .single();
 
-    const orgData = orgDataRaw as unknown as Record<string, unknown> | null;
+    // SAFETY: `description` is a real column the generated schema is missing, so supabase-js
+    // cannot type this select at all. PublicOrganizationRow names exactly the columns requested
+    // above, and `.single()` already rejected the empty and multi-row cases.
+    const organization = orgDataRaw as PublicOrganizationRow | null;
 
-    if (orgError || !orgData) {
+    if (orgError || !organization) {
       return { success: false, error: "Organization not found" };
     }
 
     // Individual orgs never get a public page
-    if ((orgData as { account_type: string | null }).account_type === "individual") {
+    if (organization.account_type === "individual") {
       return { success: false, error: "Organization not found" };
     }
-
-    // Cast to expected type
-    const organization = orgData as {
-      id: string;
-      name: string;
-      slug: string;
-      domain: string | null;
-      logo_url: string | null;
-      avatar_url: string | null;
-      banner_url: string | null;
-      primary_color: string | null;
-      description: string | null;
-      mission_statement: string | null;
-      headquarters_address: { street?: string; city?: string; state?: string; zip?: string } | null;
-      phone: string | null;
-      email: string | null;
-      website_url: string | null;
-      linkedin_url: string | null;
-      facebook_url: string | null;
-      instagram_url: string | null;
-      twitter_url: string | null;
-      headquarters_branch_id: string | null;
-    };
 
     // Fetch HQ branch if set
     let hqBranch: PublicOrgHQBranch | null = null;
@@ -1331,8 +1469,10 @@ export async function getPublicOrganizationProfile(
           total_members: b.total_members,
         })),
         featuredProfessionals: allProfessionals.map((professional) => {
-          const orgIsEnterprise = (orgData as { account_type?: string }).account_type === "enterprise";
-          const orgIsPro = orgIsEnterprise || ["professional", "pro"].includes(String((orgData as { subscription_tier?: string | null }).subscription_tier ?? ""));
+          const orgIsEnterprise = organization.account_type === "enterprise";
+          const orgIsPro =
+            orgIsEnterprise ||
+            ["professional", "pro"].includes(String(organization.subscription_tier ?? ""));
           return {
             id: professional.id,
             slug: professional.slug,
@@ -1352,4 +1492,53 @@ export async function getPublicOrganizationProfile(
   } catch {
     return { success: false, error: "Failed to load organization profile" };
   }
-}
+});
+
+export const getPublicOrganizationOgCardData = cache(async function getPublicOrganizationOgCardData(
+  slug: string
+): Promise<{ success: boolean; data?: PublicOrganizationOgCardData; error?: string }> {
+  try {
+    const supabase = createAdminClient();
+
+    const { data: organization, error } = await supabase
+      .from("organizations")
+      .select("id, name, logo_url, avatar_url, account_type")
+      .eq("slug", slug)
+      .single();
+
+    if (error || !organization || organization.account_type === "individual") {
+      return { success: false, error: "Organization not found" };
+    }
+
+    const { data: branches } = await supabase
+      .from("branches")
+      .select("average_rating, total_reviews")
+      .eq("organization_id", organization.id)
+      .eq("is_active", true)
+      .eq("is_public", true);
+
+    let totalReviews = 0;
+    let weightedRatingSum = 0;
+
+    for (const branch of branches || []) {
+      if (branch.total_reviews && branch.average_rating) {
+        totalReviews += branch.total_reviews;
+        weightedRatingSum += branch.total_reviews * Number(branch.average_rating);
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        organization: {
+          name: organization.name,
+          logo_url: organization.avatar_url || organization.logo_url,
+          aggregate_rating: totalReviews > 0 ? weightedRatingSum / totalReviews : null,
+          total_reviews: totalReviews,
+        },
+      },
+    };
+  } catch {
+    return { success: false, error: "Failed to load organization card data" };
+  }
+});

@@ -5,6 +5,24 @@ import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { formatDuration, formatRelationship, type ActionResult } from "./types";
 import { ensureSmartLinkForSource } from "@/lib/share-studio/service";
+import type { Json } from "@/types/database.types";
+
+/** The subset of `video_testimonial_requests.source_metadata` this module reads. */
+type RequestSourceMetadata = {
+  customer_display_name?: string;
+  customer_relationship?: string;
+} | null;
+
+/**
+ * Reads the `source_metadata` JSON column into the shape the request flow writes. Rows holding any
+ * other JSON shape read back as absent metadata rather than as a lying object type.
+ */
+function readSourceMetadata(value: Json | null | undefined): RequestSourceMetadata {
+  if (!(value instanceof Object) || Array.isArray(value)) return null;
+  // SAFETY: the guard above leaves only JSON objects, and both fields are optional, so a row
+  // missing either of them still satisfies the type.
+  return value as RequestSourceMetadata;
+}
 
 // ============================================================================
 // Types
@@ -237,15 +255,12 @@ export async function generateVideoPostPreview(
     return { success: false, error: "Video must be approved before publishing to social media" };
   }
 
-  type RequestData = { customer_name: string; source_metadata: { customer_display_name?: string; customer_relationship?: string } | null };
-  type ProfessionalData = { full_name: string; title: string | null };
-  type OrgData = { name: string };
+  const request = video.video_testimonial_requests;
+  const sourceMetadata = readSourceMetadata(request.source_metadata);
+  const professional = video.users;
+  const organization = video.organizations;
 
-  const request = video.video_testimonial_requests as unknown as RequestData;
-  const professional = video.users as unknown as ProfessionalData;
-  const organization = video.organizations as unknown as OrgData;
-
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const smartLink = await ensureSmartLinkForSource({
     organizationId: video.organization_id as string,
     sourceType: "video_testimonial",
@@ -263,9 +278,9 @@ export async function generateVideoPostPreview(
       return { success: false, error: "No template found for platform" };
     }
     content = fillVideoTemplatePlaceholders(template.templateText, {
-      customerName: request.source_metadata?.customer_display_name || request.customer_name,
-      customerRelationship: request.source_metadata?.customer_relationship || null,
-      professionalName: professional.full_name,
+      customerName: sourceMetadata?.customer_display_name || request.customer_name,
+      customerRelationship: sourceMetadata?.customer_relationship || null,
+      professionalName: professional.full_name ?? "",
       professionalTitle: professional.title,
       organizationName: organization.name,
       videoQuote: video.ai_generated_text,
@@ -346,7 +361,7 @@ export async function createVideoSocialPost(params: {
   }
 
   const status = params.publishImmediately ? "publishing" : params.scheduledFor ? "scheduled" : "draft";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const smartLink = await ensureSmartLinkForSource({
     organizationId: video.organization_id as string,
     sourceType: "video_testimonial",

@@ -5,7 +5,7 @@ import {
   getIntegrationBySlug,
 } from "@/config/integration-pages";
 import { getBaseUrl } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/json-ld";
+import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import {
   generateIntegrationSchema,
   generateIntegrationBreadcrumbs,
@@ -61,8 +61,12 @@ export default async function IntegrationPage({ params }: PageProps) {
 
   return (
     <>
-      <JsonLd data={generateIntegrationSchema(config, baseUrl)} />
-      <JsonLd data={generateIntegrationBreadcrumbs(config, baseUrl)} />
+      <MultiSchemaStructuredData
+        schemas={[
+          generateIntegrationSchema(config, baseUrl),
+          generateIntegrationBreadcrumbs(config, baseUrl),
+        ]}
+      />
       <IntegrationDetailPage config={config} />
     </>
   );

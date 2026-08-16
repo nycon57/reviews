@@ -143,7 +143,7 @@ describe("ContentTab", () => {
       );
     });
 
-    expect(container.textContent).toContain("Truncate Length");
+    expect(container.textContent).toContain("Max Character Length");
 
     await act(async () => {
       root.render(
@@ -155,7 +155,7 @@ describe("ContentTab", () => {
       );
     });
 
-    expect(container.textContent).not.toContain("Truncate Length");
+    expect(container.textContent).not.toContain("Max Character Length");
   });
 
   it("auto-fills CTA defaults, freezes after customization, and resets to the latest entity default", async () => {

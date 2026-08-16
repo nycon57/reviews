@@ -6,6 +6,10 @@
 
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import type { WeeklySummaryManagerEmailData } from "../types";
+import {
+  averageResponseTimeLabel,
+  type ReviewResponseTiming,
+} from "./response-time";
 
 interface TeamMetricsQueryResult {
   success: boolean;
@@ -385,6 +389,17 @@ export async function fetchWeeklyTeamMetrics(
         ? Math.round(((respondedReviews || 0) / totalReviews) * 100)
         : 0;
 
+    // Real mean time-to-respond across the team's responded reviews.
+    const { data: teamResponseTimings } = await supabase
+      .from("reviews")
+      .select("response_at, published_at, review_date")
+      .in("user_id", teamMemberIds)
+      .not("response_at", "is", null);
+
+    const teamAverageResponseTime = averageResponseTimeLabel(
+      (teamResponseTimings || []) as ReviewResponseTiming[]
+    );
+
     // Calculate team NPS
     const teamNpsScores = (teamMembers || [])
       .map((m) => m.nps_score as number | null)
@@ -428,7 +443,7 @@ export async function fetchWeeklyTeamMetrics(
 
         // Team response metrics
         teamResponseRate,
-        teamAverageResponseTime: "< 24 hours", // Placeholder
+        teamAverageResponseTime,
 
         // Performers
         topPerformers,

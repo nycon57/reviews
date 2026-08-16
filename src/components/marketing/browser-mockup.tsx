@@ -22,7 +22,7 @@ interface BrowserMockupProps {
  */
 export function BrowserMockup({
   children,
-  url = "app.repwell.ai",
+  url = "repwell.ai",
   variant = "light",
   className,
   showAddressBar = true,

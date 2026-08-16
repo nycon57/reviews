@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition, type FormEvent } from "react";
+import posthog from "posthog-js";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Copy,
   DotsThreeVertical as MoreHorizontal,
+  MagnifyingGlass,
   Sparkle,
   Pause,
   PencilSimple,
@@ -17,6 +18,7 @@ import {
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +56,9 @@ import type {
   CampaignStatus,
   WorkflowTemplate,
 } from "@/lib/campaigns/types";
+import { formatRelativeTime } from "@/lib/utils";
+import { pushMergedSearchParams } from "@/lib/url/search-params";
+import { useSyncedState } from "@/hooks/use-synced-state";
 import { useToast } from "@/hooks/use-toast";
 import dynamic from "next/dynamic";
 
@@ -105,20 +110,36 @@ function formatRelativeTimestamp(value: string): string {
     return "-";
   }
 
-  return formatDistanceToNow(date, { addSuffix: true });
+  return formatRelativeTime(date);
 }
 
 export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [filter, setFilter] = useState<FilterValue>("all");
+  const statusParam = searchParams.get("status");
+  const filter = FILTERS.some((item) => item.value === statusParam)
+    ? (statusParam as FilterValue)
+    : "all";
+  const searchParam = searchParams.get("search") ?? "";
+  const [searchValue, setSearchValue] = useSyncedState(searchParam);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{
     id: string;
     name: string;
     isDraft: boolean;
   } | null>(null);
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    pushMergedSearchParams(
+      router,
+      searchParams,
+      { search: searchValue.trim() || null },
+      { basePath: "/dashboard/campaigns" }
+    );
+  };
 
   const stats = useMemo(() => {
     return campaigns.reduce(
@@ -134,12 +155,17 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
   }, [campaigns]);
 
   const filteredCampaigns = useMemo(() => {
-    if (filter === "all") {
-      return campaigns;
-    }
+    const normalizedSearch = searchParam.trim().toLowerCase();
 
-    return campaigns.filter((campaign) => campaign.status === filter);
-  }, [campaigns, filter]);
+    return campaigns.filter((campaign) => {
+      const matchesStatus = filter === "all" || campaign.status === filter;
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        campaign.name.toLowerCase().includes(normalizedSearch);
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [campaigns, filter, searchParam]);
 
   const handleDuplicate = (id: string) => {
     startTransition(async () => {
@@ -165,12 +191,22 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
       try {
         if (campaign.status === "active") {
           await pauseCampaign(campaign.id);
+          posthog.capture("campaign_paused", {
+            campaign_id: campaign.id,
+            campaign_name: campaign.name,
+            trigger_type: campaign.triggerType,
+          });
           toast({
             title: "Campaign paused",
             description: `${campaign.name} is now paused.`,
           });
         } else {
           await activateCampaign(campaign.id);
+          posthog.capture("campaign_activated", {
+            campaign_id: campaign.id,
+            campaign_name: campaign.name,
+            trigger_type: campaign.triggerType,
+          });
           toast({
             title: "Campaign activated",
             description: `${campaign.name} is now active.`,
@@ -265,20 +301,48 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
             </Button>
           </div>
 
-          <Tabs value={filter} onValueChange={(value) => setFilter(value as FilterValue)}>
-            <TabsList variant="pills" className="h-auto flex-wrap justify-start">
-              {FILTERS.map((item) => (
-                <TabsTrigger
-                  key={item.value}
-                  value={item.value}
-                  variant="pills"
-                  className="text-xs"
-                >
-                  {item.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <form className="flex flex-1 flex-col gap-2 sm:flex-row" onSubmit={handleSearch}>
+              <div className="relative sm:max-w-sm sm:flex-1">
+                <MagnifyingGlass className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchValue}
+                  onChange={(event) => setSearchValue(event.target.value)}
+                  placeholder="Search campaign name"
+                  aria-label="Search campaign name"
+                  className="pl-9"
+                />
+              </div>
+              <Button type="submit" variant="outline">
+                Search
+              </Button>
+            </form>
+
+            <Tabs
+              value={filter}
+              onValueChange={(value) =>
+                pushMergedSearchParams(
+                  router,
+                  searchParams,
+                  { status: value },
+                  { basePath: "/dashboard/campaigns", defaults: { status: "all" } }
+                )
+              }
+            >
+              <TabsList variant="pills" className="h-auto flex-wrap justify-start">
+                {FILTERS.map((item) => (
+                  <TabsTrigger
+                    key={item.value}
+                    value={item.value}
+                    variant="pills"
+                    className="text-xs"
+                  >
+                    {item.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
         </CardHeader>
 
         <CardContent>
@@ -292,12 +356,12 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
                 <p className="text-base font-semibold">
                   {campaigns.length === 0
                     ? "Create your first automated workflow"
-                    : "No campaigns in this filter"}
+                    : "No campaigns match your filters"}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {campaigns.length === 0
                     ? "Start from a proven template or launch with a blank canvas."
-                    : "Try a different status filter or create a new campaign."}
+                    : "Try a different status, search term, or create a new campaign."}
                 </p>
               </div>
               {campaigns.length === 0 && (

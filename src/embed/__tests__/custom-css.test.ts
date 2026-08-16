@@ -5,7 +5,9 @@ import { sanitizeCustomCSS, validateCustomCSS } from "../core/css-sanitizer";
 describe("sanitizeCustomCSS", () => {
   it("returns empty for falsy input", () => {
     expect(sanitizeCustomCSS("")).toEqual({ sanitized: "", warnings: [] });
-    expect(sanitizeCustomCSS(null as unknown as string)).toEqual({ sanitized: "", warnings: [] });
+    // The parameter is declared `string`, but widget configs can hand the embed
+    // a null customCSS at runtime — the case the function's own guard covers.
+    expect(sanitizeCustomCSS(null!)).toEqual({ sanitized: "", warnings: [] });
   });
 
   it("passes through safe CSS unchanged", () => {

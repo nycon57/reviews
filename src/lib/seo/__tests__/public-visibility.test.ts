@@ -17,11 +17,13 @@ type MockChain = {
   select: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
   neq: ReturnType<typeof vi.fn>;
-  or: ReturnType<typeof vi.fn>;
+  is: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
   not: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
   single: ReturnType<typeof vi.fn>;
+  maybeSingle: ReturnType<typeof vi.fn>;
   then: ReturnType<typeof vi.fn>;
 };
 
@@ -36,12 +38,14 @@ function createMockQueryChain(finalResult: {
   chain.select = vi.fn().mockImplementation(returnChain);
   chain.eq = vi.fn().mockImplementation(returnChain);
   chain.neq = vi.fn().mockImplementation(returnChain);
-  chain.or = vi.fn().mockImplementation(returnChain);
+  chain.is = vi.fn().mockImplementation(returnChain);
   chain.order = vi.fn().mockImplementation(returnChain);
   chain.limit = vi.fn().mockImplementation(returnChain);
   chain.not = vi.fn().mockImplementation(returnChain);
+  chain.update = vi.fn().mockImplementation(returnChain);
   chain.single = vi.fn().mockResolvedValue(finalResult);
-  chain.then = vi.fn().mockImplementation((resolve: (value: unknown) => unknown) =>
+  chain.maybeSingle = vi.fn().mockResolvedValue(finalResult);
+  chain.then = vi.fn().mockImplementation((resolve: (value: unknown) => void) =>
     Promise.resolve(finalResult).then(resolve)
   );
 
@@ -73,7 +77,7 @@ describe("public visibility queries in seo actions", () => {
     expect(usersChain.neq).toHaveBeenCalledWith("role", "manager");
     expect(usersChain.neq).toHaveBeenCalledWith("role", "enterprise");
     expect(usersChain.neq).not.toHaveBeenCalledWith("role", "admin");
-    expect(usersChain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+    expect(usersChain.is).toHaveBeenCalledWith("is_public_professional", true);
   });
 
   it("applies public visibility filters to sitemap user queries", async () => {
@@ -98,7 +102,7 @@ describe("public visibility queries in seo actions", () => {
       expect(chain.neq).toHaveBeenCalledWith("role", "manager");
       expect(chain.neq).toHaveBeenCalledWith("role", "enterprise");
       expect(chain.neq).not.toHaveBeenCalledWith("role", "admin");
-      expect(chain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+      expect(chain.is).toHaveBeenCalledWith("is_public_professional", true);
     }
 
     expect(slugChain.not).toHaveBeenCalledWith("slug", "is", null);
@@ -167,7 +171,7 @@ describe("public visibility queries in seo actions", () => {
     expect(branchUsersChain.neq).toHaveBeenCalledWith("role", "manager");
     expect(branchUsersChain.neq).toHaveBeenCalledWith("role", "enterprise");
     expect(branchUsersChain.neq).not.toHaveBeenCalledWith("role", "admin");
-    expect(branchUsersChain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+    expect(branchUsersChain.is).toHaveBeenCalledWith("is_public_professional", true);
   });
 
   it("applies public visibility filters to the public professional list", async () => {
@@ -187,6 +191,6 @@ describe("public visibility queries in seo actions", () => {
     expect(usersChain.neq).toHaveBeenCalledWith("role", "manager");
     expect(usersChain.neq).toHaveBeenCalledWith("role", "enterprise");
     expect(usersChain.neq).not.toHaveBeenCalledWith("role", "admin");
-    expect(usersChain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+    expect(usersChain.is).toHaveBeenCalledWith("is_public_professional", true);
   });
 });

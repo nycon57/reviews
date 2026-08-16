@@ -1,16 +1,26 @@
 "use client";
 
+import { createElement, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { X as XIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { SUPPORT_EMAIL } from "@/lib/brand";
 import { cn } from "@/lib/utils";
+import { setCookie } from "@/lib/utils/cookies";
 import { scaleIn, staggerContainer, staggerContainerDelayed, fadeInUp } from "@/lib/motion";
 import { getIconOrDefault } from "@/lib/icons/registry";
+
+const ACTIVATION_DISMISSED_COOKIE = "repwell_activation_dismissed";
+const ACTIVATION_DISMISSED_MAX_AGE = 60 * 60 * 24 * 365;
 
 interface EmptyStateAction {
   label: string;
   href?: string;
+  onClick?: () => void;
   variant?: "default" | "outline" | "ghost";
   iconName?: string;
+  ariaLabel?: string;
 }
 
 interface EmptyStateProps {
@@ -33,7 +43,7 @@ export function EmptyState({
   compact = false,
   animated = false,
 }: EmptyStateProps) {
-  const Icon = getIconOrDefault(iconName);
+  const iconComponent = getIconOrDefault(iconName);
 
   const Wrapper = animated ? motion.div : "div";
   const ItemWrapper = animated ? motion.div : "div";
@@ -77,11 +87,11 @@ export function EmptyState({
           )}
           {...iconProps}
         >
-          <Icon
-            weight="duotone"
-            size={compact ? 28 : 40}
-            className="text-repwell-teal-300"
-          />
+          {createElement(iconComponent, {
+            weight: "duotone",
+            size: compact ? 28 : 40,
+            className: "text-repwell-teal-300",
+          })}
         </ItemWrapper>
 
         {/* Title */}
@@ -126,14 +136,29 @@ export function EmptyState({
                 </>
               );
 
+              const variant = action.variant || (index === 0 ? "default" : "outline");
+              const size = compact ? "sm" : "default";
+
+              if (action.href) {
+                return (
+                  <Button key={index} variant={variant} size={size} asChild>
+                    <a href={action.href} aria-label={action.ariaLabel}>
+                      {buttonContent}
+                    </a>
+                  </Button>
+                );
+              }
+
               return (
                 <Button
                   key={index}
-                  variant={action.variant || (index === 0 ? "default" : "outline")}
-                  size={compact ? "sm" : "default"}
-                  asChild
+                  type="button"
+                  variant={variant}
+                  size={size}
+                  onClick={action.onClick}
+                  aria-label={action.ariaLabel}
                 >
-                  <a href={action.href}>{buttonContent}</a>
+                  {buttonContent}
                 </Button>
               );
             })}
@@ -141,6 +166,54 @@ export function EmptyState({
         )}
       </Wrapper>
     </div>
+  );
+}
+
+interface ErrorStateProps {
+  title?: string;
+  description?: string;
+  retry?: () => void;
+  retryLabel?: string;
+  supportEmail?: string;
+  supportLabel?: string;
+  className?: string;
+  compact?: boolean;
+}
+
+export function ErrorState({
+  title = "We couldn't load this section",
+  description = "Something interrupted this view. Try again, or contact support if it keeps happening.",
+  retry,
+  retryLabel = "Try again",
+  supportEmail = SUPPORT_EMAIL,
+  supportLabel = "Contact support",
+  className,
+  compact = false,
+}: ErrorStateProps) {
+  const router = useRouter();
+  const handleRetry = retry ?? (() => router.refresh());
+
+  return (
+    <EmptyState
+      iconName="WarningCircle"
+      title={title}
+      description={description}
+      compact={compact}
+      className={className}
+      actions={[
+        {
+          label: retryLabel,
+          onClick: handleRetry,
+          iconName: "ArrowsClockwise",
+        },
+        {
+          label: supportLabel,
+          href: `mailto:${supportEmail}`,
+          variant: "outline",
+          iconName: "Envelope",
+        },
+      ]}
+    />
   );
 }
 
@@ -160,7 +233,7 @@ export function EmptyStateCard({
   action,
   className,
 }: EmptyStateCardProps) {
-  const Icon = getIconOrDefault(iconName);
+  const iconComponent = getIconOrDefault(iconName);
 
   return (
     <div
@@ -170,7 +243,11 @@ export function EmptyStateCard({
       )}
     >
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-card shadow-sm">
-        <Icon weight="duotone" size={24} className="text-label" />
+        {createElement(iconComponent, {
+          weight: "duotone",
+          size: 24,
+          className: "text-label",
+        })}
       </div>
       <h4 className="text-sm font-medium text-heading">{title}</h4>
       <p className="mt-1 text-xs text-label max-w-[200px]">{description}</p>
@@ -192,22 +269,40 @@ export function EmptyStateCard({
 }
 
 // Welcome banner for new users
+export interface WelcomeBannerStep {
+  id: string;
+  label: string;
+  href: string;
+  done: boolean;
+}
+
 interface WelcomeBannerProps {
   userName?: string;
-  completionPercent?: number;
+  steps: WelcomeBannerStep[];
   className?: string;
 }
 
 export function WelcomeBanner({
   userName,
-  completionPercent = 0,
+  steps,
   className,
 }: WelcomeBannerProps) {
-  const steps = [
-    { label: "Complete your profile", href: "/dashboard/settings", done: completionPercent > 25 },
-    { label: "Send your first survey", href: "/dashboard/reviews?tab=requests", done: false },
-    { label: "Connect review sources", href: "/dashboard/settings#integrations", done: false },
-  ];
+  const [dismissed, setDismissed] = useState(false);
+  const completedSteps = steps.filter((step) => step.done).length;
+  const progress = Math.round((completedSteps / steps.length) * 100);
+  const isComplete = completedSteps === steps.length;
+
+  if (isComplete || dismissed) {
+    return null;
+  }
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    setCookie(ACTIVATION_DISMISSED_COOKIE, "1", {
+      path: "/dashboard",
+      maxAge: ACTIVATION_DISMISSED_MAX_AGE,
+    });
+  };
 
   return (
     <div
@@ -216,6 +311,15 @@ export function WelcomeBanner({
         className
       )}
     >
+      <button
+        type="button"
+        onClick={handleDismiss}
+        className="absolute right-3 top-3 z-10 rounded-full p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+        aria-label="Dismiss setup checklist"
+      >
+        <XIcon className="h-4 w-4" />
+      </button>
+
       {/* Background decoration */}
       <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 opacity-10">
         <svg viewBox="0 0 200 200" className="h-full w-full">
@@ -226,11 +330,23 @@ export function WelcomeBanner({
 
       <div className="relative">
         <h2 className="text-xl font-semibold">
-          Welcome{userName ? `, ${userName}` : " to RepWell"}! 🎉
+          Welcome{userName ? `, ${userName}` : " to RepWell"}
         </h2>
         <p className="mt-1 text-repwell-sage-100/90 text-sm">
-          Let&apos;s get you set up to start collecting reviews and growing your reputation.
+          Finish these setup steps to start collecting reviews and growing your reputation.
         </p>
+
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/20">
+            <div
+              className="h-full rounded-full bg-white transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-xs font-medium text-white/80">
+            {completedSteps} of {steps.length} complete
+          </span>
+        </div>
 
         <motion.div
           className="mt-5 flex flex-wrap gap-3"
@@ -240,7 +356,7 @@ export function WelcomeBanner({
         >
           {steps.map((step, i) => (
             <motion.a
-              key={i}
+              key={step.id}
               href={step.href}
               variants={fadeInUp}
               className={cn(

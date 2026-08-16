@@ -67,7 +67,7 @@ async function getAuthedContext(
 
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, individual_organization_id, role")
+    .select("organization_id, role, organizations(account_type)")
     .eq("id", user.id)
     .single();
 
@@ -75,14 +75,14 @@ async function getAuthedContext(
     return { success: false, error: "Organization not found" };
   }
 
-  const organizationId =
-    userData?.organization_id || userData?.individual_organization_id;
+  // Single path (ADR 0006): one org per account; account_type discriminates.
+  const organizationId = userData?.organization_id;
   if (!organizationId) {
     return { success: false, error: "Organization not found" };
   }
 
   const isIndividual =
-    !userData.organization_id && !!userData.individual_organization_id;
+    (userData.organizations as { account_type?: string } | null)?.account_type === "individual";
 
   if (!isIndividual && userData.role !== "admin" && userData.role !== "manager") {
     return { success: false, error: "Insufficient permissions" };
@@ -112,7 +112,7 @@ async function backfillCurrentSnapshot(
   const { error } = await versionsTable(supabase).insert({
     widget_config_id: widget.id,
     version,
-    config: (widget.config ?? {}) as unknown as Json,
+    config: widget.config ?? {},
     name: widget.name,
     status: widget.status,
     allowed_domains: widget.allowed_domains ?? [],
@@ -192,7 +192,7 @@ export async function createVersionSnapshot(
       .insert({
         widget_config_id: widgetConfigId,
         version: newVersion,
-        config: currentConfig as unknown as Json,
+        config: currentConfig,
         name: widget.name,
         status: widget.status,
         allowed_domains: widget.allowed_domains ?? [],

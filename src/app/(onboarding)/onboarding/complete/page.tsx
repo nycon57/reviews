@@ -33,9 +33,16 @@ export default async function CompletionPage() {
     redirect("/onboarding");
   }
 
+  if (!status.organizationId) {
+    redirect("/login");
+  }
+
   return (
     <Suspense fallback={<CompletionSkeleton />}>
-      <CompletionClient isAlreadyCompleted={status.status === "completed"} />
+      <CompletionClient
+        isAlreadyCompleted={status.status === "completed"}
+        accountType={status.accountType ?? "individual"}
+      />
     </Suspense>
   );
 }

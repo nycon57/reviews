@@ -4,7 +4,9 @@
  * and route interception utilities.
  */
 
-import { test as base, type Page, type Route } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { test as base, expect, type Page, type Route } from "@playwright/test";
 
 // ── Mock Data ──────────────────────────────────────────────────────────
 
@@ -22,6 +24,11 @@ export const WIDGET_TYPES = [
   "nps_score_badge",
   "social_proof_banner",
 ] as const;
+
+const BUILT_EMBED_SCRIPT = readFileSync(
+  join(process.cwd(), "public/embed/v1/embed.js"),
+  "utf8"
+);
 
 export function mockWidgetConfig(
   overrides: Record<string, unknown> = {}
@@ -231,6 +238,14 @@ export async function loadEmbedPage(
 ) {
   const html = buildEmbedPageHTML(widgets, options);
 
+  await page.route("**/embed/v1/embed.js", async (route: Route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/javascript",
+      body: BUILT_EMBED_SCRIPT,
+    });
+  });
+
   // Serve the HTML at a test path
   await page.route("**/test-embed", async (route: Route) => {
     await route.fulfill({
@@ -241,6 +256,162 @@ export async function loadEmbedPage(
   });
 
   await page.goto("/test-embed");
+}
+
+const RENDERED_TERMINAL_SELECTOR = [
+  ".rw-widget",
+  ".rw-error",
+  ".rw-empty",
+  ".rw-carousel",
+  ".rw-srb",
+  ".rw-nps",
+].join(",");
+
+export async function waitForWidgetRendered(
+  page: Page,
+  selector = `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
+) {
+  await page.waitForFunction(
+    ({ hostSelector, terminalSelector }) => {
+      const host = document.querySelector(hostSelector);
+      if (!host?.hasAttribute("data-repwell-initialized")) return false;
+      const shadow = host.shadowRoot;
+      if (!shadow) return false;
+
+      return (
+        !shadow.querySelector(".rw-skeleton") &&
+        !!shadow.querySelector(terminalSelector)
+      );
+    },
+    { hostSelector: selector, terminalSelector: RENDERED_TERMINAL_SELECTOR },
+    { timeout: 10_000 }
+  );
+}
+
+export async function waitForWidgetState(
+  page: Page,
+  widgetId = MOCK_WIDGET_ID,
+  states: number[] = [4, 5]
+) {
+  await page.waitForFunction(
+    ({ id, expectedStates }) => {
+      const api = (
+        window as typeof window & {
+          RepWell?: {
+            _instances?: Map<string, { widgetId: string; state: number }>;
+          };
+        }
+      ).RepWell;
+      const instances = api?._instances;
+      if (!instances) return false;
+
+      for (const instance of instances.values()) {
+        if (
+          instance.widgetId === id &&
+          expectedStates.includes(instance.state)
+        ) {
+          return true;
+        }
+      }
+      return false;
+    },
+    { id: widgetId, expectedStates: states },
+    { timeout: 10_000 }
+  );
+}
+
+export async function getShadowText(
+  page: Page,
+  innerSelector: string,
+  hostSelector = `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
+) {
+  return page.evaluate(
+    ({ selector, childSelector }) => {
+      const host = document.querySelector(selector);
+      const node = host?.shadowRoot?.querySelector(childSelector);
+      return node?.textContent?.trim() ?? "";
+    },
+    { selector: hostSelector, childSelector: innerSelector }
+  );
+}
+
+export type CapturedWidgetEvent = {
+  url: string;
+  event_type?: string;
+  metadata?: Record<string, unknown> | null;
+  body: Record<string, unknown>;
+};
+
+export async function waitForWidgetEventRequest(
+  page: Page,
+  widgetId: string,
+  predicate: (event: CapturedWidgetEvent) => boolean,
+  nth = 1
+) {
+  let seen = 0;
+  const request = await page.waitForRequest(
+    (req) => {
+      if (req.method() !== "POST") return false;
+      if (!req.url().includes(`/api/v1/widgets/${widgetId}/events`)) {
+        return false;
+      }
+
+      const postData = req.postData();
+      if (!postData) return false;
+
+      try {
+        const body = JSON.parse(postData) as Record<string, unknown>;
+        const event: CapturedWidgetEvent = {
+          url: req.url(),
+          event_type:
+            typeof body.event_type === "string" ? body.event_type : undefined,
+          metadata:
+            body.metadata && typeof body.metadata === "object"
+              ? (body.metadata as Record<string, unknown>)
+              : null,
+          body,
+        };
+        if (!predicate(event)) return false;
+        seen += 1;
+        return seen >= nth;
+      } catch {
+        return false;
+      }
+    },
+    { timeout: 10_000 }
+  );
+
+  const body = JSON.parse(request.postData() ?? "{}") as Record<string, unknown>;
+  return {
+    url: request.url(),
+    event_type:
+      typeof body.event_type === "string" ? body.event_type : undefined,
+    metadata:
+      body.metadata && typeof body.metadata === "object"
+        ? (body.metadata as Record<string, unknown>)
+        : null,
+    body,
+  } satisfies CapturedWidgetEvent;
+}
+
+export async function waitForSocialProofBanner(
+  page: Page,
+  widgetId = MOCK_WIDGET_ID,
+  options: { visible?: boolean } = {}
+) {
+  const visible = options.visible ?? true;
+  await page.waitForFunction(
+    ({ id, shouldBeVisible }) => {
+      const host = document.querySelector(`[data-repwell-banner="${id}"]`);
+      const banner = host?.shadowRoot?.querySelector(".rw-spb");
+      if (!banner) return false;
+      return shouldBeVisible
+        ? banner.classList.contains("rw-spb--visible")
+        : !banner.classList.contains("rw-spb--visible");
+    },
+    { id: widgetId, shouldBeVisible: visible },
+    { timeout: 10_000 }
+  );
 }
 
 // ── Extended Test Fixture ──────────────────────────────────────────────
@@ -270,4 +441,4 @@ export const test = base.extend<WidgetFixtures>({
   },
 });
 
-export { expect } from "@playwright/test";
+export { expect };

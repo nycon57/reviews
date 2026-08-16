@@ -1,410 +1,115 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import {
-  signUpSchema,
-  signInSchema,
-  magicLinkSchema,
-  resetPasswordSchema,
-  updatePasswordSchema,
-  type SignUpInput,
-  type SignInInput,
+  type AuthResult,
   type MagicLinkInput,
   type ResetPasswordInput,
+  type SignInInput,
+  type SignUpInput,
   type UpdatePasswordInput,
-  type AuthResult,
 } from "./schemas";
 import {
-  signUpWithBetterAuth,
-  signInWithBetterAuth,
-  signInWithMagicLinkBetterAuth,
-  resetPasswordBetterAuth,
-  updatePasswordBetterAuth,
-  signOutBetterAuth,
+  checkAdminAccessBetterAuth,
   getSessionBetterAuth,
   getUserBetterAuth,
   getUserWithProfileBetterAuth,
   resendVerificationEmailBetterAuth,
-  checkAdminAccessBetterAuth,
+  resetPasswordBetterAuth,
+  signInWithBetterAuth,
+  signInWithMagicLinkBetterAuth,
+  signOutBetterAuth,
+  signUpWithBetterAuth,
+  updatePasswordBetterAuth,
 } from "./server-actions";
-import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-export async function signUp(formData: SignUpInput): Promise<AuthResult> {
-  const supabase = await createClient();
-
-  // Validate input
-  const result = signUpSchema.safeParse(formData);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
-
-  const { email, password, fullName, organizationName } = result.data;
-
-  // Create the organization slug
-  const orgSlug = slugify(organizationName);
-
-  // Sign up the user with Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        full_name: fullName,
-        organization_name: organizationName,
-      },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
-    },
-  });
-
-  if (authError) {
-    return { success: false, error: authError.message };
-  }
-
-  if (!authData.user) {
-    return { success: false, error: "Failed to create user" };
-  }
-
-  // Create individual organization for self-serve signup
-  // Uses individual_organizations table (not organizations — reserved for enterprise)
-  const { data: indivOrgData, error: indivOrgError } = await supabase
-    .from("individual_organizations")
-    .insert({
-      name: organizationName,
-      slug: orgSlug,
-    })
-    .select()
-    .single();
-
-  if (indivOrgError) {
-    console.error("Individual organization creation error:", indivOrgError);
-  }
-
-  // Create the user record in our users table
-  if (indivOrgData) {
-    // Generate SEO-friendly slug for the user
-    let userSlug: string;
-    try {
-      userSlug = await generateUniqueUserSlug(fullName);
-    } catch (slugError) {
-      console.error("Slug generation failed, using fallback:", slugError);
-      userSlug = slugify(fullName) + "-" + Date.now();
-    }
-
-    const { error: userError } = await supabase
-      .from("users")
-      .insert({
-        id: authData.user.id,
-        individual_organization_id: indivOrgData.id,
-        email: email,
-        full_name: fullName,
-        slug: userSlug,
-        role: "admin", // First user is admin
-        is_active: true,
-        is_owner: true, // Self-serve signup = owner of their org
-      });
-
-    if (userError) {
-      console.error("User record creation error:", userError);
-    }
-
-    // Skip widget seeding for individual orgs — widgets require enterprise organization_id
-  }
-
-  return {
-    success: true,
-    redirectTo: "/verify-email",
-  };
-}
-
-export async function signIn(formData: SignInInput): Promise<AuthResult> {
-  const supabase = await createClient();
-
-  // Validate input
-  const result = signInSchema.safeParse(formData);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
-
-  const { email, password } = result.data;
-
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  return {
-    success: true,
-    redirectTo: "/dashboard",
-  };
-}
-
-export async function signInWithMagicLink(formData: MagicLinkInput): Promise<AuthResult> {
-  const supabase = await createClient();
-
-  // Validate input
-  const result = magicLinkSchema.safeParse(formData);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
-
-  const { email } = result.data;
-
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
-    },
-  });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  return {
-    success: true,
-  };
-}
-
-export async function resetPassword(formData: ResetPasswordInput): Promise<AuthResult> {
-  const supabase = await createClient();
-
-  // Validate input
-  const result = resetPasswordSchema.safeParse(formData);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
-
-  const { email } = result.data;
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback?type=recovery`,
-  });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  return {
-    success: true,
-  };
-}
-
-export async function updatePassword(formData: UpdatePasswordInput): Promise<AuthResult> {
-  const supabase = await createClient();
-
-  // Validate input
-  const result = updatePasswordSchema.safeParse(formData);
-  if (!result.success) {
-    return { success: false, error: result.error.errors[0].message };
-  }
-
-  const { password } = result.data;
-
-  const { error } = await supabase.auth.updateUser({
-    password,
-  });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  return {
-    success: true,
-    redirectTo: "/dashboard",
-  };
-}
-
-export async function signOut(): Promise<void> {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login");
-}
-
-export async function resendVerificationEmail(): Promise<AuthResult> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user?.email) {
-    return { success: false, error: "No user email found" };
-  }
-
-  const { error } = await supabase.auth.resend({
-    type: "signup",
-    email: user.email,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
-    },
-  });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  return { success: true };
-}
-
-export async function getUser() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user;
-}
-
-export async function getUserWithProfile() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select(`
-      *,
-      organization:organizations(*)
-    `)
-    .eq("id", user.id)
-    .single();
-
-  return profile;
-}
 
 /**
- * Check if the current user has admin access
- * Returns true if user is authenticated, has admin role, AND belongs to an enterprise organization.
- * This matches the permission system's VIEW_ADMIN_ANALYTICS requirement (isEnterprise && isAdmin).
+ * Check whether the current authenticated user is RepWell platform staff.
  */
-export async function checkAdminAccess(): Promise<boolean> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export async function isPlatformAdmin(): Promise<boolean> {
+  const user = await unifiedGetUser();
 
   if (!user) return false;
 
-  const { data: userData } = await supabase
+  // TODO(database-types): switch to the typed admin client after
+  // users.is_platform_admin is present in generated database types.
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
     .from("users")
-    .select(`
-      role,
-      organization:organizations!inner(account_type)
-    `)
+    .select("is_platform_admin")
     .eq("id", user.id)
-    .single();
+    .limit(1);
 
-  if (!userData) return false;
+  if (error) {
+    console.error("Platform admin lookup failed:", error.message);
+    return false;
+  }
 
-  // Check both admin role AND enterprise account type to match permission system
-  const isAdmin = userData.role === "admin";
-  const organization = userData.organization as { account_type: string } | null;
-  const isEnterprise = organization?.account_type === "enterprise";
-
-  return isAdmin && isEnterprise;
+  return data?.[0]?.is_platform_admin === true;
 }
 
-// =============================================
-// Unified Auth Functions (Feature Flag Based)
-// =============================================
-
-// Feature flag for Better Auth migration
-const USE_BETTER_AUTH = process.env.USE_BETTER_AUTH === "true";
-
 /**
- * Unified sign up function
+ * Require RepWell platform staff access.
  */
+export async function requirePlatformAdmin(): Promise<void> {
+  const hasAccess = await isPlatformAdmin();
+
+  if (!hasAccess) {
+    redirect("/dashboard");
+  }
+}
+
 export async function unifiedSignUp(formData: SignUpInput): Promise<AuthResult> {
-  return USE_BETTER_AUTH ? signUpWithBetterAuth(formData) : signUp(formData);
+  return signUpWithBetterAuth(formData);
 }
 
-/**
- * Unified sign in function
- */
 export async function unifiedSignIn(formData: SignInInput): Promise<AuthResult> {
-  return USE_BETTER_AUTH ? signInWithBetterAuth(formData) : signIn(formData);
+  return signInWithBetterAuth(formData);
 }
 
-/**
- * Unified magic link sign in function
- */
 export async function unifiedSignInWithMagicLink(formData: MagicLinkInput): Promise<AuthResult> {
-  return USE_BETTER_AUTH
-    ? signInWithMagicLinkBetterAuth(formData)
-    : signInWithMagicLink(formData);
+  return signInWithMagicLinkBetterAuth(formData);
 }
 
-/**
- * Unified password reset request function
- */
 export async function unifiedResetPassword(formData: ResetPasswordInput): Promise<AuthResult> {
-  return USE_BETTER_AUTH ? resetPasswordBetterAuth(formData) : resetPassword(formData);
+  return resetPasswordBetterAuth(formData);
 }
 
-/**
- * Unified password update function
- */
 export async function unifiedUpdatePassword(
   formData: UpdatePasswordInput,
   token?: string
 ): Promise<AuthResult> {
-  if (USE_BETTER_AUTH && token) {
-    return updatePasswordBetterAuth(formData, token);
+  if (!token) {
+    return {
+      success: false,
+      error: "Missing or expired password reset token.",
+    };
   }
-  return updatePassword(formData);
+
+  return updatePasswordBetterAuth(formData, token);
 }
 
-/**
- * Unified sign out function
- */
 export async function unifiedSignOut(): Promise<void> {
-  return USE_BETTER_AUTH ? signOutBetterAuth() : signOut();
+  return signOutBetterAuth();
 }
 
-/**
- * Unified get user function
- */
 export async function unifiedGetUser() {
-  return USE_BETTER_AUTH ? getUserBetterAuth() : getUser();
+  return getUserBetterAuth();
 }
 
-/**
- * Unified get user with profile function
- */
 export async function unifiedGetUserWithProfile() {
-  return USE_BETTER_AUTH ? getUserWithProfileBetterAuth() : getUserWithProfile();
+  return getUserWithProfileBetterAuth();
 }
 
-/**
- * Unified resend verification email function
- */
 export async function unifiedResendVerificationEmail(): Promise<AuthResult> {
-  return USE_BETTER_AUTH
-    ? resendVerificationEmailBetterAuth()
-    : resendVerificationEmail();
+  return resendVerificationEmailBetterAuth();
 }
 
-/**
- * Unified check admin access function
- */
 export async function unifiedCheckAdminAccess(): Promise<boolean> {
-  return USE_BETTER_AUTH ? checkAdminAccessBetterAuth() : checkAdminAccess();
+  return checkAdminAccessBetterAuth();
 }
 
-/**
- * Get current session (Better Auth only - for advanced use cases)
- */
 export async function unifiedGetSession() {
-  if (USE_BETTER_AUTH) {
-    return getSessionBetterAuth();
-  }
-  // Supabase doesn't have a direct session equivalent, return null for compatibility
-  return null;
+  return getSessionBetterAuth();
 }

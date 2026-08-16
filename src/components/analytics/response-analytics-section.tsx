@@ -35,8 +35,8 @@ export function getResponseTimeLabel(hours: number): string {
 
 /** Return a Tailwind color class based on response time */
 export function getResponseTimeColor(hours: number): string {
-  if (hours < GOOD_RESPONSE_TIME_HOURS) return "text-green-600 dark:text-green-400";
-  if (hours < WARNING_RESPONSE_TIME_HOURS) return "text-yellow-600 dark:text-yellow-400";
+  if (hours < GOOD_RESPONSE_TIME_HOURS) return "text-green-700 dark:text-green-400";
+  if (hours < WARNING_RESPONSE_TIME_HOURS) return "text-yellow-700 dark:text-yellow-400";
   return "text-red-600 dark:text-red-400";
 }
 
@@ -185,7 +185,12 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
                   </span>
                   <span className="font-medium">{analytics.aiSuggestionRate}%</span>
                 </div>
-                <Progress value={analytics.aiSuggestionRate} className="h-2" />
+                <Progress
+                  value={analytics.aiSuggestionRate}
+                  className="h-2"
+                  aria-label="AI-suggested response rate"
+                  aria-valuetext={`${analytics.aiSuggestionRate}%`}
+                />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
@@ -195,7 +200,12 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
                   </span>
                   <span className="font-medium">{analytics.approvalRate}%</span>
                 </div>
-                <Progress value={analytics.approvalRate} className="h-2" />
+                <Progress
+                  value={analytics.approvalRate}
+                  className="h-2"
+                  aria-label="Response approval rate"
+                  aria-valuetext={`${analytics.approvalRate}%`}
+                />
               </div>
             </div>
           </CardContent>

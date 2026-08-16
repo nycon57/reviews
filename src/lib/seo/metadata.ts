@@ -5,6 +5,7 @@
 import type { Metadata } from "next";
 import type { Tables, Json } from "@/types/database.types";
 import { getBranchPublicPath } from "@/lib/branches/utils";
+import { getProfessionalDateModified } from "@/lib/seo/date-modified";
 
 type Branch = Tables<"branches">;
 
@@ -19,10 +20,15 @@ interface MetadataProfessional {
   bio: string | null;
   photo_url: string | null;
   branch?: string | null;
-  nmls_id?: string | null;
   address?: Json | null;
   average_rating: number | null;
   total_reviews: number | null;
+  updated_at?: string | null;
+}
+
+interface MetadataReview {
+  updated_at?: string | null;
+  review_date?: string | null;
 }
 
 /**
@@ -46,23 +52,55 @@ interface MetadataOrganization {
   name: string;
 }
 
+function buildOgImageMetadata(profileUrl: string, alt: string) {
+  const profileImageUrl = `${profileUrl}/opengraph-image`;
+
+  return {
+    openGraph: {
+      images: [
+        {
+          url: profileImageUrl,
+          width: 1200,
+          height: 630,
+          alt,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      images: [profileImageUrl],
+    },
+  };
+}
+
 /**
  * Generate metadata for a professional profile page
  */
 export function generateLOProfileMetadata(
   professional: MetadataProfessional,
   organization: MetadataOrganization | null,
-  baseUrl: string
+  baseUrl: string,
+  reviews: MetadataReview[] = []
 ): Metadata {
   const title = `${professional.full_name} - ${professional.title || "Professional"} Reviews`;
+  const rating = professional.average_rating
+    ? Number(professional.average_rating).toFixed(1)
+    : "0.0";
+  const reviewCount = professional.total_reviews || 0;
+  const companyName = organization?.name || "their company";
   const description =
-    professional.bio ||
-    `Read reviews and ratings for ${professional.full_name}, ${professional.title || "Professional"}${organization ? ` at ${organization.name}` : ""}. ${professional.total_reviews || 0} reviews with ${professional.average_rating ? `${Number(professional.average_rating).toFixed(1)} average rating` : "ratings available"}.`;
-  const profileUrl = `${baseUrl}/pro/${professional.slug}`;
+    `${professional.full_name} is a ${rating}-star rated ${professional.title || "Professional"} at ${companyName} with ${reviewCount} verified reviews on RepWell`;
+  const publicSlug = professional.slug || professional.id;
+  const profileUrl = `${baseUrl}/pro/${publicSlug}`;
+  const dateModified = getProfessionalDateModified(professional, reviews);
+  const ogImageMetadata = buildOgImageMetadata(
+    profileUrl,
+    `${professional.full_name} reviews on RepWell`
+  );
 
   const metadata: Metadata = {
     title,
-    description: description.slice(0, 160), // SEO best practice: 155-160 chars
+    description,
     alternates: {
       canonical: profileUrl,
     },
@@ -70,12 +108,14 @@ export function generateLOProfileMetadata(
       title,
       description,
       url: profileUrl,
-      type: "profile",
+      type: "article",
+      modifiedTime: dateModified,
       siteName: organization?.name || "RepWell",
       locale: "en_US",
+      ...ogImageMetadata.openGraph,
     },
     twitter: {
-      card: "summary",
+      ...ogImageMetadata.twitter,
       title,
       description,
     },
@@ -84,25 +124,6 @@ export function generateLOProfileMetadata(
       follow: true,
     },
   };
-
-  // Add image if photo exists
-  if (professional.photo_url) {
-    metadata.openGraph = {
-      ...metadata.openGraph,
-      images: [
-        {
-          url: professional.photo_url,
-          width: 400,
-          height: 400,
-          alt: `${professional.full_name} profile photo`,
-        },
-      ],
-    };
-    metadata.twitter = {
-      ...metadata.twitter,
-      images: [professional.photo_url],
-    };
-  }
 
   return metadata;
 }
@@ -148,15 +169,14 @@ export function generateLOListingMetadata(
  * Generate base URL from environment or request
  */
 export function getBaseUrl(): string {
-  // Check for explicit base URL env var first
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
   }
-  // Vercel deployment URL
+
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+    return `https://${process.env.VERCEL_URL}`.replace(/\/$/, "");
   }
-  // Default to localhost in development
+
   return "http://localhost:3000";
 }
 
@@ -178,7 +198,7 @@ export function truncateForSEO(text: string, maxLength: number): string {
 }
 
 /**
- * Generate keywords from LO profile data
+ * Generate keywords from professional profile data.
  */
 export function generateLOKeywords(
   professional: MetadataProfessional,
@@ -186,8 +206,8 @@ export function generateLOKeywords(
 ): string[] {
   const keywords: string[] = [
     professional.full_name,
-    "loan officer",
-    "mortgage",
+    "professional profile",
+    "customer feedback",
     "reviews",
     "ratings",
   ];
@@ -195,8 +215,6 @@ export function generateLOKeywords(
   if (professional.title) keywords.push(professional.title);
   if (organization?.name) keywords.push(organization.name);
   if (professional.branch) keywords.push(professional.branch);
-  if (professional.nmls_id) keywords.push(`NMLS ${professional.nmls_id}`);
-
   // Parse address for location keywords
   const address = professional.address as { city?: string; state?: string } | null;
   if (address?.city) keywords.push(address.city);
@@ -236,6 +254,10 @@ export function generateBranchProfileMetadata(
     `Visit ${branch.name}${locationStr ? ` in ${locationStr}` : ""}. Meet our team of ${loCount} experienced professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}.`;
 
   const profileUrl = `${baseUrl}${getBranchPublicPath(branch)}`;
+  const ogImageMetadata = buildOgImageMetadata(
+    profileUrl,
+    `${branch.name} reviews on RepWell`
+  );
 
   const metadata: Metadata = {
     title,
@@ -250,9 +272,10 @@ export function generateBranchProfileMetadata(
       type: "website",
       siteName,
       locale: "en_US",
+      ...ogImageMetadata.openGraph,
     },
     twitter: {
-      card: "summary_large_image",
+      ...ogImageMetadata.twitter,
       title,
       description,
     },
@@ -261,26 +284,6 @@ export function generateBranchProfileMetadata(
       follow: true,
     },
   };
-
-  // Add image if photo exists (prefer cover image)
-  const imageUrl = branch.cover_image_url || branch.photo_url;
-  if (imageUrl) {
-    metadata.openGraph = {
-      ...metadata.openGraph,
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: `${branch.name} branch location`,
-        },
-      ],
-    };
-    metadata.twitter = {
-      ...metadata.twitter,
-      images: [imageUrl],
-    };
-  }
 
   return metadata;
 }
@@ -322,6 +325,10 @@ export function generateOrganizationProfileMetadata(
     `Explore ${organization.name} with ${branchCount} locations and ${loCount} professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}. Find your local branch and team member.`;
 
   const profileUrl = `${baseUrl}/org/${organization.slug}`;
+  const ogImageMetadata = buildOgImageMetadata(
+    profileUrl,
+    `${organization.name} reviews on RepWell`
+  );
 
   const metadata: Metadata = {
     title,
@@ -336,9 +343,10 @@ export function generateOrganizationProfileMetadata(
       type: "website",
       siteName,
       locale: "en_US",
+      ...ogImageMetadata.openGraph,
     },
     twitter: {
-      card: "summary_large_image",
+      ...ogImageMetadata.twitter,
       title,
       description,
     },
@@ -347,25 +355,6 @@ export function generateOrganizationProfileMetadata(
       follow: true,
     },
   };
-
-  // Add image if logo exists
-  if (organization.logo_url) {
-    metadata.openGraph = {
-      ...metadata.openGraph,
-      images: [
-        {
-          url: organization.logo_url,
-          width: 800,
-          height: 800,
-          alt: `${organization.name} logo`,
-        },
-      ],
-    };
-    metadata.twitter = {
-      ...metadata.twitter,
-      images: [organization.logo_url],
-    };
-  }
 
   return metadata;
 }

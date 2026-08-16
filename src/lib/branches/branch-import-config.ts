@@ -76,7 +76,13 @@ export function createBranchImportConfig(): CsvImportConfig {
     import: async (_mappedRows, validation) => {
       const validRows = validation.rows
         .filter((r) => r.status !== "error")
-        .map((r) => r.data as unknown as ParsedBranchData);
+        .map((r) => {
+          // SAFETY: validate() above runs branchImportRowSchema, which rejects a row
+          // whose name is empty, so any row that is not "error" carries a name and
+          // the fallback below cannot be reached.
+          const data = r.data as Partial<ParsedBranchData>;
+          return { ...data, name: data.name ?? "" };
+        });
 
       const result = await bulkImportBranches(validRows);
       return {

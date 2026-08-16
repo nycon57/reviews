@@ -120,7 +120,7 @@ export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
                     <span>NPS: {user.npsScore}</span>
                   </div>
                   <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" asChild>
-                    <Link href={`/dashboard/team/${user.id}`}>
+                    <Link href={`/dashboard/analytics/member/${user.id}`}>
                       View
                       <ChevronRight className="ml-1 h-3 w-3" />
                     </Link>
@@ -133,7 +133,7 @@ export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
 
         {data.length > 5 && (
           <Button variant="outline" size="sm" className="w-full" asChild>
-            <Link href="/dashboard/team?tab=overview&filter=needs_attention">
+            <Link href="/dashboard/analytics/team?filter=needs_attention">
               View all {data.length} members needing attention
             </Link>
           </Button>

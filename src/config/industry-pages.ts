@@ -9,7 +9,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
   slug: "mortgage",
   industry: "mortgage",
   hero: {
-    badge: "Trusted by 500+ Mortgage Professionals",
+    badge: "Built for Mortgage Professionals",
     title: "Turn Every Closing Into a ",
     titleAccent: "5-Star Review",
     description:
@@ -23,14 +23,12 @@ export const mortgagePageConfig: IndustryPageConfig = {
       title: "Reviews Take Too Long",
       description:
         "Manually chasing borrowers for reviews after closing wastes hours each week and most never follow through.",
-      stat: { value: "12+", label: "hours/month wasted" },
     },
     {
       icon: "TrendingDown",
       title: "Falling Behind Competitors",
       description:
         "Other LOs in your market are building massive review profiles while you're stuck with a handful of outdated testimonials.",
-      stat: { value: "73%", label: "of borrowers check reviews" },
     },
     {
       icon: "MessageSquareOff",
@@ -58,91 +56,10 @@ export const mortgagePageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews Collected", description: "vs. manual outreach" },
-    { value: "94%", label: "Customer Satisfaction", description: "average NPS score" },
-    { value: "42%", label: "Response Rate", description: "on automated surveys" },
-    { value: "4.9", label: "Average Rating", description: "across our users" },
-  ],
-  featureTabs: [
-    {
-      icon: "Star",
-      tabName: "Reviews",
-      title: "Automated Review Collection",
-      summary:
-        "Perfectly-timed surveys sent when loans close, with smart reminders that maximize response rates without annoying borrowers.",
-      bulletPoints: [
-        "Trigger surveys at optimal moments post-closing",
-        "Smart follow-up sequences that boost responses",
-        "Route happy borrowers to Google and Zillow",
-      ],
-      layoutVariant: "single",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&h=1400&fit=crop&q=80",
-          alt: "Mortgage professional helping clients",
-        },
-      ],
-      stat: { value: "3x", label: "more reviews collected" },
-    },
-    {
-      icon: "BarChart3",
-      tabName: "Analytics",
-      title: "Real-Time NPS & Analytics",
-      summary:
-        "Track NPS, satisfaction trends, and performance metrics across your team with live dashboards.",
-      bulletPoints: [
-        "Live NPS tracking across all loan officers",
-        "Automated weekly and monthly reports",
-        "Compare performance across branches",
-      ],
-      layoutVariant: "floating",
-      images: [
-        { src: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&h=700&fit=crop&q=80", alt: "Business professionals" },
-        { src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=700&fit=crop&q=80", alt: "Professional woman" },
-        { src: "https://images.unsplash.com/photo-1556157382-97eda2d62296?w=600&h=700&fit=crop&q=80", alt: "Professional at desk" },
-        { src: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=600&h=700&fit=crop&q=80", alt: "Team meeting" },
-      ],
-      stat: { value: "42%", label: "avg response rate" },
-    },
-    {
-      icon: "MessageSquare",
-      tabName: "AI Insights",
-      title: "AI-Powered Sentiment Analysis",
-      summary:
-        "Understand what borrowers really think with automatic sentiment detection and theme extraction.",
-      bulletPoints: [
-        "Automatic sentiment scoring on every review",
-        "Key phrase extraction identifies trends",
-        "AI-generated response suggestions",
-      ],
-      layoutVariant: "wide",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1600&h=900&fit=crop&q=80",
-          alt: "Team collaboration",
-        },
-      ],
-      stat: { value: "94%", label: "accuracy rate" },
-    },
-    {
-      icon: "Zap",
-      tabName: "Amplify",
-      title: "Reputation Amplification",
-      summary:
-        "Route positive reviews to Google and Zillow. Capture video testimonials. Share to social with one click.",
-      bulletPoints: [
-        "One-click publishing to review platforms",
-        "Video testimonial capture",
-        "Automated social media sharing",
-      ],
-      layoutVariant: "grid",
-      images: [
-        { src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&h=600&fit=crop&q=80", alt: "Presentation" },
-        { src: "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&h=600&fit=crop&q=80", alt: "Team success" },
-        { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=1200&fit=crop&q=80", alt: "Professional" },
-      ],
-      stat: { value: "+300%", label: "review volume increase" },
-    },
+    { value: "Reviews", label: "More Reviews Collected", description: "vs. manual outreach" },
+    { value: "AI", label: "Feedback Trends", description: "from customer feedback" },
+    { value: "NPS", label: "Survey Workflows", description: "for customer feedback" },
+    { value: "Reviews", label: "Review Monitoring", description: "across review channels" },
   ],
   roleTabs: [
     {
@@ -208,29 +125,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "RepWell helped me go from 12 Google reviews to over 80 in just 6 months. My referral partners noticed immediately.",
-      name: "Sarah Johnson",
-      title: "Senior Loan Officer",
-      company: "Cornerstone Mortgage",
-      rating: 5,
-    },
-    {
-      quote: "We rolled this out across 15 branches and saw our NPS jump 20 points in the first quarter.",
-      name: "Michael Chen",
-      title: "Regional Manager",
-      company: "First National Lending",
-      rating: 5,
-    },
-    {
-      quote: "The AI insights helped us identify a training gap we didn't know we had. Game changer.",
-      name: "Jennifer Martinez",
-      title: "VP of Production",
-      company: "Pacific Home Loans",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "Encompass", logoUrl: "/integrations/encompass.svg", category: "LOS" },
     { name: "Velocify", logoUrl: "/integrations/velocify.svg", category: "CRM" },
@@ -259,7 +154,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
   cta: {
     headline: "Ready to Build Your Reputation?",
     description:
-      "Join 500+ mortgage professionals who trust RepWell to grow their business through reviews and referrals.",
+      "Use RepWell to grow your business through reviews and referrals.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Schedule Demo",
     urgencyText: "Limited: First 50 signups get 3 months free",
@@ -267,7 +162,7 @@ export const mortgagePageConfig: IndustryPageConfig = {
   seo: {
     title: "Reputation Management for Mortgage Professionals | RepWell",
     description:
-      "Automate review collection, track NPS, and grow your mortgage business with RepWell. Trusted by 500+ loan officers. Start your free trial today.",
+      "Automate review collection, track NPS, and grow your mortgage business with RepWell. Start your free trial today.",
     keywords: [
       "mortgage reputation management",
       "loan officer reviews",
@@ -289,7 +184,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
     title: "Win More Listings With ",
     titleAccent: "Social Proof",
     description:
-      "In a market where 87% of buyers check agent reviews before reaching out, your online reputation is your competitive edge. Build it automatically.",
+      "In a market where buyers check agent reviews before reaching out, your online reputation is your competitive edge. Build it automatically.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See How It Works",
   },
@@ -298,15 +193,13 @@ export const realEstatePageConfig: IndustryPageConfig = {
       icon: "Clock",
       title: "Clients Forget to Review",
       description:
-        "Even your happiest clients move on after closing. Without follow-up, 90% never leave a review.",
-      stat: { value: "90%", label: "never leave reviews" },
+        "Even your happiest clients move on after closing. Without follow-up, many never leave a review.",
     },
     {
       icon: "Search",
       title: "Competitors Outrank You",
       description:
         "Agents with more reviews dominate Zillow and Google searches. Every day without reviews is lost visibility.",
-      stat: { value: "87%", label: "check reviews first" },
     },
     {
       icon: "Users",
@@ -334,91 +227,10 @@ export const realEstatePageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual requests" },
-    { value: "87%", label: "Buyers Research", description: "agents online first" },
-    { value: "4.9", label: "Avg Rating", description: "across our agents" },
-    { value: "2 Days", label: "Time to Value", description: "from signup to reviews" },
-  ],
-  featureTabs: [
-    {
-      icon: "Star",
-      tabName: "Reviews",
-      title: "Automated Review Collection",
-      summary:
-        "Post-closing surveys trigger automatically. Smart timing and follow-ups maximize responses without being pushy.",
-      bulletPoints: [
-        "Auto-send after closing date",
-        "Multi-channel: email, SMS, or both",
-        "Route 5-star reviews to Zillow & Google",
-      ],
-      layoutVariant: "single",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&h=1400&fit=crop&q=80",
-          alt: "Real estate agent with happy clients",
-        },
-      ],
-      stat: { value: "3x", label: "more reviews" },
-    },
-    {
-      icon: "BarChart3",
-      tabName: "Analytics",
-      title: "Client Satisfaction Insights",
-      summary:
-        "Real-time NPS tracking shows exactly how your clients feel. Spot trends before they become problems.",
-      bulletPoints: [
-        "Live NPS and satisfaction scores",
-        "Compare your metrics to market averages",
-        "Weekly email digests with key insights",
-      ],
-      layoutVariant: "floating",
-      images: [
-        { src: "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?w=600&h=700&fit=crop&q=80", alt: "Home interior" },
-        { src: "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=600&h=700&fit=crop&q=80", alt: "Modern home" },
-        { src: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=700&fit=crop&q=80", alt: "Luxury home" },
-        { src: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=700&fit=crop&q=80", alt: "Beautiful home" },
-      ],
-      stat: { value: "48%", label: "response rate" },
-    },
-    {
-      icon: "MessageSquare",
-      tabName: "Testimonials",
-      title: "Testimonial Management",
-      summary:
-        "Capture, organize, and publish client stories across all your marketing channels with one click.",
-      bulletPoints: [
-        "Video testimonial requests",
-        "One-click social media sharing",
-        "Embed widgets for your website",
-      ],
-      layoutVariant: "wide",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&h=900&fit=crop&q=80",
-          alt: "Happy homeowners",
-        },
-      ],
-      stat: { value: "24%", label: "more referrals" },
-    },
-    {
-      icon: "Trophy",
-      tabName: "Growth",
-      title: "Reputation Amplification",
-      summary:
-        "Transform satisfied clients into your marketing engine. Reviews flow to the platforms that matter most.",
-      bulletPoints: [
-        "Automatic Zillow profile building",
-        "Google Business Profile optimization",
-        "Review response templates",
-      ],
-      layoutVariant: "grid",
-      images: [
-        { src: "https://images.unsplash.com/photo-1560518883-7c0d3a3e3e0a?w=600&h=600&fit=crop&q=80", alt: "Open house" },
-        { src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=600&fit=crop&q=80", alt: "Home exterior" },
-        { src: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&h=1200&fit=crop&q=80", alt: "Real estate" },
-      ],
-      stat: { value: "+200%", label: "review growth" },
-    },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual requests" },
+    { value: "Trust", label: "Buyers Research", description: "agents online first" },
+    { value: "Reviews", label: "Review Monitoring", description: "across review channels" },
+    { value: "Fast", label: "Time to Value", description: "from signup to reviews" },
   ],
   roleTabs: [
     {
@@ -430,7 +242,6 @@ export const realEstatePageConfig: IndustryPageConfig = {
         "Automated post-closing surveys",
         "Direct Zillow and Google integration",
         "Social media content generator",
-        "Mobile app for on-the-go access",
       ],
     },
     {
@@ -484,29 +295,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "I went from 23 Zillow reviews to over 100 in my first year with RepWell. Listing appointments doubled.",
-      name: "Marcus Thompson",
-      title: "Broker Associate",
-      company: "Keller Williams Realty",
-      rating: 5,
-    },
-    {
-      quote: "Our team of 40 agents saw a 35% increase in online leads after implementing RepWell across the board.",
-      name: "Lisa Park",
-      title: "Managing Broker",
-      company: "RE/MAX Elite",
-      rating: 5,
-    },
-    {
-      quote: "The video testimonial feature alone has closed 3 listings for me. Buyers love seeing real client stories.",
-      name: "David Rodriguez",
-      title: "Luxury Home Specialist",
-      company: "Compass",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "Follow Up Boss", logoUrl: "/integrations/follow-up-boss.svg", category: "CRM" },
     { name: "kvCORE", logoUrl: "/integrations/kvcore.svg", category: "CRM" },
@@ -535,7 +324,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
   cta: {
     headline: "Ready to Dominate Your Market?",
     description:
-      "Join thousands of top agents who use RepWell to build their reputation and win more business.",
+      "Use RepWell to build your reputation and win more business.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Schedule Demo",
   },
@@ -580,7 +369,6 @@ export const insurancePageConfig: IndustryPageConfig = {
       title: "Trust Is Hard to Prove",
       description:
         "Insurance is a trust-based purchase. Without reviews, prospects rely on guesswork when choosing an agent.",
-      stat: { value: "82%", label: "research online first" },
     },
     {
       icon: "UserMinus",
@@ -608,91 +396,10 @@ export const insurancePageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual requests" },
-    { value: "82%", label: "Research Online", description: "before choosing" },
-    { value: "91%", label: "Retention Rate", description: "for top-reviewed agencies" },
-    { value: "4.8", label: "Avg Rating", description: "across our users" },
-  ],
-  featureTabs: [
-    {
-      icon: "Star",
-      tabName: "Reviews",
-      title: "Automated Review Collection",
-      summary:
-        "Trigger surveys after policy purchases, renewals, and claims. Smart timing captures satisfaction at peak moments.",
-      bulletPoints: [
-        "Post-purchase and renewal triggers",
-        "Claims follow-up surveys",
-        "Multi-channel outreach (email + SMS)",
-      ],
-      layoutVariant: "single",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=1400&fit=crop&q=80",
-          alt: "Insurance agent meeting with clients",
-        },
-      ],
-      stat: { value: "3x", label: "more reviews" },
-    },
-    {
-      icon: "BarChart3",
-      tabName: "Analytics",
-      title: "Client Satisfaction Tracking",
-      summary:
-        "Real-time NPS and satisfaction scores across your book of business. Identify at-risk clients before they churn.",
-      bulletPoints: [
-        "Live NPS dashboard",
-        "At-risk client alerts",
-        "Retention prediction insights",
-      ],
-      layoutVariant: "floating",
-      images: [
-        { src: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=700&fit=crop&q=80", alt: "Professional" },
-        { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=700&fit=crop&q=80", alt: "Business meeting" },
-        { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=700&fit=crop&q=80", alt: "Executive" },
-        { src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&h=700&fit=crop&q=80", alt: "Presentation" },
-      ],
-      stat: { value: "38%", label: "response rate" },
-    },
-    {
-      icon: "Shield",
-      tabName: "Claims",
-      title: "Claims Experience Capture",
-      summary:
-        "Turn exceptional claims handling into powerful testimonials that differentiate you from competitors.",
-      bulletPoints: [
-        "Post-claim satisfaction surveys",
-        "Claims story capture",
-        "Video testimonial requests",
-      ],
-      layoutVariant: "wide",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1600&h=900&fit=crop&q=80",
-          alt: "Insurance professional",
-        },
-      ],
-      stat: { value: "94%", label: "claims satisfaction" },
-    },
-    {
-      icon: "Trophy",
-      tabName: "Growth",
-      title: "Reputation Building",
-      summary:
-        "Route positive feedback to Google and industry platforms. Build the trust that drives referrals.",
-      bulletPoints: [
-        "Google Business optimization",
-        "BBB rating improvement",
-        "Referral program integration",
-      ],
-      layoutVariant: "grid",
-      images: [
-        { src: "https://images.unsplash.com/photo-1521791055366-0d553872125f?w=600&h=600&fit=crop&q=80", alt: "Success" },
-        { src: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=600&fit=crop&q=80", alt: "Team" },
-        { src: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=600&h=1200&fit=crop&q=80", alt: "Professional" },
-      ],
-      stat: { value: "+180%", label: "review growth" },
-    },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual requests" },
+    { value: "Trust", label: "Research Online", description: "before choosing" },
+    { value: "Feedback", label: "Retention Rate", description: "for top-reviewed agencies" },
+    { value: "Reviews", label: "Review Monitoring", description: "across review channels" },
   ],
   roleTabs: [
     {
@@ -758,22 +465,7 @@ export const insurancePageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "We doubled our Google reviews in 4 months. New clients tell us our reviews are why they called us first.",
-      name: "Robert Williams",
-      title: "Agency Owner",
-      company: "Williams Insurance Group",
-      rating: 5,
-    },
-    {
-      quote: "The claims follow-up surveys helped us identify and fix a service gap. Retention improved 15%.",
-      name: "Michelle Torres",
-      title: "Operations Manager",
-      company: "Secure Insurance Partners",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "AgencyZoom", logoUrl: "/integrations/agencyzoom.svg", category: "AMS" },
     { name: "HawkSoft", logoUrl: "/integrations/hawksoft.svg", category: "AMS" },
@@ -828,7 +520,7 @@ export const healthcarePageConfig: IndustryPageConfig = {
     title: "Patient Experience That ",
     titleAccent: "Builds Reputation",
     description:
-      "77% of patients check online reviews before booking. Capture feedback, improve care, and grow your practice with HIPAA-compliant reputation management.",
+      "Patients check online reviews before booking. Capture feedback, improve care, and grow your practice with HIPAA-conscious reputation management.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
   },
@@ -838,14 +530,12 @@ export const healthcarePageConfig: IndustryPageConfig = {
       title: "Patients Don't Leave Reviews",
       description:
         "Satisfied patients leave quietly. Without a system, only unhappy patients share their experience online.",
-      stat: { value: "2%", label: "leave reviews naturally" },
     },
     {
       icon: "Search",
       title: "Competitors Rank Higher",
       description:
         "Practices with more reviews dominate Healthgrades and Google. New patients find them first.",
-      stat: { value: "77%", label: "check reviews first" },
     },
     {
       icon: "FileWarning",
@@ -873,91 +563,10 @@ export const healthcarePageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual outreach" },
-    { value: "77%", label: "Research First", description: "before booking" },
-    { value: "100%", label: "HIPAA Compliant", description: "end-to-end encryption" },
-    { value: "4.7", label: "Avg Rating", description: "across our practices" },
-  ],
-  featureTabs: [
-    {
-      icon: "Star",
-      tabName: "Reviews",
-      title: "HIPAA-Compliant Feedback",
-      summary:
-        "Capture patient satisfaction with fully HIPAA-compliant surveys. Build reviews while protecting patient privacy.",
-      bulletPoints: [
-        "Post-visit automated surveys",
-        "HIPAA-compliant data handling",
-        "Smart routing to review platforms",
-      ],
-      layoutVariant: "single",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1200&h=1400&fit=crop&q=80",
-          alt: "Healthcare professional with patient",
-        },
-      ],
-      stat: { value: "3x", label: "more reviews" },
-    },
-    {
-      icon: "BarChart3",
-      tabName: "Analytics",
-      title: "Patient Experience Analytics",
-      summary:
-        "Real-time NPS and satisfaction tracking across your practice. Identify trends and improve care.",
-      bulletPoints: [
-        "Provider-level satisfaction scores",
-        "Wait time and staff feedback trends",
-        "Benchmark against local competitors",
-      ],
-      layoutVariant: "floating",
-      images: [
-        { src: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&h=700&fit=crop&q=80", alt: "Medical team" },
-        { src: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&h=700&fit=crop&q=80", alt: "Healthcare" },
-        { src: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=600&h=700&fit=crop&q=80", alt: "Doctor" },
-        { src: "https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=600&h=700&fit=crop&q=80", alt: "Medical team" },
-      ],
-      stat: { value: "32%", label: "response rate" },
-    },
-    {
-      icon: "AlertTriangle",
-      tabName: "Recovery",
-      title: "Service Recovery Alerts",
-      summary:
-        "Get instant alerts for dissatisfied patients. Resolve issues before they become public reviews.",
-      bulletPoints: [
-        "Real-time negative feedback alerts",
-        "Service recovery workflow",
-        "Private issue resolution",
-      ],
-      layoutVariant: "wide",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?w=1600&h=900&fit=crop&q=80",
-          alt: "Medical consultation",
-        },
-      ],
-      stat: { value: "89%", label: "recovery rate" },
-    },
-    {
-      icon: "Trophy",
-      tabName: "Growth",
-      title: "Reputation Building",
-      summary:
-        "Route satisfied patients to Healthgrades, Google, and Zocdoc. Build the reputation that attracts new patients.",
-      bulletPoints: [
-        "Healthgrades profile optimization",
-        "Google Business Profile growth",
-        "Zocdoc review integration",
-      ],
-      layoutVariant: "grid",
-      images: [
-        { src: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&h=600&fit=crop&q=80", alt: "Medical facility" },
-        { src: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&h=600&fit=crop&q=80", alt: "Hospital" },
-        { src: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600&h=1200&fit=crop&q=80", alt: "Healthcare" },
-      ],
-      stat: { value: "+150%", label: "review growth" },
-    },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual outreach" },
+    { value: "Trust", label: "Research First", description: "before booking" },
+    { value: "Governed", label: "HIPAA Compliant", description: "end-to-end encryption" },
+    { value: "Reviews", label: "Review Monitoring", description: "across our practices" },
   ],
   roleTabs: [
     {
@@ -1023,22 +632,7 @@ export const healthcarePageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "Our Healthgrades rating went from 3.8 to 4.6 in 6 months. New patient bookings increased 28%.",
-      name: "Dr. Amanda Chen",
-      title: "Internal Medicine",
-      company: "Bay Area Medical Group",
-      rating: 5,
-    },
-    {
-      quote: "The service recovery feature alone has saved dozens of patient relationships. Worth every penny.",
-      name: "Mark Patterson",
-      title: "Practice Administrator",
-      company: "Coastal Family Practice",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "athenahealth", logoUrl: "/integrations/athenahealth.svg", category: "EHR" },
     { name: "Healthgrades", logoUrl: "/integrations/healthgrades.svg", category: "Reviews" },
@@ -1118,7 +712,6 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
       icon: "Search",
       title: "Prospects Research You",
       description: "Before trusting you with their wealth, prospects check your online reputation.",
-      stat: { value: "68%", label: "research advisors online" },
     },
     {
       icon: "BarChart",
@@ -1132,87 +725,10 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual requests" },
-    { value: "68%", label: "Research First", description: "before choosing advisor" },
-    { value: "100%", label: "SEC Compliant", description: "testimonial management" },
-    { value: "4.9", label: "Avg Rating", description: "across our users" },
-  ],
-  featureTabs: [
-    {
-      icon: "Star",
-      tabName: "Reviews",
-      title: "Compliant Review Collection",
-      summary: "Capture client testimonials while maintaining SEC and FINRA compliance.",
-      bulletPoints: [
-        "Compliance-approved survey templates",
-        "Automated consent collection",
-        "Archiving for regulatory requirements",
-      ],
-      layoutVariant: "single",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&h=1400&fit=crop&q=80",
-          alt: "Financial advisor meeting",
-        },
-      ],
-      stat: { value: "3x", label: "more testimonials" },
-    },
-    {
-      icon: "BarChart3",
-      tabName: "Analytics",
-      title: "Client Satisfaction Insights",
-      summary: "Track satisfaction across your book of business with real-time NPS.",
-      bulletPoints: [
-        "Real-time NPS tracking",
-        "At-risk client identification",
-        "Retention prediction",
-      ],
-      layoutVariant: "floating",
-      images: [
-        { src: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=700&fit=crop&q=80", alt: "Finance" },
-        { src: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=700&fit=crop&q=80", alt: "Analytics" },
-        { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=700&fit=crop&q=80", alt: "Professional" },
-        { src: "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600&h=700&fit=crop&q=80", alt: "Business" },
-      ],
-      stat: { value: "35%", label: "response rate" },
-    },
-    {
-      icon: "MessageSquare",
-      tabName: "Testimonials",
-      title: "Compliant Testimonial Management",
-      summary: "Collect, approve, and publish client stories within regulatory guidelines.",
-      bulletPoints: [
-        "Compliance review workflow",
-        "Consent and archiving",
-        "Website and social publishing",
-      ],
-      layoutVariant: "wide",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1600&h=900&fit=crop&q=80",
-          alt: "Business presentation",
-        },
-      ],
-      stat: { value: "100%", label: "compliance rate" },
-    },
-    {
-      icon: "Trophy",
-      tabName: "Growth",
-      title: "Reputation That Attracts Wealth",
-      summary: "Build the online presence that high-net-worth prospects expect.",
-      bulletPoints: [
-        "Google Business optimization",
-        "LinkedIn testimonial integration",
-        "Website review widgets",
-      ],
-      layoutVariant: "grid",
-      images: [
-        { src: "https://images.unsplash.com/photo-1551836022-4c4c79ecde51?w=600&h=600&fit=crop&q=80", alt: "Success" },
-        { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop&q=80", alt: "Team" },
-        { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=1200&fit=crop&q=80", alt: "Executive" },
-      ],
-      stat: { value: "+120%", label: "referral increase" },
-    },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual requests" },
+    { value: "Trust", label: "Research First", description: "before choosing advisor" },
+    { value: "Governed", label: "SEC Compliant", description: "testimonial management" },
+    { value: "Reviews", label: "Review Monitoring", description: "across review channels" },
   ],
   roleTabs: [
     {
@@ -1278,15 +794,7 @@ export const financialAdvisoryPageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "RepWell helped us build a compliant testimonial program that's added $15M in AUM from referrals.",
-      name: "James Mitchell",
-      title: "CFP, Managing Partner",
-      company: "Mitchell Wealth Advisors",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "Wealthbox", logoUrl: "/integrations/wealthbox.svg", category: "CRM" },
     { name: "Redtail", logoUrl: "/integrations/redtail.svg", category: "CRM" },
@@ -1341,7 +849,7 @@ export const homeServicesPageConfig: IndustryPageConfig = {
     title: "Reviews That Keep Your ",
     titleAccent: "Trucks Rolling",
     description:
-      "97% of consumers read reviews before hiring a contractor. Build the reputation that keeps your schedule full.",
+      "Consumers read reviews before hiring a contractor. Build the reputation that keeps your schedule full.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
   },
@@ -1355,7 +863,6 @@ export const homeServicesPageConfig: IndustryPageConfig = {
       icon: "Search",
       title: "Competitors Have More Reviews",
       description: "They show up first on Google. You're losing jobs before prospects even call.",
-      stat: { value: "97%", label: "check reviews first" },
     },
     {
       icon: "Star",
@@ -1379,87 +886,10 @@ export const homeServicesPageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. asking manually" },
-    { value: "97%", label: "Check Reviews", description: "before hiring" },
-    { value: "4.8", label: "Avg Rating", description: "across our pros" },
-    { value: "15min", label: "Setup Time", description: "start collecting today" },
-  ],
-  featureTabs: [
-    {
-      icon: "Star",
-      tabName: "Reviews",
-      title: "Review Collection on Autopilot",
-      summary: "Text surveys send after every job. No extra work for you or your techs.",
-      bulletPoints: [
-        "SMS surveys after job completion",
-        "One-tap review requests",
-        "Route to Google, Yelp, Angi",
-      ],
-      layoutVariant: "single",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=1200&h=1400&fit=crop&q=80",
-          alt: "Home service professional",
-        },
-      ],
-      stat: { value: "3x", label: "more reviews" },
-    },
-    {
-      icon: "BarChart3",
-      tabName: "Analytics",
-      title: "Know What Customers Think",
-      summary: "Real-time satisfaction scores for every tech and job type.",
-      bulletPoints: [
-        "Technician performance tracking",
-        "Job type satisfaction trends",
-        "Customer feedback themes",
-      ],
-      layoutVariant: "floating",
-      images: [
-        { src: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&h=700&fit=crop&q=80", alt: "Technician" },
-        { src: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&h=700&fit=crop&q=80", alt: "Home repair" },
-        { src: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=600&h=700&fit=crop&q=80", alt: "Team" },
-        { src: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&h=700&fit=crop&q=80", alt: "Work" },
-      ],
-      stat: { value: "52%", label: "response rate" },
-    },
-    {
-      icon: "AlertTriangle",
-      tabName: "Recovery",
-      title: "Catch Problems Before Reviews",
-      summary: "Unhappy customers tell you first, not Google. Fix issues before they go public.",
-      bulletPoints: [
-        "Instant alerts for low scores",
-        "Service recovery workflow",
-        "Turn complaints into fans",
-      ],
-      layoutVariant: "wide",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1600&h=900&fit=crop&q=80",
-          alt: "Customer service",
-        },
-      ],
-      stat: { value: "87%", label: "recovery rate" },
-    },
-    {
-      icon: "Trophy",
-      tabName: "Growth",
-      title: "Dominate Local Search",
-      summary: "More reviews = higher rankings = more jobs. Simple math.",
-      bulletPoints: [
-        "Google Business Profile optimization",
-        "Nextdoor reputation building",
-        "Review response templates",
-      ],
-      layoutVariant: "grid",
-      images: [
-        { src: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=600&fit=crop&q=80", alt: "Home" },
-        { src: "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=600&h=600&fit=crop&q=80", alt: "House" },
-        { src: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=1200&fit=crop&q=80", alt: "Exterior" },
-      ],
-      stat: { value: "+250%", label: "review growth" },
-    },
+    { value: "Reviews", label: "More Reviews", description: "vs. asking manually" },
+    { value: "Reviews", label: "Check Reviews", description: "before hiring" },
+    { value: "Reviews", label: "Review Monitoring", description: "across our pros" },
+    { value: "Fast", label: "Setup Time", description: "start collecting today" },
   ],
   roleTabs: [
     {
@@ -1468,7 +898,6 @@ export const homeServicesPageConfig: IndustryPageConfig = {
       description: "Build your personal reputation",
       features: [
         "Personal review dashboard",
-        "Mobile app for job completion",
         "Performance tracking",
         "Customer feedback view",
         "Gamification and rankings",
@@ -1514,8 +943,8 @@ export const homeServicesPageConfig: IndustryPageConfig = {
     },
     {
       step: 3,
-      title: "Customers Get Texted",
-      description: "Simple SMS surveys. Customers tap to leave a review.",
+      title: "Customers Get Emailed",
+      description: "Simple email surveys. Customers tap to leave a review.",
       icon: "Smartphone",
     },
     {
@@ -1525,15 +954,7 @@ export const homeServicesPageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "We went from 45 Google reviews to over 300. Our phone rings constantly now.",
-      name: "Mike Johnson",
-      title: "Owner",
-      company: "Johnson Plumbing",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "ServiceTitan", logoUrl: "/integrations/servicetitan.svg", category: "FSM" },
     { name: "Housecall Pro", logoUrl: "/integrations/housecall-pro.svg", category: "FSM" },
@@ -1585,7 +1006,7 @@ export const legalPageConfig: IndustryPageConfig = {
     title: "Clients Trust Attorneys With ",
     titleAccent: "Proven Results",
     description:
-      "84% of people looking for a lawyer check online reviews first. Build the reputation that wins cases before they start.",
+      "People looking for a lawyer check online reviews first. Build the reputation that wins trust before the first consultation.",
     primaryCta: "Start Free Trial",
     secondaryCta: "Book a Demo",
   },
@@ -1599,7 +1020,6 @@ export const legalPageConfig: IndustryPageConfig = {
       icon: "Search",
       title: "Competitors Rank Higher",
       description: "Firms with more Avvo and Google reviews get found first.",
-      stat: { value: "84%", label: "check reviews first" },
     },
     {
       icon: "FileText",
@@ -1623,87 +1043,10 @@ export const legalPageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Reviews", description: "vs. manual requests" },
-    { value: "84%", label: "Research First", description: "before hiring" },
-    { value: "100%", label: "Ethics Compliant", description: "bar-approved approach" },
-    { value: "4.8", label: "Avg Rating", description: "across our firms" },
-  ],
-  featureTabs: [
-    {
-      icon: "Star",
-      tabName: "Reviews",
-      title: "Ethics-Compliant Review Collection",
-      summary: "Post-matter surveys that comply with bar rules while building your reputation.",
-      bulletPoints: [
-        "Bar-compliant survey language",
-        "Post-matter timing",
-        "Route to Avvo, Google, Martindale",
-      ],
-      layoutVariant: "single",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=1200&h=1400&fit=crop&q=80",
-          alt: "Law office",
-        },
-      ],
-      stat: { value: "3x", label: "more reviews" },
-    },
-    {
-      icon: "BarChart3",
-      tabName: "Analytics",
-      title: "Client Experience Insights",
-      summary: "Track satisfaction across practice areas and attorneys.",
-      bulletPoints: [
-        "Attorney-level satisfaction",
-        "Practice area trends",
-        "NPS tracking",
-      ],
-      layoutVariant: "floating",
-      images: [
-        { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=700&fit=crop&q=80", alt: "Professional" },
-        { src: "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&h=700&fit=crop&q=80", alt: "Meeting" },
-        { src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=600&h=700&fit=crop&q=80", alt: "Attorney" },
-        { src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=700&fit=crop&q=80", alt: "Lawyer" },
-      ],
-      stat: { value: "28%", label: "response rate" },
-    },
-    {
-      icon: "MessageSquare",
-      tabName: "Testimonials",
-      title: "Case Story Capture",
-      summary: "Collect powerful client stories that showcase your results.",
-      bulletPoints: [
-        "Written and video testimonials",
-        "Consent management",
-        "Website and marketing use",
-      ],
-      layoutVariant: "wide",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1521791055366-0d553872125f?w=1600&h=900&fit=crop&q=80",
-          alt: "Legal consultation",
-        },
-      ],
-      stat: { value: "12+", label: "testimonials/month" },
-    },
-    {
-      icon: "Trophy",
-      tabName: "Growth",
-      title: "Legal Directory Dominance",
-      summary: "Build your presence on the platforms that matter for attorneys.",
-      bulletPoints: [
-        "Avvo profile optimization",
-        "Martindale-Hubbell ratings",
-        "Google Business Profile",
-      ],
-      layoutVariant: "grid",
-      images: [
-        { src: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=600&h=600&fit=crop&q=80", alt: "Office" },
-        { src: "https://images.unsplash.com/photo-1521791055366-0d553872125f?w=600&h=600&fit=crop&q=80", alt: "Consultation" },
-        { src: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&h=1200&fit=crop&q=80", alt: "Law" },
-      ],
-      stat: { value: "+180%", label: "review growth" },
-    },
+    { value: "Reviews", label: "More Reviews", description: "vs. manual requests" },
+    { value: "Trust", label: "Research First", description: "before hiring" },
+    { value: "Governed", label: "Ethics Compliant", description: "bar-approved approach" },
+    { value: "Reviews", label: "Review Monitoring", description: "across our firms" },
   ],
   roleTabs: [
     {
@@ -1769,15 +1112,7 @@ export const legalPageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "Our Avvo rating went from 4.2 to 4.9. We're now the top-rated personal injury firm in our market.",
-      name: "Jennifer Walsh",
-      title: "Managing Partner",
-      company: "Walsh & Associates",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "Clio", logoUrl: "/integrations/clio.svg", category: "PMS" },
     { name: "MyCase", logoUrl: "/integrations/mycase.svg", category: "PMS" },
@@ -1866,87 +1201,10 @@ export const consultingPageConfig: IndustryPageConfig = {
     },
   ],
   stats: [
-    { value: "3x", label: "More Testimonials", description: "vs. manual requests" },
-    { value: "72%", label: "Research First", description: "before hiring consultants" },
-    { value: "95%", label: "Client Satisfaction", description: "across our users" },
-    { value: "4.9", label: "Avg Rating", description: "from client feedback" },
-  ],
-  featureTabs: [
-    {
-      icon: "Star",
-      tabName: "Feedback",
-      title: "Engagement Feedback Collection",
-      summary: "Capture client satisfaction at key milestones and engagement close.",
-      bulletPoints: [
-        "Mid-engagement check-ins",
-        "Close-of-project surveys",
-        "Testimonial capture",
-      ],
-      layoutVariant: "single",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=1400&fit=crop&q=80",
-          alt: "Consulting meeting",
-        },
-      ],
-      stat: { value: "3x", label: "more testimonials" },
-    },
-    {
-      icon: "BarChart3",
-      tabName: "Analytics",
-      title: "Client Satisfaction Analytics",
-      summary: "Real-time NPS tracking across all engagements and consultants.",
-      bulletPoints: [
-        "Engagement-level satisfaction",
-        "Consultant performance",
-        "Service line trends",
-      ],
-      layoutVariant: "floating",
-      images: [
-        { src: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&h=700&fit=crop&q=80", alt: "Team" },
-        { src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=700&fit=crop&q=80", alt: "Collaboration" },
-        { src: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&h=700&fit=crop&q=80", alt: "Meeting" },
-        { src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=600&h=700&fit=crop&q=80", alt: "Professional" },
-      ],
-      stat: { value: "42%", label: "response rate" },
-    },
-    {
-      icon: "FileText",
-      tabName: "Case Studies",
-      title: "Rapid Case Study Creation",
-      summary: "Turn testimonials into case studies with client-approved quotes.",
-      bulletPoints: [
-        "Quote approval workflow",
-        "Results documentation",
-        "Marketing-ready content",
-      ],
-      layoutVariant: "wide",
-      images: [
-        {
-          src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1600&h=900&fit=crop&q=80",
-          alt: "Presentation",
-        },
-      ],
-      stat: { value: "5x", label: "faster case studies" },
-    },
-    {
-      icon: "Trophy",
-      tabName: "Growth",
-      title: "Reputation Building",
-      summary: "Build your online presence with client-approved social proof.",
-      bulletPoints: [
-        "LinkedIn testimonial integration",
-        "Google Business Profile",
-        "Clutch.co review management",
-      ],
-      layoutVariant: "grid",
-      images: [
-        { src: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&h=600&fit=crop&q=80", alt: "Workshop" },
-        { src: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&h=600&fit=crop&q=80", alt: "Strategy" },
-        { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=1200&fit=crop&q=80", alt: "Consultant" },
-      ],
-      stat: { value: "+150%", label: "referral increase" },
-    },
+    { value: "Stories", label: "More Testimonials", description: "vs. manual requests" },
+    { value: "Trust", label: "Research First", description: "before hiring consultants" },
+    { value: "Feedback", label: "Client Satisfaction", description: "across review channels" },
+    { value: "Reviews", label: "Review Monitoring", description: "from review workflows" },
   ],
   roleTabs: [
     {
@@ -2012,15 +1270,7 @@ export const consultingPageConfig: IndustryPageConfig = {
       icon: "TrendingUp",
     },
   ],
-  testimonials: [
-    {
-      quote: "RepWell helped us capture 40+ client testimonials in our first year. Our proposal win rate improved 25%.",
-      name: "David Kim",
-      title: "Managing Director",
-      company: "Strategy Partners LLC",
-      rating: 5,
-    },
-  ],
+  testimonials: [],
   integrations: [
     { name: "HubSpot", logoUrl: "/integrations/hubspot.svg", category: "CRM" },
     { name: "Salesforce", logoUrl: "/integrations/salesforce.svg", category: "CRM" },

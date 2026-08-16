@@ -36,7 +36,7 @@ export default async function EmbedVideoPage({ params }: PageProps) {
   }
 
   const video = result.data;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const smartLink = await getPublishedSmartLinkBySource({
     organizationId: video.organization.id,
     sourceType: "video_testimonial",

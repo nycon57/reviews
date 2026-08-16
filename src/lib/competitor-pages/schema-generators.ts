@@ -1,21 +1,9 @@
 import type { CompetitorPageConfig, FAQSection } from "./types";
+import { generateFAQPageSchema as generateGenericFAQPageSchema } from "@/lib/seo/schema-generators";
 
 // ---------------------------------------------------------------------------
 // FAQPage Schema
 // ---------------------------------------------------------------------------
-
-interface FAQPageSchema {
-  "@context": "https://schema.org";
-  "@type": "FAQPage";
-  mainEntity: Array<{
-    "@type": "Question";
-    name: string;
-    acceptedAnswer: {
-      "@type": "Answer";
-      text: string;
-    };
-  }>;
-}
 
 /** Strips HTML tags to produce plain-text for JSON-LD answer fields. */
 function stripHtmlTags(html: string): string {
@@ -26,26 +14,19 @@ function stripHtmlTags(html: string): string {
  * Generates FAQPage JSON-LD structured data from a competitor page FAQ config.
  * @see https://developers.google.com/search/docs/appearance/structured-data/faqpage
  */
-export function generateFAQPageSchema(faq: FAQSection): FAQPageSchema {
-  const allFaqs = [...faq.standard, ...faq.competitorSpecific];
+const generateCompetitorFAQPageSchema = (faq: FAQSection) =>
+  generateGenericFAQPageSchema(
+    [...faq.standard, ...faq.competitorSpecific].map((item) => ({
+      question: item.question,
+      answer: stripHtmlTags(item.answer),
+    }))
+  );
 
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: allFaqs.map((item) => ({
-      "@type": "Question",
-      name: item.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: stripHtmlTags(item.answer),
-      },
-    })),
-  };
-}
+export { generateCompetitorFAQPageSchema as generateFAQPageSchema };
 
 /** Serializes FAQPage schema to a JSON-LD string for `<script type="application/ld+json">`. */
 export function generateFAQPageJsonLd(faq: FAQSection): string {
-  return JSON.stringify(generateFAQPageSchema(faq));
+  return JSON.stringify(generateCompetitorFAQPageSchema(faq));
 }
 
 // ---------------------------------------------------------------------------
@@ -93,44 +74,5 @@ export function generateBreadcrumbListSchema(
         name: `${config.competitorName} Alternative`,
       },
     ],
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Product with AggregateRating Schema
-// ---------------------------------------------------------------------------
-
-interface ProductSchema {
-  "@context": "https://schema.org";
-  "@type": "Product";
-  name: string;
-  description: string;
-  brand: { "@type": "Brand"; name: string };
-  aggregateRating: {
-    "@type": "AggregateRating";
-    ratingValue: number;
-    bestRating: number;
-    ratingCount: number;
-  };
-}
-
-/**
- * Generates Product JSON-LD with AggregateRating from RepWell's G2 rating data.
- */
-export function generateProductSchema(
-  config: CompetitorPageConfig,
-): ProductSchema {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: "RepWell",
-    description: config.seo.description,
-    brand: { "@type": "Brand", name: "RepWell" },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: config.ratingComparison.repwell.g2Score,
-      bestRating: 5,
-      ratingCount: config.ratingComparison.repwell.g2ReviewCount,
-    },
   };
 }

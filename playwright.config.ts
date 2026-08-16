@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const port = process.env.PLAYWRIGHT_PORT || "3000";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${port}`;
+
 /**
  * Playwright configuration for RepWell E2E tests.
  *
@@ -11,6 +14,7 @@ import { defineConfig, devices } from "@playwright/test";
  * - access-control: Role-based redirect verification
  * - widgets: Existing widget embed tests (mocked APIs)
  * - interactions: Per-feature interaction tests
+ * - golden-flows: Real UI money-path coverage with only external boundary mocks
  */
 export default defineConfig({
   testDir: "./tests",
@@ -22,7 +26,7 @@ export default defineConfig({
   timeout: 30_000,
 
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
@@ -79,6 +83,13 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
 
+    // ── Golden Flow Tests ──────────────────────────────────
+    {
+      name: "golden-flows",
+      testMatch: /golden-flows\/.*\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+
     // ── Performance Tests ──────────────────────────────────
     {
       name: "performance",
@@ -88,8 +99,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
+    command: `npm run dev -- --port ${port}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

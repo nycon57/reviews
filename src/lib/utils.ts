@@ -1,25 +1,47 @@
 import { type ClassValue, clsx } from "clsx";
+import { formatDistanceToNow, type FormatDistanceToNowOptions } from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("en-US", {
+export function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+export function formatDate(date: Date | string | null | undefined, fallback = ""): string {
+  if (!date) return fallback;
+
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return fallback;
+
+  return parsed.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string | null | undefined, fallback = ""): string {
+  if (!date) return fallback;
+
   return new Date(date).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
+  });
+}
+
+export function formatRelativeTime(
+  date: Date | string | number,
+  options?: FormatDistanceToNowOptions
+): string {
+  return formatDistanceToNow(date instanceof Date ? date : new Date(date), {
+    addSuffix: true,
+    ...options,
   });
 }
 
@@ -71,7 +93,5 @@ export function getInitials(name: string | null | undefined): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "";
   if (parts.length === 1) return (parts[0]?.[0] ?? "").toUpperCase();
-  return (
-    (parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")
-  ).toUpperCase();
+  return ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase();
 }

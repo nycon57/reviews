@@ -42,6 +42,27 @@ export interface PersonInfo {
 // Video Testimonial Types
 // =============================================================================
 
+/** Background music bed for a Clip. Ducked under the customer's speech. */
+export interface ClipMusic {
+  /** Absolute URL of the licensed instrumental track */
+  url: string;
+  /** Peak volume on non-speech segments (0-1). Default 0.3 */
+  volume?: number;
+}
+
+/** End Card contents: the professional's contact block + QR to the smart link. */
+export interface EndCardContact {
+  professionalName: string;
+  professionalTitle: string | null;
+  professionalPhotoUrl: string | null;
+  /** The professional's own CTA text (cta_button_text), e.g. "Get Started" */
+  ctaText: string | null;
+  /** URL encoded into the QR code (the review's smart link) */
+  qrUrl: string | null;
+  phone?: string | null;
+  website?: string | null;
+}
+
 export interface VideoTestimonialProps {
   /** URL of the source video */
   videoUrl: string;
@@ -78,6 +99,37 @@ export interface VideoTestimonialProps {
   showOutro: boolean;
   /** Duration of source video in milliseconds */
   videoDurationMs: number;
+  /** Trim into the source video, ms (default 0). Captions are on the source timeline. */
+  trimStartMs?: number;
+  /** Trim end on the source timeline, ms (default videoDurationMs) */
+  trimEndMs?: number;
+  /** Source video pixel dimensions; drives adaptive framing. Unknown -> assume 16:9 */
+  sourceWidth?: number | null;
+  sourceHeight?: number | null;
+  /**
+   * Source framing: "crop" center-crops the source to fill the frame,
+   * "card" forces the styled card on the brand background, "auto" picks
+   * by source aspect ratio (legacy heuristic). Default "crop".
+   */
+  framing?: "crop" | "card" | "auto";
+  /** Background music bed; null/undefined renders without music */
+  music?: ClipMusic | null;
+  /** End Card contact block; null falls back to the generic branded outro */
+  endCard?: EndCardContact | null;
+}
+
+/** Played portion of the source video after trim, in milliseconds. */
+export function getPlayedDurationMs(props: {
+  videoDurationMs: number;
+  trimStartMs?: number;
+  trimEndMs?: number;
+}): number {
+  const start = Math.max(0, props.trimStartMs ?? 0);
+  const end = Math.min(
+    props.videoDurationMs,
+    props.trimEndMs ?? props.videoDurationMs
+  );
+  return Math.max(1000, end - start);
 }
 
 // =============================================================================

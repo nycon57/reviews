@@ -92,7 +92,7 @@ export function PerformanceLeaderboard({
         {data.map((entry) => (
           <Link
             key={entry.id}
-            href={`/dashboard/team/${entry.id}`}
+            href={`/dashboard/analytics/member/${entry.id}`}
             className={`flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-accent ${getRankBackground(entry.rank)}`}
           >
             {/* Rank */}

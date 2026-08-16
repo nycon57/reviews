@@ -272,7 +272,7 @@ export async function createGroup(
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
   revalidatePath("/dashboard/groups");
 
   return { success: true, data: rowToGroup(data as GroupRow) };
@@ -327,7 +327,7 @@ export async function updateGroup(
     return { success: false, error: "Group not found" };
   }
 
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
   revalidatePath("/dashboard/groups");
   revalidatePath(`/dashboard/groups/${parsed.data.id}`);
 
@@ -355,7 +355,7 @@ export async function deleteGroup(id: string): Promise<ActionResult> {
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
   revalidatePath("/dashboard/groups");
 
   return { success: true };
@@ -415,7 +415,7 @@ export async function addMember(input: unknown): Promise<ActionResult> {
   }
 
   revalidatePath(`/dashboard/groups/${parsed.data.groupId}`);
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
 
   return { success: true };
 }
@@ -502,7 +502,7 @@ export async function removeMember(input: unknown): Promise<ActionResult> {
   }
 
   revalidatePath(`/dashboard/groups/${parsed.data.groupId}`);
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
 
   return { success: true };
 }
@@ -569,7 +569,7 @@ export async function addMembers(
   }
 
   revalidatePath(`/dashboard/groups/${groupId}`);
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
 
   return {
     success: true,

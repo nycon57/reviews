@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getPublicLOProfile } from "@/lib/seo/actions";
 import {
@@ -6,6 +7,8 @@ import {
   getBaseUrl,
   generateProfilePageSchema,
 } from "@/lib/seo";
+import { logAgentVisit } from "@/lib/agents/detection";
+import { WebMcpClientRegistration } from "@/lib/webmcp/client-registration";
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import { ProProfileContent } from "./pro-profile-content";
 import { buildProfessionalBreadcrumbs } from "@/lib/directory/breadcrumb-utils";
@@ -42,7 +45,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return generateLOProfileMetadata(
     result.data.professional,
     result.data.organization,
-    baseUrl
+    baseUrl,
+    result.data.reviews
   );
 }
 
@@ -62,6 +66,7 @@ export default async function LOProfilePage({ params }: PageProps) {
   }
 
   const baseUrl = getBaseUrl();
+  logAgentVisit(`/pro/${professional.slug || professional.id}`, await headers());
 
   // Build breadcrumbs for navigation — only link to org page for enterprise accounts (href present)
   const breadcrumbs = buildProfessionalBreadcrumbs(
@@ -93,6 +98,7 @@ export default async function LOProfilePage({ params }: PageProps) {
   return (
     <>
       <MultiSchemaStructuredData schemas={schemas} />
+      <WebMcpClientRegistration />
       <ProProfileContent
         professional={professional}
         organization={organization}
@@ -103,6 +109,7 @@ export default async function LOProfilePage({ params }: PageProps) {
         breadcrumbs={breadcrumbs}
         isEnterprise={is_enterprise}
         isPro={is_pro}
+        profileUrl={`${baseUrl}/pro/${professional.slug || professional.id}`}
       />
     </>
   );

@@ -9,6 +9,7 @@ import type {
   ReviewAggregationStats,
   ReviewExportData,
   ActionResult,
+  ReviewSource,
 } from "./types";
 
 // Get user's role and organization ID
@@ -72,17 +73,33 @@ async function requireManagerRole(): Promise<{
   };
 }
 
+/** The `users!user_id` embed every review query in this module selects. */
+type ReviewLoanOfficerEmbed = {
+  id: string;
+  full_name: string | null;
+  email: string;
+  avatar_url: string | null;
+};
+
+/** The `survey_responses` embed every review query in this module selects. */
+type ReviewSurveyResponseEmbed = {
+  id: string;
+  overall_rating: number | null;
+  nps_score: number | null;
+  testimonial_text: string | null;
+};
+
 // Map database row to AggregatedReview
 function mapRowToAggregatedReview(
   row: Record<string, unknown>,
-  loanOfficer: { id: string; full_name: string; email: string; avatar_url: string | null },
-  surveyResponse: { id: string; overall_rating: number | null; nps_score: number | null; testimonial_text: string | null } | null
+  loanOfficer: ReviewLoanOfficerEmbed | null,
+  surveyResponse: ReviewSurveyResponseEmbed | null
 ): AggregatedReview {
   return {
     id: row.id as string,
     organizationId: row.organization_id as string,
     loanOfficerId: row.user_id as string,
-    source: row.source as string,
+    source: row.source as ReviewSource,
     rating: row.rating as number,
     title: row.title as string | null,
     text: row.text as string | null,
@@ -93,6 +110,7 @@ function mapRowToAggregatedReview(
     approvedAt: row.approved_at as string | null,
     approvedBy: row.approved_by as string | null,
     rejectionReason: row.rejection_reason as string | null,
+    moderationReasons: (row.moderation_reasons as string[] | null) ?? null,
     isPublished: (row.is_published as boolean) ?? false,
     publishedAt: row.published_at as string | null,
     reviewDate: row.review_date as string,
@@ -112,12 +130,14 @@ function mapRowToAggregatedReview(
     aiSuggestedResponse: row.ai_suggested_response as string | null,
     featured: (row.featured as boolean) ?? false,
     syncedAt: row.synced_at as string | null,
-    loanOfficer: {
-      id: loanOfficer.id,
-      fullName: loanOfficer.full_name,
-      email: loanOfficer.email,
-      avatarUrl: loanOfficer.avatar_url,
-    },
+    loanOfficer: loanOfficer
+      ? {
+          id: loanOfficer.id,
+          fullName: loanOfficer.full_name ?? "",
+          email: loanOfficer.email,
+          avatarUrl: loanOfficer.avatar_url,
+        }
+      : undefined,
     surveyResponse: surveyResponse
       ? {
           id: surveyResponse.id,
@@ -154,7 +174,9 @@ export async function getAggregatedReviews(
   };
   const sortColumn = sortColumnMap[sortBy] || "review_date";
 
-  let query = supabase
+  // `moderation_reasons` is not yet in the generated database types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any)
     .from("reviews")
     .select(
       `
@@ -178,6 +200,7 @@ export async function getAggregatedReviews(
       approved_at,
       approved_by,
       rejection_reason,
+      moderation_reasons,
       response_text,
       response_at,
       response_by,
@@ -273,20 +296,15 @@ export async function getAggregatedReviews(
     return { success: false, error: error.message || "Failed to fetch reviews" };
   }
 
-  const reviews: AggregatedReview[] = (data || []).map((row) => {
-    const loanOfficer = row.users as unknown as {
-      id: string;
-      full_name: string;
-      email: string;
-      avatar_url: string | null;
-    };
-
-    const surveyResponse = row.survey_responses as unknown as {
-      id: string;
-      overall_rating: number | null;
-      nps_score: number | null;
-      testimonial_text: string | null;
-    } | null;
+  const reviews: AggregatedReview[] = (data || []).map((row: Record<string, unknown>) => {
+    // SAFETY: this query runs through an untyped client because `moderation_reasons` is missing
+    // from the generated schema, so the embed arrives untyped. The select above names exactly
+    // these columns on `users!user_id`, and PostgREST returns null for a to-one embed with no
+    // matching row.
+    const loanOfficer = row.users as ReviewLoanOfficerEmbed | null;
+    // SAFETY: same untyped select; these are exactly the `survey_responses` columns requested,
+    // and the embed is null when the review did not come from a survey.
+    const surveyResponse = row.survey_responses as ReviewSurveyResponseEmbed | null;
 
     return mapRowToAggregatedReview(row, loanOfficer, surveyResponse);
   });
@@ -308,7 +326,9 @@ export async function getAggregatedReviewById(
 
   const supabase = createAdminClient();
 
-  let query = supabase
+  // `moderation_reasons` is not yet in the generated database types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any)
     .from("reviews")
     .select(
       `
@@ -332,6 +352,7 @@ export async function getAggregatedReviewById(
       approved_at,
       approved_by,
       rejection_reason,
+      moderation_reasons,
       response_text,
       response_at,
       response_by,
@@ -373,19 +394,14 @@ export async function getAggregatedReviewById(
     return { success: false, error: "Review not found" };
   }
 
-  const loanOfficer = data.users as unknown as {
-    id: string;
-    full_name: string;
-    email: string;
-    avatar_url: string | null;
-  };
-
-  const surveyResponse = data.survey_responses as unknown as {
-    id: string;
-    overall_rating: number | null;
-    nps_score: number | null;
-    testimonial_text: string | null;
-  } | null;
+  // SAFETY: this query runs through an untyped client because `moderation_reasons` is missing
+  // from the generated schema, so the embed arrives untyped. The select above names exactly
+  // these columns on `users!user_id`, and PostgREST returns null for a to-one embed with no
+  // matching row.
+  const loanOfficer = data.users as ReviewLoanOfficerEmbed | null;
+  // SAFETY: same untyped select; these are exactly the `survey_responses` columns requested,
+  // and the embed is null when the review did not come from a survey.
+  const surveyResponse = data.survey_responses as ReviewSurveyResponseEmbed | null;
 
   return {
     success: true,
@@ -691,14 +707,13 @@ export async function exportReviews(
   }
 
   const exportData: ReviewExportData[] = (data || []).map((row) => {
-    const user = row.users as unknown as { full_name: string };
     return {
       id: row.id,
       source: row.source,
       rating: row.rating,
       customerName: row.customer_name,
       text: row.text,
-      loanOfficerName: user.full_name,
+      loanOfficerName: row.users?.full_name ?? "",
       status: row.status || "pending",
       reviewDate: row.review_date,
       responseText: row.response_text,

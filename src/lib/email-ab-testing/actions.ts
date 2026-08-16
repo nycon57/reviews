@@ -16,7 +16,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getSupabaseForABTesting(): SupabaseClient<any, any, any> {
-  return createAdminClient() as unknown as SupabaseClient<any, any, any>;
+  // SAFETY: same runtime client, only the schema generic is dropped — the A/B
+  // testing tables exist in the database but not yet in the generated types, so
+  // the typed client would reject every table name used in this module.
+  return createAdminClient() as SupabaseClient<any, any, any>;
 }
 import type {
   ActionResult,
@@ -39,10 +42,7 @@ import {
   mapDbTestToTs,
   mapDbResultToTs,
 } from "./types";
-import {
-  calculateStatisticalSignificance,
-  calculateConfidenceInterval,
-} from "./statistics";
+import { calculateStatisticalSignificance, calculateConfidenceInterval } from "./statistics";
 
 // ============================================================================
 // Helper Functions
@@ -82,9 +82,7 @@ async function getAdminContext() {
 /**
  * Create a new A/B test
  */
-export async function createABTest(
-  data: CreateABTestInput
-): Promise<ActionResult<ABTest>> {
+export async function createABTest(data: CreateABTestInput): Promise<ActionResult<ABTest>> {
   // Validate input
   const validated = createABTestSchema.safeParse(data);
   if (!validated.success) {
@@ -105,10 +103,7 @@ export async function createABTest(
   // Validate traffic split keys match variant IDs
   const variantIds = testData.variants.map((v) => v.id);
   const splitKeys = Object.keys(testData.trafficSplit);
-  if (
-    variantIds.length !== splitKeys.length ||
-    !variantIds.every((id) => splitKeys.includes(id))
-  ) {
+  if (variantIds.length !== splitKeys.length || !variantIds.every((id) => splitKeys.includes(id))) {
     return {
       success: false,
       error: "Traffic split must have one entry per variant",
@@ -163,7 +158,7 @@ export async function createABTest(
     // Don't fail the whole operation, results will be created on first email
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
+  revalidatePath("/staff/email-ab-tests");
 
   return { success: true, data: mapDbTestToTs(test) };
 }
@@ -244,8 +239,8 @@ export async function updateABTest(
     return { success: false, error: "Failed to update A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -273,7 +268,7 @@ export async function deleteABTest(id: string): Promise<ActionResult<void>> {
     return { success: false, error: "Failed to archive A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
+  revalidatePath("/staff/email-ab-tests");
 
   return { success: true };
 }
@@ -323,9 +318,7 @@ export async function startABTest(id: string): Promise<ActionResult<ABTest>> {
 
   // Calculate end date based on duration
   const startedAt = new Date();
-  const endedAt = new Date(
-    startedAt.getTime() + existing.test_duration_hours * 60 * 60 * 1000
-  );
+  const endedAt = new Date(startedAt.getTime() + existing.test_duration_hours * 60 * 60 * 1000);
 
   // Update status to active
   const { data: updated, error } = await supabase
@@ -344,8 +337,8 @@ export async function startABTest(id: string): Promise<ActionResult<ABTest>> {
     return { success: false, error: "Failed to start A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -396,8 +389,8 @@ export async function stopABTest(id: string): Promise<ActionResult<ABTest>> {
     return { success: false, error: "Failed to stop A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -427,8 +420,8 @@ export async function pauseABTest(id: string): Promise<ActionResult<ABTest>> {
     return { success: false, error: "Failed to pause A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -458,8 +451,8 @@ export async function resumeABTest(id: string): Promise<ActionResult<ABTest>> {
     return { success: false, error: "Failed to resume A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -497,9 +490,7 @@ export async function getABTest(id: string): Promise<ActionResult<ABTest>> {
 /**
  * Get a single A/B test with results
  */
-export async function getABTestWithResults(
-  id: string
-): Promise<ActionResult<ABTestWithResults>> {
+export async function getABTestWithResults(id: string): Promise<ActionResult<ABTestWithResults>> {
   const context = await getAdminContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Admin access required" };
@@ -612,11 +603,7 @@ export async function getABTests(
 
   // Apply sorting
   const sortColumn =
-    f.sortBy === "createdAt"
-      ? "created_at"
-      : f.sortBy === "startedAt"
-        ? "started_at"
-        : f.sortBy;
+    f.sortBy === "createdAt" ? "created_at" : f.sortBy === "startedAt" ? "started_at" : f.sortBy;
   query = query.order(sortColumn || "created_at", {
     ascending: f.sortOrder === "asc",
   });
@@ -687,15 +674,10 @@ export async function getABTestAnalysis(testId: string): Promise<
   // Calculate confidence intervals for each variant
   const resultsWithCI = results.map((r) => {
     const metric = test.winning_metric as WinningMetric;
-    const successes =
-      metric === "open_rate" ? r.emailsOpened : r.emailsClicked;
+    const successes = metric === "open_rate" ? r.emailsOpened : r.emailsClicked;
     const trials = r.emailsDelivered;
 
-    const ci = calculateConfidenceInterval(
-      successes,
-      trials,
-      Number(test.confidence_level)
-    );
+    const ci = calculateConfidenceInterval(successes, trials, Number(test.confidence_level));
 
     return {
       ...r,
@@ -718,11 +700,8 @@ export async function getABTestAnalysis(testId: string): Promise<
 
       const metric = test.winning_metric as WinningMetric;
       const controlSuccesses =
-        metric === "open_rate"
-          ? controlResult.emailsOpened
-          : controlResult.emailsClicked;
-      const variantSuccesses =
-        metric === "open_rate" ? result.emailsOpened : result.emailsClicked;
+        metric === "open_rate" ? controlResult.emailsOpened : controlResult.emailsClicked;
+      const variantSuccesses = metric === "open_rate" ? result.emailsOpened : result.emailsClicked;
 
       const sig = calculateStatisticalSignificance(
         {
@@ -783,14 +762,11 @@ export async function getABTestSummary(): Promise<ActionResult<ABTestSummary>> {
   // Calculate average duration for completed tests
   const completedTests = allTests.filter((t) => t.started_at && t.ended_at);
   const totalDuration = completedTests.reduce((sum, t) => {
-    const duration =
-      new Date(t.ended_at!).getTime() - new Date(t.started_at!).getTime();
+    const duration = new Date(t.ended_at!).getTime() - new Date(t.started_at!).getTime();
     return sum + duration / (1000 * 60 * 60); // Convert to hours
   }, 0);
   const averageDuration =
-    completedTests.length > 0
-      ? Number((totalDuration / completedTests.length).toFixed(1))
-      : 0;
+    completedTests.length > 0 ? Number((totalDuration / completedTests.length).toFixed(1)) : 0;
 
   // Get total emails sent across all tests for this organization
   const testIds = allTests.map((t) => t.id);
@@ -803,10 +779,7 @@ export async function getABTestSummary(): Promise<ActionResult<ABTestSummary>> {
       .in("ab_test_id", testIds); // Filter by organization's tests only
 
     if (resultsSums) {
-      totalEmailsSent = resultsSums.reduce(
-        (sum, r) => sum + (r.emails_sent || 0),
-        0
-      );
+      totalEmailsSent = resultsSums.reduce((sum, r) => sum + (r.emails_sent || 0), 0);
     }
   }
 
@@ -832,9 +805,7 @@ export async function getABTestSummary(): Promise<ActionResult<ABTestSummary>> {
 /**
  * Manually declare a winner for an A/B test
  */
-export async function declareWinner(
-  data: DeclareWinnerInput
-): Promise<ActionResult<ABTest>> {
+export async function declareWinner(data: DeclareWinnerInput): Promise<ActionResult<ABTest>> {
   // Validate input
   const validated = declareWinnerSchema.safeParse(data);
   if (!validated.success) {
@@ -881,8 +852,7 @@ export async function declareWinner(
       winner_auto: autoWinner,
       winner_reason: reason || (autoWinner ? "Auto-declared by system" : "Manually declared"),
       status: test.status === "active" ? "completed" : test.status,
-      ended_at:
-        test.status === "active" ? new Date().toISOString() : undefined,
+      ended_at: test.status === "active" ? new Date().toISOString() : undefined,
     })
     .eq("id", testId)
     .select()
@@ -893,15 +863,35 @@ export async function declareWinner(
     return { success: false, error: "Failed to declare winner" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${testId}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${testId}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
 
 /**
- * Apply winning variant configuration to future email sends
- * This is a placeholder - actual implementation would update email templates or settings
+ * Postgres "undefined_table" (42P01) / "undefined_column" (42703). Used to
+ * degrade gracefully when the email_type_overrides table or winner_applied_*
+ * columns (migration 20260707150000) have not been applied yet.
+ */
+function isMissingSchema(error: { code?: string } | null | undefined): boolean {
+  return error?.code === "42P01" || error?.code === "42703";
+}
+
+/**
+ * Apply a declared winner to future email sends.
+ *
+ * Mechanically, "applying" writes the winning variant's subject line / preview
+ * text into `email_type_overrides` keyed by (organization_id, email_type). The
+ * send path consults that store (see `resolveEmailTypeOverride` in
+ * ./overrides) and swaps in the winning copy for every subsequent send of that
+ * email type — even after the test itself is archived. The test row is stamped
+ * winner_applied_at/by so the admin UI can distinguish "declared" from
+ * "applied".
+ *
+ * Scope: subject-line / preview-text winners (the dominant test dimension).
+ * A winning variant that only changes body content or send time has nothing to
+ * persist into the copy override and is reported as unsupported.
  */
 export async function applyWinnerToFuture(
   testId: string
@@ -933,23 +923,80 @@ export async function applyWinnerToFuture(
   }
 
   // Get winning variant details
-  const variants = test.variants as { id: string; name: string }[];
+  const variants = test.variants as {
+    id: string;
+    name: string;
+    subjectLine?: string;
+    previewText?: string;
+  }[];
   const winningVariant = variants.find((v) => v.id === test.winner_variant);
   if (!winningVariant) {
     return { success: false, error: "Winner variant not found" };
   }
 
-  // TODO: Implement logic to update email templates or campaign defaults
-  // This would depend on the specific integration requirements
-  // For example:
-  // - Update survey_templates table with new subject line
-  // - Update email sequence configuration
-  // - Store in organization settings for this email type
+  const subjectLine = winningVariant.subjectLine?.trim() || null;
+  const previewText = winningVariant.previewText?.trim() || null;
+
+  if (!subjectLine && !previewText) {
+    return {
+      success: false,
+      error:
+        "Only subject-line and preview-text winners can be applied automatically. This variant changes body content or send time — apply it in the template manually.",
+    };
+  }
+
+  // Persist the effective override the send path reads. Upsert so re-applying a
+  // corrected winner overwrites the prior one for this (org, email_type).
+  const nowIso = new Date().toISOString();
+  const { error: overrideError } = await supabase.from("email_type_overrides").upsert(
+    {
+      organization_id: context.organizationId,
+      email_type: test.email_type,
+      subject_line: subjectLine,
+      preview_text: previewText,
+      source_ab_test_id: test.id,
+      applied_at: nowIso,
+      applied_by: context.userId,
+      updated_at: nowIso,
+    },
+    { onConflict: "organization_id,email_type" }
+  );
+
+  if (overrideError) {
+    if (isMissingSchema(overrideError)) {
+      return {
+        success: false,
+        error:
+          "Email override storage is not available yet (pending migration). Ask an administrator to apply the latest database migrations.",
+      };
+    }
+    console.error("Error writing email type override:", overrideError);
+    return { success: false, error: "Failed to apply winner" };
+  }
+
+  // Stamp the applied state for the admin UI. Non-fatal: the override (the
+  // functional part) already succeeded, so a missing column only costs the badge.
+  const { error: stampError } = await supabase
+    .from("email_ab_tests")
+    .update({ winner_applied_at: nowIso, winner_applied_by: context.userId })
+    .eq("id", test.id)
+    .eq("organization_id", context.organizationId);
+
+  if (stampError && !isMissingSchema(stampError)) {
+    console.error("Error stamping winner_applied_at:", stampError);
+  }
+
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${testId}`);
+
+  const applied = [subjectLine ? "subject line" : null, previewText ? "preview text" : null]
+    .filter(Boolean)
+    .join(" and ");
 
   return {
     success: true,
     data: {
-      message: `Winner variant "${winningVariant.name}" marked for future ${test.email_type} emails. Please update email templates manually.`,
+      message: `Applied variant "${winningVariant.name}" ${applied} to all future ${test.email_type} emails.`,
     },
   };
 }
@@ -966,6 +1013,11 @@ export async function getActiveTestForEmailType(
   organizationId: string,
   emailType: string
 ): Promise<ActionResult<ABTest | null>> {
+  const context = await getAdminContext();
+  if (!context || context.organizationId !== organizationId) {
+    return { success: false, error: "Unauthorized - Admin access required" };
+  }
+
   const supabase = await getSupabaseForABTesting();
 
   const { data: test, error } = await supabase
@@ -988,4 +1040,3 @@ export async function getActiveTestForEmailType(
     data: test ? mapDbTestToTs(test) : null,
   };
 }
-

@@ -18,6 +18,7 @@ import {
 } from "./schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 
 /**
  * Helper to slugify organization names
@@ -53,21 +54,25 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
   const orgSlug = slugify(organizationName);
 
   try {
-    // Use admin client to create individual organization first
-    // Self-serve signups use individual_organizations (not organizations — reserved for enterprise)
+    // Create the organization for self-serve signup (ADR 0006: one organizations
+    // table; account_type discriminates). Self-serve accounts are 'individual'
+    // and skip plan + payment, so onboarding starts at the profile step.
     const supabaseAdmin = createAdminClient();
 
-    const { data: indivOrgData, error: indivOrgError } = await supabaseAdmin
-      .from("individual_organizations")
+    const { data: orgData, error: orgError } = await supabaseAdmin
+      .from("organizations")
       .insert({
         name: organizationName,
         slug: orgSlug,
+        account_type: "individual",
+        subscription_tier: "basic",
+        onboarding_status: "payment_complete",
       })
       .select()
       .single();
 
-    if (indivOrgError) {
-      console.error("Individual organization creation error:", indivOrgError);
+    if (orgError) {
+      console.error("Organization creation error:", orgError);
       return { success: false, error: "Failed to create organization" };
     }
 
@@ -81,8 +86,8 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
     });
 
     if (!signUpResult || "error" in signUpResult) {
-      // Clean up individual organization if user creation failed
-      await supabaseAdmin.from("individual_organizations").delete().eq("id", indivOrgData.id);
+      // Clean up the organization if user creation failed
+      await supabaseAdmin.from("organizations").delete().eq("id", orgData.id);
       return {
         success: false,
         error: (signUpResult as { error?: string })?.error || "Failed to create user",
@@ -102,9 +107,9 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
         console.error("Failed to clean up user/accounts after slug error:", cleanupErr);
       }
       try {
-        await supabaseAdmin.from("individual_organizations").delete().eq("id", indivOrgData.id);
+        await supabaseAdmin.from("organizations").delete().eq("id", orgData.id);
       } catch (cleanupErr) {
-        console.error("Failed to clean up individual organization after slug error:", cleanupErr);
+        console.error("Failed to clean up organization after slug error:", cleanupErr);
       }
       return {
         success: false,
@@ -112,11 +117,11 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
       };
     }
 
-    // Update user with individual organization details
+    // Link the user to their organization
     const { error: userUpdateError } = await supabaseAdmin
       .from("users")
       .update({
-        individual_organization_id: indivOrgData.id,
+        organization_id: orgData.id,
         slug: userSlug,
         role: "admin",
         is_active: true,
@@ -128,7 +133,19 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
       console.error("User update error:", userUpdateError);
     }
 
-    // Skip widget seeding and membership for individual orgs — widgets require enterprise organization_id
+    // Widget seeding and membership are intentionally skipped for self-serve
+    // individual accounts; they seed on demand.
+
+    void capturePostHogEvent({
+      distinctId: signUpResult.user.id,
+      event: "user_signed_up",
+      properties: {
+        auth_system: "better_auth",
+        account_type: "individual",
+      },
+      groups: { organization: orgData.id },
+      logContext: "better auth signup",
+    });
 
     return {
       success: true,
@@ -183,9 +200,7 @@ export async function signInWithBetterAuth(formData: SignInInput): Promise<AuthR
 /**
  * Sign in with magic link using Better Auth
  */
-export async function signInWithMagicLinkBetterAuth(
-  formData: MagicLinkInput
-): Promise<AuthResult> {
+export async function signInWithMagicLinkBetterAuth(formData: MagicLinkInput): Promise<AuthResult> {
   // Validate input
   const result = magicLinkSchema.safeParse(formData);
   if (!result.success) {
@@ -197,17 +212,14 @@ export async function signInWithMagicLinkBetterAuth(
   try {
     // Call the magic link endpoint directly
     const appUrl = getTrustedAppUrl();
-    const response = await fetch(
-      `${appUrl}/api/auth/sign-in/magic-link`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          callbackURL: "/dashboard",
-        }),
-      }
-    );
+    const response = await fetch(`${appUrl}/api/auth/sign-in/magic-link`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        callbackURL: "/dashboard",
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to send magic link");
@@ -229,9 +241,7 @@ export async function signInWithMagicLinkBetterAuth(
  * Request password reset using Better Auth
  * Note: Better Auth's forgetPassword endpoint is at POST /api/auth/forget-password
  */
-export async function resetPasswordBetterAuth(
-  formData: ResetPasswordInput
-): Promise<AuthResult> {
+export async function resetPasswordBetterAuth(formData: ResetPasswordInput): Promise<AuthResult> {
   // Validate input
   const result = resetPasswordSchema.safeParse(formData);
   if (!result.success) {
@@ -309,10 +319,13 @@ export async function updatePasswordBetterAuth(
  */
 export async function signOutBetterAuth(): Promise<void> {
   try {
-    const headersList = await headers();
-    await auth.api.signOut({
-      headers: headersList,
-    });
+    const session = await getSessionBetterAuth();
+    if (session?.user) {
+      const headersList = await headers();
+      await auth.api.signOut({
+        headers: headersList,
+      });
+    }
   } catch (error) {
     console.error("Sign out error:", error);
   }
@@ -352,10 +365,12 @@ export async function getUserWithProfileBetterAuth() {
   const supabaseAdmin = createAdminClient();
   const { data: profile } = await supabaseAdmin
     .from("users")
-    .select(`
+    .select(
+      `
       *,
       organization:organizations(*)
-    `)
+    `
+    )
     .eq("id", session.user.id)
     .single();
 
@@ -374,17 +389,14 @@ export async function resendVerificationEmailBetterAuth(): Promise<AuthResult> {
 
     // Call the send verification email endpoint directly
     const appUrl = getTrustedAppUrl();
-    const response = await fetch(
-      `${appUrl}/api/auth/send-verification-email`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: session.user.email,
-          callbackURL: "/dashboard",
-        }),
-      }
-    );
+    const response = await fetch(`${appUrl}/api/auth/send-verification-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: session.user.email,
+        callbackURL: "/dashboard",
+      }),
+    });
 
     if (!response.ok) {
       throw new Error("Failed to send verification email");
@@ -411,10 +423,12 @@ export async function checkAdminAccessBetterAuth(): Promise<boolean> {
   const supabaseAdmin = createAdminClient();
   const { data: userData } = await supabaseAdmin
     .from("users")
-    .select(`
+    .select(
+      `
       role,
       organization:organizations!inner(account_type)
-    `)
+    `
+    )
     .eq("id", session.user.id)
     .single();
 

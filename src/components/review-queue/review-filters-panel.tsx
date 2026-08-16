@@ -19,15 +19,9 @@ import {
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
+import { REVIEW_STATUS_FILTER_LABELS } from "@/components/reviews/review-status-badge";
 import { useReviewQueue } from "./review-queue-context";
-
-const SOURCE_LABELS: Record<string, string> = {
-  internal: "Survey",
-  google: "Google",
-  zillow: "Zillow",
-  facebook: "Facebook",
-  yelp: "Yelp",
-};
 
 export function ReviewFiltersPanel() {
   const { state, actions } = useReviewQueue();
@@ -44,6 +38,7 @@ export function ReviewFiltersPanel() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            aria-label="Search reviews"
             placeholder="Search reviews by text, customer name..."
             value={state.filters.searchQuery}
             onChange={(e) => actions.dispatch({ type: "SET_SEARCH", value: e.target.value })}
@@ -56,6 +51,7 @@ export function ReviewFiltersPanel() {
                 actions.dispatch({ type: "SET_SEARCH", value: "" });
                 actions.handleFilterChange();
               }}
+              aria-label="Clear review search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
@@ -73,15 +69,15 @@ export function ReviewFiltersPanel() {
           value={state.filters.statusFilter}
           onValueChange={(v) => { actions.dispatch({ type: "SET_STATUS", value: v }); actions.handleFilterChange(); }}
         >
-          <SelectTrigger className="h-9 w-[140px]">
+          <SelectTrigger className="h-9 w-[150px]" aria-label="Filter reviews by status">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-            <SelectItem value="archived">Archived</SelectItem>
+            <SelectItem value="pending">{REVIEW_STATUS_FILTER_LABELS.pending}</SelectItem>
+            <SelectItem value="approved">{REVIEW_STATUS_FILTER_LABELS.approved}</SelectItem>
+            <SelectItem value="rejected">{REVIEW_STATUS_FILTER_LABELS.rejected}</SelectItem>
+            <SelectItem value="archived">{REVIEW_STATUS_FILTER_LABELS.archived}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -89,14 +85,14 @@ export function ReviewFiltersPanel() {
           value={state.filters.sourceFilter}
           onValueChange={(v) => { actions.dispatch({ type: "SET_SOURCE", value: v }); actions.handleFilterChange(); }}
         >
-          <SelectTrigger className="h-9 w-[140px]">
+          <SelectTrigger className="h-9 w-[140px]" aria-label="Filter reviews by source">
             <SelectValue placeholder="Source" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Sources</SelectItem>
             {availableSources.map((source) => (
               <SelectItem key={source} value={source}>
-                {SOURCE_LABELS[source] || source.charAt(0).toUpperCase() + source.slice(1)}
+                {formatReviewSource(source)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -106,7 +102,7 @@ export function ReviewFiltersPanel() {
           value={state.filters.featuredFilter}
           onValueChange={(v) => { actions.dispatch({ type: "SET_FEATURED", value: v }); actions.handleFilterChange(); }}
         >
-          <SelectTrigger className="h-9 w-[140px]">
+          <SelectTrigger className="h-9 w-[140px]" aria-label="Filter featured reviews">
             <SelectValue placeholder="Featured" />
           </SelectTrigger>
           <SelectContent>
@@ -121,6 +117,7 @@ export function ReviewFiltersPanel() {
             <Button
               variant="outline"
               size="sm"
+              aria-label="Filter reviews by date range"
               className={cn(
                 "h-9 w-[220px] justify-start text-left font-normal",
                 !state.filters.dateRange && "text-muted-foreground"

@@ -18,17 +18,15 @@ export function AnimatedSection({
   delay,
   once = true,
 }: AnimatedSectionProps) {
+  const visible = typeof variants.visible === "object" ? variants.visible : undefined;
+  const baseTransition = visible && "transition" in visible ? visible.transition : undefined;
+
   const delayedVariants: Variants | undefined = delay
     ? {
         ...variants,
         visible: {
-          ...(typeof variants.visible === "object" ? variants.visible : {}),
-          transition: {
-            ...(typeof variants.visible === "object" && "transition" in variants.visible
-              ? (variants.visible.transition as Record<string, unknown>)
-              : {}),
-            delay,
-          },
+          ...visible,
+          transition: { ...baseTransition, delay },
         },
       }
     : undefined;

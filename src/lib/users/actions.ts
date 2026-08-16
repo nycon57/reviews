@@ -455,7 +455,7 @@ export async function updateUserByAdmin(
     return { success: false, error: "User not found" };
   }
 
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
   revalidatePath(`/profile/${parsed.data.userId}`);
 
   return { success: true, data: rowToUser(data as UserRow) };
@@ -487,7 +487,7 @@ export async function deactivateUser(userId: string): Promise<ActionResult> {
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
 
   return { success: true };
 }
@@ -513,7 +513,7 @@ export async function reactivateUser(userId: string): Promise<ActionResult> {
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
 
   return { success: true };
 }

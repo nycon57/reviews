@@ -38,8 +38,10 @@
   ],
   "exclude": [
     "node_modules",
-    "mobile",
     "wordpress-plugin",
-    "packages"
+    "packages",
+    "tools/oxlint",
+    "truetone-stack-repwell",
+    "truetone-stack-ttai"
   ]
 }
